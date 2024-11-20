@@ -470,6 +470,9 @@ xi.mod =
     SENGIKORI_MB_DMG_DEBUFF         = 1089, -- % Increase to magic burst damage. Applied to defender.
     SENGIKORI_BONUS                 = 1090, -- additive % increase to Sengikori
 
+    -- Ninja
+    ENHANCES_SANGE                  = 1091, -- 1 = +1 attack for Daken during Sange per Sange merit (i.e. 20 with 5 merits = +100 attack during Sange)
+
     -- Dragoon
     WYVERN_LVL_BONUS                = 1043, -- Wyvern: Lv.+ (Increases wyvern's base level above 99)
 
@@ -836,7 +839,7 @@ xi.mod =
     -- Crafting food effects
     SYNTH_SUCCESS                   = 851, -- Rate of synthesis success
     SYNTH_SKILL_GAIN                = 852, -- Synthesis skill gain rate
-    SYNTH_FAIL_RATE                 = 861, -- Synthesis failure rate (percent)
+    SYNTH_FAIL_RATE                 = 861, -- Synthesis material loss rate (percent)
     SYNTH_HQ_RATE                   = 862, -- High-quality success rate (not a percent)
     DESYNTH_SUCCESS                 = 916, -- Rate of desynthesis success
     SYNTH_FAIL_RATE_FIRE            = 917, -- Amount synthesis failure rate is reduced when using a fire crystal

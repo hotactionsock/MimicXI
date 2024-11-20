@@ -563,6 +563,7 @@ enum class Mod
     NIN_NUKE_BONUS_GEAR  = 522, // Ninjutsu damage multiplier from gear.
     DAKEN                = 911, // chance to throw a shuriken without consuming it
     NINJUTSU_DURATION    = 1000,
+    ENHANCES_SANGE       = 1091, // 1 = +1 attack for Daken during Sange per Sange merit (i.e. 20 with 5 merits = +100 attack during Sange)
 
     // Dragoon
     ANCIENT_CIRCLE_DURATION    = 859,  // Ancient Circle extended duration in seconds
@@ -949,7 +950,7 @@ enum class Mod
     // Crafting food effects
     SYNTH_SUCCESS             = 851, // Rate of synthesis success
     SYNTH_SKILL_GAIN          = 852, // Synthesis skill gain rate
-    SYNTH_FAIL_RATE           = 861, // Synthesis failure rate (percent)
+    SYNTH_FAIL_RATE           = 861, // Synthesis material loss rate (percent)
     SYNTH_HQ_RATE             = 862, // High-quality success rate (not a percent)
     DESYNTH_SUCCESS           = 916, // Rate of desynthesis success
     SYNTH_FAIL_RATE_FIRE      = 917, // Amount synthesis failure rate is reduced when using a fire crystal
@@ -1029,7 +1030,7 @@ enum class Mod
     // The spares take care of finding the next ID to use so long as we don't forget to list IDs that have been freed up by refactoring.
     // 570 through 825 used by WS DMG mods these are not spares.
     //
-    // SPARE IDs: 1091 and onward
+    // SPARE IDs: 1092 and onward
 };
 
 // temporary workaround for using enum class as unordered_map key until compilers support it
