@@ -793,7 +793,7 @@ uint16 CBattleEntity::ATT(SLOTTYPE slot)
     }
     else if (weapon && weapon->isHandToHand()) // H2H Weapon
     {
-        ATT += STR() * 3 / 4;
+        ATT += STR() * 3.5 / 3;
     }
     else if (slot == SLOT_RANGED || slot == SLOT_AMMO) // Ranged/ammo weapon.
     {
@@ -801,7 +801,7 @@ uint16 CBattleEntity::ATT(SLOTTYPE slot)
     }
     else if (slot == SLOT_MAIN) // 1-handed weapon in main slot.
     {
-        ATT += STR();
+        ATT += STR() * 3 / 2;
     }
     else // 1-handed weapon in sub slot.
     {
@@ -928,12 +928,12 @@ uint16 CBattleEntity::ACC(uint8 attackNumber, uint8 offsetAccuracy)
         ACC       = (ACC > 200 ? (int16)(((ACC - 200) * 0.9) + 200) : ACC);
         if (auto* weapon = dynamic_cast<CItemWeapon*>(m_Weapons[SLOT_MAIN]); weapon && weapon->isTwoHanded())
         {
-            ACC += (int16)(DEX() * 0.75);
+            ACC += (int16)(DEX());
             ACC += m_modStat[Mod::TWOHAND_ACC];
         }
         else
         {
-            ACC += (int16)(DEX() * 0.75);
+            ACC += (int16)(DEX());
         }
         ACC = (ACC + m_modStat[Mod::ACC] + offsetAccuracy);
 
@@ -975,14 +975,14 @@ uint16 CBattleEntity::ACC(uint8 attackNumber, uint8 offsetAccuracy)
             ACC += this->getMod(Mod::ENSPELL_DMG);
         }
 
-        ACC = ACC + std::min<int16>((ACC * m_modStat[Mod::FOOD_ACCP] / 100), m_modStat[Mod::FOOD_ACC_CAP]) + DEX() / 2; // Account for food mods here for Snatch Morsel
+        ACC = ACC + std::min<int16>((ACC * m_modStat[Mod::FOOD_ACCP] / 100), m_modStat[Mod::FOOD_ACC_CAP]) + DEX(); // Account for food mods here for Snatch Morsel
         return std::max<int16>(0, ACC);
     }
 }
 
 uint16 CBattleEntity::DEF()
 {
-    int32 DEF = 8 + m_modStat[Mod::DEF] + VIT() / 2;
+    int32 DEF = 8 + m_modStat[Mod::DEF] + VIT();
     if (this->StatusEffectContainer->HasStatusEffect(EFFECT_COUNTERSTANCE, 0))
     {
         return DEF / 2;
@@ -1010,7 +1010,7 @@ uint16 CBattleEntity::EVA()
         }
     }
 
-    evasion += AGI() / 2;
+    evasion += AGI();
 
     return std::max(1, evasion + (this->objtype == TYPE_MOB || this->objtype == TYPE_PET ? 0 : m_modStat[Mod::EVA])); // The mod for a pet or mob is already calclated in the above so return 0
 }
