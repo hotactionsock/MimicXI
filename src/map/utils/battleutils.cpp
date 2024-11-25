@@ -535,7 +535,7 @@ namespace battleutils
             uint16 cap   = 3 + ((6 * skill) / 100);
             if (skill > 200)
             {
-                cap = 5 + ((5 * skill) / 100);
+                cap = 3 * ((5 * skill) / 100);
             }
             cap *= 2;
 
@@ -661,7 +661,7 @@ namespace battleutils
         uint32  obi[8]                 = { 15435, 15436, 15437, 15438, 15439, 15440, 15441, 15442 };
         Mod     resistarray[8]         = { Mod::FIRE_MEVA, Mod::ICE_MEVA, Mod::WIND_MEVA, Mod::EARTH_MEVA,
                                            Mod::THUNDER_MEVA, Mod::WATER_MEVA, Mod::LIGHT_MEVA, Mod::DARK_MEVA };
-        bool    obiBonus               = false;
+        bool    obiBonus               = true;
 
         double half      = (double)(PDefender->getMod(resistarray[element - 1])) / 100;
         double quart     = pow(half, 2);
