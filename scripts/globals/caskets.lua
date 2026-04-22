@@ -148,27 +148,18 @@ local function getCasketID(mob)
         return 0
     end
 
-    -- Get the ID of the first entry and use that as our base ID to offset against
-    local baseChestId = caskets[1]:getID()
-    local chestId     = 0
-
-    for i = baseChestId, baseChestId + 15 do
-        if timeElapsedCheck(GetNPCByID(i)) then
-            if
-                GetNPCByID(i):getLocalVar('[caskets]SPAWNSTATUS') == casketInfo.spawnStatus.DESPAWNED or
-                GetNPCByID(i):getLocalVar('[caskets]SPAWNSTATUS') == 0
-            then
-                chestId = i
-                break
+    -- Iterate directly over known casket entities to avoid calling GetNPCByID
+    -- with out-of-range IDs that belong to unrelated NPCs.
+    for _, casket in ipairs(caskets) do
+        if timeElapsedCheck(casket) then
+            local status = casket:getLocalVar('[caskets]SPAWNSTATUS')
+            if status == casketInfo.spawnStatus.DESPAWNED or status == 0 then
+                return casket:getID()
             end
         end
     end
 
-    if GetNPCByID(chestId) == nil then
-        return 0
-    end
-
-    return chestId
+    return 0
 end
 
 -----------------------------------
@@ -772,6 +763,13 @@ xi.caskets.onTrigger = function(player, npc)
                 getTempDrop(npc, 3),
                 0, 0, 0, 0, 0)
         elseif dropType == casketInfo.dropTypes.ITEM then
+            player:startEvent(unlockedEvent,
+                getChestItem(npc, 1),
+                getChestItem(npc, 2),
+                getChestItem(npc, 3),
+                getChestItem(npc, 4),
+                0, 0, 0, 0)
+        elseif dropType == casketInfo.dropTypes.RARE_ITEM then
             player:startEvent(unlockedEvent,
                 getChestItem(npc, 1),
                 getChestItem(npc, 2),
