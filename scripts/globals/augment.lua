@@ -62,3 +62,30 @@ xi.augments.id =
     MND             = 517, -- MND+1
     CHR             = 518, -- CHR+1
 }
+
+-- Reverse lookup: augment ID → display name used in Gold Casket preview messages.
+xi.augments.name =
+{
+    [1]   = 'HP',
+    [9]   = 'MP',
+    [23]  = 'Accuracy',
+    [25]  = 'Attack',
+    [27]  = 'Rng.Acc.',
+    [29]  = 'Rng.Atk.',
+    [31]  = 'Evasion',
+    [33]  = 'DEF',
+    [35]  = 'Mag.Acc.',
+    [37]  = 'Mag.Evasion',
+    [39]  = 'Enmity',
+    [41]  = 'Crit.hit rate',
+    [44]  = 'Store TP',
+    [45]  = 'DMG',
+    [49]  = 'Haste',
+    [512] = 'STR',
+    [513] = 'DEX',
+    [514] = 'VIT',
+    [515] = 'AGI',
+    [516] = 'INT',
+    [517] = 'MND',
+    [518] = 'CHR',
+}
