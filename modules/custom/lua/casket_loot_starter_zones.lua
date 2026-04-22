@@ -7,9 +7,13 @@
 --   West/East Sarutabaruta (Windurst,   lv 1-12)
 --
 -- Gold caskets spawn at a 5% rate (replacing nothing; the existing 85/15
--- blue/brown split is preserved for zones without a rareItems pool).
+-- blue/brown split is preserved for zones without a rarePools entry).
 -- They contain level-appropriate HQ (+1/+2) gear, optionally augmented
 -- once xi.caskets.augmentPools is populated.
+--
+-- Rare pools are registered in xi.caskets.rarePools at module load time so
+-- they survive the lazy re-execution of casket_loot.lua that happens when
+-- the first player enters a casket zone.
 --
 -- To disable this module: comment out its line in modules/init.txt.
 -----------------------------------
@@ -156,37 +160,20 @@ local sarutabarutaRareItems =
 }
 
 -----------------------------------
--- Inject rareItems into existing zone loot tables on server start.
--- The temps/items/regionalItems in casket_loot.lua are left untouched.
+-- Register rare pools directly into xi.caskets.rarePools at module load
+-- time. Modules load after all scripts/globals (including zone enums), so
+-- xi.zone.* constants are guaranteed to be defined here. Storing in
+-- xi.caskets.rarePools instead of injecting into xi.casket_loot.casketItems
+-- avoids being wiped by the lazy re-execution of casket_loot.lua that occurs
+-- when the first player enters a casket zone.
 -----------------------------------
-m:addOverride('xi.server.onServerStart', function()
-    super()
+xi.caskets.rarePools = xi.caskets.rarePools or {}
 
-    local casketItems = xi.casket_loot.casketItems
-
-    -- Ronfaure (both zones share the same rare pool)
-    if casketItems[xi.zone.WEST_RONFAURE] then
-        casketItems[xi.zone.WEST_RONFAURE].rareItems = ronfaureRareItems
-    end
-    if casketItems[xi.zone.EAST_RONFAURE] then
-        casketItems[xi.zone.EAST_RONFAURE].rareItems = ronfaureRareItems
-    end
-
-    -- Gustaberg (both zones share the same rare pool)
-    if casketItems[xi.zone.NORTH_GUSTABERG] then
-        casketItems[xi.zone.NORTH_GUSTABERG].rareItems = gustabergRareItems
-    end
-    if casketItems[xi.zone.SOUTH_GUSTABERG] then
-        casketItems[xi.zone.SOUTH_GUSTABERG].rareItems = gustabergRareItems
-    end
-
-    -- Sarutabaruta (both zones share the same rare pool)
-    if casketItems[xi.zone.WEST_SARUTABARUTA] then
-        casketItems[xi.zone.WEST_SARUTABARUTA].rareItems = sarutabarutaRareItems
-    end
-    if casketItems[xi.zone.EAST_SARUTABARUTA] then
-        casketItems[xi.zone.EAST_SARUTABARUTA].rareItems = sarutabarutaRareItems
-    end
-end)
+xi.caskets.rarePools[xi.zone.WEST_RONFAURE]     = ronfaureRareItems
+xi.caskets.rarePools[xi.zone.EAST_RONFAURE]     = ronfaureRareItems
+xi.caskets.rarePools[xi.zone.NORTH_GUSTABERG]   = gustabergRareItems
+xi.caskets.rarePools[xi.zone.SOUTH_GUSTABERG]   = gustabergRareItems
+xi.caskets.rarePools[xi.zone.WEST_SARUTABARUTA] = sarutabarutaRareItems
+xi.caskets.rarePools[xi.zone.EAST_SARUTABARUTA] = sarutabarutaRareItems
 
 return m

@@ -236,7 +236,7 @@ local function setCasketData(player, x, y, z, r, npc, partyID, mobLvl)
     local kupowersBonus  = 0 -- TODO: Kupowers add a 20% chance.
     local zoneId         = player:getZoneID()
     local zoneItems      = xi.casket_loot.casketItems[zoneId]
-    local zoneHasRarePol = zoneItems ~= nil and zoneItems.rareItems ~= nil
+    local zoneHasRarePol = xi.caskets.rarePools ~= nil and xi.caskets.rarePools[zoneId] ~= nil
     local roll           = math.random(1, 100)
 
     if zoneHasRarePol and roll <= 5 then
@@ -464,20 +464,19 @@ local function getDrops(npc, dropType, zoneId)
     -- Rare HQ item drops (Gold casket)
     -----------------------------------
     elseif dropType == casketInfo.dropTypes.RARE_ITEM then
-        local zoneItems = xi.casket_loot.casketItems[zoneId]
-        if not zoneItems then
-            return
-        end
-
-        -- Prefer the dedicated rare pool; fall back to the regular items pool so
-        -- the chest is never empty even when no rare pool is defined for the zone.
-        local pool = zoneItems.rareItems
+        -- Primary source: xi.caskets.rarePools populated by the casket loot module
+        -- at load time. Falls back to the zone's regular items pool so the chest
+        -- is never permanently empty even if no rare pool is defined for this zone.
+        local pool = xi.caskets.rarePools and xi.caskets.rarePools[zoneId]
         if not pool then
-            if casketInfo.splitZones[zoneId] then
-                local mobLvl = npc:getLocalVar('[caskets]MOBLVL')
-                pool = mobLvl > 50 and zoneItems.itemsHi or zoneItems.itemsLow
-            else
-                pool = zoneItems.items
+            local zoneItems = xi.casket_loot.casketItems[zoneId]
+            if zoneItems then
+                if casketInfo.splitZones[zoneId] then
+                    local mobLvl = npc:getLocalVar('[caskets]MOBLVL')
+                    pool = mobLvl > 50 and zoneItems.itemsHi or zoneItems.itemsLow
+                else
+                    pool = zoneItems.items
+                end
             end
         end
 
