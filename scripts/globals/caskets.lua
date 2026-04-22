@@ -465,7 +465,23 @@ local function getDrops(npc, dropType, zoneId)
     -----------------------------------
     elseif dropType == casketInfo.dropTypes.RARE_ITEM then
         local zoneItems = xi.casket_loot.casketItems[zoneId]
-        if not zoneItems or not zoneItems.rareItems then
+        if not zoneItems then
+            return
+        end
+
+        -- Prefer the dedicated rare pool; fall back to the regular items pool so
+        -- the chest is never empty even when no rare pool is defined for the zone.
+        local pool = zoneItems.rareItems
+        if not pool then
+            if casketInfo.splitZones[zoneId] then
+                local mobLvl = npc:getLocalVar('[caskets]MOBLVL')
+                pool = mobLvl > 50 and zoneItems.itemsHi or zoneItems.itemsLow
+            else
+                pool = zoneItems.items
+            end
+        end
+
+        if not pool then
             return
         end
 
@@ -474,7 +490,7 @@ local function getDrops(npc, dropType, zoneId)
         local items       = { 0, 0, 0, 0 }
 
         for i = 1, itemCount do
-            items[i] = xi.itemUtils.pickItemRandom(zoneItems.rareItems)
+            items[i] = xi.itemUtils.pickItemRandom(pool)
         end
 
         setItems(npc, items[1], items[2], items[3], items[4])
