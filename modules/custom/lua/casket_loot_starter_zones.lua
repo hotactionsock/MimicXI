@@ -18,7 +18,6 @@
 -- To disable this module: comment out its line in modules/init.txt.
 -----------------------------------
 require('modules/module_utils')
-require('scripts/globals/augment')
 
 local m = Module:new('casket_loot_starter_zones')
 
@@ -175,5 +174,129 @@ xi.caskets.rarePools[xi.zone.NORTH_GUSTABERG]   = gustabergRareItems
 xi.caskets.rarePools[xi.zone.SOUTH_GUSTABERG]   = gustabergRareItems
 xi.caskets.rarePools[xi.zone.WEST_SARUTABARUTA] = sarutabarutaRareItems
 xi.caskets.rarePools[xi.zone.EAST_SARUTABARUTA] = sarutabarutaRareItems
+
+-----------------------------------
+-- Augment pools for Gold casket loot
+--
+-- When a Gold casket gives out an item that has an entry here, the casket
+-- system randomly picks 1–2 of the listed augments (without repeating) and
+-- applies them to the item before handing it to the player.
+--
+-- Format:
+--   [itemId] = {
+--       { id = xi.augments.id.STAT, min = minValue, max = maxValue },
+--       ...
+--   }
+--
+-- Augment IDs: see scripts/globals/augment.lua → xi.augments.id
+-- To add more augment pools, append entries below using the same pattern.
+-- Leave xi.caskets.augmentPools empty (or omit an item) for a plain HQ drop.
+-----------------------------------
+xi.caskets.augmentPools =
+{
+    -- Bronze Sword +1 (lv1 sword — light combat augments)
+    [16623] =
+    {
+        { id = xi.augments.id.ATTACK,   min = 1, max = 2 },
+        { id = xi.augments.id.ACCURACY, min = 1, max = 2 },
+        { id = xi.augments.id.STR,      min = 1, max = 1 },
+        { id = xi.augments.id.DEX,      min = 1, max = 1 },
+    },
+
+    -- Bronze Axe +1 (lv1 axe)
+    [16646] =
+    {
+        { id = xi.augments.id.ATTACK,  min = 1, max = 2 },
+        { id = xi.augments.id.STR,     min = 1, max = 1 },
+        { id = xi.augments.id.VIT,     min = 1, max = 1 },
+    },
+
+    -- Bronze Dagger +1 / Bronze Knife +1 (lv1 daggers — DEX/AGI focus)
+    [16492] =
+    {
+        { id = xi.augments.id.ACCURACY, min = 1, max = 2 },
+        { id = xi.augments.id.DEX,      min = 1, max = 1 },
+        { id = xi.augments.id.STORE_TP, min = 1, max = 1 },
+    },
+    [16491] =
+    {
+        { id = xi.augments.id.ACCURACY, min = 1, max = 2 },
+        { id = xi.augments.id.AGI,      min = 1, max = 1 },
+        { id = xi.augments.id.EVASION,  min = 1, max = 2 },
+    },
+
+    -- Bronze Cap +1 (lv1 head armor)
+    [12463] =
+    {
+        { id = xi.augments.id.HP,      min = 3, max = 6 },
+        { id = xi.augments.id.DEFENSE, min = 1, max = 2 },
+        { id = xi.augments.id.VIT,     min = 1, max = 1 },
+    },
+
+    -- Bronze Harness +1 (lv1 body)
+    [12607] =
+    {
+        { id = xi.augments.id.HP,      min = 5, max = 10 },
+        { id = xi.augments.id.DEFENSE, min = 1, max = 2  },
+        { id = xi.augments.id.STR,     min = 1, max = 1  },
+    },
+
+    -- Leather Vest +1 (lv7 body — balanced melee)
+    [12599] =
+    {
+        { id = xi.augments.id.HP,       min = 5, max = 10 },
+        { id = xi.augments.id.ACCURACY, min = 1, max = 2  },
+        { id = xi.augments.id.DEX,      min = 1, max = 1  },
+        { id = xi.augments.id.AGI,      min = 1, max = 1  },
+    },
+
+    -- Brass Cap +1 (lv11 head)
+    [12528] =
+    {
+        { id = xi.augments.id.HP,      min = 5,  max = 12 },
+        { id = xi.augments.id.DEFENSE, min = 1,  max = 2  },
+        { id = xi.augments.id.STR,     min = 1,  max = 1  },
+        { id = xi.augments.id.VIT,     min = 1,  max = 1  },
+    },
+
+    -- Brass Harness +1 (lv11 body)
+    [12664] =
+    {
+        { id = xi.augments.id.HP,      min = 8,  max = 15 },
+        { id = xi.augments.id.DEFENSE, min = 1,  max = 3  },
+        { id = xi.augments.id.STR,     min = 1,  max = 1  },
+    },
+
+    -- Ash Club +1 / Ash Pole +1 (lv1/5 mage weapons — INT/MND focus)
+    [17137] =
+    {
+        { id = xi.augments.id.INT,          min = 1, max = 1 },
+        { id = xi.augments.id.MAG_ACCURACY, min = 1, max = 2 },
+        { id = xi.augments.id.MP,           min = 3, max = 6 },
+    },
+    [17122] =
+    {
+        { id = xi.augments.id.INT,          min = 1, max = 1 },
+        { id = xi.augments.id.MND,          min = 1, max = 1 },
+        { id = xi.augments.id.MAG_ACCURACY, min = 1, max = 2 },
+    },
+
+    -- Willow Wand +1 (lv9 wand)
+    [17138] =
+    {
+        { id = xi.augments.id.MP,           min = 5, max = 10 },
+        { id = xi.augments.id.MND,          min = 1, max = 1  },
+        { id = xi.augments.id.MAG_ACCURACY, min = 1, max = 2  },
+    },
+
+    -- Holly Staff +1 (lv11 staff)
+    [17125] =
+    {
+        { id = xi.augments.id.MP,           min = 8, max = 15 },
+        { id = xi.augments.id.INT,          min = 1, max = 1  },
+        { id = xi.augments.id.MND,          min = 1, max = 1  },
+        { id = xi.augments.id.MAG_ACCURACY, min = 1, max = 2  },
+    },
+}
 
 return m
