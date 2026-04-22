@@ -1222,7 +1222,6 @@ void HandleEnspell(CBattleEntity* PAttacker, CBattleEntity* PDefender, action_re
                 finaldamage > 0 &&
                 isFirstSwing &&
                 PDefender->objtype == TYPE_MOB &&
-                PChar->GetMJob() == JOB_THF &&
                 PChar->getMod(Mod::TREASURE_HUNTER) > 0)
             {
                 auto PMob = dynamic_cast<CMobEntity*>(PDefender);
