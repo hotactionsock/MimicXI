@@ -228,7 +228,7 @@ INSERT INTO `traits` VALUES (18,'dual wield',19,20,1,259,10,'ABYSSEA',0);
 INSERT INTO `traits` VALUES (18,'dual wield',19,40,2,259,15,'ABYSSEA',0);
 INSERT INTO `traits` VALUES (18,'dual wield',19,60,3,259,25,'ABYSSEA',0);
 INSERT INTO `traits` VALUES (18,'dual wield',19,80,4,259,30,'ABYSSEA',0);
-INSERT INTO `traits` VALUES (19,'treasure hunter',6,15,1,303,1,NULL,0);
+-- treasure hunter I removed: granted via mission reward (Shadow Lord / Rank 6)
 INSERT INTO `traits` VALUES (20,'gilfinder',6,5,1,897,1,NULL,0);
 INSERT INTO `traits` VALUES (20,'gilfinder',6,90,2,897,2,NULL,0); -- https://wiki.ffo.jp/html/1677.html
 INSERT INTO `traits` VALUES (21,'alertness',11,5,1,0,0,NULL,0);
@@ -416,8 +416,8 @@ INSERT INTO `traits` VALUES (63,'resist amnesia',18,35,2,253,15,'ABYSSEA',0);
 INSERT INTO `traits` VALUES (63,'resist amnesia',18,55,3,253,20,'ABYSSEA',0);
 INSERT INTO `traits` VALUES (63,'resist amnesia',18,75,4,253,25,'ABYSSEA',0);
 INSERT INTO `traits` VALUES (63,'resist amnesia',18,95,5,253,30,'ABYSSEA',0);
-INSERT INTO `traits` VALUES (64,'treasure hunter ii',6,45,2,303,1,NULL,0);
-INSERT INTO `traits` VALUES (65,'treasure hunter iii',6,90,3,303,1,'ABYSSEA',0);
+-- treasure hunter II removed: granted via mission reward (Rise of the Zilart - Awakening)
+-- treasure hunter III removed: granted via mission reward (Chains of Promathia - Dawn)
 INSERT INTO `traits` VALUES (66,'kick attacks',2,51,1,292,10,NULL,0);
 INSERT INTO `traits` VALUES (66,'kick attacks',2,71,2,292,12,NULL,0);
 INSERT INTO `traits` VALUES (66,'kick attacks',2,76,3,292,14,'ABYSSEA',0);
