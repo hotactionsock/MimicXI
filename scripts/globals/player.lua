@@ -197,6 +197,30 @@ xi.player.onGameIn = function(player, firstLogin, zoning)
     -- apply mods from gearsets (scripts/globals/gear_sets.lua)
     xi.gear_sets.checkForGearSet(player)
 
+    -- Treasure Hunter: granted by mission progression rather than as a job trait
+    -- TH+1: Shadow Lord (Rank 6 nation missions)
+    -- TH+2: Rise of the Zilart - Awakening (ZM17)
+    -- TH+3: Chains of Promathia - Dawn (8-4)
+    if player:getMainJob() == xi.job.THF then
+        local thLevel = 0
+
+        if player:hasCompletedMission(xi.mission.log_id.COP, xi.mission.id.cop.DAWN) then
+            thLevel = 3
+        elseif player:hasCompletedMission(xi.mission.log_id.ZILART, xi.mission.id.zilart.AWAKENING) then
+            thLevel = 2
+        elseif
+            player:hasCompletedMission(xi.mission.log_id.SANDORIA, xi.mission.id.sandoria.THE_SHADOW_LORD) or
+            player:hasCompletedMission(xi.mission.log_id.BASTOK, xi.mission.id.bastok.XARCABARD_LAND_OF_TRUTHS) or
+            player:hasCompletedMission(xi.mission.log_id.WINDURST, xi.mission.id.windurst.THE_SHADOW_AWAITS)
+        then
+            thLevel = 1
+        end
+
+        if thLevel > 0 then
+            player:addMod(xi.mod.TREASURE_HUNTER, thLevel)
+        end
+    end
+
     -- god mode
     if player:getCharVar('GodMode') == 1 then
         player:addStatusEffect(xi.effect.MAX_HP_BOOST, { power = 1000, origin = player })

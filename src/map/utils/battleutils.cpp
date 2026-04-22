@@ -1223,7 +1223,7 @@ void HandleEnspell(CBattleEntity* PAttacker, CBattleEntity* PDefender, action_re
                 isFirstSwing &&
                 PDefender->objtype == TYPE_MOB &&
                 PChar->GetMJob() == JOB_THF &&
-                PChar->hasTrait(TRAITTYPE::TRAIT_TREASURE_HUNTER)) // TH trait as a requirement is assumed, but likely. Could this just be a level 15 check instead?
+                PChar->getMod(Mod::TREASURE_HUNTER) > 0)
             {
                 auto PMob = dynamic_cast<CMobEntity*>(PDefender);
                 if (PMob && PMob->m_THLvl < (12 + PChar->getMod(Mod::TREASURE_HUNTER_CAP))) // TH proc cap is 12 + job gifts
