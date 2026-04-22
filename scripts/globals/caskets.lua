@@ -691,13 +691,14 @@ end
 xi.caskets.dropTypes = casketInfo.dropTypes
 
 xi.caskets.spawnCasket = function(player, mob, x, y, z, r)
-    local chestId    = getCasketID(mob)
-    local npc        = GetNPCByID(chestId)
-    local chestOwner = player:getLeaderID()
+    local chestId = getCasketID(mob)
 
     if chestId == 0 then
         return
     end
+
+    local npc        = GetNPCByID(chestId)
+    local chestOwner = player:getLeaderID()
 
     if dropChance(player) then
         setCasketData(player, x, y, z, r, npc, chestOwner, mob:getMainLvl())
