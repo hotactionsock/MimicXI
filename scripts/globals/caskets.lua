@@ -530,26 +530,6 @@ end
 -- Desc: Prints a Gold Casket contents preview to the triggering player so
 --       they can see pre-rolled augments before committing to obtain an item.
 -----------------------------------
-local function showRareItemContents(player, npc)
-    for slot = 1, 4 do
-        local itemId  = getChestItem(npc, slot)
-        local numAugs = npc:getLocalVar(string.format('[caskets]ITEM%dNUMAUGS', slot))
-        if itemId ~= 0 and numAugs and numAugs > 0 then
-            local parts = {}
-            for j = 1, numAugs do
-                local augId  = npc:getLocalVar(string.format('[caskets]ITEM%dAUG%dID',  slot, j))
-                local augVal = npc:getLocalVar(string.format('[caskets]ITEM%dAUG%dVAL', slot, j))
-                local name   = (xi.augments and xi.augments.name and xi.augments.name[augId]) or tostring(augId)
-                parts[#parts + 1] = string.format('%s+%d', name, augVal)
-            end
-            player:printToPlayer(
-                string.format('[Gold Casket] Slot %d augment(s): %s', slot, table.concat(parts, ', ')),
-                xi.msg.channel.SYSTEM_3
-            )
-        end
-    end
-end
-
 -----------------------------------
 -- Temp item functions
 -----------------------------------
@@ -633,6 +613,30 @@ local function getChestItem(npc, slot)
         return 0
     else
         return var
+    end
+end
+
+-----------------------------------
+-- Desc: Prints pre-rolled augment info to chat before the item selection
+--       dialog opens so the player knows what they will receive.
+-----------------------------------
+local function showRareItemContents(player, npc)
+    for slot = 1, 4 do
+        local itemId  = getChestItem(npc, slot)
+        local numAugs = npc:getLocalVar(string.format('[caskets]ITEM%dNUMAUGS', slot))
+        if itemId ~= 0 and numAugs and numAugs > 0 then
+            local parts = {}
+            for j = 1, numAugs do
+                local augId  = npc:getLocalVar(string.format('[caskets]ITEM%dAUG%dID',  slot, j))
+                local augVal = npc:getLocalVar(string.format('[caskets]ITEM%dAUG%dVAL', slot, j))
+                local name   = (xi.augments and xi.augments.name and xi.augments.name[augId]) or tostring(augId)
+                parts[#parts + 1] = string.format('%s+%d', name, augVal)
+            end
+            player:printToPlayer(
+                string.format('[Gold Casket] Slot %d augment(s): %s', slot, table.concat(parts, ', ')),
+                xi.msg.channel.SYSTEM_3
+            )
+        end
     end
 end
 
