@@ -506,4 +506,67 @@ xi.caskets.rarePools[xi.zone.GUSTAV_TUNNEL]           = xi.caskets.rarePools[xi.
 xi.caskets.rarePools[xi.zone.CAPE_TERIGGAN]           = xi.caskets.rarePools[xi.zone.CAPE_TERIGGAN]           or tier4RareItems
 xi.caskets.rarePools[xi.zone.KUFTAL_TUNNEL]           = xi.caskets.rarePools[xi.zone.KUFTAL_TUNNEL]           or tier4RareItems
 
+-----------------------------------
+-- Tier 5 rare item pool (lv60-70 HQ gear)
+-----------------------------------
+local tier5RareItems =
+{
+    -- Head
+    { itemId = 12423, weight = 290 }, -- dst._armet_+1        lv65
+    { itemId = 12461, weight = 270 }, -- scorpion_helm_+1     lv66
+    { itemId = 13845, weight = 250 }, -- celata_+1            lv68
+    -- Body
+    { itemId = 11350, weight = 290 }, -- styrne_byrnie_+1     lv62
+    { itemId = 13761, weight = 280 }, -- cor._scale_mail_+1   lv65
+    { itemId = 13765, weight = 275 }, -- dst._harness_+1      lv65
+    { itemId = 12628, weight = 270 }, -- battle_jupon_+1      lv65
+    { itemId = 12589, weight = 265 }, -- scp._brstplate_+1    lv66
+    { itemId = 13756, weight = 260 }, -- dst._cuirass_+1      lv66
+    { itemId = 13793, weight = 245 }, -- hauberk_+1           lv69
+    { itemId = 13768, weight = 240 }, -- dmn._harness_+1      lv70
+    { itemId = 13770, weight = 235 }, -- war_shinobi_gi_+1    lv70
+    -- Neck / waist / rings / cape
+    { itemId = 13133, weight = 280 }, -- dst._nodowa_+1       lv63
+    { itemId = 13131, weight = 265 }, -- dst._gorget_+1       lv67
+    { itemId = 13130, weight = 240 }, -- jeweled_collar_+1    lv70
+    { itemId = 13250, weight = 270 }, -- sonic_belt_+1        lv65
+    { itemId = 13276, weight = 260 }, -- arachne_obi_+1       lv66
+    { itemId = 13279, weight = 255 }, -- muscle_belt_+1       lv67
+    { itemId = 13556, weight = 240 }, -- behemoth_ring_+1     lv70
+    { itemId = 13646, weight = 280 }, -- amemet_mantle_+1     lv61
+    { itemId = 13650, weight = 265 }, -- taffeta_cape_+1      lv65
+    { itemId = 13626, weight = 255 }, -- blue_cape_+1         lv68
+    { itemId = 13634, weight = 250 }, -- empwr._mantle_+1     lv67
+    -- Shields
+    { itemId = 12352, weight = 280 }, -- round_shield_+1      lv61
+    { itemId = 12354, weight = 260 }, -- tower_shield_+1      lv65
+    -- Weapons
+    { itemId = 17641, weight = 290 }, -- gold_sword_+1        lv62
+    { itemId = 17633, weight = 280 }, -- rapier_+1            lv64
+    { itemId = 16731, weight = 275 }, -- colossal_axe_+1      lv64
+    { itemId = 17600, weight = 275 }, -- stun_knife_+1        lv65
+    { itemId = 16875, weight = 270 }, -- golden_spear_+1      lv65
+    { itemId = 17433, weight = 270 }, -- mythic_wand_+1       lv65
+    { itemId = 17525, weight = 265 }, -- ebony_pole_+1        lv65
+    { itemId = 16790, weight = 265 }, -- dst._scythe_+1       lv65
+    { itemId = 16879, weight = 260 }, -- cermet_lance_+1      lv66
+    { itemId = 17485, weight = 255 }, -- dragon_claws_+1      lv68
+    { itemId = 17431, weight = 255 }, -- platinum_mace_+1     lv67
+    { itemId = 17637, weight = 250 }, -- wing_sword_+1        lv69
+    { itemId = 18860, weight = 245 }, -- flanged_mace_+1      lv69
+    { itemId = 17436, weight = 240 }, -- platinum_rod_+1      lv70
+    { itemId = 17526, weight = 235 }, -- mythic_pole_+1       lv70
+}
+
+xi.caskets.rarePools[xi.zone.LOWER_DELKFUTTS_TOWER]  = xi.caskets.rarePools[xi.zone.LOWER_DELKFUTTS_TOWER]  or tier5RareItems
+xi.caskets.rarePools[xi.zone.MIDDLE_DELKFUTTS_TOWER] = xi.caskets.rarePools[xi.zone.MIDDLE_DELKFUTTS_TOWER] or tier5RareItems
+xi.caskets.rarePools[xi.zone.UPPER_DELKFUTTS_TOWER]  = xi.caskets.rarePools[xi.zone.UPPER_DELKFUTTS_TOWER]  or tier5RareItems
+xi.caskets.rarePools[xi.zone.FEIYIN]                  = xi.caskets.rarePools[xi.zone.FEIYIN]                  or tier5RareItems
+xi.caskets.rarePools[xi.zone.TORAIMARAI_CANAL]        = xi.caskets.rarePools[xi.zone.TORAIMARAI_CANAL]        or tier5RareItems
+xi.caskets.rarePools[xi.zone.BOSTAUNIEUX_OUBLIETTE]   = xi.caskets.rarePools[xi.zone.BOSTAUNIEUX_OUBLIETTE]   or tier5RareItems
+xi.caskets.rarePools[xi.zone.TEMPLE_OF_UGGALEPIH]     = xi.caskets.rarePools[xi.zone.TEMPLE_OF_UGGALEPIH]     or tier5RareItems
+xi.caskets.rarePools[xi.zone.THE_ELDIEME_NECROPOLIS]  = xi.caskets.rarePools[xi.zone.THE_ELDIEME_NECROPOLIS]  or tier5RareItems
+xi.caskets.rarePools[xi.zone.DEN_OF_RANCOR]           = xi.caskets.rarePools[xi.zone.DEN_OF_RANCOR]           or tier5RareItems
+xi.caskets.rarePools[xi.zone.THE_BOYAHDA_TREE]        = xi.caskets.rarePools[xi.zone.THE_BOYAHDA_TREE]        or tier5RareItems
+
 return m
