@@ -355,4 +355,76 @@ xi.caskets.rarePools[xi.zone.ZERUHN_MINES]         = xi.caskets.rarePools[xi.zon
 xi.caskets.rarePools[xi.zone.OUTER_HORUTOTO_RUINS] = xi.caskets.rarePools[xi.zone.OUTER_HORUTOTO_RUINS] or tier2RareItems
 xi.caskets.rarePools[xi.zone.DANGRUF_WADI]         = xi.caskets.rarePools[xi.zone.DANGRUF_WADI]         or tier2RareItems
 
+-----------------------------------
+-- Tier 3 rare item pool (lv30-45 HQ gear)
+-----------------------------------
+local tier3RareItems =
+{
+    -- Head
+    { itemId = 12538, weight = 320 }, -- red_cap_+1           lv36
+    -- Body
+    { itemId = 13797, weight = 310 }, -- bishops_robe_+1      lv35
+    { itemId = 13784, weight = 290 }, -- iron_scale_mail_+1   lv37
+    { itemId = 11348, weight = 260 }, -- salutary_robe_+1     lv40
+    { itemId = 14358, weight = 240 }, -- ryl.sqr._robe_+1     lv43
+    -- Hands
+    { itemId = 12718, weight = 300 }, -- iron_mittens_+1      lv35
+    { itemId = 14002, weight = 260 }, -- iron_fng._gnt._+1    lv37
+    { itemId = 12790, weight = 230 }, -- cpc._mittens_+1      lv45
+    -- Legs
+    { itemId = 12891, weight = 300 }, -- iron_subligar_+1     lv35
+    { itemId = 12903, weight = 280 }, -- hose_+1              lv36
+    { itemId = 12916, weight = 260 }, -- cuisses_+1           lv40
+    { itemId = 12914, weight = 230 }, -- cpc._subligar_+1     lv45
+    -- Feet
+    { itemId = 13026, weight = 300 }, -- leggings_+1          lv35
+    { itemId = 13029, weight = 280 }, -- silver_greaves_+1    lv36
+    { itemId = 13041, weight = 260 }, -- cuir_highboots_+1    lv38
+    { itemId = 13044, weight = 230 }, -- cpc._leggings_+1     lv45
+    -- Neck / waist / rings / earrings / cape
+    { itemId = 13065, weight = 270 }, -- gorget_+1            lv40
+    { itemId = 13214, weight = 280 }, -- waistbelt_+1         lv40
+    { itemId = 13232, weight = 250 }, -- swordbelt_+1         lv43
+    { itemId = 13281, weight = 260 }, -- snipers_ring_+1      lv40
+    { itemId = 13502, weight = 280 }, -- horn_ring_+1         lv35
+    { itemId = 14600, weight = 270 }, -- alacrity_ring_+1     lv36
+    { itemId = 14601, weight = 270 }, -- puissance_ring_+1    lv36
+    { itemId = 14602, weight = 270 }, -- wisdom_ring_+1       lv36
+    { itemId = 14603, weight = 270 }, -- deft_ring_+1         lv36
+    { itemId = 14696, weight = 270 }, -- alc._earring_+1      lv31
+    { itemId = 14698, weight = 270 }, -- wisdom_earring_+1    lv31
+    { itemId = 13363, weight = 240 }, -- tor._earring_+1      lv45
+    { itemId = 13575, weight = 270 }, -- ram_mantle_+1        lv36
+    { itemId = 13610, weight = 290 }, -- black_cape_+1        lv32
+    { itemId = 13618, weight = 290 }, -- white_cape_+1        lv32
+    { itemId = 13640, weight = 240 }, -- aurora_mantle_+1     lv44
+    -- Shields
+    { itemId = 12331, weight = 280 }, -- oak_shield_+1        lv36
+    { itemId = 12328, weight = 250 }, -- heater_shield_+1     lv43
+    -- Weapons
+    { itemId = 16876, weight = 290 }, -- lance_+1             lv34
+    { itemId = 17409, weight = 290 }, -- mythril_rod_+1       lv34
+    { itemId = 16695, weight = 280 }, -- katars_+1            lv33
+    { itemId = 16635, weight = 280 }, -- mythril_sword_+1     lv36
+    { itemId = 16816, weight = 270 }, -- holy_sword_+1        lv36
+    { itemId = 17147, weight = 270 }, -- mythril_mace_+1      lv35
+    { itemId = 16665, weight = 270 }, -- mythril_axe_+1       lv37
+    { itemId = 17127, weight = 260 }, -- oak_staff_+1         lv39
+    { itemId = 17179, weight = 260 }, -- composite_bow_+1     lv36
+    { itemId = 16782, weight = 255 }, -- mythril_scythe_+1    lv40
+    { itemId = 17411, weight = 240 }, -- holy_mace_+1         lv43
+}
+
+xi.caskets.rarePools[xi.zone.QUFIM_ISLAND]         = xi.caskets.rarePools[xi.zone.QUFIM_ISLAND]         or tier3RareItems
+xi.caskets.rarePools[xi.zone.BATALLIA_DOWNS]       = xi.caskets.rarePools[xi.zone.BATALLIA_DOWNS]       or tier3RareItems
+xi.caskets.rarePools[xi.zone.ROLANBERRY_FIELDS]    = xi.caskets.rarePools[xi.zone.ROLANBERRY_FIELDS]    or tier3RareItems
+xi.caskets.rarePools[xi.zone.SAUROMUGUE_CHAMPAIGN] = xi.caskets.rarePools[xi.zone.SAUROMUGUE_CHAMPAIGN] or tier3RareItems
+xi.caskets.rarePools[xi.zone.YUHTUNGA_JUNGLE]      = xi.caskets.rarePools[xi.zone.YUHTUNGA_JUNGLE]      or tier3RareItems
+xi.caskets.rarePools[xi.zone.YHOATOR_JUNGLE]       = xi.caskets.rarePools[xi.zone.YHOATOR_JUNGLE]       or tier3RareItems
+xi.caskets.rarePools[xi.zone.MAZE_OF_SHAKHRAMI]    = xi.caskets.rarePools[xi.zone.MAZE_OF_SHAKHRAMI]    or tier3RareItems
+xi.caskets.rarePools[xi.zone.ORDELLES_CAVES]       = xi.caskets.rarePools[xi.zone.ORDELLES_CAVES]       or tier3RareItems
+xi.caskets.rarePools[xi.zone.KING_RANPERRES_TOMB]  = xi.caskets.rarePools[xi.zone.KING_RANPERRES_TOMB]  or tier3RareItems
+xi.caskets.rarePools[xi.zone.GUSGEN_MINES]         = xi.caskets.rarePools[xi.zone.GUSGEN_MINES]         or tier3RareItems
+xi.caskets.rarePools[xi.zone.KORROLOKA_TUNNEL]     = xi.caskets.rarePools[xi.zone.KORROLOKA_TUNNEL]     or tier3RareItems
+
 return m
