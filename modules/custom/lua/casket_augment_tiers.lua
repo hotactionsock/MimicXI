@@ -635,4 +635,105 @@ xi.caskets.rarePools[xi.zone.XARCABARD]          = xi.caskets.rarePools[xi.zone.
 xi.caskets.rarePools[xi.zone.VALLEY_OF_SORROWS]  = xi.caskets.rarePools[xi.zone.VALLEY_OF_SORROWS]  or tier6RareItems
 xi.caskets.rarePools[xi.zone.BEHEMOTHS_DOMINION] = xi.caskets.rarePools[xi.zone.BEHEMOTHS_DOMINION] or tier6RareItems
 
+-----------------------------------
+-- Tier 7 rare item pool (lv75 endgame HQ gear)
+-----------------------------------
+local tier7RareItems =
+{
+    -- Head (AF+1 job pieces lv75)
+    { itemId = 15245, weight = 260 }, -- war._mask_+1          lv75
+    { itemId = 15246, weight = 260 }, -- mnk._crown_+1         lv75
+    { itemId = 15247, weight = 260 }, -- whm._coif_+1          lv75
+    { itemId = 15248, weight = 260 }, -- blm._hat_+1           lv75
+    { itemId = 15249, weight = 260 }, -- rdm._chapeau_+1       lv75
+    { itemId = 15250, weight = 260 }, -- thf._mask_+1          lv75
+    { itemId = 15251, weight = 260 }, -- pld._armet_+1         lv75
+    { itemId = 15252, weight = 260 }, -- drk._helm_+1          lv75
+    { itemId = 15253, weight = 260 }, -- bst._helm_+1          lv75
+    { itemId = 15254, weight = 260 }, -- brd._chapeau_+1       lv75
+    { itemId = 15255, weight = 260 }, -- rng._beret_+1         lv75
+    { itemId = 15256, weight = 260 }, -- sam._kabuto_+1        lv75
+    { itemId = 15257, weight = 260 }, -- nin._hatsuburi_+1     lv75
+    -- Body (AF+1 job pieces lv75)
+    { itemId = 14500, weight = 260 }, -- war._lorica_+1        lv75
+    { itemId = 14501, weight = 260 }, -- mnk._gi_+1            lv75
+    { itemId = 14502, weight = 260 }, -- whm._cloak_+1         lv75
+    { itemId = 14503, weight = 260 }, -- blm._coat_+1          lv75
+    { itemId = 14504, weight = 260 }, -- rdm._coat_+1          lv75
+    { itemId = 14505, weight = 260 }, -- thf._harness_+1       lv75
+    { itemId = 14506, weight = 260 }, -- pld._cuirass_+1       lv75
+    { itemId = 14507, weight = 260 }, -- drk._cuirass_+1       lv75
+    { itemId = 14508, weight = 260 }, -- bst._jackcoat_+1      lv75
+    { itemId = 14509, weight = 260 }, -- brd._justaucorps_+1   lv75
+    { itemId = 14510, weight = 260 }, -- rng._jackcoat_+1      lv75
+    { itemId = 14511, weight = 260 }, -- sam._haramaki_+1      lv75
+    { itemId = 14512, weight = 260 }, -- nin._chainmail_+1     lv75
+    { itemId = 14513, weight = 260 }, -- drg._mail_+1          lv75
+    { itemId = 14514, weight = 260 }, -- smn._doublet_+1       lv75
+    -- Hands (AF+1 job pieces lv75)
+    { itemId = 14909, weight = 255 }, -- war._mufflers_+1      lv75
+    { itemId = 14910, weight = 255 }, -- mnk._gloves_+1        lv75
+    { itemId = 14911, weight = 255 }, -- whm._mitts_+1         lv75
+    { itemId = 14912, weight = 255 }, -- blm._gloves_+1        lv75
+    { itemId = 14913, weight = 255 }, -- rdm._gloves_+1        lv75
+    { itemId = 14914, weight = 255 }, -- thf._armlets_+1       lv75
+    { itemId = 14915, weight = 255 }, -- pld._mufflers_+1      lv75
+    { itemId = 14916, weight = 255 }, -- drk._mufflers_+1      lv75
+    { itemId = 14917, weight = 255 }, -- bst._gloves_+1        lv75
+    { itemId = 14918, weight = 255 }, -- brd._cuffs_+1         lv75
+    { itemId = 14919, weight = 255 }, -- rng._gloves_+1        lv75
+    { itemId = 14920, weight = 255 }, -- sam._kote_+1          lv75
+    { itemId = 14921, weight = 255 }, -- nin._tekko_+1         lv75
+    { itemId = 14922, weight = 255 }, -- drg._gauntlets_+1     lv75
+    { itemId = 14923, weight = 255 }, -- smn._bracers_+1       lv75
+    -- Legs (AF+1 job pieces lv75)
+    { itemId = 15580, weight = 255 }, -- war._cuisses_+1       lv75
+    { itemId = 15581, weight = 255 }, -- mnk._slacks_+1        lv75
+    { itemId = 15582, weight = 255 }, -- whm._slops_+1         lv75
+    { itemId = 15583, weight = 255 }, -- blm._slops_+1         lv75
+    { itemId = 15584, weight = 255 }, -- rdm._slops_+1         lv75
+    { itemId = 15585, weight = 255 }, -- thf._culottes_+1      lv75
+    { itemId = 15586, weight = 255 }, -- pld._cuisses_+1       lv75
+    { itemId = 15587, weight = 255 }, -- drk._cuisses_+1       lv75
+    { itemId = 15588, weight = 255 }, -- bst._trousers_+1      lv75
+    { itemId = 15589, weight = 255 }, -- brd._cannions_+1      lv75
+    { itemId = 15590, weight = 255 }, -- rng._trousers_+1      lv75
+    { itemId = 15591, weight = 255 }, -- sam._hakama_+1        lv75
+    { itemId = 15592, weight = 255 }, -- nin._hakama_+1        lv75
+    -- Feet (AF+1 job pieces lv75)
+    { itemId = 15669, weight = 250 }, -- war._greaves_+1       lv75
+    { itemId = 15670, weight = 250 }, -- mnk._boots_+1         lv75
+    { itemId = 15671, weight = 250 }, -- whm._duckbills_+1     lv75
+    { itemId = 15672, weight = 250 }, -- blm._sabots_+1        lv75
+    { itemId = 15673, weight = 250 }, -- rdm._boots_+1         lv75
+    { itemId = 15674, weight = 250 }, -- thf._boots_+1         lv75
+    { itemId = 15675, weight = 250 }, -- pld._leggings_+1      lv75
+    { itemId = 15676, weight = 250 }, -- drk._sabatons_+1      lv75
+    { itemId = 15677, weight = 250 }, -- bst._gaiters_+1       lv75
+    { itemId = 15678, weight = 250 }, -- brd._pigaches_+1      lv75
+    -- Neck / accessories
+    { itemId = 10919, weight = 255 }, -- tndm._necklace_+1     lv75
+    { itemId = 11580, weight = 250 }, -- fylgja_torque_+1      lv75
+    { itemId = 11582, weight = 250 }, -- ire_torque_+1         lv75
+    { itemId = 11584, weight = 250 }, -- loquac._earring_+1    lv75
+    { itemId = 15781, weight = 245 }, -- toreador_ring_+1      lv75
+    { itemId = 15950, weight = 250 }, -- warwolf_belt_+1       lv75
+    { itemId = 15952, weight = 250 }, -- life_belt_+1          lv75
+    { itemId = 16053, weight = 245 }, -- suppanomimi_+1        lv75
+    { itemId = 16216, weight = 245 }, -- amemet_mantle_+1      lv75
+    { itemId = 27599, weight = 240 }, -- cheviot_cape_+1       lv75
+    -- Shield
+    { itemId = 12386, weight = 245 }, -- koenig_schaller_+1    lv75
+    -- Weapons (job relic-adjacent lv75)
+    { itemId = 17263, weight = 240 }, -- corsairs_gun_+1       lv75
+    { itemId = 17568, weight = 240 }, -- joyeuse_+1            lv75
+    { itemId = 18701, weight = 235 }, -- cerberus_bow_+1       lv75
+    { itemId = 20784, weight = 230 }, -- uruz_blade_+1         lv75
+}
+
+xi.caskets.rarePools[xi.zone.RANGUEMONT_PASS]    = xi.caskets.rarePools[xi.zone.RANGUEMONT_PASS]    or tier7RareItems
+xi.caskets.rarePools[xi.zone.RUAUN_GARDENS]      = xi.caskets.rarePools[xi.zone.RUAUN_GARDENS]      or tier7RareItems
+xi.caskets.rarePools[xi.zone.VELUGANNON_PALACE]  = xi.caskets.rarePools[xi.zone.VELUGANNON_PALACE]  or tier7RareItems
+xi.caskets.rarePools[xi.zone.THE_SHRINE_OF_RUAVITAU] = xi.caskets.rarePools[xi.zone.THE_SHRINE_OF_RUAVITAU] or tier7RareItems
+
 return m
