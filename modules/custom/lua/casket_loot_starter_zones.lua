@@ -194,7 +194,11 @@ xi.caskets.rarePools[xi.zone.EAST_SARUTABARUTA] = sarutabarutaRareItems
 -----------------------------------
 xi.caskets.augmentPools =
 {
-    -- Bronze Sword +1 (lv1 sword — light combat augments)
+    ------------------------------------
+    -- Bronze (lv1) weapons
+    ------------------------------------
+
+    -- Bronze Sword +1
     [16623] =
     {
         { id = xi.augments.id.ATTACK,   min = 1, max = 2 },
@@ -203,21 +207,24 @@ xi.caskets.augmentPools =
         { id = xi.augments.id.DEX,      min = 1, max = 1 },
     },
 
-    -- Bronze Axe +1 (lv1 axe)
+    -- Bronze Axe +1
     [16646] =
     {
-        { id = xi.augments.id.ATTACK,  min = 1, max = 2 },
-        { id = xi.augments.id.STR,     min = 1, max = 1 },
-        { id = xi.augments.id.VIT,     min = 1, max = 1 },
+        { id = xi.augments.id.ATTACK,   min = 1, max = 2 },
+        { id = xi.augments.id.ACCURACY, min = 1, max = 2 },
+        { id = xi.augments.id.STR,      min = 1, max = 1 },
+        { id = xi.augments.id.VIT,      min = 1, max = 1 },
     },
 
-    -- Bronze Dagger +1 / Bronze Knife +1 (lv1 daggers — DEX/AGI focus)
+    -- Bronze Dagger +1
     [16492] =
     {
         { id = xi.augments.id.ACCURACY, min = 1, max = 2 },
         { id = xi.augments.id.DEX,      min = 1, max = 1 },
         { id = xi.augments.id.STORE_TP, min = 1, max = 1 },
     },
+
+    -- Bronze Knife +1
     [16491] =
     {
         { id = xi.augments.id.ACCURACY, min = 1, max = 2 },
@@ -225,7 +232,19 @@ xi.caskets.augmentPools =
         { id = xi.augments.id.EVASION,  min = 1, max = 2 },
     },
 
-    -- Bronze Cap +1 (lv1 head armor)
+    -- Ash Club +1 (lv1 club — mage/WHM starter)
+    [17137] =
+    {
+        { id = xi.augments.id.MP,           min = 3, max = 6 },
+        { id = xi.augments.id.INT,          min = 1, max = 1 },
+        { id = xi.augments.id.MAG_ACCURACY, min = 1, max = 2 },
+    },
+
+    ------------------------------------
+    -- Bronze (lv1) armor
+    ------------------------------------
+
+    -- Bronze Cap +1
     [12463] =
     {
         { id = xi.augments.id.HP,      min = 3, max = 6 },
@@ -233,7 +252,7 @@ xi.caskets.augmentPools =
         { id = xi.augments.id.VIT,     min = 1, max = 1 },
     },
 
-    -- Bronze Harness +1 (lv1 body)
+    -- Bronze Harness +1
     [12607] =
     {
         { id = xi.augments.id.HP,      min = 5, max = 10 },
@@ -241,7 +260,72 @@ xi.caskets.augmentPools =
         { id = xi.augments.id.STR,     min = 1, max = 1  },
     },
 
-    -- Leather Vest +1 (lv7 body — balanced melee)
+    -- Bronze Mittens +1
+    [12695] =
+    {
+        { id = xi.augments.id.HP,      min = 2, max = 5 },
+        { id = xi.augments.id.DEFENSE, min = 1, max = 2 },
+        { id = xi.augments.id.DEX,     min = 1, max = 1 },
+        { id = xi.augments.id.STR,     min = 1, max = 1 },
+    },
+
+    -- Bronze Leggings +1
+    [12951] =
+    {
+        { id = xi.augments.id.HP,      min = 2, max = 5 },
+        { id = xi.augments.id.DEFENSE, min = 1, max = 2 },
+        { id = xi.augments.id.VIT,     min = 1, max = 1 },
+    },
+
+    ------------------------------------
+    -- lv4–5 weapons
+    ------------------------------------
+
+    -- Bronze Mace +1 (lv4, often used by WHM/MNK)
+    [17086] =
+    {
+        { id = xi.augments.id.ATTACK, min = 1, max = 2 },
+        { id = xi.augments.id.MND,    min = 1, max = 1 },
+        { id = xi.augments.id.STR,    min = 1, max = 1 },
+    },
+
+    -- Bronze Rod +1 (lv5 rod — BLM/RDM/WHM)
+    [17111] =
+    {
+        { id = xi.augments.id.MP,           min = 3, max = 6 },
+        { id = xi.augments.id.INT,          min = 1, max = 1 },
+        { id = xi.augments.id.MAG_ACCURACY, min = 1, max = 2 },
+    },
+
+    -- Ash Pole +1 (lv5 polearm — RDM/BLM/WHM secondary)
+    [17122] =
+    {
+        { id = xi.augments.id.INT,          min = 1, max = 1 },
+        { id = xi.augments.id.MND,          min = 1, max = 1 },
+        { id = xi.augments.id.MAG_ACCURACY, min = 1, max = 2 },
+    },
+
+    -- Bronze Hammer +1 (lv5 great katana / 2H)
+    [17144] =
+    {
+        { id = xi.augments.id.ATTACK,   min = 1, max = 2 },
+        { id = xi.augments.id.STR,      min = 1, max = 1 },
+        { id = xi.augments.id.ACCURACY, min = 1, max = 1 },
+    },
+
+    -- Longbow +1 (lv5 bow)
+    [17177] =
+    {
+        { id = xi.augments.id.RANGED_ACCURACY, min = 1, max = 2 },
+        { id = xi.augments.id.RANGED_ATTACK,   min = 1, max = 2 },
+        { id = xi.augments.id.AGI,             min = 1, max = 1 },
+    },
+
+    ------------------------------------
+    -- Leather (lv7) armor
+    ------------------------------------
+
+    -- Leather Vest +1
     [12599] =
     {
         { id = xi.augments.id.HP,       min = 5, max = 10 },
@@ -250,7 +334,176 @@ xi.caskets.augmentPools =
         { id = xi.augments.id.AGI,      min = 1, max = 1  },
     },
 
-    -- Brass Cap +1 (lv11 head)
+    -- Leather Gloves +1
+    [12784] =
+    {
+        { id = xi.augments.id.DEX,      min = 1, max = 1 },
+        { id = xi.augments.id.ACCURACY, min = 1, max = 2 },
+        { id = xi.augments.id.AGI,      min = 1, max = 1 },
+        { id = xi.augments.id.STORE_TP, min = 1, max = 1 },
+    },
+
+    -- Leather Highboots +1
+    [12971] =
+    {
+        { id = xi.augments.id.AGI,     min = 1, max = 1 },
+        { id = xi.augments.id.EVASION, min = 1, max = 2 },
+        { id = xi.augments.id.DEX,     min = 1, max = 1 },
+    },
+
+    -- Leather Gorget +1 (neck — balanced melee)
+    [13069] =
+    {
+        { id = xi.augments.id.STR,      min = 1, max = 1 },
+        { id = xi.augments.id.DEX,      min = 1, max = 1 },
+        { id = xi.augments.id.ACCURACY, min = 1, max = 2 },
+    },
+
+    -- Leather Belt +1 (waist)
+    [13210] =
+    {
+        { id = xi.augments.id.STORE_TP, min = 1, max = 1 },
+        { id = xi.augments.id.ATTACK,   min = 1, max = 2 },
+        { id = xi.augments.id.STR,      min = 1, max = 1 },
+    },
+
+    ------------------------------------
+    -- lv7–8 weapons
+    ------------------------------------
+
+    -- Wakizashi +1 (lv7 katana — NIN)
+    [16918] =
+    {
+        { id = xi.augments.id.ACCURACY, min = 1, max = 2 },
+        { id = xi.augments.id.ATTACK,   min = 1, max = 2 },
+        { id = xi.augments.id.DEX,      min = 1, max = 1 },
+        { id = xi.augments.id.STORE_TP, min = 1, max = 1 },
+    },
+
+    -- Self Bow +1 (lv7 bow)
+    [17176] =
+    {
+        { id = xi.augments.id.RANGED_ACCURACY, min = 1, max = 2 },
+        { id = xi.augments.id.RANGED_ATTACK,   min = 1, max = 2 },
+        { id = xi.augments.id.AGI,             min = 1, max = 1 },
+    },
+
+    -- Brass Axe +1 (lv8 axe)
+    [16661] =
+    {
+        { id = xi.augments.id.ATTACK,   min = 1, max = 2 },
+        { id = xi.augments.id.ACCURACY, min = 1, max = 2 },
+        { id = xi.augments.id.STR,      min = 1, max = 1 },
+    },
+
+    -- Butterfly Axe +1 (lv8 axe — WAR/DRK)
+    [16716] =
+    {
+        { id = xi.augments.id.ATTACK,   min = 1, max = 2 },
+        { id = xi.augments.id.ACCURACY, min = 1, max = 2 },
+        { id = xi.augments.id.STR,      min = 1, max = 1 },
+    },
+
+    -- Bronze Spear +1 (lv8 spear — DRG/WAR)
+    [16859] =
+    {
+        { id = xi.augments.id.ATTACK,   min = 1, max = 2 },
+        { id = xi.augments.id.ACCURACY, min = 1, max = 2 },
+        { id = xi.augments.id.STR,      min = 1, max = 1 },
+    },
+
+    ------------------------------------
+    -- lv8–9 misc armor
+    ------------------------------------
+
+    -- Maple Shield +1 (lv8 shield)
+    [12330] =
+    {
+        { id = xi.augments.id.HP,      min = 5, max = 10 },
+        { id = xi.augments.id.DEFENSE, min = 1, max = 2  },
+        { id = xi.augments.id.VIT,     min = 1, max = 1  },
+    },
+
+    -- Tunic +1 (lv8 body — light/mage)
+    [12616] =
+    {
+        { id = xi.augments.id.HP,      min = 5, max = 10 },
+        { id = xi.augments.id.DEFENSE, min = 1, max = 2  },
+        { id = xi.augments.id.MND,     min = 1, max = 1  },
+    },
+
+    -- Slacks +1 (lv8 legs — light/mage)
+    [12898] =
+    {
+        { id = xi.augments.id.HP,      min = 5, max = 10 },
+        { id = xi.augments.id.DEFENSE, min = 1, max = 2  },
+        { id = xi.augments.id.INT,     min = 1, max = 1  },
+    },
+
+    ------------------------------------
+    -- lv9 weapons
+    ------------------------------------
+
+    -- Brass Dagger +1 (lv9)
+    [16740] =
+    {
+        { id = xi.augments.id.ACCURACY, min = 1, max = 2 },
+        { id = xi.augments.id.ATTACK,   min = 1, max = 2 },
+        { id = xi.augments.id.DEX,      min = 1, max = 1 },
+    },
+
+    -- Willow Wand +1 (lv9 wand — WHM/BLM/RDM)
+    [17138] =
+    {
+        { id = xi.augments.id.MP,           min = 5, max = 10 },
+        { id = xi.augments.id.MND,          min = 1, max = 1  },
+        { id = xi.augments.id.MAG_ACCURACY, min = 1, max = 2  },
+    },
+
+    -- Brass Knuckles +1 (lv9 H2H — MNK/PUP)
+    [16689] =
+    {
+        { id = xi.augments.id.ATTACK,   min = 1, max = 2 },
+        { id = xi.augments.id.ACCURACY, min = 1, max = 2 },
+        { id = xi.augments.id.DEX,      min = 1, max = 1 },
+        { id = xi.augments.id.STR,      min = 1, max = 1 },
+    },
+
+    ------------------------------------
+    -- lv10 accessories (Sarutabaruta)
+    ------------------------------------
+
+    -- Brass Hairpin +1 (lv10 head — mage)
+    [12529] =
+    {
+        { id = xi.augments.id.MP,           min = 3, max = 8 },
+        { id = xi.augments.id.INT,          min = 1, max = 1 },
+        { id = xi.augments.id.MND,          min = 1, max = 1 },
+        { id = xi.augments.id.MAG_ACCURACY, min = 1, max = 2 },
+    },
+
+    -- Eremite's Ring +1 (lv10 ring — BLM focus)
+    [13285] =
+    {
+        { id = xi.augments.id.MP,           min = 3, max = 8 },
+        { id = xi.augments.id.INT,          min = 1, max = 1 },
+        { id = xi.augments.id.MAG_ACCURACY, min = 1, max = 2 },
+    },
+
+    -- Saintly Ring +1 (lv10 ring — WHM focus)
+    [13283] =
+    {
+        { id = xi.augments.id.MP,           min = 3, max = 8 },
+        { id = xi.augments.id.MND,          min = 1, max = 1 },
+        { id = xi.augments.id.CHR,          min = 1, max = 1 },
+        { id = xi.augments.id.MAG_ACCURACY, min = 1, max = 2 },
+    },
+
+    ------------------------------------
+    -- Brass (lv11) armor
+    ------------------------------------
+
+    -- Brass Cap +1
     [12528] =
     {
         { id = xi.augments.id.HP,      min = 5,  max = 12 },
@@ -259,7 +512,7 @@ xi.caskets.augmentPools =
         { id = xi.augments.id.VIT,     min = 1,  max = 1  },
     },
 
-    -- Brass Harness +1 (lv11 body)
+    -- Brass Harness +1
     [12664] =
     {
         { id = xi.augments.id.HP,      min = 8,  max = 15 },
@@ -267,35 +520,82 @@ xi.caskets.augmentPools =
         { id = xi.augments.id.STR,     min = 1,  max = 1  },
     },
 
-    -- Ash Club +1 / Ash Pole +1 (lv1/5 mage weapons — INT/MND focus)
-    [17137] =
+    -- Brass Mittens +1
+    [12770] =
     {
-        { id = xi.augments.id.INT,          min = 1, max = 1 },
-        { id = xi.augments.id.MAG_ACCURACY, min = 1, max = 2 },
-        { id = xi.augments.id.MP,           min = 3, max = 6 },
-    },
-    [17122] =
-    {
-        { id = xi.augments.id.INT,          min = 1, max = 1 },
-        { id = xi.augments.id.MND,          min = 1, max = 1 },
-        { id = xi.augments.id.MAG_ACCURACY, min = 1, max = 2 },
+        { id = xi.augments.id.HP,      min = 5,  max = 12 },
+        { id = xi.augments.id.DEFENSE, min = 1,  max = 2  },
+        { id = xi.augments.id.STR,     min = 1,  max = 1  },
+        { id = xi.augments.id.DEX,     min = 1,  max = 1  },
     },
 
-    -- Willow Wand +1 (lv9 wand)
-    [17138] =
+    -- Brass Leggings +1
+    [13027] =
     {
-        { id = xi.augments.id.MP,           min = 5, max = 10 },
-        { id = xi.augments.id.MND,          min = 1, max = 1  },
-        { id = xi.augments.id.MAG_ACCURACY, min = 1, max = 2  },
+        { id = xi.augments.id.HP,      min = 5,  max = 12 },
+        { id = xi.augments.id.DEFENSE, min = 1,  max = 2  },
+        { id = xi.augments.id.VIT,     min = 1,  max = 1  },
+        { id = xi.augments.id.STR,     min = 1,  max = 1  },
     },
 
-    -- Holly Staff +1 (lv11 staff)
+    ------------------------------------
+    -- lv11 weapons
+    ------------------------------------
+
+    -- Holly Staff +1 (lv11 staff — WHM/BLM/RDM)
     [17125] =
     {
         { id = xi.augments.id.MP,           min = 8, max = 15 },
         { id = xi.augments.id.INT,          min = 1, max = 1  },
         { id = xi.augments.id.MND,          min = 1, max = 1  },
         { id = xi.augments.id.MAG_ACCURACY, min = 1, max = 2  },
+    },
+
+    -- Brass Hammer +1 (lv11 great katana / 2H — WAR/MNK)
+    [17149] =
+    {
+        { id = xi.augments.id.ATTACK,   min = 1, max = 3 },
+        { id = xi.augments.id.ACCURACY, min = 1, max = 2 },
+        { id = xi.augments.id.STR,      min = 1, max = 1 },
+        { id = xi.augments.id.VIT,      min = 1, max = 1 },
+    },
+
+    ------------------------------------
+    -- lv12 weapons
+    ------------------------------------
+
+    -- Dagger +1 (lv12 — THF/NIN/RDM)
+    [16736] =
+    {
+        { id = xi.augments.id.ACCURACY, min = 1, max = 3 },
+        { id = xi.augments.id.ATTACK,   min = 1, max = 2 },
+        { id = xi.augments.id.DEX,      min = 1, max = 1 },
+        { id = xi.augments.id.STORE_TP, min = 1, max = 1 },
+    },
+
+    -- Greataxe +1 (lv12 — WAR/DRK)
+    [16717] =
+    {
+        { id = xi.augments.id.ATTACK,   min = 1, max = 3 },
+        { id = xi.augments.id.ACCURACY, min = 1, max = 2 },
+        { id = xi.augments.id.STR,      min = 1, max = 2 },
+    },
+
+    -- Brass Rod +1 (lv12 rod — BLM/RDM/WHM)
+    [17148] =
+    {
+        { id = xi.augments.id.MP,           min = 8, max = 15 },
+        { id = xi.augments.id.INT,          min = 1, max = 1  },
+        { id = xi.augments.id.MND,          min = 1, max = 1  },
+        { id = xi.augments.id.MAG_ACCURACY, min = 1, max = 3  },
+    },
+
+    -- Crossbow +1 (lv12 — RNG/COR)
+    [17225] =
+    {
+        { id = xi.augments.id.RANGED_ACCURACY, min = 1, max = 3 },
+        { id = xi.augments.id.RANGED_ATTACK,   min = 1, max = 2 },
+        { id = xi.augments.id.AGI,             min = 1, max = 1 },
     },
 }
 
