@@ -644,8 +644,15 @@ local function showRareItemContents(player, npc)
             for j = 1, numAugs do
                 local augId  = npc:getLocalVar(string.format('[caskets]ITEM%dAUG%dID',  slot, j))
                 local augVal = npc:getLocalVar(string.format('[caskets]ITEM%dAUG%dVAL', slot, j))
-                local name   = (xi.augments and xi.augments.name and xi.augments.name[augId]) or tostring(augId)
-                parts[#parts + 1] = string.format('%s+%d', name, augVal)
+                local name = (xi.augments and xi.augments.name and xi.augments.name[augId]) or tostring(augId)
+                local part
+                if name:find('[%+%-]') then
+                    -- compound/directional augment: name already shows the per-unit effect
+                    part = augVal > 1 and string.format('%s x%d', name, augVal) or name
+                else
+                    part = string.format('%s+%d', name, augVal)
+                end
+                parts[#parts + 1] = part
             end
             player:printToPlayer(
                 string.format('[Gold Casket] Slot %d augment(s): %s', slot, table.concat(parts, ', ')),
