@@ -7,14 +7,17 @@
 --   West/East Sarutabaruta (Windurst,   lv 1-12)
 --
 -- Gold caskets spawn at a 5% rate (replacing nothing; the existing 85/15
--- blue/brown split is preserved for zones without a rareItems pool).
+-- blue/brown split is preserved for zones without a rarePools entry).
 -- They contain level-appropriate HQ (+1/+2) gear, optionally augmented
 -- once xi.caskets.augmentPools is populated.
+--
+-- Rare pools are registered in xi.caskets.rarePools at module load time so
+-- they survive the lazy re-execution of casket_loot.lua that happens when
+-- the first player enters a casket zone.
 --
 -- To disable this module: comment out its line in modules/init.txt.
 -----------------------------------
 require('modules/module_utils')
-require('scripts/globals/augment')
 
 local m = Module:new('casket_loot_starter_zones')
 
@@ -156,37 +159,144 @@ local sarutabarutaRareItems =
 }
 
 -----------------------------------
--- Inject rareItems into existing zone loot tables on server start.
--- The temps/items/regionalItems in casket_loot.lua are left untouched.
+-- Register rare pools directly into xi.caskets.rarePools at module load
+-- time. Modules load after all scripts/globals (including zone enums), so
+-- xi.zone.* constants are guaranteed to be defined here. Storing in
+-- xi.caskets.rarePools instead of injecting into xi.casket_loot.casketItems
+-- avoids being wiped by the lazy re-execution of casket_loot.lua that occurs
+-- when the first player enters a casket zone.
 -----------------------------------
-m:addOverride('xi.server.onServerStart', function()
-    super()
+xi.caskets.rarePools = xi.caskets.rarePools or {}
 
-    local casketItems = xi.casket_loot.casketItems
+xi.caskets.rarePools[xi.zone.WEST_RONFAURE]     = ronfaureRareItems
+xi.caskets.rarePools[xi.zone.EAST_RONFAURE]     = ronfaureRareItems
+xi.caskets.rarePools[xi.zone.NORTH_GUSTABERG]   = gustabergRareItems
+xi.caskets.rarePools[xi.zone.SOUTH_GUSTABERG]   = gustabergRareItems
+xi.caskets.rarePools[xi.zone.WEST_SARUTABARUTA] = sarutabarutaRareItems
+xi.caskets.rarePools[xi.zone.EAST_SARUTABARUTA] = sarutabarutaRareItems
 
-    -- Ronfaure (both zones share the same rare pool)
-    if casketItems[xi.zone.WEST_RONFAURE] then
-        casketItems[xi.zone.WEST_RONFAURE].rareItems = ronfaureRareItems
-    end
-    if casketItems[xi.zone.EAST_RONFAURE] then
-        casketItems[xi.zone.EAST_RONFAURE].rareItems = ronfaureRareItems
-    end
+-----------------------------------
+-- Augment pools for Gold casket loot
+--
+-- When a Gold casket gives out an item that has an entry here, the casket
+-- system randomly picks 1–2 of the listed augments (without repeating) and
+-- applies them to the item before handing it to the player.
+--
+-- Format:
+--   [itemId] = {
+--       { id = xi.augments.id.STAT, min = minValue, max = maxValue },
+--       ...
+--   }
+--
+-- Augment IDs: see scripts/globals/augment.lua → xi.augments.id
+-- To add more augment pools, append entries below using the same pattern.
+-- Leave xi.caskets.augmentPools empty (or omit an item) for a plain HQ drop.
+-----------------------------------
+xi.caskets.augmentPools =
+{
+    -- Bronze Sword +1 (lv1 sword — light combat augments)
+    [16623] =
+    {
+        { id = xi.augments.id.ATTACK,   min = 1, max = 2 },
+        { id = xi.augments.id.ACCURACY, min = 1, max = 2 },
+        { id = xi.augments.id.STR,      min = 1, max = 1 },
+        { id = xi.augments.id.DEX,      min = 1, max = 1 },
+    },
 
-    -- Gustaberg (both zones share the same rare pool)
-    if casketItems[xi.zone.NORTH_GUSTABERG] then
-        casketItems[xi.zone.NORTH_GUSTABERG].rareItems = gustabergRareItems
-    end
-    if casketItems[xi.zone.SOUTH_GUSTABERG] then
-        casketItems[xi.zone.SOUTH_GUSTABERG].rareItems = gustabergRareItems
-    end
+    -- Bronze Axe +1 (lv1 axe)
+    [16646] =
+    {
+        { id = xi.augments.id.ATTACK,  min = 1, max = 2 },
+        { id = xi.augments.id.STR,     min = 1, max = 1 },
+        { id = xi.augments.id.VIT,     min = 1, max = 1 },
+    },
 
-    -- Sarutabaruta (both zones share the same rare pool)
-    if casketItems[xi.zone.WEST_SARUTABARUTA] then
-        casketItems[xi.zone.WEST_SARUTABARUTA].rareItems = sarutabarutaRareItems
-    end
-    if casketItems[xi.zone.EAST_SARUTABARUTA] then
-        casketItems[xi.zone.EAST_SARUTABARUTA].rareItems = sarutabarutaRareItems
-    end
-end)
+    -- Bronze Dagger +1 / Bronze Knife +1 (lv1 daggers — DEX/AGI focus)
+    [16492] =
+    {
+        { id = xi.augments.id.ACCURACY, min = 1, max = 2 },
+        { id = xi.augments.id.DEX,      min = 1, max = 1 },
+        { id = xi.augments.id.STORE_TP, min = 1, max = 1 },
+    },
+    [16491] =
+    {
+        { id = xi.augments.id.ACCURACY, min = 1, max = 2 },
+        { id = xi.augments.id.AGI,      min = 1, max = 1 },
+        { id = xi.augments.id.EVASION,  min = 1, max = 2 },
+    },
+
+    -- Bronze Cap +1 (lv1 head armor)
+    [12463] =
+    {
+        { id = xi.augments.id.HP,      min = 3, max = 6 },
+        { id = xi.augments.id.DEFENSE, min = 1, max = 2 },
+        { id = xi.augments.id.VIT,     min = 1, max = 1 },
+    },
+
+    -- Bronze Harness +1 (lv1 body)
+    [12607] =
+    {
+        { id = xi.augments.id.HP,      min = 5, max = 10 },
+        { id = xi.augments.id.DEFENSE, min = 1, max = 2  },
+        { id = xi.augments.id.STR,     min = 1, max = 1  },
+    },
+
+    -- Leather Vest +1 (lv7 body — balanced melee)
+    [12599] =
+    {
+        { id = xi.augments.id.HP,       min = 5, max = 10 },
+        { id = xi.augments.id.ACCURACY, min = 1, max = 2  },
+        { id = xi.augments.id.DEX,      min = 1, max = 1  },
+        { id = xi.augments.id.AGI,      min = 1, max = 1  },
+    },
+
+    -- Brass Cap +1 (lv11 head)
+    [12528] =
+    {
+        { id = xi.augments.id.HP,      min = 5,  max = 12 },
+        { id = xi.augments.id.DEFENSE, min = 1,  max = 2  },
+        { id = xi.augments.id.STR,     min = 1,  max = 1  },
+        { id = xi.augments.id.VIT,     min = 1,  max = 1  },
+    },
+
+    -- Brass Harness +1 (lv11 body)
+    [12664] =
+    {
+        { id = xi.augments.id.HP,      min = 8,  max = 15 },
+        { id = xi.augments.id.DEFENSE, min = 1,  max = 3  },
+        { id = xi.augments.id.STR,     min = 1,  max = 1  },
+    },
+
+    -- Ash Club +1 / Ash Pole +1 (lv1/5 mage weapons — INT/MND focus)
+    [17137] =
+    {
+        { id = xi.augments.id.INT,          min = 1, max = 1 },
+        { id = xi.augments.id.MAG_ACCURACY, min = 1, max = 2 },
+        { id = xi.augments.id.MP,           min = 3, max = 6 },
+    },
+    [17122] =
+    {
+        { id = xi.augments.id.INT,          min = 1, max = 1 },
+        { id = xi.augments.id.MND,          min = 1, max = 1 },
+        { id = xi.augments.id.MAG_ACCURACY, min = 1, max = 2 },
+    },
+
+    -- Willow Wand +1 (lv9 wand)
+    [17138] =
+    {
+        { id = xi.augments.id.MP,           min = 5, max = 10 },
+        { id = xi.augments.id.MND,          min = 1, max = 1  },
+        { id = xi.augments.id.MAG_ACCURACY, min = 1, max = 2  },
+    },
+
+    -- Holly Staff +1 (lv11 staff)
+    [17125] =
+    {
+        { id = xi.augments.id.MP,           min = 8, max = 15 },
+        { id = xi.augments.id.INT,          min = 1, max = 1  },
+        { id = xi.augments.id.MND,          min = 1, max = 1  },
+        { id = xi.augments.id.MAG_ACCURACY, min = 1, max = 2  },
+    },
+}
 
 return m
