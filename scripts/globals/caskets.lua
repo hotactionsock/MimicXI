@@ -726,7 +726,7 @@ local function giveRareItem(player, npc, itemNum, subOption)
             augments[j] =
             {
                 id    = npc:getLocalVar(string.format('[caskets]ITEM%dAUG%dID',  itemNum, j)),
-                value = npc:getLocalVar(string.format('[caskets]ITEM%dAUG%dVAL', itemNum, j)),
+                value = npc:getLocalVar(string.format('[caskets]ITEM%dAUG%dVAL', itemNum, j)) - 1,
             }
         end
 
