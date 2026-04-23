@@ -569,4 +569,70 @@ xi.caskets.rarePools[xi.zone.THE_ELDIEME_NECROPOLIS]  = xi.caskets.rarePools[xi.
 xi.caskets.rarePools[xi.zone.DEN_OF_RANCOR]           = xi.caskets.rarePools[xi.zone.DEN_OF_RANCOR]           or tier5RareItems
 xi.caskets.rarePools[xi.zone.THE_BOYAHDA_TREE]        = xi.caskets.rarePools[xi.zone.THE_BOYAHDA_TREE]        or tier5RareItems
 
+-----------------------------------
+-- Tier 6 rare item pool (lv70-75 HQ gear)
+-----------------------------------
+local tier6RareItems =
+{
+    -- Head (job-specific AF2-style)
+    { itemId = 11464, weight = 270 }, -- magus_keffiyeh_+1    lv74
+    { itemId = 11466, weight = 265 }, -- mirage_keffiyeh_+1   lv75
+    { itemId = 11467, weight = 265 }, -- cor._tricorne_+1     lv74
+    { itemId = 11469, weight = 260 }, -- comm._tricorne_+1    lv75
+    { itemId = 11470, weight = 260 }, -- puppetry_taj_+1      lv74
+    { itemId = 11472, weight = 255 }, -- pantin_taj_+1        lv75
+    -- Body
+    { itemId = 14538, weight = 280 }, -- hydra_mail_+1        lv72
+    { itemId = 14379, weight = 275 }, -- hct._harness_+1      lv73
+    { itemId = 11291, weight = 270 }, -- magus_jubbah_+1      lv74
+    { itemId = 14449, weight = 265 }, -- ucn._harness_+1      lv74
+    { itemId = 14476, weight = 265 }, -- wzd._coat_+1         lv74
+    { itemId = 14479, weight = 260 }, -- glt._surcoat_+1      lv74
+    { itemId = 14480, weight = 260 }, -- chs._cuirass_+1      lv74
+    { itemId = 14485, weight = 260 }, -- nin._chainmail_+1    lv74
+    { itemId = 14486, weight = 260 }, -- drn._mail_+1         lv74
+    { itemId = 11293, weight = 255 }, -- mirage_jubbah_+1     lv75
+    { itemId = 11294, weight = 255 }, -- corsairs_frac_+1     lv74
+    { itemId = 11296, weight = 250 }, -- comm._frac_+1        lv75
+    { itemId = 14503, weight = 250 }, -- src._coat_+1         lv75
+    -- Legs / feet
+    { itemId = 14181, weight = 265 }, -- hct._leggings_+1     lv73
+    { itemId = 15346, weight = 260 }, -- ucn._leggings_+1     lv74
+    { itemId = 11381, weight = 265 }, -- magus_charuqs_+1     lv74
+    { itemId = 11383, weight = 260 }, -- mirage_charuqs_+1    lv75
+    { itemId = 11384, weight = 260 }, -- cor._bottes_+1       lv74
+    { itemId = 11386, weight = 255 }, -- comm._bottes_+1      lv75
+    -- Neck / rings
+    { itemId = 10919, weight = 260 }, -- tndm._necklace_+1    lv75
+    { itemId = 11580, weight = 255 }, -- fylgja_torque_+1     lv75
+    { itemId = 11582, weight = 255 }, -- ire_torque_+1        lv75
+    { itemId = 14617, weight = 265 }, -- nimble_ring_+1       lv72
+    { itemId = 14618, weight = 265 }, -- triumph_ring_+1      lv72
+    { itemId = 14619, weight = 265 }, -- omn._ring_+1         lv72
+    { itemId = 14620, weight = 260 }, -- adroit_ring_+1       lv72
+    { itemId = 14622, weight = 260 }, -- robust_ring_+1       lv72
+    -- Shields
+    { itemId = 12358, weight = 270 }, -- ritter_shield_+1     lv71
+    { itemId = 12357, weight = 260 }, -- ice_shield_+1        lv72
+    -- Weapons
+    { itemId = 18143, weight = 275 }, -- shigeto_bow_+1       lv71
+    { itemId = 16791, weight = 270 }, -- death_scythe_+1      lv73
+    { itemId = 16873, weight = 270 }, -- wyvern_spear_+1      lv73
+    { itemId = 17591, weight = 265 }, -- primate_staff_+1     lv73
+    { itemId = 18432, weight = 265 }, -- butachi_+1           lv73
+    { itemId = 16895, weight = 260 }, -- ice_lance_+1         lv74
+    { itemId = 17214, weight = 255 }, -- staurobow_+1         lv74
+    { itemId = 17263, weight = 250 }, -- corsairs_gun_+1      lv75
+    { itemId = 18701, weight = 245 }, -- cerberus_bow_+1      lv75
+    { itemId = 20784, weight = 240 }, -- uruz_blade_+1        lv75
+}
+
+xi.caskets.rarePools[xi.zone.GARLAIGE_CITADEL]   = xi.caskets.rarePools[xi.zone.GARLAIGE_CITADEL]   or tier6RareItems
+xi.caskets.rarePools[xi.zone.IFRITS_CAULDRON]    = xi.caskets.rarePools[xi.zone.IFRITS_CAULDRON]    or tier6RareItems
+xi.caskets.rarePools[xi.zone.ROMAEVE]            = xi.caskets.rarePools[xi.zone.ROMAEVE]            or tier6RareItems
+xi.caskets.rarePools[xi.zone.BEAUCEDINE_GLACIER] = xi.caskets.rarePools[xi.zone.BEAUCEDINE_GLACIER] or tier6RareItems
+xi.caskets.rarePools[xi.zone.XARCABARD]          = xi.caskets.rarePools[xi.zone.XARCABARD]          or tier6RareItems
+xi.caskets.rarePools[xi.zone.VALLEY_OF_SORROWS]  = xi.caskets.rarePools[xi.zone.VALLEY_OF_SORROWS]  or tier6RareItems
+xi.caskets.rarePools[xi.zone.BEHEMOTHS_DOMINION] = xi.caskets.rarePools[xi.zone.BEHEMOTHS_DOMINION] or tier6RareItems
+
 return m
