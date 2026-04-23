@@ -494,25 +494,40 @@ local function getDrops(npc, dropType, zoneId)
 
         setItems(npc, items[1], items[2], items[3], items[4])
 
-        -- Pre-roll augments now so the preview message and the actual grant
-        -- always show the same values.
+        -- Pre-roll augments: per-item pool overrides zone tier pool.
+        -- Augment count is determined by sequential tier probability rolls.
+        local zoneTier = xi.caskets.zoneTier and xi.caskets.zoneTier[zoneId]
+        local tierDef  = zoneTier and xi.caskets.augmentTiers and xi.caskets.augmentTiers[zoneTier]
         for slot = 1, itemCount do
-            local itemId  = items[slot]
-            local augPool = xi.caskets.augmentPools and xi.caskets.augmentPools[itemId]
-            if itemId ~= 0 and augPool and #augPool > 0 then
-                local available = {}
-                for _, aug in ipairs(augPool) do
-                    available[#available + 1] = aug
+            local itemId   = items[slot]
+            if itemId == 0 then break end
+            local itemPool = xi.caskets.augmentPools and xi.caskets.augmentPools[itemId]
+            local pool     = itemPool or (tierDef and tierDef.pool)
+            if pool and #pool > 0 then
+                local chances = (tierDef and tierDef.augChances) or { 50, 5, 0, 0 }
+                local numAugs = 0
+                for _, chance in ipairs(chances) do
+                    if math.random(100) <= chance then
+                        numAugs = numAugs + 1
+                    else
+                        break
+                    end
                 end
-                local numAugs = math.random(1, math.min(2, #available))
-                npc:setLocalVar(string.format('[caskets]ITEM%dNUMAUGS', slot), numAugs)
-                for j = 1, numAugs do
-                    local idx   = math.random(1, #available)
-                    local aug   = available[idx]
-                    local value = math.random(aug.min, aug.max)
-                    npc:setLocalVar(string.format('[caskets]ITEM%dAUG%dID',  slot, j), aug.id)
-                    npc:setLocalVar(string.format('[caskets]ITEM%dAUG%dVAL', slot, j), value)
-                    table.remove(available, idx)
+                numAugs = math.min(numAugs, #pool)
+                if numAugs > 0 then
+                    local available = {}
+                    for _, aug in ipairs(pool) do
+                        available[#available + 1] = aug
+                    end
+                    npc:setLocalVar(string.format('[caskets]ITEM%dNUMAUGS', slot), numAugs)
+                    for j = 1, numAugs do
+                        local idx   = math.random(1, #available)
+                        local aug   = available[idx]
+                        local value = math.random(aug.min, aug.max)
+                        npc:setLocalVar(string.format('[caskets]ITEM%dAUG%dID',  slot, j), aug.id)
+                        npc:setLocalVar(string.format('[caskets]ITEM%dAUG%dVAL', slot, j), value)
+                        table.remove(available, idx)
+                    end
                 end
             end
         end
