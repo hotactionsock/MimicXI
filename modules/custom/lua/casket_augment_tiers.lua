@@ -196,4 +196,85 @@ for tier = 1, 7 do
     }
 end
 
+-----------------------------------
+-- Zone → tier mapping (all 60 casket zones)
+-- Tier 1 zones have rarePools set by casket_loot_starter_zones.lua;
+-- this map ensures they still get tier-based augment chance rolling.
+-----------------------------------
+xi.caskets.zoneTier = xi.caskets.zoneTier or {}
+
+-- Tier 1 (lv1-15) — starter zones
+xi.caskets.zoneTier[xi.zone.WEST_RONFAURE]       = 1
+xi.caskets.zoneTier[xi.zone.EAST_RONFAURE]       = 1
+xi.caskets.zoneTier[xi.zone.NORTH_GUSTABERG]     = 1
+xi.caskets.zoneTier[xi.zone.SOUTH_GUSTABERG]     = 1
+xi.caskets.zoneTier[xi.zone.WEST_SARUTABARUTA]   = 1
+xi.caskets.zoneTier[xi.zone.EAST_SARUTABARUTA]   = 1
+
+-- Tier 2 (lv15-30)
+xi.caskets.zoneTier[xi.zone.LA_THEINE_PLATEAU]   = 2
+xi.caskets.zoneTier[xi.zone.KONSCHTAT_HIGHLANDS] = 2
+xi.caskets.zoneTier[xi.zone.TAHRONGI_CANYON]     = 2
+xi.caskets.zoneTier[xi.zone.VALKURM_DUNES]       = 2
+xi.caskets.zoneTier[xi.zone.JUGNER_FOREST]       = 2
+xi.caskets.zoneTier[xi.zone.PASHHOW_MARSHLANDS]  = 2
+xi.caskets.zoneTier[xi.zone.MERIPHATAUD_MOUNTAINS] = 2
+xi.caskets.zoneTier[xi.zone.BUBURIMU_PENINSULA]  = 2
+xi.caskets.zoneTier[xi.zone.INNER_HORUTOTO_RUINS] = 2
+xi.caskets.zoneTier[xi.zone.ZERUHN_MINES]        = 2
+xi.caskets.zoneTier[xi.zone.OUTER_HORUTOTO_RUINS] = 2
+xi.caskets.zoneTier[xi.zone.DANGRUF_WADI]        = 2
+
+-- Tier 3 (lv30-45)
+xi.caskets.zoneTier[xi.zone.QUFIM_ISLAND]        = 3
+xi.caskets.zoneTier[xi.zone.BATALLIA_DOWNS]      = 3
+xi.caskets.zoneTier[xi.zone.ROLANBERRY_FIELDS]   = 3
+xi.caskets.zoneTier[xi.zone.SAUROMUGUE_CHAMPAIGN] = 3
+xi.caskets.zoneTier[xi.zone.YUHTUNGA_JUNGLE]     = 3
+xi.caskets.zoneTier[xi.zone.YHOATOR_JUNGLE]      = 3
+xi.caskets.zoneTier[xi.zone.MAZE_OF_SHAKHRAMI]   = 3
+xi.caskets.zoneTier[xi.zone.ORDELLES_CAVES]      = 3
+xi.caskets.zoneTier[xi.zone.KING_RANPERRES_TOMB] = 3
+xi.caskets.zoneTier[xi.zone.GUSGEN_MINES]        = 3
+xi.caskets.zoneTier[xi.zone.KORROLOKA_TUNNEL]    = 3
+
+-- Tier 4 (lv45-60)
+xi.caskets.zoneTier[xi.zone.EASTERN_ALTEPA_DESERT]  = 4
+xi.caskets.zoneTier[xi.zone.WESTERN_ALTEPA_DESERT]  = 4
+xi.caskets.zoneTier[xi.zone.CRAWLERS_NEST]           = 4
+xi.caskets.zoneTier[xi.zone.LABYRINTH_OF_ONZOZO]     = 4
+xi.caskets.zoneTier[xi.zone.THE_SANCTUARY_OF_ZITAH]  = 4
+xi.caskets.zoneTier[xi.zone.SEA_SERPENT_GROTTO]      = 4
+xi.caskets.zoneTier[xi.zone.QUICKSAND_CAVES]         = 4
+xi.caskets.zoneTier[xi.zone.GUSTAV_TUNNEL]           = 4
+xi.caskets.zoneTier[xi.zone.CAPE_TERIGGAN]           = 4
+xi.caskets.zoneTier[xi.zone.KUFTAL_TUNNEL]           = 4
+
+-- Tier 5 (lv60-70)
+xi.caskets.zoneTier[xi.zone.LOWER_DELKFUTTS_TOWER]  = 5
+xi.caskets.zoneTier[xi.zone.MIDDLE_DELKFUTTS_TOWER] = 5
+xi.caskets.zoneTier[xi.zone.UPPER_DELKFUTTS_TOWER]  = 5
+xi.caskets.zoneTier[xi.zone.FEIYIN]                  = 5
+xi.caskets.zoneTier[xi.zone.TORAIMARAI_CANAL]        = 5
+xi.caskets.zoneTier[xi.zone.BOSTAUNIEUX_OUBLIETTE]   = 5
+xi.caskets.zoneTier[xi.zone.TEMPLE_OF_UGGALEPIH]     = 5
+xi.caskets.zoneTier[xi.zone.THE_ELDIEME_NECROPOLIS]  = 5
+xi.caskets.zoneTier[xi.zone.DEN_OF_RANCOR]           = 5
+xi.caskets.zoneTier[xi.zone.THE_BOYAHDA_TREE]        = 5
+
+-- Tier 6 (lv70-75)
+xi.caskets.zoneTier[xi.zone.GARLAIGE_CITADEL]        = 6
+xi.caskets.zoneTier[xi.zone.IFRITS_CAULDRON]         = 6
+xi.caskets.zoneTier[xi.zone.ROMAEVE]                 = 6
+xi.caskets.zoneTier[xi.zone.BEAUCEDINE_GLACIER]      = 6
+xi.caskets.zoneTier[xi.zone.XARCABARD]               = 6
+xi.caskets.zoneTier[xi.zone.VALLEY_OF_SORROWS]       = 6
+xi.caskets.zoneTier[xi.zone.BEHEMOTHS_DOMINION]      = 6
+
+-- Tier 7 (lv75+ endgame)
+xi.caskets.zoneTier[xi.zone.RANGUEMONT_PASS]         = 7
+xi.caskets.zoneTier[xi.zone.RUAUN_GARDENS]           = 7
+xi.caskets.zoneTier[xi.zone.VELUGANNON_PALACE]       = 7
+xi.caskets.zoneTier[xi.zone.THE_SHRINE_OF_RUAVITAU]  = 7
+
 return m
