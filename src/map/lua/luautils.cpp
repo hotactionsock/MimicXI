@@ -3585,6 +3585,19 @@ void OnMobSpawn(CBaseEntity* PMob)
 
     PMob->PAI->EventHandler.triggerListener("PRESPAWN", PMob);
 
+    // Global ecosystem resistance hook (xi.mob.onMobSpawn in scripts/globals/mobs.lua).
+    // Runs before the per-mob script so per-mob scripts can override specific values.
+    auto onMobSpawnGlobal = lua["xi"]["mob"]["onMobSpawn"];
+    if (onMobSpawnGlobal.valid())
+    {
+        auto result = onMobSpawnGlobal(PMob);
+        if (!result.valid())
+        {
+            sol::error err = result;
+            ShowError("luautils::xi.mob.onMobSpawn: %s", err.what());
+        }
+    }
+
     const sol::function onMobSpawn = getEntityCachedFunction(PMob, "onMobSpawn");
     if (onMobSpawn.valid())
     {
