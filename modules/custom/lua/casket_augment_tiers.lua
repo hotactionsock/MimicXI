@@ -277,4 +277,82 @@ xi.caskets.zoneTier[xi.zone.RUAUN_GARDENS]           = 7
 xi.caskets.zoneTier[xi.zone.VELUGANNON_PALACE]       = 7
 xi.caskets.zoneTier[xi.zone.THE_SHRINE_OF_RUAVITAU]  = 7
 
+-----------------------------------
+-- Tier 2 rare item pool (lv15-30 HQ gear)
+-----------------------------------
+xi.caskets.rarePools = xi.caskets.rarePools or {}
+
+local tier2RareItems =
+{
+    -- Head
+    { itemId = 12480, weight = 320 }, -- lizard_helm_+1       lv17
+    { itemId = 12537, weight = 310 }, -- ctn._hachimaki_+1    lv18
+    { itemId = 12524, weight = 280 }, -- iron_mask_+1         lv24
+    { itemId = 12479, weight = 250 }, -- wool_hat_+1          lv28
+    -- Body
+    { itemId = 12624, weight = 320 }, -- cotton_dogi_+1       lv18
+    { itemId = 12662, weight = 290 }, -- chainmail_+1         lv24
+    { itemId = 12627, weight = 260 }, -- wool_robe_+1         lv28
+    { itemId = 12665, weight = 250 }, -- brs._scale_mail_+1   lv27
+    -- Hands
+    { itemId = 12777, weight = 320 }, -- cotton_tekko_+1      lv18
+    { itemId = 12789, weight = 290 }, -- beetle_mittens_+1    lv21
+    { itemId = 12769, weight = 270 }, -- chain_mittens_+1     lv24
+    { itemId = 12782, weight = 250 }, -- wool_cuffs_+1        lv28
+    -- Legs
+    { itemId = 12902, weight = 320 }, -- ctn._sitabaki_+1     lv18
+    { itemId = 12913, weight = 290 }, -- beetle_subligar_+1   lv21
+    { itemId = 12890, weight = 270 }, -- chain_hose_+1        lv24
+    { itemId = 12906, weight = 250 }, -- wool_slops_+1        lv28
+    -- Feet
+    { itemId = 13033, weight = 320 }, -- cotton_kyahan_+1     lv18
+    { itemId = 10648, weight = 300 }, -- areion_boots_+1      lv20
+    { itemId = 13043, weight = 280 }, -- btl._leggings_+1     lv21
+    { itemId = 13022, weight = 250 }, -- chs._sabots_+1       lv28
+    -- Neck / waist / rings / earrings / cape
+    { itemId = 13068, weight = 270 }, -- hemp_gorget_+1       lv23
+    { itemId = 13070, weight = 240 }, -- wolf_gorget_+1       lv30
+    { itemId = 13240, weight = 300 }, -- warriors_belt_+1     lv15
+    { itemId = 13191, weight = 290 }, -- lizard_belt_+1       lv17
+    { itemId = 13213, weight = 270 }, -- chain_belt_+1        lv24
+    { itemId = 13500, weight = 290 }, -- bone_ring_+1         lv16
+    { itemId = 13501, weight = 270 }, -- beetle_ring_+1       lv21
+    { itemId = 13519, weight = 250 }, -- mythril_ring_+1      lv24
+    { itemId = 13362, weight = 280 }, -- bone_earring_+1      lv16
+    { itemId = 13371, weight = 260 }, -- mythril_earring_+1   lv24
+    { itemId = 13600, weight = 270 }, -- dhalmel_mantle_+1    lv18
+    { itemId = 13608, weight = 260 }, -- lizard_mantle_+1     lv17
+    -- Shields
+    { itemId = 12413, weight = 270 }, -- turtle_shield_+1     lv24
+    { itemId = 12326, weight = 250 }, -- kite_shield_+1       lv28
+    -- Weapons
+    { itemId = 16626, weight = 300 }, -- iron_sword_+1        lv18
+    { itemId = 16628, weight = 290 }, -- longsword_+1         lv18
+    { itemId = 16663, weight = 280 }, -- battleaxe_+1         lv20
+    { itemId = 17145, weight = 280 }, -- mace_+1              lv19
+    { itemId = 16738, weight = 270 }, -- mythril_dagger_+1    lv23
+    { itemId = 16781, weight = 270 }, -- scythe_+1            lv18
+    { itemId = 16865, weight = 260 }, -- spear_+1             lv24
+    { itemId = 17115, weight = 270 }, -- warhammer_+1         lv20
+    { itemId = 17126, weight = 260 }, -- elm_staff_+1         lv23
+    { itemId = 17140, weight = 270 }, -- yew_wand_+1          lv18
+    { itemId = 17146, weight = 260 }, -- rod_+1               lv22
+    { itemId = 17172, weight = 255 }, -- wrapped_bow_+1       lv24
+    { itemId = 17442, weight = 240 }, -- eremites_wand_+1     lv28
+}
+
+-- Assign T2 pool to all tier-2 zones
+xi.caskets.rarePools[xi.zone.LA_THEINE_PLATEAU]    = xi.caskets.rarePools[xi.zone.LA_THEINE_PLATEAU]    or tier2RareItems
+xi.caskets.rarePools[xi.zone.KONSCHTAT_HIGHLANDS]  = xi.caskets.rarePools[xi.zone.KONSCHTAT_HIGHLANDS]  or tier2RareItems
+xi.caskets.rarePools[xi.zone.TAHRONGI_CANYON]      = xi.caskets.rarePools[xi.zone.TAHRONGI_CANYON]      or tier2RareItems
+xi.caskets.rarePools[xi.zone.VALKURM_DUNES]        = xi.caskets.rarePools[xi.zone.VALKURM_DUNES]        or tier2RareItems
+xi.caskets.rarePools[xi.zone.JUGNER_FOREST]        = xi.caskets.rarePools[xi.zone.JUGNER_FOREST]        or tier2RareItems
+xi.caskets.rarePools[xi.zone.PASHHOW_MARSHLANDS]   = xi.caskets.rarePools[xi.zone.PASHHOW_MARSHLANDS]   or tier2RareItems
+xi.caskets.rarePools[xi.zone.MERIPHATAUD_MOUNTAINS] = xi.caskets.rarePools[xi.zone.MERIPHATAUD_MOUNTAINS] or tier2RareItems
+xi.caskets.rarePools[xi.zone.BUBURIMU_PENINSULA]   = xi.caskets.rarePools[xi.zone.BUBURIMU_PENINSULA]   or tier2RareItems
+xi.caskets.rarePools[xi.zone.INNER_HORUTOTO_RUINS] = xi.caskets.rarePools[xi.zone.INNER_HORUTOTO_RUINS] or tier2RareItems
+xi.caskets.rarePools[xi.zone.ZERUHN_MINES]         = xi.caskets.rarePools[xi.zone.ZERUHN_MINES]         or tier2RareItems
+xi.caskets.rarePools[xi.zone.OUTER_HORUTOTO_RUINS] = xi.caskets.rarePools[xi.zone.OUTER_HORUTOTO_RUINS] or tier2RareItems
+xi.caskets.rarePools[xi.zone.DANGRUF_WADI]         = xi.caskets.rarePools[xi.zone.DANGRUF_WADI]         or tier2RareItems
+
 return m
