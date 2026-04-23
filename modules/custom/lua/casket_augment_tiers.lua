@@ -162,4 +162,38 @@ local augmentDefs =
     { id = 321, min = 1, maxes = {  0,  0,  0,  0,  0,  4,  6 } }, -- Avatar perpetuation cost -1
 }
 
+-----------------------------------
+-- Augment count probabilities per tier
+-- Four values: % chance for aug slots 1, 2, 3, 4 (sequential — misses stop the chain)
+-----------------------------------
+local augChancesPerTier =
+{
+    [1] = {  50,   5,   0,   0 }, -- T1 lv1-15:  50% aug1, 5% aug2
+    [2] = {  75,  15,   5,   0 }, -- T2 lv15-30: guaranteed-ish aug1, small aug2/3
+    [3] = {  90,  25,  10,   3 }, -- T3 lv30-45
+    [4] = { 100,  35,  20,   8 }, -- T4 lv45-60: always aug1
+    [5] = { 100,  50,  30,  15 }, -- T5 lv60-70
+    [6] = { 100,  65,  40,  20 }, -- T6 lv70-75
+    [7] = { 100,  75,  50,  25 }, -- T7 lv75+:   always aug1+2, coin-flip aug3
+}
+
+-----------------------------------
+-- Build xi.caskets.augmentTiers[1..7] from augmentDefs + augChancesPerTier
+-----------------------------------
+xi.caskets.augmentTiers = {}
+for tier = 1, 7 do
+    local pool = {}
+    for _, def in ipairs(augmentDefs) do
+        local maxVal = def.maxes[tier]
+        if maxVal and maxVal > 0 then
+            pool[#pool + 1] = { id = def.id, min = def.min, max = maxVal }
+        end
+    end
+    xi.caskets.augmentTiers[tier] =
+    {
+        augChances = augChancesPerTier[tier],
+        pool       = pool,
+    }
+end
+
 return m
