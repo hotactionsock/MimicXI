@@ -427,4 +427,83 @@ xi.caskets.rarePools[xi.zone.KING_RANPERRES_TOMB]  = xi.caskets.rarePools[xi.zon
 xi.caskets.rarePools[xi.zone.GUSGEN_MINES]         = xi.caskets.rarePools[xi.zone.GUSGEN_MINES]         or tier3RareItems
 xi.caskets.rarePools[xi.zone.KORROLOKA_TUNNEL]     = xi.caskets.rarePools[xi.zone.KORROLOKA_TUNNEL]     or tier3RareItems
 
+-----------------------------------
+-- Tier 4 rare item pool (lv45-60 HQ gear)
+-----------------------------------
+local tier4RareItems =
+{
+    -- Head
+    { itemId = 12541, weight = 310 }, -- wool_cap_+1          lv48
+    { itemId = 13701, weight = 270 }, -- beak_helm_+1         lv58
+    { itemId = 12482, weight = 250 }, -- scorpion_mask_+1     lv57
+    { itemId = 12439, weight = 240 }, -- bascinet_+1          lv59
+    -- Body
+    { itemId = 12667, weight = 300 }, -- banded_mail_+1       lv46
+    { itemId = 12651, weight = 280 }, -- white_cloak_+1       lv50
+    { itemId = 12652, weight = 270 }, -- silk_coat_+1         lv53
+    { itemId = 13734, weight = 260 }, -- scp._harness_+1      lv57
+    { itemId = 13745, weight = 250 }, -- justaucorps_+1       lv58
+    { itemId = 13735, weight = 240 }, -- haubergeon_+1        lv59
+    { itemId = 13741, weight = 230 }, -- byrnie_+1            lv60
+    { itemId = 13743, weight = 230 }, -- aketon_+1            lv60
+    -- Hands
+    { itemId = 12792, weight = 300 }, -- mufflers_+1          lv46
+    { itemId = 12783, weight = 280 }, -- wool_bracers_+1      lv48
+    -- Legs
+    { itemId = 12895, weight = 300 }, -- breeches_+1          lv46
+    { itemId = 12907, weight = 280 }, -- wool_hose_+1         lv48
+    { itemId = 12925, weight = 265 }, -- shn._hakama_+1       lv49
+    { itemId = 12926, weight = 255 }, -- white_slacks_+1      lv50
+    { itemId = 12927, weight = 240 }, -- silk_slops_+1        lv53
+    -- Feet
+    { itemId = 13047, weight = 300 }, -- sollerets_+1         lv46
+    { itemId = 13036, weight = 280 }, -- wool_socks_+1        lv48
+    { itemId = 13050, weight = 260 }, -- moccasins_+1         lv50
+    -- Neck / waist / rings / earrings / cape
+    { itemId = 13124, weight = 270 }, -- nodowa_+1            lv49
+    { itemId = 13126, weight = 250 }, -- torque_+1            lv58
+    { itemId = 13234, weight = 280 }, -- brocade_obi_+1       lv46
+    { itemId = 13274, weight = 260 }, -- twinthread_obi_+1    lv52
+    { itemId = 13277, weight = 250 }, -- r.k._belt_+1         lv52
+    { itemId = 13513, weight = 270 }, -- scorpion_ring_+1     lv55
+    { itemId = 13545, weight = 240 }, -- demons_ring_+1       lv60
+    { itemId = 13498, weight = 240 }, -- platinum_ring_+1     lv60
+    { itemId = 13418, weight = 260 }, -- eris_earring_+1      lv54
+    { itemId = 13397, weight = 240 }, -- ptm._earring_+1      lv60
+    { itemId = 13638, weight = 270 }, -- gaia_mantle_+1       lv51
+    { itemId = 13620, weight = 260 }, -- jesters_cape_+1      lv54
+    { itemId = 13621, weight = 250 }, -- beak_mantle_+1       lv58
+    { itemId = 13604, weight = 240 }, -- behem._mantle_+1     lv60
+    -- Shields
+    { itemId = 12329, weight = 290 }, -- leather_shield_+1    lv48
+    { itemId = 12339, weight = 260 }, -- scutum_+1            lv54
+    { itemId = 12346, weight = 240 }, -- dst._shield_+1       lv60
+    -- Weapons
+    { itemId = 16877, weight = 290 }, -- mythril_lance_+1     lv48
+    { itemId = 17446, weight = 280 }, -- t.m._wand_+1         lv52
+    { itemId = 16880, weight = 275 }, -- holy_lance_+1        lv53
+    { itemId = 16811, weight = 270 }, -- dst._sword_+1        lv51
+    { itemId = 16751, weight = 265 }, -- dst._knife_+1        lv53
+    { itemId = 16795, weight = 260 }, -- bone_scythe_+1       lv53
+    { itemId = 16612, weight = 255 }, -- saber_+1             lv56
+    { itemId = 17173, weight = 260 }, -- war_bow_+1           lv50
+    { itemId = 16677, weight = 255 }, -- darksteel_axe_+1     lv56
+    { itemId = 17428, weight = 250 }, -- darksteel_mace_+1    lv57
+    { itemId = 16878, weight = 245 }, -- dst._lance_+1        lv58
+    { itemId = 17189, weight = 240 }, -- rapid_bow_+1         lv58
+    { itemId = 17427, weight = 235 }, -- ebony_wand_+1        lv60
+    { itemId = 16828, weight = 230 }, -- bastard_sword_+1     lv60
+}
+
+xi.caskets.rarePools[xi.zone.EASTERN_ALTEPA_DESERT]  = xi.caskets.rarePools[xi.zone.EASTERN_ALTEPA_DESERT]  or tier4RareItems
+xi.caskets.rarePools[xi.zone.WESTERN_ALTEPA_DESERT]  = xi.caskets.rarePools[xi.zone.WESTERN_ALTEPA_DESERT]  or tier4RareItems
+xi.caskets.rarePools[xi.zone.CRAWLERS_NEST]           = xi.caskets.rarePools[xi.zone.CRAWLERS_NEST]           or tier4RareItems
+xi.caskets.rarePools[xi.zone.LABYRINTH_OF_ONZOZO]     = xi.caskets.rarePools[xi.zone.LABYRINTH_OF_ONZOZO]     or tier4RareItems
+xi.caskets.rarePools[xi.zone.THE_SANCTUARY_OF_ZITAH]  = xi.caskets.rarePools[xi.zone.THE_SANCTUARY_OF_ZITAH]  or tier4RareItems
+xi.caskets.rarePools[xi.zone.SEA_SERPENT_GROTTO]      = xi.caskets.rarePools[xi.zone.SEA_SERPENT_GROTTO]      or tier4RareItems
+xi.caskets.rarePools[xi.zone.QUICKSAND_CAVES]         = xi.caskets.rarePools[xi.zone.QUICKSAND_CAVES]         or tier4RareItems
+xi.caskets.rarePools[xi.zone.GUSTAV_TUNNEL]           = xi.caskets.rarePools[xi.zone.GUSTAV_TUNNEL]           or tier4RareItems
+xi.caskets.rarePools[xi.zone.CAPE_TERIGGAN]           = xi.caskets.rarePools[xi.zone.CAPE_TERIGGAN]           or tier4RareItems
+xi.caskets.rarePools[xi.zone.KUFTAL_TUNNEL]           = xi.caskets.rarePools[xi.zone.KUFTAL_TUNNEL]           or tier4RareItems
+
 return m
