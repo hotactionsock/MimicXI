@@ -30,8 +30,6 @@
 -- 4. Per-mob onMobSpawn scripts that call mob:setMod() after this module
 --    runs will silently override any value set here for that specific mob.
 -----------------------------------
-require('scripts/globals/utils')
-
 xi = xi or {}
 xi.mob = xi.mob or {}
 xi.mob.resistances = xi.mob.resistances or {}
