@@ -232,48 +232,77 @@ void CZone::SetBackgroundMusicNight(uint16 music)
 }
 
 /**
- * Queries for entities (mobs or npcs) which name match the given pattern.
+ * Queries for entities (mobs or npcs) whose name matches the given pattern.
  *
- * @param pattern The pattern used to match the entity name. We use % as wildcard for consistency
- * with other methods that perform pattern matching.
- * E.g: %anto% matches Shantotto and Canto-anto
+ * Patterns without regex metacharacters are matched with direct string equality.
+ * Patterns containing metacharacters (. * + ? [ ] { } ( ) | ^ $ \) are treated
+ * as std::regex expressions. Results are cached per pattern for all queries,
+ * including DE_ (dynamic entity) lookups.
+ *
+ * Note: DE_ entity pointers are safe to cache because LQS dynamic entities are
+ * registered at zone initialisation time and are never destroyed while the zone
+ * is running (m_bReleaseTargIDOnDisappear is false for LQS entities).
  */
 const QueryByNameResult_t& CZone::queryEntitiesByName(const std::string& pattern)
 {
     TracyZoneScoped;
 
-    // Always ignore cache for queries explicitly looking for dynamic entities
-    // TODO: make this memoization work for dynamic entities somehow?
-    if (pattern.rfind("DE_", 0) != 0)
+    auto result = m_queryByNameResults.find(pattern);
+    if (result != m_queryByNameResults.end())
     {
-        // Use memoization since lookups are typically for the same mob names
-        auto result = m_queryByNameResults.find(pattern);
-        if (result != m_queryByNameResults.end())
-        {
-            return result->second;
-        }
+        return result->second;
     }
 
     std::vector<CBaseEntity*> entities;
 
-    // TODO: Make work for instances
-    // clang-format off
-    ForEachNpc([&](CNpcEntity* PNpc)
-    {
-        if (matches(PNpc->getName(), pattern))
-        {
-            entities.emplace_back(PNpc);
-        }
-    });
+    // Use direct equality for plain names (no regex metacharacters).
+    // std::regex construction is very expensive on MSVC; avoid it for the
+    // common case of exact DE_ / mob-name lookups.
+    static constexpr std::string_view kMetaChars = ".*+?[]{}()|^$\\";
+    const bool needsRegex = pattern.find_first_of(kMetaChars) != std::string::npos;
 
-    ForEachMob([&](CMobEntity* PMob)
+    // TODO: Make work for instances
+    if (needsRegex)
     {
-        if (matches(PMob->getName(), pattern))
+        // clang-format off
+        std::regex re(pattern);
+        ForEachNpc([&](CNpcEntity* PNpc)
         {
-            entities.emplace_back(PMob);
-        }
-     });
-    // clang-format on
+            if (std::regex_match(PNpc->getName(), re))
+            {
+                entities.emplace_back(PNpc);
+            }
+        });
+
+        ForEachMob([&](CMobEntity* PMob)
+        {
+            if (std::regex_match(PMob->getName(), re))
+            {
+                entities.emplace_back(PMob);
+            }
+        });
+        // clang-format on
+    }
+    else
+    {
+        // clang-format off
+        ForEachNpc([&](CNpcEntity* PNpc)
+        {
+            if (PNpc->getName() == pattern)
+            {
+                entities.emplace_back(PNpc);
+            }
+        });
+
+        ForEachMob([&](CMobEntity* PMob)
+        {
+            if (PMob->getName() == pattern)
+            {
+                entities.emplace_back(PMob);
+            }
+        });
+        // clang-format on
+    }
 
     m_queryByNameResults[pattern] = std::move(entities);
     return m_queryByNameResults[pattern];

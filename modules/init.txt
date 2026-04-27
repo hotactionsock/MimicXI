@@ -36,7 +36,10 @@
 #
 # Live example:
 
+custom/LQS/cpp/lqs_util.cpp
 custom/commands/
 custom/lua/test_npcs_in_gm_home.lua
 custom/lua/casket_loot_starter_zones.lua
 custom/lua/casket_augment_tiers.lua
+custom/LQS/lib/LQS.lua
+custom/LQS/questpack

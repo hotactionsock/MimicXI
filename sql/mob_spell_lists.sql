@@ -5765,6 +5765,24 @@ INSERT INTO `mob_spell_lists` VALUES ('Chemical_Cook_Chemachiq',565,112,1,255); 
 
 -- Next Available: 566
 
+-- Forsaken Revenant — LQS: Echoes of the Abyss (566)
+INSERT INTO `mob_spell_lists` VALUES ('Forsaken_Revenant',566,172,1,255); -- water_iv (1~255)
+INSERT INTO `mob_spell_lists` VALUES ('Forsaken_Revenant',566,173,1,255); -- water_v (1~255)
+INSERT INTO `mob_spell_lists` VALUES ('Forsaken_Revenant',566,201,1,255); -- waterga_iii (1~255)
+INSERT INTO `mob_spell_lists` VALUES ('Forsaken_Revenant',566,214,1,255); -- flood (1~255)
+INSERT INTO `mob_spell_lists` VALUES ('Forsaken_Revenant',566,240,1,255); -- drown (1~255)
+INSERT INTO `mob_spell_lists` VALUES ('Forsaken_Revenant',566,231,1,255); -- bio_ii (1~255)
+INSERT INTO `mob_spell_lists` VALUES ('Forsaken_Revenant',566,232,1,255); -- bio_iii (1~255)
+INSERT INTO `mob_spell_lists` VALUES ('Forsaken_Revenant',566,245,1,255); -- drain (1~255)
+INSERT INTO `mob_spell_lists` VALUES ('Forsaken_Revenant',566,247,1,255); -- aspir (1~255)
+INSERT INTO `mob_spell_lists` VALUES ('Forsaken_Revenant',566,258,1,255); -- bind (1~255)
+
+-- Abyssal Shade — LQS: Echoes of the Abyss (567)
+INSERT INTO `mob_spell_lists` VALUES ('Abyssal_Shade',567,171,1,255); -- water_iii (1~255)
+INSERT INTO `mob_spell_lists` VALUES ('Abyssal_Shade',567,231,1,255); -- bio_ii (1~255)
+INSERT INTO `mob_spell_lists` VALUES ('Abyssal_Shade',567,245,1,255); -- drain (1~255)
+INSERT INTO `mob_spell_lists` VALUES ('Abyssal_Shade',567,247,1,255); -- aspir (1~255)
+
 /*!40000 ALTER TABLE `mob_spell_lists` ENABLE KEYS */;
 UNLOCK TABLES;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;

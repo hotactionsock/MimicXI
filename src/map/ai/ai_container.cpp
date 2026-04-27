@@ -450,7 +450,24 @@ auto CAIContainer::Tick(timer::time_point tick) -> Task<void>
                 if (top == GetCurrentState())
                 {
                     top->Cleanup(tick);
-                    m_stateStack.pop();
+                    // Cleanup may call ForceChangeState (e.g. DespawnMob via onMobDisengage),
+                    // pushing a new state above `top`. Ensure we pop `top`, not the new state.
+                    if (top == GetCurrentState())
+                    {
+                        m_stateStack.pop();
+                    }
+                    else if (!m_stateStack.empty())
+                    {
+                        // A new state was pushed above `top` during Cleanup.
+                        // Promote it by removing `top` from underneath.
+                        auto promoted = std::move(m_stateStack.top());
+                        m_stateStack.pop();
+                        if (!m_stateStack.empty())
+                        {
+                            m_stateStack.pop(); // remove `top`
+                        }
+                        m_stateStack.push(std::move(promoted));
+                    }
                 }
             }
             else // The state isn't done yet, preserve the state stack and bail out
