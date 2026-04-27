@@ -49,24 +49,7 @@ spellObject.onSpellCast = function(caster, target, spell)
     if isValidHealTarget(caster, target) then
         basecure = getBaseCure(power, divisor, constant, basepower)
         final = getCureFinal(caster, spell, basecure, minCure, false)
-        if
-            caster:hasStatusEffect(xi.effect.AFFLATUS_SOLACE) and
-            not target:hasStatusEffect(xi.effect.STONESKIN)
-        then
-            local solaceStoneskin = 0
-            local equippedBody = caster:getEquipID(xi.slot.BODY)
-            if equippedBody == 11186 then
-                solaceStoneskin = math.floor(final * 0.30)
-            elseif equippedBody == 11086 then
-                solaceStoneskin = math.floor(final * 0.35)
-            else
-                solaceStoneskin = math.floor(final * 0.25)
-            end
-
-            solaceStoneskin = solaceStoneskin * (1 + caster:getMerit(xi.merit.ANIMUS_SOLACE) / 100)
-
-            target:addStatusEffect(xi.effect.STONESKIN, { power = solaceStoneskin, duration = 25, origin = caster, tier = 1 })
-        end
+        xi.magic.applySolaceShield(caster, target, final)
 
         final = final + (final * (target:getMod(xi.mod.CURE_POTENCY_RCVD) / 100))
 

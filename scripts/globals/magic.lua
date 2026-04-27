@@ -47,6 +47,8 @@ function getCureFinal(caster, spell, basecure, minCure, isBlueMagic)
 
     if caster:hasStatusEffect(xi.effect.DIVINE_SEAL) then
         dSeal = 2
+        caster:delStatusEffect(xi.effect.DIVINE_SEAL)
+        caster:addStatusEffect(xi.effect.AURA_OF_RADIANCE, { power = 1, duration = 20, origin = caster })
     end
 
     local rapture = 1
@@ -65,6 +67,29 @@ function getCureFinal(caster, spell, basecure, minCure, isBlueMagic)
     final       = math.floor(final * dSeal)
 
     return final
+end
+
+xi.magic = xi.magic or {}
+
+xi.magic.applySolaceShield = function(caster, target, cureAmount)
+    if not caster:hasStatusEffect(xi.effect.AFFLATUS_SOLACE) then
+        return
+    end
+    local SOLACE_SHIELD_CAP = 300
+    local shieldAmount = math.floor(cureAmount * 0.1)
+    if shieldAmount <= 0 then
+        return
+    end
+    if target:hasStatusEffect(xi.effect.STONESKIN) then
+        local current = target:getMod(xi.mod.STONESKIN)
+        local toAdd = math.min(shieldAmount, SOLACE_SHIELD_CAP - current)
+        if toAdd > 0 then
+            target:addMod(xi.mod.STONESKIN, toAdd)
+        end
+    else
+        local power = math.min(shieldAmount, SOLACE_SHIELD_CAP)
+        target:addStatusEffect(xi.effect.STONESKIN, { power = power, duration = 60, origin = caster, tier = 1 })
+    end
 end
 
 function isValidHealTarget(caster, target)

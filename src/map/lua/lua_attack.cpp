@@ -42,6 +42,11 @@ void CLuaAttack::setCritical(bool critical)
     m_PLuaAttack->SetCritical(critical);
 }
 
+int CLuaAttack::getAttackType() const
+{
+    return static_cast<int>(m_PLuaAttack->GetAttackType());
+}
+
 //==========================================================//
 
 void CLuaAttack::Register()
@@ -50,6 +55,7 @@ void CLuaAttack::Register()
 
     SOL_REGISTER("isCritical", CLuaAttack::isCritical);
     SOL_REGISTER("setCritical", CLuaAttack::setCritical);
+    SOL_REGISTER("getAttackType", CLuaAttack::getAttackType);
 }
 
 std::ostream& operator<<(std::ostream& os, const CLuaAttack& attack)

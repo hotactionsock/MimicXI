@@ -677,8 +677,10 @@ xi.effect =
     HYSTERIA                 = 804, -- Used for Hysteroanima to stop after readying a weaponskill with no msg.
     TOMAHAWK                 = 805, -- Silent status effect inflicted by a Warrior using the "Tomahawk" job ability
     NUKE_WALL                = 806, -- Custom effect for NM type mobs only.
+    AURA_OF_RADIANCE         = 807, -- WHM: granted after Divine Seal is consumed by a cure; next Holy/Banish deals 150% damage
+    ARCANE_ECHO              = 808, -- BLM: granted when Elemental Seal is consumed; next spell of the same element deals 150% damage
 
     -- 789
-    -- 807-1022
+    -- 809-1022
     -- PLACEHOLDER           = 1023 -- The client dat file seems to have only this many "slots", results of exceeding that are untested.
 }

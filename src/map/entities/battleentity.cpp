@@ -3175,11 +3175,15 @@ bool CBattleEntity::OnAttack(CAttackState& state, action_t& action)
                 // Apply Feint
                 if (CStatusEffect* PFeintEffect = StatusEffectContainer->GetStatusEffect(EFFECT_FEINT))
                 {
-                    if (PTarget->StatusEffectContainer->AddStatusEffect(new CStatusEffect(EFFECT_EVASION_DOWN, EFFECT_EVASION_DOWN, PFeintEffect->GetPower(), 3s, 30s)))
+                    if (PTarget->StatusEffectContainer->AddStatusEffect(new CStatusEffect(EFFECT_EVASION_DOWN, EFFECT_EVASION_DOWN, PFeintEffect->GetPower(), 3s, 60s)))
                     {
                         auto PEffect = PTarget->StatusEffectContainer->GetStatusEffect(EFFECT_EVASION_DOWN);
 
-                        // When Feint's evasion down effect is on, the target can get "debuffed" with TREASURE_HUNTER_PROC +25% * level above first on Feint
+                        // Open Guard: expose all physical damage types for 60s
+                        PEffect->addMod(Mod::SLASH_SDT, -500);
+                        PEffect->addMod(Mod::PIERCE_SDT, -500);
+                        PEffect->addMod(Mod::IMPACT_SDT, -500);
+                        PEffect->addMod(Mod::HTH_SDT, -500);
                         PEffect->addMod(Mod::TREASURE_HUNTER_PROC, PFeintEffect->GetSubPower());
                     }
                     StatusEffectContainer->DelStatusEffect(EFFECT_FEINT);
