@@ -777,6 +777,18 @@ xi.spells.damage.calculateArcaneEchoMultiplier = function(caster, skillType, spe
     return 1.5
 end
 
+-- BRD Threnody vulnerability stacks (stored in target local vars by threnody.lua).
+-- Each stack = +5% bonus damage from the matching element. All stacks consumed on hit.
+xi.spells.damage.calculateThrenodyVulnerabilityMultiplier = function(caster, target, spellElement)
+    if not target then return 1 end
+    if spellElement <= xi.element.NONE then return 1 end
+    local key    = 'THRENODY_STACKS_' .. tostring(spellElement)
+    local stacks = target:getLocalVar(key)
+    if stacks <= 0 then return 1 end
+    target:setLocalVar(key, 0)
+    return 1 + stacks * 0.05
+end
+
 -- Elemental seal applies its own multiplier to spells when Laevateinn is equipped,
 -- or some other source of ENHANCES_ELEMENTAL_SEAL is available to the caster.
 -- Also consumes Elemental Seal and grants Arcane Echo for the follow-up spell.
@@ -1227,6 +1239,7 @@ xi.spells.damage.useDamageSpell = function(caster, target, spell)
     local eleSealMultiplier                = xi.spells.damage.calculateEnhancedElementalSealMultiplier(caster, skillType, spellElement)
     local ebullienceMultiplier             = xi.spells.damage.calculateEbullienceMultiplier(caster, spellGroup)
     local chainspellConvergenceMultiplier  = xi.spells.damage.calculateChainspellConvergenceMultiplier(caster, skillType, spellElement)
+    local threnodyVulnMultiplier           = xi.spells.damage.calculateThrenodyVulnerabilityMultiplier(caster, target, spellElement)
     local skillTypeMultiplier       = xi.spells.damage.calculateSkillTypeMultiplier(skillType)
     local ninSkillBonus             = xi.spells.damage.calculateNinSkillBonus(caster, spellId, skillType)
     local ninFutaeBonus             = xi.spells.damage.calculateNinFutaeBonus(caster, skillType)
@@ -1256,6 +1269,7 @@ xi.spells.damage.useDamageSpell = function(caster, target, spell)
     finalDamage = math.floor(finalDamage * eleSealMultiplier)
     finalDamage = math.floor(finalDamage * ebullienceMultiplier)
     finalDamage = math.floor(finalDamage * chainspellConvergenceMultiplier)
+    finalDamage = math.floor(finalDamage * threnodyVulnMultiplier)
     finalDamage = math.floor(finalDamage * skillTypeMultiplier)
     finalDamage = math.floor(finalDamage * ninSkillBonus)
     finalDamage = math.floor(finalDamage * ninFutaeBonus)

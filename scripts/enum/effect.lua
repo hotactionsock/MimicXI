@@ -683,6 +683,8 @@ xi.effect =
     SOUL_RESERVOIR           = 810, -- DRK: granted when Souleater expires; stores HP drained, next WS deals up to +50% bonus damage
     DARK_EMPOWERMENT         = 811, -- DRK: granted when Nether Void is consumed by a drain/aspir/absorb; drains restore TP for 30s
     CRIMSON_TIDE             = 812, -- DRK: granted when Blood Weapon expires; stacking crit rate bonus based on hits during BW
+    GROGGY                   = 813, -- BRD: applied to target when Lullaby expires; +5% physical damage taken for 10s
+    STRATEGIC_CLARITY        = 814, -- BRD: granted when Finale strips a buff; next Threnody/Elegy/Lullaby recast is reset
 
     -- 789
     -- 813-1022
