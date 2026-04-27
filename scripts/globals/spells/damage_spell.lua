@@ -724,6 +724,21 @@ xi.spells.damage.calculateDivineEmblemMultiplier = function(caster, skillType)
     return 1 + caster:getSkillLevel(xi.skill.DIVINE_MAGIC) / 100
 end
 
+-- Aura of Radiance: granted when Divine Seal is consumed by a cure. Next Holy/Banish deals 150% damage.
+xi.spells.damage.calculateAuraOfRadianceMultiplier = function(caster, skillType)
+    if not caster:hasStatusEffect(xi.effect.AURA_OF_RADIANCE) then
+        return 1
+    end
+
+    if skillType ~= xi.skill.DIVINE_MAGIC then
+        return 1
+    end
+
+    caster:delStatusEffect(xi.effect.AURA_OF_RADIANCE)
+
+    return 1.5
+end
+
 -- Elemental seal applies its own multiplier to spells when Laevateinn is equipped,
 -- or some other source of ENHANCES_ELEMENTAL_SEAL is available to the caster.
 xi.spells.damage.calculateEnhancedElementalSealMultiplier = function(caster, skillType, spellElement)
@@ -1135,6 +1150,7 @@ xi.spells.damage.useDamageSpell = function(caster, target, spell)
     local criticalDamageMultiplier  = xi.spells.damage.calculateMagicCriticalMultiplier(caster)
     local divineSealMultiplier      = xi.spells.damage.calculateDivineSealMultiplier(caster, target, skillType)
     local divineEmblemMultiplier    = xi.spells.damage.calculateDivineEmblemMultiplier(caster, skillType)
+    local auraOfRadianceMultiplier  = xi.spells.damage.calculateAuraOfRadianceMultiplier(caster, skillType)
     local eleSealMultiplier         = xi.spells.damage.calculateEnhancedElementalSealMultiplier(caster, skillType, spellElement)
     local ebullienceMultiplier      = xi.spells.damage.calculateEbullienceMultiplier(caster, spellGroup)
     local skillTypeMultiplier       = xi.spells.damage.calculateSkillTypeMultiplier(skillType)
@@ -1160,6 +1176,7 @@ xi.spells.damage.useDamageSpell = function(caster, target, spell)
     finalDamage = math.floor(finalDamage * targetMagicDamageAdjustment)
     finalDamage = math.floor(finalDamage * divineSealMultiplier)
     finalDamage = math.floor(finalDamage * divineEmblemMultiplier)
+    finalDamage = math.floor(finalDamage * auraOfRadianceMultiplier)
     finalDamage = math.floor(finalDamage * eleSealMultiplier)
     finalDamage = math.floor(finalDamage * ebullienceMultiplier)
     finalDamage = math.floor(finalDamage * skillTypeMultiplier)
