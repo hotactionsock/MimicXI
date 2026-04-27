@@ -798,6 +798,35 @@ xi.spells.damage.calculateEbullienceMultiplier = function(caster, spellGroup)
     return 1.2 + caster:getMod(xi.mod.EBULLIENCE_AMOUNT) / 100
 end
 
+-- Chainspell Convergence: during Chainspell, elemental spells matching the active enspell's element deal 130% damage.
+xi.spells.damage.calculateChainspellConvergenceMultiplier = function(caster, skillType, spellElement)
+    if not caster:hasStatusEffect(xi.effect.CHAINSPELL) then
+        return 1
+    end
+
+    if skillType ~= xi.skill.ELEMENTAL_MAGIC then
+        return 1
+    end
+
+    if spellElement <= xi.element.NONE then
+        return 1
+    end
+
+    local enspellMod = caster:getMod(xi.mod.ENSPELL)
+    if enspellMod <= 0 then
+        return 1
+    end
+
+    -- Tier 2 enspells store element + 8; normalise to the base element for comparison
+    local enspellElement = (enspellMod > 8) and (enspellMod - 8) or enspellMod
+
+    if enspellElement ~= spellElement then
+        return 1
+    end
+
+    return 1.3
+end
+
 -- CUSTOM function supported in settings.
 xi.spells.damage.calculateSkillTypeMultiplier = function(skillType)
     if skillType == xi.skill.ELEMENTAL_MAGIC then
@@ -1178,8 +1207,9 @@ xi.spells.damage.useDamageSpell = function(caster, target, spell)
     local divineEmblemMultiplier    = xi.spells.damage.calculateDivineEmblemMultiplier(caster, skillType)
     local auraOfRadianceMultiplier  = xi.spells.damage.calculateAuraOfRadianceMultiplier(caster, skillType)
     local arcaneEchoMultiplier      = xi.spells.damage.calculateArcaneEchoMultiplier(caster, skillType, spellElement)
-    local eleSealMultiplier         = xi.spells.damage.calculateEnhancedElementalSealMultiplier(caster, skillType, spellElement)
-    local ebullienceMultiplier      = xi.spells.damage.calculateEbullienceMultiplier(caster, spellGroup)
+    local eleSealMultiplier                = xi.spells.damage.calculateEnhancedElementalSealMultiplier(caster, skillType, spellElement)
+    local ebullienceMultiplier             = xi.spells.damage.calculateEbullienceMultiplier(caster, spellGroup)
+    local chainspellConvergenceMultiplier  = xi.spells.damage.calculateChainspellConvergenceMultiplier(caster, skillType, spellElement)
     local skillTypeMultiplier       = xi.spells.damage.calculateSkillTypeMultiplier(skillType)
     local ninSkillBonus             = xi.spells.damage.calculateNinSkillBonus(caster, spellId, skillType)
     local ninFutaeBonus             = xi.spells.damage.calculateNinFutaeBonus(caster, skillType)
@@ -1207,6 +1237,7 @@ xi.spells.damage.useDamageSpell = function(caster, target, spell)
     finalDamage = math.floor(finalDamage * arcaneEchoMultiplier)
     finalDamage = math.floor(finalDamage * eleSealMultiplier)
     finalDamage = math.floor(finalDamage * ebullienceMultiplier)
+    finalDamage = math.floor(finalDamage * chainspellConvergenceMultiplier)
     finalDamage = math.floor(finalDamage * skillTypeMultiplier)
     finalDamage = math.floor(finalDamage * ninSkillBonus)
     finalDamage = math.floor(finalDamage * ninFutaeBonus)
