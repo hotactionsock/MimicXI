@@ -712,6 +712,14 @@ xi.weaponskills.doPhysicalWeaponskill = function(attacker, target, wsID, wsParam
     attacker:delStatusEffect(xi.effect.SNEAK_ATTACK)
     attacker:delStatusEffectSilent(xi.effect.BUILDING_FLOURISH)
 
+    -- Soul Reservoir (DRK): HP sacrificed during Souleater converts to WS damage bonus.
+    if attacker:hasStatusEffect(xi.effect.SOUL_RESERVOIR) then
+        local reservoirEffect = attacker:getStatusEffect(xi.effect.SOUL_RESERVOIR)
+        local drained = reservoirEffect:getPower()
+        attacker:delStatusEffect(xi.effect.SOUL_RESERVOIR)
+        finaldmg = math.floor(finaldmg * (1 + drained / 3000 * 0.5))
+    end
+
     finaldmg            = finaldmg * xi.settings.main.WEAPON_SKILL_POWER -- Add server bonus
     calcParams.finalDmg = finaldmg
     finaldmg            = xi.weaponskills.takeWeaponskillDamage(target, attacker, wsParams, primaryMsg, attack, calcParams, action)

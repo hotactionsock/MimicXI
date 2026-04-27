@@ -680,8 +680,11 @@ xi.effect =
     AURA_OF_RADIANCE         = 807, -- WHM: granted after Divine Seal is consumed by a cure; next Holy/Banish deals 150% damage
     ARCANE_ECHO              = 808, -- BLM: granted when Elemental Seal is consumed; next spell of the same element deals 150% damage
     HOLY_RETRIBUTION         = 809, -- PLD: granted when Sentinel expires based on hits absorbed; next Holy/Banish/Flash deals bonus damage
+    SOUL_RESERVOIR           = 810, -- DRK: granted when Souleater expires; stores HP drained, next WS deals up to +50% bonus damage
+    DARK_EMPOWERMENT         = 811, -- DRK: granted when Nether Void is consumed by a drain/aspir/absorb; drains restore TP for 30s
+    CRIMSON_TIDE             = 812, -- DRK: granted when Blood Weapon expires; stacking crit rate bonus based on hits during BW
 
     -- 789
-    -- 810-1022
+    -- 813-1022
     -- PLACEHOLDER           = 1023 -- The client dat file seems to have only this many "slots", results of exceeding that are untested.
 }

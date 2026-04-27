@@ -27,6 +27,14 @@ xi.combat.damage.souleaterAddition = function(actor)
 
         actor:delHP(selfDamage)
 
+        -- Track HP sacrificed for Soul Reservoir (DRK main only, capped at 3000).
+        if actor:getMainJob() == xi.job.DRK then
+            local souleaterEff = actor:getStatusEffect(xi.effect.SOULEATER)
+            if souleaterEff then
+                souleaterEff:setTier(math.min(souleaterEff:getTier() + math.floor(selfDamage), 3000))
+            end
+        end
+
         if actor:getMainJob() ~= xi.job.DRK then
             return math.floor(bonusDamage / 2)
         end

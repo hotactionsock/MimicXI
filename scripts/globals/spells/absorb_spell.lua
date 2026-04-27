@@ -42,6 +42,8 @@ xi.spells.absorb.doAbsorbStatSpell = function(caster, target, spell)
     local netherVoidMultiplier = 1
     if caster:hasStatusEffect(xi.effect.NETHER_VOID) then
         netherVoidMultiplier = 1 + caster:getStatusEffect(xi.effect.NETHER_VOID):getPower() / 100
+        caster:delStatusEffect(xi.effect.NETHER_VOID)
+        caster:addStatusEffect(xi.effect.DARK_EMPOWERMENT, { power = 1, duration = 30, origin = caster })
     end
 
     local finalPotency = math.floor(basePotency * gearMultiplier * liberatorMultiplier)
@@ -136,6 +138,8 @@ xi.spells.absorb.doDrainingSpell = function(caster, target, spell)
     local netherVoidMultiplier   = 1
     if caster:hasStatusEffect(xi.effect.NETHER_VOID) then
         netherVoidMultiplier = 1 + caster:getStatusEffect(xi.effect.NETHER_VOID):getPower() / 100
+        caster:delStatusEffect(xi.effect.NETHER_VOID)
+        caster:addStatusEffect(xi.effect.DARK_EMPOWERMENT, { power = 1, duration = 30, origin = caster })
     end
 
     -- Operations.
@@ -203,6 +207,10 @@ xi.spells.absorb.doDrainingSpell = function(caster, target, spell)
     -- Perform (non) damage and healing.
     if modAbsorbed == xi.mod.HP then
         caster:addHP(finalDamage)
+        -- Dark Empowerment: HP drains also restore TP.
+        if caster:hasStatusEffect(xi.effect.DARK_EMPOWERMENT) then
+            caster:addTP(math.floor(finalDamage / 4))
+        end
     else
         caster:addMP(finalDamage)
         target:delMP(finalDamage)
@@ -281,6 +289,8 @@ xi.spells.absorb.doAbsorbAttriSpell = function(caster, target, spell)
             if effectSecond ~= 0 then
                 count = count + 1
             end
+            caster:delStatusEffect(xi.effect.NETHER_VOID)
+            caster:addStatusEffect(xi.effect.DARK_EMPOWERMENT, { power = 1, duration = 30, origin = caster })
         end
 
         spell:setMsg(xi.msg.basic.MAGIC_STEAL)
