@@ -22,7 +22,7 @@ effectObject.onEffectGain = function(target, effect)
         if damage <= 0 then return end
         local stacks = effectArg:getSubPower()
         if stacks >= MAX_MISERY_STACKS then return end
-        actorArg:addMod(xi.mod.ACC, 1)
+        actorArg:addMod(xi.mod.MACC, 1)
         actorArg:addMod(xi.mod.MATT, 1)
         effectArg:setSubPower(stacks + 1)
     end)
@@ -37,7 +37,7 @@ effectObject.onEffectLose = function(target, effect)
 
     local stacks = effect:getSubPower()
     if stacks > 0 then
-        target:delMod(xi.mod.ACC, stacks)
+        target:delMod(xi.mod.MACC, stacks)
         target:delMod(xi.mod.MATT, stacks)
     end
 
