@@ -40,6 +40,7 @@ public:
 
     bool isCritical() const;
     void setCritical(bool critical);
+    int  getAttackType() const;
 
     friend std::ostream& operator<<(std::ostream& out, const CLuaAttack& action);
 
