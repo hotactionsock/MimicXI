@@ -4,24 +4,29 @@
 ---@type TEffect
 local effectObject = {}
 
+local SDT_BY_WEAPON_TYPE =
+{
+    [xi.damageType.SLASHING] = xi.mod.SLASH_SDT,
+    [xi.damageType.PIERCING] = xi.mod.PIERCE_SDT,
+    [xi.damageType.BLUNT]    = xi.mod.IMPACT_SDT,
+    [xi.damageType.HTH]      = xi.mod.HTH_SDT,
+}
+
+local TOMAHAWK_SDT_VALUE = -2000 -- 20% vulnerability to the matched damage type
+
 effectObject.onEffectGain = function(target, effect)
-    local physSDT = { xi.mod.SLASH_SDT, xi.mod.PIERCE_SDT, xi.mod.IMPACT_SDT, xi.mod.HTH_SDT }
-
-    for i = 1, #physSDT do
-        local physicalSDTModifier   = physSDT[i]
-        local physicalSDTValue      = target:getMod(physicalSDTModifier)
-        local physicalSDTAdjustment = math.floor(physicalSDTValue * 0.25)
-
-        effect:addMod(physicalSDTModifier, -physicalSDTAdjustment)
+    local origin = GetPlayerByID(effect:getOriginID())
+    if not origin then
+        return
     end
 
-    for element = xi.element.FIRE, xi.element.DARK do
-        local elementSDTModifier   = xi.data.element.getElementalSDTModifier(element)
-        local elementSDTValue      = target:getMod(elementSDTModifier)
-        local elementSDTAdjustment = math.floor(elementSDTValue * 0.25)
-
-        effect:addMod(elementSDTModifier, -elementSDTAdjustment)
+    local weaponType = origin:getWeaponDamageType(xi.slot.MAIN)
+    local sdtMod     = SDT_BY_WEAPON_TYPE[weaponType]
+    if not sdtMod then
+        return
     end
+
+    effect:addMod(sdtMod, TOMAHAWK_SDT_VALUE)
 end
 
 effectObject.onEffectTick = function(target, effect)
