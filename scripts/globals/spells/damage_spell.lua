@@ -724,8 +724,46 @@ xi.spells.damage.calculateDivineEmblemMultiplier = function(caster, skillType)
     return 1 + caster:getSkillLevel(xi.skill.DIVINE_MAGIC) / 100
 end
 
+-- Aura of Radiance: granted when Divine Seal is consumed by a cure. Next Holy/Banish deals 150% damage.
+xi.spells.damage.calculateAuraOfRadianceMultiplier = function(caster, skillType)
+    if not caster:hasStatusEffect(xi.effect.AURA_OF_RADIANCE) then
+        return 1
+    end
+
+    if skillType ~= xi.skill.DIVINE_MAGIC then
+        return 1
+    end
+
+    caster:delStatusEffect(xi.effect.AURA_OF_RADIANCE)
+
+    return 1.5
+end
+
+-- Arcane Echo: granted when Elemental Seal is consumed. Next spell of the same element deals 150% damage.
+-- Must be checked BEFORE calculateEnhancedElementalSealMultiplier so an existing echo is consumed
+-- before a new one can be granted on the same cast.
+xi.spells.damage.calculateArcaneEchoMultiplier = function(caster, skillType, spellElement)
+    if not caster:hasStatusEffect(xi.effect.ARCANE_ECHO) then
+        return 1
+    end
+
+    if skillType ~= xi.skill.ELEMENTAL_MAGIC then
+        return 1
+    end
+
+    local echoEffect = caster:getStatusEffect(xi.effect.ARCANE_ECHO)
+    if echoEffect:getPower() ~= spellElement then
+        return 1
+    end
+
+    caster:delStatusEffect(xi.effect.ARCANE_ECHO)
+
+    return 1.5
+end
+
 -- Elemental seal applies its own multiplier to spells when Laevateinn is equipped,
 -- or some other source of ENHANCES_ELEMENTAL_SEAL is available to the caster.
+-- Also consumes Elemental Seal and grants Arcane Echo for the follow-up spell.
 xi.spells.damage.calculateEnhancedElementalSealMultiplier = function(caster, skillType, spellElement)
     if not caster:hasStatusEffect(xi.effect.ELEMENTAL_SEAL) then
         return 1
@@ -738,6 +776,9 @@ xi.spells.damage.calculateEnhancedElementalSealMultiplier = function(caster, ski
     if spellElement <= xi.element.NONE then
         return 1
     end
+
+    caster:delStatusEffect(xi.effect.ELEMENTAL_SEAL)
+    caster:addStatusEffect(xi.effect.ARCANE_ECHO, { power = spellElement, duration = 30, origin = caster })
 
     return 1 + caster:getMod(xi.mod.ENHANCES_ELEMENTAL_SEAL) / 100
 end
@@ -1135,6 +1176,8 @@ xi.spells.damage.useDamageSpell = function(caster, target, spell)
     local criticalDamageMultiplier  = xi.spells.damage.calculateMagicCriticalMultiplier(caster)
     local divineSealMultiplier      = xi.spells.damage.calculateDivineSealMultiplier(caster, target, skillType)
     local divineEmblemMultiplier    = xi.spells.damage.calculateDivineEmblemMultiplier(caster, skillType)
+    local auraOfRadianceMultiplier  = xi.spells.damage.calculateAuraOfRadianceMultiplier(caster, skillType)
+    local arcaneEchoMultiplier      = xi.spells.damage.calculateArcaneEchoMultiplier(caster, skillType, spellElement)
     local eleSealMultiplier         = xi.spells.damage.calculateEnhancedElementalSealMultiplier(caster, skillType, spellElement)
     local ebullienceMultiplier      = xi.spells.damage.calculateEbullienceMultiplier(caster, spellGroup)
     local skillTypeMultiplier       = xi.spells.damage.calculateSkillTypeMultiplier(skillType)
@@ -1160,6 +1203,8 @@ xi.spells.damage.useDamageSpell = function(caster, target, spell)
     finalDamage = math.floor(finalDamage * targetMagicDamageAdjustment)
     finalDamage = math.floor(finalDamage * divineSealMultiplier)
     finalDamage = math.floor(finalDamage * divineEmblemMultiplier)
+    finalDamage = math.floor(finalDamage * auraOfRadianceMultiplier)
+    finalDamage = math.floor(finalDamage * arcaneEchoMultiplier)
     finalDamage = math.floor(finalDamage * eleSealMultiplier)
     finalDamage = math.floor(finalDamage * ebullienceMultiplier)
     finalDamage = math.floor(finalDamage * skillTypeMultiplier)

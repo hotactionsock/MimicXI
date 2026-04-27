@@ -253,8 +253,8 @@ end
 xi.job_utils.thief.useFeint = function(player, target, ability, action)
     local bonus = player:getMod(xi.mod.AUGMENTS_FEINT) * player:getMerit(xi.merit.FEINT) / 25 -- Divide by the merit value (feint is 25) to get the number of merit points
 
-    -- Subpower is the proc rate bonus for TH procs
-    player:addStatusEffect(xi.effect.FEINT, { power = 150 + bonus, duration = 60, origin = player, subPower = player:getMerit(xi.merit.FEINT) - 25 }) -- -150 Evasion base, 0% base TREASURE_HUNTER_PROC, every merit past 1 gives 25%
+    -- EVA down reduced to 75; the Open Guard SDT debuff (5% all physical types) is applied in C++ on hit
+    player:addStatusEffect(xi.effect.FEINT, { power = 75 + bonus, duration = 60, origin = player, subPower = player:getMerit(xi.merit.FEINT) - 25 })
 end
 
 xi.job_utils.thief.useFlee = function(player, target, ability)
