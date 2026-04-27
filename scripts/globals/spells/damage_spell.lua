@@ -724,6 +724,22 @@ xi.spells.damage.calculateDivineEmblemMultiplier = function(caster, skillType)
     return 1 + caster:getSkillLevel(xi.skill.DIVINE_MAGIC) / 100
 end
 
+-- Holy Retribution: granted when Sentinel expires after absorbing physical hits. Next Holy/Banish/Flash deals 10-100% bonus damage.
+xi.spells.damage.calculateHolyRetributionMultiplier = function(caster, skillType)
+    if not caster:hasStatusEffect(xi.effect.HOLY_RETRIBUTION) then
+        return 1
+    end
+
+    if skillType ~= xi.skill.DIVINE_MAGIC then
+        return 1
+    end
+
+    local stacks = caster:getStatusEffect(xi.effect.HOLY_RETRIBUTION):getPower()
+    caster:delStatusEffect(xi.effect.HOLY_RETRIBUTION)
+
+    return 1 + (stacks * 0.1)
+end
+
 -- Aura of Radiance: granted when Divine Seal is consumed by a cure. Next Holy/Banish deals 150% damage.
 xi.spells.damage.calculateAuraOfRadianceMultiplier = function(caster, skillType)
     if not caster:hasStatusEffect(xi.effect.AURA_OF_RADIANCE) then
@@ -1205,6 +1221,7 @@ xi.spells.damage.useDamageSpell = function(caster, target, spell)
     local criticalDamageMultiplier  = xi.spells.damage.calculateMagicCriticalMultiplier(caster)
     local divineSealMultiplier      = xi.spells.damage.calculateDivineSealMultiplier(caster, target, skillType)
     local divineEmblemMultiplier    = xi.spells.damage.calculateDivineEmblemMultiplier(caster, skillType)
+    local holyRetributionMultiplier = xi.spells.damage.calculateHolyRetributionMultiplier(caster, skillType)
     local auraOfRadianceMultiplier  = xi.spells.damage.calculateAuraOfRadianceMultiplier(caster, skillType)
     local arcaneEchoMultiplier      = xi.spells.damage.calculateArcaneEchoMultiplier(caster, skillType, spellElement)
     local eleSealMultiplier                = xi.spells.damage.calculateEnhancedElementalSealMultiplier(caster, skillType, spellElement)
@@ -1231,6 +1248,7 @@ xi.spells.damage.useDamageSpell = function(caster, target, spell)
     finalDamage = math.floor(finalDamage * magicBonusDiff)
     finalDamage = math.floor(finalDamage * criticalDamageMultiplier)
     finalDamage = math.floor(finalDamage * targetMagicDamageAdjustment)
+    finalDamage = math.floor(finalDamage * holyRetributionMultiplier)
     finalDamage = math.floor(finalDamage * divineSealMultiplier)
     finalDamage = math.floor(finalDamage * divineEmblemMultiplier)
     finalDamage = math.floor(finalDamage * auraOfRadianceMultiplier)

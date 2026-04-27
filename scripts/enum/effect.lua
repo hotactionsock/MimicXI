@@ -679,8 +679,9 @@ xi.effect =
     NUKE_WALL                = 806, -- Custom effect for NM type mobs only.
     AURA_OF_RADIANCE         = 807, -- WHM: granted after Divine Seal is consumed by a cure; next Holy/Banish deals 150% damage
     ARCANE_ECHO              = 808, -- BLM: granted when Elemental Seal is consumed; next spell of the same element deals 150% damage
+    HOLY_RETRIBUTION         = 809, -- PLD: granted when Sentinel expires based on hits absorbed; next Holy/Banish/Flash deals bonus damage
 
     -- 789
-    -- 809-1022
+    -- 810-1022
     -- PLACEHOLDER           = 1023 -- The client dat file seems to have only this many "slots", results of exceeding that are untested.
 }
