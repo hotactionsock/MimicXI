@@ -691,8 +691,9 @@ xi.effect =
     DRACONIC_RESONANCE       = 818, -- DRG: each damaging jump adds stacks (1 or 2); consumed on polearm WS for +20% per stack (cap 3 stacks/+60%)
     WYVERN_BLESSING          = 819, -- DRG: granted when Healing Breath heals master; next WS deals bonus damage scaled to HP restored (cap +50%)
     BREACH                   = 820, -- DRG: granted when Angon lands; next jump deals +35% bonus damage
+    WARD_RESONANCE           = 821, -- SMN: each Ward BP builds 1 stack (max 5, 30s refresh); consumed by next Rage BP for +15% per stack (up to +75%)
 
     -- 789
-    -- 821-1022
+    -- 822-1022
     -- PLACEHOLDER           = 1023 -- The client dat file seems to have only this many "slots", results of exceeding that are untested.
 }
