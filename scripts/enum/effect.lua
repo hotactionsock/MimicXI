@@ -688,8 +688,11 @@ xi.effect =
     DRAWN_BOW                = 815, -- SAM: granted after ranged WS while Hasso active; next melee WS deals +20% damage
     ZANSHIN_MOMENTUM         = 816, -- SAM: each Zanshin proc adds +5% TWOHAND haste (stacks to 15%, refreshes 10s timer)
     ELEMENTAL_SCAR           = 817, -- NIN: applied to target after a ninjutsu hit; matching element on next cast deals +25%; expires in 35s
+    DRACONIC_RESONANCE       = 818, -- DRG: each damaging jump adds stacks (1 or 2); consumed on polearm WS for +20% per stack (cap 3 stacks/+60%)
+    WYVERN_BLESSING          = 819, -- DRG: granted when Healing Breath heals master; next WS deals bonus damage scaled to HP restored (cap +50%)
+    BREACH                   = 820, -- DRG: granted when Angon lands; next jump deals +35% bonus damage
 
     -- 789
-    -- 818-1022
+    -- 821-1022
     -- PLACEHOLDER           = 1023 -- The client dat file seems to have only this many "slots", results of exceeding that are untested.
 }

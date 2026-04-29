@@ -735,6 +735,25 @@ xi.weaponskills.doPhysicalWeaponskill = function(attacker, target, wsID, wsParam
         finaldmg = math.floor(finaldmg * 1.2)
     end
 
+    -- Draconic Resonance (DRG): jump stacks consumed on polearm WS for +20% per stack (up to +60%).
+    if attacker:getWeaponSkillType(xi.slot.MAIN) == xi.skill.POLEARM then
+        local resonanceEffect = attacker:getStatusEffect(xi.effect.DRACONIC_RESONANCE)
+        if resonanceEffect then
+            local stacks = resonanceEffect:getPower()
+            attacker:delStatusEffect(xi.effect.DRACONIC_RESONANCE)
+            finaldmg = math.floor(finaldmg * (1 + stacks * 0.2))
+        end
+    end
+
+    -- Wyvern's Blessing (DRG): Healing Breath creates a WS window scaled to HP restored (cap +50%).
+    local blessingEffect = attacker:getStatusEffect(xi.effect.WYVERN_BLESSING)
+    if blessingEffect then
+        local healed = blessingEffect:getPower()
+        attacker:delStatusEffect(xi.effect.WYVERN_BLESSING)
+        local mult = utils.clamp(1 + healed / (attacker:getMaxHP() * 2), 1, 1.5)
+        finaldmg = math.floor(finaldmg * mult)
+    end
+
     -- Yonin Aggressive Evasion (NIN): Yonin's decaying power grants a melee WS bonus (+30%→+10%).
     local yoninEffect = attacker:getStatusEffect(xi.effect.YONIN)
     if yoninEffect then
