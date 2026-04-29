@@ -84,6 +84,9 @@ local function performWSJump(player, target, action, params, abilityID)
         local newStacks = math.min(currentStacks + stacksToAdd, 3)
         player:delStatusEffect(xi.effect.DRACONIC_RESONANCE)
         player:addStatusEffect(xi.effect.DRACONIC_RESONANCE, { power = newStacks, duration = 10, origin = player })
+        if xi.settings.map.MIMIC_COMBAT_NOTIFICATIONS then
+            player:printToPlayer(string.format('Draconic Resonance: %d/3', newStacks), xi.msg.channel.SYSTEM_3, '')
+        end
 
         action:recordDamage(target, xi.attackType.PHYSICAL, damage, criticalHit)
         action:messageID(target:getID(), xi.msg.basic.USES_JA_TAKE_DAMAGE)

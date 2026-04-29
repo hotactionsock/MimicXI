@@ -20,7 +20,11 @@ effectObject.onEffectGain = function(target, effect) -- Power = 30 initially, su
         if not actorArg:isBehind(targetArg, 23) then return end
         local stacks = actorArg:getLocalVar('BLADE_DANCE_STACKS')
         if stacks < 5 then
-            actorArg:setLocalVar('BLADE_DANCE_STACKS', stacks + 1)
+            local newStacks = stacks + 1
+            actorArg:setLocalVar('BLADE_DANCE_STACKS', newStacks)
+            if xi.settings.map.MIMIC_COMBAT_NOTIFICATIONS then
+                actorArg:printToPlayer(string.format('Blade Dance: %d/5', newStacks), xi.msg.channel.SYSTEM_3, '')
+            end
         end
     end)
 end
