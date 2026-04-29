@@ -707,6 +707,23 @@ INSERT INTO `status_effects` VALUES (802,'elemental_resistance_down',@FLAG_DEATH
 INSERT INTO `status_effects` VALUES (803,'full_speed_ahead',@FLAG_ON_ZONE | @FLAG_NO_LOSS_MESSAGE,0,0,0,0,0,0,0,0,NULL);
 INSERT INTO `status_effects` VALUES (805,'tomahawk',@FLAG_DEATH | @FLAG_NO_LOSS_MESSAGE,0,0,0,0,0,0,0,0,NULL);
 
+-- MimicXI balance-pass custom effects (807-821). MAX_EFFECTID raised to 822 in src/map/status_effect.h.
+INSERT INTO `status_effects` VALUES (807,'aura_of_radiance',@FLAG_DEATH | @FLAG_ON_ZONE | @FLAG_NO_LOSS_MESSAGE,0,0,0,0,0,0,0,0,NULL);
+INSERT INTO `status_effects` VALUES (808,'arcane_echo',@FLAG_DEATH | @FLAG_ON_ZONE | @FLAG_NO_LOSS_MESSAGE,0,0,0,0,0,0,0,0,NULL);
+INSERT INTO `status_effects` VALUES (809,'holy_retribution',@FLAG_DEATH | @FLAG_ON_ZONE | @FLAG_NO_LOSS_MESSAGE,0,0,0,0,0,0,0,0,NULL);
+INSERT INTO `status_effects` VALUES (810,'soul_reservoir',@FLAG_DEATH | @FLAG_ON_ZONE | @FLAG_NO_LOSS_MESSAGE,0,0,0,0,0,0,0,0,NULL);
+INSERT INTO `status_effects` VALUES (811,'dark_empowerment',@FLAG_DEATH | @FLAG_ON_ZONE | @FLAG_NO_LOSS_MESSAGE,0,0,0,0,0,0,0,0,NULL);
+INSERT INTO `status_effects` VALUES (812,'crimson_tide',@FLAG_DEATH | @FLAG_ON_ZONE | @FLAG_NO_LOSS_MESSAGE,0,0,0,0,0,0,0,0,NULL);
+INSERT INTO `status_effects` VALUES (813,'groggy',@FLAG_DEATH | @FLAG_NO_LOSS_MESSAGE,0,0,0,0,0,0,0,0,NULL);
+INSERT INTO `status_effects` VALUES (814,'strategic_clarity',@FLAG_DEATH | @FLAG_ON_ZONE | @FLAG_NO_LOSS_MESSAGE,0,0,0,0,0,0,0,0,NULL);
+INSERT INTO `status_effects` VALUES (815,'drawn_bow',@FLAG_DEATH | @FLAG_ON_ZONE | @FLAG_NO_LOSS_MESSAGE,0,0,0,0,0,0,0,0,NULL);
+INSERT INTO `status_effects` VALUES (816,'zanshin_momentum',@FLAG_DEATH | @FLAG_ON_ZONE | @FLAG_NO_LOSS_MESSAGE,0,0,0,0,0,0,0,0,NULL);
+INSERT INTO `status_effects` VALUES (817,'elemental_scar',@FLAG_DEATH | @FLAG_NO_LOSS_MESSAGE,0,0,0,0,0,0,0,0,NULL);
+INSERT INTO `status_effects` VALUES (818,'draconic_resonance',@FLAG_DEATH | @FLAG_ON_ZONE | @FLAG_NO_LOSS_MESSAGE,0,0,0,0,0,0,0,0,NULL);
+INSERT INTO `status_effects` VALUES (819,'wyvern_blessing',@FLAG_DEATH | @FLAG_ON_ZONE | @FLAG_NO_LOSS_MESSAGE,0,0,0,0,0,0,0,0,NULL);
+INSERT INTO `status_effects` VALUES (820,'breach',@FLAG_DEATH | @FLAG_ON_ZONE | @FLAG_NO_LOSS_MESSAGE,0,0,0,0,0,0,0,0,NULL);
+INSERT INTO `status_effects` VALUES (821,'ward_resonance',@FLAG_DEATH | @FLAG_ON_ZONE | @FLAG_NO_LOSS_MESSAGE,0,0,0,0,0,0,0,0,NULL);
+
 /*!40000 ALTER TABLE `status_effects` ENABLE KEYS */;
 UNLOCK TABLES;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
