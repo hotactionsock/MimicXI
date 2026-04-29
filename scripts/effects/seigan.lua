@@ -31,6 +31,9 @@ effectObject.onEffectGain = function(target, effect)
         local newPower = math.min(current + 500, 1500)
         actorArg:delStatusEffect(xi.effect.ZANSHIN_MOMENTUM)
         actorArg:addStatusEffect(xi.effect.ZANSHIN_MOMENTUM, { power = newPower, duration = 10, origin = actorArg })
+        if xi.settings.map.MIMIC_COMBAT_NOTIFICATIONS then
+            actorArg:printToPlayer(string.format('Zanshin Momentum: %d%%', newPower / 100), xi.msg.channel.SYSTEM_3, '')
+        end
     end)
 end
 
