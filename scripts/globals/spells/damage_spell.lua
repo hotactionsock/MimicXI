@@ -932,6 +932,74 @@ xi.spells.damage.calculateNinjutsuMultiplier = function(caster, target, skillTyp
     return 1 + caster:getMod(xi.mod.NIN_NUKE_BONUS_INNIN) / 100
 end
 
+-- NIN Blade Dance: melee hits from behind while Innin is active build stacks (max 5).
+-- Consuming those stacks while casting ninjutsu from behind amplifies the hit by +8% per stack.
+xi.spells.damage.calculateBladeDanceMultiplier = function(caster, target, skillType)
+    if skillType ~= xi.skill.NINJUTSU then
+        return 1
+    end
+
+    if not caster:hasStatusEffect(xi.effect.INNIN) then
+        return 1
+    end
+
+    if not caster:isBehind(target, 23) then
+        return 1
+    end
+
+    local stacks = caster:getLocalVar('BLADE_DANCE_STACKS')
+
+    if stacks <= 0 then
+        return 1
+    end
+
+    caster:setLocalVar('BLADE_DANCE_STACKS', 0)
+
+    return 1 + stacks * 0.08
+end
+
+-- NIN Yonin Aggressive Evasion: Yonin's decaying power (30→10) grants a matching ninjutsu bonus.
+-- At full power: +30% ninjutsu damage. At minimum: +10%.
+xi.spells.damage.calculateYoninOffensiveMultiplier = function(caster, skillType)
+    if skillType ~= xi.skill.NINJUTSU then
+        return 1
+    end
+
+    local yoninEffect = caster:getStatusEffect(xi.effect.YONIN)
+
+    if not yoninEffect then
+        return 1
+    end
+
+    return 1 + yoninEffect:getPower() / 100
+end
+
+-- NIN Elemental Scar: ninjutsu always stamps an elemental scar on the target (35s).
+-- If the target already carries a matching scar the hit deals +25% bonus damage.
+-- Scar is always overwritten with the current spell's element.
+xi.spells.damage.calculateElementalScarMultiplier = function(caster, target, skillType, spellElement)
+    if skillType ~= xi.skill.NINJUTSU then
+        return 1
+    end
+
+    if spellElement <= xi.element.NONE then
+        return 1
+    end
+
+    local multiplier = 1
+
+    local scarEffect = target:getStatusEffect(xi.effect.ELEMENTAL_SCAR)
+
+    if scarEffect and scarEffect:getPower() == spellElement then
+        multiplier = 1.25
+    end
+
+    target:delStatusEffect(xi.effect.ELEMENTAL_SCAR)
+    target:addStatusEffect(xi.effect.ELEMENTAL_SCAR, { power = spellElement, duration = 35, origin = caster })
+
+    return multiplier
+end
+
 xi.spells.damage.calculateUndeadDivinePenalty = function(target, skillType)
     if not target:isUndead() then
         return 1
@@ -1244,6 +1312,9 @@ xi.spells.damage.useDamageSpell = function(caster, target, spell)
     local ninSkillBonus             = xi.spells.damage.calculateNinSkillBonus(caster, spellId, skillType)
     local ninFutaeBonus             = xi.spells.damage.calculateNinFutaeBonus(caster, skillType)
     local ninjutsuMultiplier        = xi.spells.damage.calculateNinjutsuMultiplier(caster, target, skillType)
+    local bladeDanceMultiplier      = xi.spells.damage.calculateBladeDanceMultiplier(caster, target, skillType)
+    local yoninOffensiveMultiplier  = xi.spells.damage.calculateYoninOffensiveMultiplier(caster, skillType)
+    local elementalScarMultiplier   = xi.spells.damage.calculateElementalScarMultiplier(caster, target, skillType, spellElement)
     local undeadDivinePenalty       = xi.spells.damage.calculateUndeadDivinePenalty(target, skillType)
     local scarletDeliriumMultiplier = xi.combat.damage.scarletDeliriumMultiplier(caster)
     local helixMeritMultiplier      = xi.spells.damage.calculateHelixMeritMultiplier(caster, spellId)
@@ -1274,6 +1345,9 @@ xi.spells.damage.useDamageSpell = function(caster, target, spell)
     finalDamage = math.floor(finalDamage * ninSkillBonus)
     finalDamage = math.floor(finalDamage * ninFutaeBonus)
     finalDamage = math.floor(finalDamage * ninjutsuMultiplier)
+    finalDamage = math.floor(finalDamage * bladeDanceMultiplier)
+    finalDamage = math.floor(finalDamage * yoninOffensiveMultiplier)
+    finalDamage = math.floor(finalDamage * elementalScarMultiplier)
     finalDamage = math.floor(finalDamage * undeadDivinePenalty)
     finalDamage = math.floor(finalDamage * scarletDeliriumMultiplier)
     finalDamage = math.floor(finalDamage * helixMeritMultiplier)

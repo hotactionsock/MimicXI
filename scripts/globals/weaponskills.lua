@@ -735,6 +735,12 @@ xi.weaponskills.doPhysicalWeaponskill = function(attacker, target, wsID, wsParam
         finaldmg = math.floor(finaldmg * 1.2)
     end
 
+    -- Yonin Aggressive Evasion (NIN): Yonin's decaying power grants a melee WS bonus (+30%→+10%).
+    local yoninEffect = attacker:getStatusEffect(xi.effect.YONIN)
+    if yoninEffect then
+        finaldmg = math.floor(finaldmg * (1 + yoninEffect:getPower() / 100))
+    end
+
     finaldmg            = finaldmg * xi.settings.main.WEAPON_SKILL_POWER -- Add server bonus
     calcParams.finalDmg = finaldmg
     finaldmg            = xi.weaponskills.takeWeaponskillDamage(target, attacker, wsParams, primaryMsg, attack, calcParams, action)
