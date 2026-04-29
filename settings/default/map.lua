@@ -214,6 +214,10 @@ xi.settings.map =
     -- Enable/disable shared blood pact timer
     BLOOD_PACT_SHARED_TIMER = false,
 
+    -- MimicXI: Show chat notifications for combat stack mechanics whose counts are not otherwise
+    -- visible to the player (Poised Strike, Blade Dance, Draconic Resonance, Ward Resonance).
+    MIMIC_COMBAT_NOTIFICATIONS = true,
+
     -- Adjust mob drop rate. Acts as a multiplier, so default is 1.
     DROP_RATE_MULTIPLIER = 1.0,
 

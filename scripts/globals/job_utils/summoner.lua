@@ -238,6 +238,9 @@ xi.job_utils.summoner.onUseBloodPact = function(target, petskill, summoner, acti
             local newStacks = math.min(current + 1, 5)
             summoner:delStatusEffect(xi.effect.WARD_RESONANCE)
             summoner:addStatusEffect(xi.effect.WARD_RESONANCE, { power = newStacks, duration = 30, origin = summoner })
+            if xi.settings.map.MIMIC_COMBAT_NOTIFICATIONS then
+                summoner:printToPlayer(string.format('Ward Resonance: %d/5', newStacks), xi.msg.channel.SYSTEM_3, '')
+            end
         end
     end
 end
