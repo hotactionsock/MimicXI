@@ -19,6 +19,10 @@ effectObject.onEffectLose = function(target, effect)
         local drained = effect:getTier()
         if drained > 0 then
             target:addStatusEffect(xi.effect.SOUL_RESERVOIR, { power = drained, duration = 60, origin = target })
+            if xi.settings.map.MIMIC_COMBAT_NOTIFICATIONS then
+                local bonusPct = math.floor(drained * 50 / 3000)
+                target:printToPlayer(string.format('Soul Reservoir: +%d%% to next WS', bonusPct), xi.msg.channel.SYSTEM_3, '')
+            end
         end
     end
 end

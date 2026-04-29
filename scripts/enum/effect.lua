@@ -689,9 +689,11 @@ xi.effect =
     ZANSHIN_MOMENTUM         = 816, -- SAM: each Zanshin proc adds +5% TWOHAND haste (stacks to 15%, refreshes 10s timer)
     ELEMENTAL_SCAR           = 817, -- NIN: applied to target after a ninjutsu hit; matching element on next cast deals +25%; expires in 35s
 
-    -- Server hard cap is 817 (IDs >= 818 are rejected). Use gaps below for new custom effects.
-    DRACONIC_RESONANCE       = 789, -- DRG: each damaging jump adds stacks (1 or 2); consumed on polearm WS for +20% per stack (cap 3 stacks/+60%)
-    WYVERN_BLESSING          = 767, -- DRG: granted when Healing Breath heals master; next WS deals bonus damage scaled to HP restored (cap +50%)
-    BREACH                   = 766, -- DRG: granted when Angon lands; next jump deals +35% bonus damage
-    WARD_RESONANCE           = 765, -- SMN: each Ward BP builds 1 stack (max 5, 30s refresh); consumed by next Rage BP for +15% per stack (up to +75%)
+    DRACONIC_RESONANCE       = 818, -- DRG: each damaging jump adds stacks (1 or 2); consumed on polearm WS for +20% per stack (cap 3 stacks/+60%)
+    WYVERN_BLESSING          = 819, -- DRG: granted when Healing Breath heals master; next WS deals bonus damage scaled to HP restored (cap +50%)
+    BREACH                   = 820, -- DRG: granted when Angon lands; next jump deals +35% bonus damage
+    WARD_RESONANCE           = 821, -- SMN: each Ward BP builds 1 stack (max 5, 30s refresh); consumed by next Rage BP for +15% per stack (up to +75%)
+
+    -- MAX_EFFECTID in src/map/status_effect.h is 822. Next available ID: 822.
+    -- Bump MAX_EFFECTID and add a SQL row before adding new effects.
 }
