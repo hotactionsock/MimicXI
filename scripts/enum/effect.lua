@@ -685,8 +685,10 @@ xi.effect =
     CRIMSON_TIDE             = 812, -- DRK: granted when Blood Weapon expires; stacking crit rate bonus based on hits during BW
     GROGGY                   = 813, -- BRD: applied to target when Lullaby expires; +5% physical damage taken for 10s
     STRATEGIC_CLARITY        = 814, -- BRD: granted when Finale strips a buff; next Threnody/Elegy/Lullaby recast is reset
+    DRAWN_BOW                = 815, -- SAM: granted after ranged WS while Hasso active; next melee WS deals +20% damage
+    ZANSHIN_MOMENTUM         = 816, -- SAM: each Zanshin proc adds +5% TWOHAND haste (stacks to 15%, refreshes 10s timer)
 
     -- 789
-    -- 813-1022
+    -- 817-1022
     -- PLACEHOLDER           = 1023 -- The client dat file seems to have only this many "slots", results of exceeding that are untested.
 }

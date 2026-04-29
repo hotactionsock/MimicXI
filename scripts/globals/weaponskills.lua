@@ -720,6 +720,21 @@ xi.weaponskills.doPhysicalWeaponskill = function(attacker, target, wsID, wsParam
         finaldmg = math.floor(finaldmg * (1 + drained / 3000 * 0.5))
     end
 
+    -- Poised Strike (SAM): Third Eye anticipations with polearm build stacks, consumed on polearm WS.
+    if attacker:getWeaponSkillType(xi.slot.MAIN) == xi.skill.POLEARM then
+        local stacks = attacker:getLocalVar('POISED_STACKS')
+        if stacks > 0 then
+            attacker:setLocalVar('POISED_STACKS', 0)
+            finaldmg = math.floor(finaldmg * (1 + stacks * 0.1))
+        end
+    end
+
+    -- Drawn Bow (SAM): Ranged WS primer consumed on first melee WS for +20% damage.
+    if attacker:hasStatusEffect(xi.effect.DRAWN_BOW) then
+        attacker:delStatusEffect(xi.effect.DRAWN_BOW)
+        finaldmg = math.floor(finaldmg * 1.2)
+    end
+
     finaldmg            = finaldmg * xi.settings.main.WEAPON_SKILL_POWER -- Add server bonus
     calcParams.finalDmg = finaldmg
     finaldmg            = xi.weaponskills.takeWeaponskillDamage(target, attacker, wsParams, primaryMsg, attack, calcParams, action)
@@ -807,6 +822,11 @@ xi.weaponskills.doRangedWeaponskill = function(attacker, target, wsID, wsParams,
     -- Ammo needs to be removed after xi.weaponskills.takeWeaponskillDamage for delay/tp return uses
     if calcParams.ammoUsed and calcParams.ammoUsed > 0 then
         attacker:removeAmmo(calcParams.ammoUsed)
+    end
+
+    -- Drawn Bow (SAM): Ranged WS while Hasso active primes next melee WS for +20% damage.
+    if attacker:hasStatusEffect(xi.effect.HASSO) and finaldmg > 0 then
+        attacker:addStatusEffect(xi.effect.DRAWN_BOW, { power = 1, duration = 20, origin = attacker })
     end
 
     return finaldmg, calcParams.criticalHit, calcParams.tpHitsLanded, calcParams.extraHitsLanded, calcParams.shadowsAbsorbed
