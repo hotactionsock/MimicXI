@@ -14,6 +14,7 @@ effectObject.onEffectTick = function(target, effect)
 end
 
 effectObject.onEffectLose = function(target, effect)
+    target:setLocalVar('DRACONIC_RESONANCE_STACKS', 0)
 end
 
 return effectObject

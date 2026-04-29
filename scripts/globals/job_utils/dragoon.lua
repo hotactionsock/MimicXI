@@ -75,13 +75,10 @@ local function performWSJump(player, target, action, params, abilityID)
         end
 
         -- Draconic Resonance (DRG): each damaging jump builds stacks (Spirit/Soul = 2, others = 1).
-        local stacksToAdd = (abilityID == xi.jobAbility.SPIRIT_JUMP or abilityID == xi.jobAbility.SOUL_JUMP) and 2 or 1
-        local currentStacks = 0
-        local resonanceEffect = player:getStatusEffect(xi.effect.DRACONIC_RESONANCE)
-        if resonanceEffect then
-            currentStacks = resonanceEffect:getPower()
-        end
-        local newStacks = math.min(currentStacks + stacksToAdd, 3)
+        local stacksToAdd  = (abilityID == xi.jobAbility.SPIRIT_JUMP or abilityID == xi.jobAbility.SOUL_JUMP) and 2 or 1
+        local currentStacks = player:getLocalVar('DRACONIC_RESONANCE_STACKS')
+        local newStacks    = math.min(currentStacks + stacksToAdd, 3)
+        player:setLocalVar('DRACONIC_RESONANCE_STACKS', newStacks)
         player:delStatusEffect(xi.effect.DRACONIC_RESONANCE)
         player:addStatusEffect(xi.effect.DRACONIC_RESONANCE, { power = newStacks, duration = 10, origin = player })
         if xi.settings.map.MIMIC_COMBAT_NOTIFICATIONS then

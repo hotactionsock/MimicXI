@@ -737,9 +737,8 @@ xi.weaponskills.doPhysicalWeaponskill = function(attacker, target, wsID, wsParam
 
     -- Draconic Resonance (DRG): jump stacks consumed on polearm WS for +20% per stack (up to +60%).
     if attacker:getWeaponSkillType(xi.slot.MAIN) == xi.skill.POLEARM then
-        local resonanceEffect = attacker:getStatusEffect(xi.effect.DRACONIC_RESONANCE)
-        if resonanceEffect then
-            local stacks = resonanceEffect:getPower()
+        if attacker:hasStatusEffect(xi.effect.DRACONIC_RESONANCE) then
+            local stacks = attacker:getLocalVar('DRACONIC_RESONANCE_STACKS')
             attacker:delStatusEffect(xi.effect.DRACONIC_RESONANCE)
             finaldmg = math.floor(finaldmg * (1 + stacks * 0.2))
         end
