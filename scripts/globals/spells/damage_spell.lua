@@ -724,6 +724,22 @@ xi.spells.damage.calculateDivineEmblemMultiplier = function(caster, skillType)
     return 1 + caster:getSkillLevel(xi.skill.DIVINE_MAGIC) / 100
 end
 
+-- Holy Retribution: granted when Sentinel expires after absorbing physical hits. Next Holy/Banish/Flash deals 10-100% bonus damage.
+xi.spells.damage.calculateHolyRetributionMultiplier = function(caster, skillType)
+    if not caster:hasStatusEffect(xi.effect.HOLY_RETRIBUTION) then
+        return 1
+    end
+
+    if skillType ~= xi.skill.DIVINE_MAGIC then
+        return 1
+    end
+
+    local stacks = caster:getStatusEffect(xi.effect.HOLY_RETRIBUTION):getPower()
+    caster:delStatusEffect(xi.effect.HOLY_RETRIBUTION)
+
+    return 1 + (stacks * 0.1)
+end
+
 -- Aura of Radiance: granted when Divine Seal is consumed by a cure. Next Holy/Banish deals 150% damage.
 xi.spells.damage.calculateAuraOfRadianceMultiplier = function(caster, skillType)
     if not caster:hasStatusEffect(xi.effect.AURA_OF_RADIANCE) then
@@ -761,6 +777,18 @@ xi.spells.damage.calculateArcaneEchoMultiplier = function(caster, skillType, spe
     return 1.5
 end
 
+-- BRD Threnody vulnerability stacks (stored in target local vars by threnody.lua).
+-- Each stack = +5% bonus damage from the matching element. All stacks consumed on hit.
+xi.spells.damage.calculateThrenodyVulnerabilityMultiplier = function(caster, target, spellElement)
+    if not target then return 1 end
+    if spellElement <= xi.element.NONE then return 1 end
+    local key    = 'THRENODY_STACKS_' .. tostring(spellElement)
+    local stacks = target:getLocalVar(key)
+    if stacks <= 0 then return 1 end
+    target:setLocalVar(key, 0)
+    return 1 + stacks * 0.05
+end
+
 -- Elemental seal applies its own multiplier to spells when Laevateinn is equipped,
 -- or some other source of ENHANCES_ELEMENTAL_SEAL is available to the caster.
 -- Also consumes Elemental Seal and grants Arcane Echo for the follow-up spell.
@@ -796,6 +824,35 @@ xi.spells.damage.calculateEbullienceMultiplier = function(caster, spellGroup)
     caster:delStatusEffectSilent(xi.effect.EBULLIENCE)
 
     return 1.2 + caster:getMod(xi.mod.EBULLIENCE_AMOUNT) / 100
+end
+
+-- Chainspell Convergence: during Chainspell, elemental spells matching the active enspell's element deal 130% damage.
+xi.spells.damage.calculateChainspellConvergenceMultiplier = function(caster, skillType, spellElement)
+    if not caster:hasStatusEffect(xi.effect.CHAINSPELL) then
+        return 1
+    end
+
+    if skillType ~= xi.skill.ELEMENTAL_MAGIC then
+        return 1
+    end
+
+    if spellElement <= xi.element.NONE then
+        return 1
+    end
+
+    local enspellMod = caster:getMod(xi.mod.ENSPELL)
+    if enspellMod <= 0 then
+        return 1
+    end
+
+    -- Tier 2 enspells store element + 8; normalise to the base element for comparison
+    local enspellElement = (enspellMod > 8) and (enspellMod - 8) or enspellMod
+
+    if enspellElement ~= spellElement then
+        return 1
+    end
+
+    return 1.3
 end
 
 -- CUSTOM function supported in settings.
@@ -873,6 +930,74 @@ xi.spells.damage.calculateNinjutsuMultiplier = function(caster, target, skillTyp
     end
 
     return 1 + caster:getMod(xi.mod.NIN_NUKE_BONUS_INNIN) / 100
+end
+
+-- NIN Blade Dance: melee hits from behind while Innin is active build stacks (max 5).
+-- Consuming those stacks while casting ninjutsu from behind amplifies the hit by +8% per stack.
+xi.spells.damage.calculateBladeDanceMultiplier = function(caster, target, skillType)
+    if skillType ~= xi.skill.NINJUTSU then
+        return 1
+    end
+
+    if not caster:hasStatusEffect(xi.effect.INNIN) then
+        return 1
+    end
+
+    if not caster:isBehind(target, 23) then
+        return 1
+    end
+
+    local stacks = caster:getLocalVar('BLADE_DANCE_STACKS')
+
+    if stacks <= 0 then
+        return 1
+    end
+
+    caster:setLocalVar('BLADE_DANCE_STACKS', 0)
+
+    return 1 + stacks * 0.08
+end
+
+-- NIN Yonin Aggressive Evasion: Yonin's decaying power (30→10) grants a matching ninjutsu bonus.
+-- At full power: +30% ninjutsu damage. At minimum: +10%.
+xi.spells.damage.calculateYoninOffensiveMultiplier = function(caster, skillType)
+    if skillType ~= xi.skill.NINJUTSU then
+        return 1
+    end
+
+    local yoninEffect = caster:getStatusEffect(xi.effect.YONIN)
+
+    if not yoninEffect then
+        return 1
+    end
+
+    return 1 + yoninEffect:getPower() / 100
+end
+
+-- NIN Elemental Scar: ninjutsu always stamps an elemental scar on the target (35s).
+-- If the target already carries a matching scar the hit deals +25% bonus damage.
+-- Scar is always overwritten with the current spell's element.
+xi.spells.damage.calculateElementalScarMultiplier = function(caster, target, skillType, spellElement)
+    if skillType ~= xi.skill.NINJUTSU then
+        return 1
+    end
+
+    if spellElement <= xi.element.NONE then
+        return 1
+    end
+
+    local multiplier = 1
+
+    local scarEffect = target:getStatusEffect(xi.effect.ELEMENTAL_SCAR)
+
+    if scarEffect and scarEffect:getPower() == spellElement then
+        multiplier = 1.25
+    end
+
+    target:delStatusEffect(xi.effect.ELEMENTAL_SCAR)
+    target:addStatusEffect(xi.effect.ELEMENTAL_SCAR, { power = spellElement, duration = 35, origin = caster })
+
+    return multiplier
 end
 
 xi.spells.damage.calculateUndeadDivinePenalty = function(target, skillType)
@@ -1176,14 +1301,20 @@ xi.spells.damage.useDamageSpell = function(caster, target, spell)
     local criticalDamageMultiplier  = xi.spells.damage.calculateMagicCriticalMultiplier(caster)
     local divineSealMultiplier      = xi.spells.damage.calculateDivineSealMultiplier(caster, target, skillType)
     local divineEmblemMultiplier    = xi.spells.damage.calculateDivineEmblemMultiplier(caster, skillType)
+    local holyRetributionMultiplier = xi.spells.damage.calculateHolyRetributionMultiplier(caster, skillType)
     local auraOfRadianceMultiplier  = xi.spells.damage.calculateAuraOfRadianceMultiplier(caster, skillType)
     local arcaneEchoMultiplier      = xi.spells.damage.calculateArcaneEchoMultiplier(caster, skillType, spellElement)
-    local eleSealMultiplier         = xi.spells.damage.calculateEnhancedElementalSealMultiplier(caster, skillType, spellElement)
-    local ebullienceMultiplier      = xi.spells.damage.calculateEbullienceMultiplier(caster, spellGroup)
+    local eleSealMultiplier                = xi.spells.damage.calculateEnhancedElementalSealMultiplier(caster, skillType, spellElement)
+    local ebullienceMultiplier             = xi.spells.damage.calculateEbullienceMultiplier(caster, spellGroup)
+    local chainspellConvergenceMultiplier  = xi.spells.damage.calculateChainspellConvergenceMultiplier(caster, skillType, spellElement)
+    local threnodyVulnMultiplier           = xi.spells.damage.calculateThrenodyVulnerabilityMultiplier(caster, target, spellElement)
     local skillTypeMultiplier       = xi.spells.damage.calculateSkillTypeMultiplier(skillType)
     local ninSkillBonus             = xi.spells.damage.calculateNinSkillBonus(caster, spellId, skillType)
     local ninFutaeBonus             = xi.spells.damage.calculateNinFutaeBonus(caster, skillType)
     local ninjutsuMultiplier        = xi.spells.damage.calculateNinjutsuMultiplier(caster, target, skillType)
+    local bladeDanceMultiplier      = xi.spells.damage.calculateBladeDanceMultiplier(caster, target, skillType)
+    local yoninOffensiveMultiplier  = xi.spells.damage.calculateYoninOffensiveMultiplier(caster, skillType)
+    local elementalScarMultiplier   = xi.spells.damage.calculateElementalScarMultiplier(caster, target, skillType, spellElement)
     local undeadDivinePenalty       = xi.spells.damage.calculateUndeadDivinePenalty(target, skillType)
     local scarletDeliriumMultiplier = xi.combat.damage.scarletDeliriumMultiplier(caster)
     local helixMeritMultiplier      = xi.spells.damage.calculateHelixMeritMultiplier(caster, spellId)
@@ -1201,16 +1332,22 @@ xi.spells.damage.useDamageSpell = function(caster, target, spell)
     finalDamage = math.floor(finalDamage * magicBonusDiff)
     finalDamage = math.floor(finalDamage * criticalDamageMultiplier)
     finalDamage = math.floor(finalDamage * targetMagicDamageAdjustment)
+    finalDamage = math.floor(finalDamage * holyRetributionMultiplier)
     finalDamage = math.floor(finalDamage * divineSealMultiplier)
     finalDamage = math.floor(finalDamage * divineEmblemMultiplier)
     finalDamage = math.floor(finalDamage * auraOfRadianceMultiplier)
     finalDamage = math.floor(finalDamage * arcaneEchoMultiplier)
     finalDamage = math.floor(finalDamage * eleSealMultiplier)
     finalDamage = math.floor(finalDamage * ebullienceMultiplier)
+    finalDamage = math.floor(finalDamage * chainspellConvergenceMultiplier)
+    finalDamage = math.floor(finalDamage * threnodyVulnMultiplier)
     finalDamage = math.floor(finalDamage * skillTypeMultiplier)
     finalDamage = math.floor(finalDamage * ninSkillBonus)
     finalDamage = math.floor(finalDamage * ninFutaeBonus)
     finalDamage = math.floor(finalDamage * ninjutsuMultiplier)
+    finalDamage = math.floor(finalDamage * bladeDanceMultiplier)
+    finalDamage = math.floor(finalDamage * yoninOffensiveMultiplier)
+    finalDamage = math.floor(finalDamage * elementalScarMultiplier)
     finalDamage = math.floor(finalDamage * undeadDivinePenalty)
     finalDamage = math.floor(finalDamage * scarletDeliriumMultiplier)
     finalDamage = math.floor(finalDamage * helixMeritMultiplier)

@@ -229,6 +229,16 @@ xi.job_utils.summoner.onUseBloodPact = function(target, petskill, summoner, acti
                 summoner:addRecast(xi.recast.ABILITY, bloodPactAbility:getRecastID(), bloodPactRecast)
             end
         end
+
+        -- Ward Resonance: each Ward BP builds one stack (max 5, 30s refresh) consumed by next Rage BP.
+        if bloodPactAbility:getRecastID() == xi.recastID.BLOODPACT_WARD then
+            local current = 0
+            local resEffect = summoner:getStatusEffect(xi.effect.WARD_RESONANCE)
+            if resEffect then current = resEffect:getPower() end
+            local newStacks = math.min(current + 1, 5)
+            summoner:delStatusEffect(xi.effect.WARD_RESONANCE)
+            summoner:addStatusEffect(xi.effect.WARD_RESONANCE, { power = newStacks, duration = 30, origin = summoner })
+        end
     end
 end
 

@@ -12,6 +12,17 @@ effectObject.onEffectGain = function(target, effect) -- Power = 30 initially, su
     effect:addMod(xi.mod.EVA, -power)
     effect:addMod(xi.mod.ENMITY, -effect:getSubPower())
     effect:addMod(xi.mod.ACC, jpValue)
+
+    -- Blade Dance: melee hits from behind while Innin is active build stacks (max 5) that
+    -- amplify the next ninjutsu cast (if also from behind) by +8% per stack (up to +40%).
+    target:addListener('MELEE_SWING_HIT', 'INNIN_BLADE_DANCE', function(actorArg, targetArg, attack)
+        if not actorArg:hasStatusEffect(xi.effect.INNIN) then return end
+        if not actorArg:isBehind(targetArg, 23) then return end
+        local stacks = actorArg:getLocalVar('BLADE_DANCE_STACKS')
+        if stacks < 5 then
+            actorArg:setLocalVar('BLADE_DANCE_STACKS', stacks + 1)
+        end
+    end)
 end
 
 effectObject.onEffectTick = function(target, effect)
@@ -35,6 +46,8 @@ effectObject.onEffectTick = function(target, effect)
 end
 
 effectObject.onEffectLose = function(target, effect)
+    target:removeListener('INNIN_BLADE_DANCE')
+    target:setLocalVar('BLADE_DANCE_STACKS', 0)
 end
 
 return effectObject

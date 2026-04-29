@@ -1189,6 +1189,17 @@ xi.mobskills.mobMagicalMove = function(mob, target, skill, action, skillParams)
 
         if mob:isAvatar() then
             bloodPactMultiplier = 1 + mob:getMod(xi.mod.BP_DAMAGE) / 100
+
+            -- Ward Resonance (SMN): consume stacks built by prior Ward BPs.
+            local master = mob:getMaster()
+            if master then
+                local resonanceEffect = master:getStatusEffect(xi.effect.WARD_RESONANCE)
+                if resonanceEffect then
+                    local stacks = resonanceEffect:getPower()
+                    master:delStatusEffect(xi.effect.WARD_RESONANCE)
+                    bloodPactMultiplier = bloodPactMultiplier * (1 + stacks * 0.15)
+                end
+            end
         end
 
         if

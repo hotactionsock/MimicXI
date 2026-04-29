@@ -40,6 +40,14 @@ xi.combat.physicalHitRate.checkAnticipated = function(attacker, defender)
         defender:delStatusEffect(xi.effect.THIRD_EYE)
     end
 
+    -- Poised Strike (SAM): Third Eye anticipation with polearm builds stacks (max 5) for next polearm WS.
+    if defender:getMainJob() == xi.job.SAM and defender:getWeaponSkillType(xi.slot.MAIN) == xi.skill.POLEARM then
+        local stacks = defender:getLocalVar('POISED_STACKS')
+        if stacks < 5 then
+            defender:setLocalVar('POISED_STACKS', stacks + 1)
+        end
+    end
+
     return true
 end
 

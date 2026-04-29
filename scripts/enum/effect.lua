@@ -679,8 +679,21 @@ xi.effect =
     NUKE_WALL                = 806, -- Custom effect for NM type mobs only.
     AURA_OF_RADIANCE         = 807, -- WHM: granted after Divine Seal is consumed by a cure; next Holy/Banish deals 150% damage
     ARCANE_ECHO              = 808, -- BLM: granted when Elemental Seal is consumed; next spell of the same element deals 150% damage
+    HOLY_RETRIBUTION         = 809, -- PLD: granted when Sentinel expires based on hits absorbed; next Holy/Banish/Flash deals bonus damage
+    SOUL_RESERVOIR           = 810, -- DRK: granted when Souleater expires; stores HP drained, next WS deals up to +50% bonus damage
+    DARK_EMPOWERMENT         = 811, -- DRK: granted when Nether Void is consumed by a drain/aspir/absorb; drains restore TP for 30s
+    CRIMSON_TIDE             = 812, -- DRK: granted when Blood Weapon expires; stacking crit rate bonus based on hits during BW
+    GROGGY                   = 813, -- BRD: applied to target when Lullaby expires; +5% physical damage taken for 10s
+    STRATEGIC_CLARITY        = 814, -- BRD: granted when Finale strips a buff; next Threnody/Elegy/Lullaby recast is reset
+    DRAWN_BOW                = 815, -- SAM: granted after ranged WS while Hasso active; next melee WS deals +20% damage
+    ZANSHIN_MOMENTUM         = 816, -- SAM: each Zanshin proc adds +5% TWOHAND haste (stacks to 15%, refreshes 10s timer)
+    ELEMENTAL_SCAR           = 817, -- NIN: applied to target after a ninjutsu hit; matching element on next cast deals +25%; expires in 35s
+    DRACONIC_RESONANCE       = 818, -- DRG: each damaging jump adds stacks (1 or 2); consumed on polearm WS for +20% per stack (cap 3 stacks/+60%)
+    WYVERN_BLESSING          = 819, -- DRG: granted when Healing Breath heals master; next WS deals bonus damage scaled to HP restored (cap +50%)
+    BREACH                   = 820, -- DRG: granted when Angon lands; next jump deals +35% bonus damage
+    WARD_RESONANCE           = 821, -- SMN: each Ward BP builds 1 stack (max 5, 30s refresh); consumed by next Rage BP for +15% per stack (up to +75%)
 
     -- 789
-    -- 809-1022
+    -- 822-1022
     -- PLACEHOLDER           = 1023 -- The client dat file seems to have only this many "slots", results of exceeding that are untested.
 }
