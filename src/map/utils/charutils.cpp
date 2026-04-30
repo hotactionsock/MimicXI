@@ -5244,29 +5244,51 @@ void DistributeExperiencePoints(CCharEntity* PChar, CMobEntity* PMob)
 
                     exp = charutils::AddExpBonus(PMember, exp);
 
-                    // Sync Buddy Bonus: rewards mentors (synced-down veterans) and pupils (sync target members)
+                    // Sync Buddy Bonus: fires only for the two players who have explicitly paired
+                    // with each other via /syncbuddy.  Checks the designated buddy ID stored in
+                    // char vars so the bonus never spills to other party members in a full sync.
                     if (settings::get<bool>("map.SYNC_BUDDY_ENABLE") && PChar->PParty)
                     {
                         CBattleEntity* PSyncTarget = PChar->PParty->GetSyncTarget();
                         if (PSyncTarget)
                         {
-                            bool  isSynced  = PMember->StatusEffectContainer->HasStatusEffect(EFFECT_LEVEL_SYNC);
-                            uint8 realLevel = PMember->jobs.job[PMember->GetMJob()];
-                            uint8 syncLevel = PSyncTarget->GetMLevel();
-                            uint8 minDiff   = settings::get<uint8>("map.SYNC_MIN_LEVEL_DIFF");
+                            int32 buddyId    = PMember->getCharVar("sync_buddy_id");
+                            bool  buddyFound = false;
 
-                            if (isSynced && realLevel >= syncLevel + minDiff)
+                            if (buddyId != 0)
                             {
-                                // Mentor path: veteran synced down 10+ levels
-                                float mentorBonus = settings::get<float>("map.SYNC_MENTOR_EXP_BONUS");
-                                exp *= (1.0f + mentorBonus);
-                                float sparksPct                = settings::get<float>("map.SYNC_MENTOR_SPARKS_PCT");
-                                PMember->m_pendingMentorSparks = (uint32)(exp * sparksPct);
+                                // Walk the party (not alliance) to confirm the buddy is present here
+                                PChar->ForParty([buddyId, &buddyFound](CBattleEntity* PCheck)
+                                {
+                                    if (CCharEntity* PC = dynamic_cast<CCharEntity*>(PCheck))
+                                    {
+                                        if (static_cast<int32>(PC->id) == buddyId)
+                                        {
+                                            buddyFound = true;
+                                        }
+                                    }
+                                });
                             }
-                            else if (!isSynced && PMember->GetMLevel() <= syncLevel)
+
+                            if (buddyFound)
                             {
-                                // Pupil path: the lower-level member being synced to
-                                exp *= (1.0f + settings::get<float>("map.SYNC_PUPIL_EXP_BONUS"));
+                                bool  isSyncTarget = (PSyncTarget == PMember);
+                                bool  isSynced     = PMember->StatusEffectContainer->HasStatusEffect(EFFECT_LEVEL_SYNC);
+                                uint8 realLevel    = PMember->jobs.job[PMember->GetMJob()];
+                                uint8 syncLevel    = PSyncTarget->GetMLevel();
+                                uint8 minDiff      = settings::get<uint8>("map.SYNC_MIN_LEVEL_DIFF");
+
+                                if (isSynced && !isSyncTarget && realLevel >= syncLevel + minDiff)
+                                {
+                                    // Mentor: veteran synced down at least SYNC_MIN_LEVEL_DIFF levels
+                                    exp *= (1.0f + settings::get<float>("map.SYNC_MENTOR_EXP_BONUS"));
+                                    PMember->m_pendingMentorSparks = (uint32)(exp * settings::get<float>("map.SYNC_MENTOR_SPARKS_PCT"));
+                                }
+                                else if (isSyncTarget)
+                                {
+                                    // Pupil: the low-level player the rest of the party is synced to
+                                    exp *= (1.0f + settings::get<float>("map.SYNC_PUPIL_EXP_BONUS"));
+                                }
                             }
                         }
                     }
