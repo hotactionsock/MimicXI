@@ -6,6 +6,9 @@
 -- on their level relative to the sync target.  The bonus only fires for
 -- the designated pair and does not affect other party members.
 --
+-- A 10-minute cooldown is applied to both players when a pair is formed.
+-- While on cooldown a player cannot send requests or receive them.
+--
 -- Usage:
 --   /syncbuddy <playername>  - Send a sync buddy request
 --   /syncbuddy accept        - Accept an incoming request
@@ -23,13 +26,38 @@ commandObj.cmdprops =
 
 local VAR_BUDDY_ID      = 'sync_buddy_id'
 local VAR_BUDDY_PENDING = 'sync_buddy_pending'
+local VAR_COOLDOWN_END  = 'sync_buddy_cooldown_end'
+local COOLDOWN_SECONDS  = 600
 
-local function getCurrentBuddy(player)
-    local buddyId = player:getCharVar(VAR_BUDDY_ID)
-    if buddyId == 0 then
-        return nil
+-- Returns the number of seconds remaining on the cooldown, or 0 if not on cooldown.
+local function cooldownRemaining(player)
+    local endTime = player:getCharVar(VAR_COOLDOWN_END)
+    if endTime == 0 then
+        return 0
     end
-    return GetPlayerByID(buddyId)
+    local remaining = endTime - os.time()
+    return remaining > 0 and remaining or 0
+end
+
+-- Formats a duration in seconds as a human-readable string.
+local function formatDuration(seconds)
+    local mins = math.floor(seconds / 60)
+    local secs = seconds % 60
+    if mins > 0 and secs > 0 then
+        return string.format('%d minute%s and %d second%s', mins, mins ~= 1 and 's' or '', secs, secs ~= 1 and 's' or '')
+    elseif mins > 0 then
+        return string.format('%d minute%s', mins, mins ~= 1 and 's' or '')
+    else
+        return string.format('%d second%s', secs, secs ~= 1 and 's' or '')
+    end
+end
+
+-- Applies the post-accept cooldown to a player.
+-- The end timestamp is stored as both the value and the DB expiry so the
+-- row self-cleans once the cooldown lapses.
+local function applyCooldown(player)
+    local endTime = os.time() + COOLDOWN_SECONDS
+    player:setCharVar(VAR_COOLDOWN_END, endTime, endTime)
 end
 
 commandObj.onTrigger = function(player, arg)
@@ -45,6 +73,13 @@ commandObj.onTrigger = function(player, arg)
         local requesterId = player:getCharVar(VAR_BUDDY_PENDING)
         if requesterId == 0 then
             player:printToPlayer('[Sync Buddy] You have no pending sync buddy request.')
+            return
+        end
+
+        -- Cooldown check on the accepter
+        local remaining = cooldownRemaining(player)
+        if remaining > 0 then
+            player:printToPlayer(string.format('[Sync Buddy] You cannot accept a sync buddy request for another %s.', formatDuration(remaining)))
             return
         end
 
@@ -77,6 +112,10 @@ commandObj.onTrigger = function(player, arg)
         requester:setCharVar(VAR_BUDDY_ID, player:getID())
         player:setCharVar(VAR_BUDDY_ID, requester:getID())
         player:setCharVar(VAR_BUDDY_PENDING, 0)
+
+        -- Apply cooldown to both players
+        applyCooldown(player)
+        applyCooldown(requester)
 
         player:printToPlayer(string.format('[Sync Buddy] You and %s are now sync buddies! You will both receive bonus EXP when level synced together.', requester:getName()))
         requester:printToPlayer(string.format('[Sync Buddy] %s has accepted your sync buddy request! You will both receive bonus EXP when level synced together.', player:getName()))
@@ -135,6 +174,19 @@ commandObj.onTrigger = function(player, arg)
 
     if target:getID() == player:getID() then
         player:printToPlayer('[Sync Buddy] You cannot set yourself as your sync buddy.')
+        return
+    end
+
+    -- Check the sender is not on cooldown
+    local senderCooldown = cooldownRemaining(player)
+    if senderCooldown > 0 then
+        player:printToPlayer(string.format('[Sync Buddy] You cannot send sync buddy requests for another %s.', formatDuration(senderCooldown)))
+        return
+    end
+
+    -- Check the target is not on cooldown
+    if cooldownRemaining(target) > 0 then
+        player:printToPlayer('[Sync Buddy] This player cannot receive Buddy Sync invites at this time.')
         return
     end
 
