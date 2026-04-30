@@ -315,6 +315,7 @@ public:
     profile_t       profile{};
     capacityChain_t capacityChain{};
     expChain_t      expChain{};
+    uint32          m_pendingMentorSparks{}; // Sparks queued by Sync Buddy bonus, flushed in AddExperiencePoints
     search_t        search{};              // Data and comment displayed in the search box
     bazaar_t        bazaar{};              // All the data you need to run bazaar
     uint16          m_EquipFlag{};         // Current events handled by the equipment (later it will be packed into a structure, along with equip[])

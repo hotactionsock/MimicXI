@@ -66,6 +66,22 @@ xi.settings.map =
     EXP_LOSS_RATE           = 1.0,
     EXP_PARTY_GAP_PENALTIES = true,
 
+    -- New Player Aura: linearly scales from +100% XP at level 1 down to +0% at cap level.
+    NEW_PLAYER_AURA_ENABLE    = true,
+    NEW_PLAYER_AURA_CAP_LEVEL = 30,
+
+    -- Party Momentum Bonus: bonus XP multiplier per extra party member (stacks per additional member beyond 1).
+    -- At 0.40 per member: 2p = share(0.60) * 1.40 = 0.84x, 6p = share(0.35) * 3.00 = 1.05x vs solo 1.0x.
+    PARTY_MOMENTUM_ENABLE  = true,
+    PARTY_BONUS_PER_MEMBER = 0.40,
+
+    -- Sync Buddy Bonus: rewards mentors (high-level synced-down members) and pupils (the lower-level sync target members).
+    SYNC_BUDDY_ENABLE      = true,
+    SYNC_MENTOR_EXP_BONUS  = 0.15,  -- Extra EXP % for the mentor
+    SYNC_PUPIL_EXP_BONUS   = 0.20,  -- Extra EXP % for the pupil
+    SYNC_MENTOR_SPARKS_PCT = 0.05,  -- Sparks awarded to mentor as a fraction of their final EXP
+    SYNC_MIN_LEVEL_DIFF    = 10,    -- Minimum true-level gap above sync target to qualify as mentor
+
     -- A party member's experience points are nullified if the level difference with the highest-level party member exceeds this value.
     -- When set to 0, there is no nullification of EXP regardless of how wide the gap is between party members.
     -- When set to 10, if you are level 65 or below in a party with a level 75, you will receive no EXP.

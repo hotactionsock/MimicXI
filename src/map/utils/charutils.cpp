@@ -4955,6 +4955,13 @@ void DistributeExperiencePoints(CCharEntity* PChar, CMobEntity* PMob)
 
                     exp *= GetPlayerShareMultiplier(pcinzone, isInSignetZone || isInSanctionZone);
 
+                    // Party Momentum Bonus: rewards grouping with a stacking per-member multiplier
+                    if (settings::get<bool>("map.PARTY_MOMENTUM_ENABLE") && pcinzone > 1)
+                    {
+                        float bonusPerMember = settings::get<float>("map.PARTY_BONUS_PER_MEMBER");
+                        exp *= 1.0f + (pcinzone - 1) * bonusPerMember;
+                    }
+
                     if (PMob->getMobMod(MOBMOD_EXP_BONUS))
                     {
                         const float monsterbonus = 1.0f + PMob->getMobMod(MOBMOD_EXP_BONUS) / 100.0f;
@@ -5236,6 +5243,33 @@ void DistributeExperiencePoints(CCharEntity* PChar, CMobEntity* PMob)
                     }
 
                     exp = charutils::AddExpBonus(PMember, exp);
+
+                    // Sync Buddy Bonus: rewards mentors (synced-down veterans) and pupils (sync target members)
+                    if (settings::get<bool>("map.SYNC_BUDDY_ENABLE") && PChar->PParty)
+                    {
+                        CBattleEntity* PSyncTarget = PChar->PParty->GetSyncTarget();
+                        if (PSyncTarget)
+                        {
+                            bool  isSynced  = PMember->StatusEffectContainer->HasStatusEffect(EFFECT_LEVEL_SYNC);
+                            uint8 realLevel = PMember->jobs.job[PMember->GetMJob()];
+                            uint8 syncLevel = PSyncTarget->GetMLevel();
+                            uint8 minDiff   = settings::get<uint8>("map.SYNC_MIN_LEVEL_DIFF");
+
+                            if (isSynced && realLevel >= syncLevel + minDiff)
+                            {
+                                // Mentor path: veteran synced down 10+ levels
+                                float mentorBonus = settings::get<float>("map.SYNC_MENTOR_EXP_BONUS");
+                                exp *= (1.0f + mentorBonus);
+                                float sparksPct                = settings::get<float>("map.SYNC_MENTOR_SPARKS_PCT");
+                                PMember->m_pendingMentorSparks = (uint32)(exp * sparksPct);
+                            }
+                            else if (!isSynced && PMember->GetMLevel() <= syncLevel)
+                            {
+                                // Pupil path: the lower-level member being synced to
+                                exp *= (1.0f + settings::get<float>("map.SYNC_PUPIL_EXP_BONUS"));
+                            }
+                        }
+                    }
 
                     charutils::AddExperiencePoints(false, PMember, PMob, (uint32)exp, mobCheck, chainactive);
                 }
@@ -5683,6 +5717,13 @@ void AddExperiencePoints(bool expFromRaise, CCharEntity* PChar, CBaseEntity* PMo
     }
 
     PChar->PAI->EventHandler.triggerListener("EXPERIENCE_POINTS", PChar, PMob, exp);
+
+    // Flush any Sync Buddy mentor sparks queued during DistributeExperiencePoints
+    if (PChar->m_pendingMentorSparks > 0)
+    {
+        charutils::AddPoints(PChar, "sparks_of_eminence", (int32)PChar->m_pendingMentorSparks);
+        PChar->m_pendingMentorSparks = 0;
+    }
 
     // Player levels up
     if ((currentExp + exp) >= GetExpNEXTLevel(PChar->jobs.job[PChar->GetMJob()]) && !onLimitMode)
@@ -6653,6 +6694,19 @@ float AddExpBonus(CCharEntity* PChar, float exp)
     TracyZoneScoped;
 
     int32 bonus = 0;
+
+    // New Player Aura: linearly scales from +100% at level 1 to +0% at cap level
+    if (settings::get<bool>("map.NEW_PLAYER_AURA_ENABLE"))
+    {
+        uint8 auraCapLevel = settings::get<uint8>("map.NEW_PLAYER_AURA_CAP_LEVEL");
+        uint8 charLevel    = PChar->GetMLevel();
+        if (charLevel < auraCapLevel)
+        {
+            float pct = 1.0f - ((float)charLevel / (float)auraCapLevel);
+            bonus += (int32)(exp * pct);
+        }
+    }
+
     if (PChar->StatusEffectContainer->GetStatusEffect(EFFECT_DEDICATION) && PChar->loc.zone->GetRegionID() != REGION_TYPE::ABYSSEA)
     {
         CStatusEffect* dedication = PChar->StatusEffectContainer->GetStatusEffect(EFFECT_DEDICATION);
