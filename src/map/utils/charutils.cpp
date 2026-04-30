@@ -6695,11 +6695,12 @@ float AddExpBonus(CCharEntity* PChar, float exp)
 
     int32 bonus = 0;
 
-    // New Player Aura: linearly scales from +100% at level 1 to +0% at cap level
+    // New Player Aura: linearly scales from +100% at level 1 to +0% at cap level.
+    // Uses true job level (not synced level) so veterans synced down don't benefit.
     if (settings::get<bool>("map.NEW_PLAYER_AURA_ENABLE"))
     {
         uint8 auraCapLevel = settings::get<uint8>("map.NEW_PLAYER_AURA_CAP_LEVEL");
-        uint8 charLevel    = PChar->GetMLevel();
+        uint8 charLevel    = PChar->jobs.job[PChar->GetMJob()]; // true level, unaffected by sync
         if (charLevel < auraCapLevel)
         {
             float pct = 1.0f - ((float)charLevel / (float)auraCapLevel);
