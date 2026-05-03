@@ -41,5 +41,6 @@ custom/commands/
 custom/lua/test_npcs_in_gm_home.lua
 custom/lua/casket_loot_starter_zones.lua
 custom/lua/casket_augment_tiers.lua
+custom/lua/casket_mimic.lua
 custom/LQS/lib/LQS.lua
 custom/LQS/questpack

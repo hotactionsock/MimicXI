@@ -366,6 +366,10 @@ local function checkRemainingAttempts(player, npc, remaining, correctNumber)
     if remaining == 1 then
         player:messageSpecial(baseMessage + casketInfo.messageOffset.CORRECT_NUMBER_WAS, correctNumber, 0, 0, 0, 0)
         messageChest(player, 'UNABLE_TO_OPEN_LOCK', 0, 0, 0, 0, npc)
+        -- Mimic chance: must run before removeChest wipes the NPC local vars.
+        if xi.caskets.mimic and xi.caskets.mimic.onChestFail then
+            xi.caskets.mimic.onChestFail(player, npc)
+        end
         removeChest(npc)
     end
 end
@@ -788,6 +792,59 @@ end
 -----------------------------------
 -- Expose drop type constants so external modules can reference them.
 xi.caskets.dropTypes = casketInfo.dropTypes
+
+-----------------------------------
+-- Extracts pre-rolled item and augment data from an NPC's local vars into
+-- a plain Lua table.  Must be called before removeChest() resets the vars.
+-----------------------------------
+xi.caskets.extractNpcLoot = function(npc)
+    local items = {}
+    for slot = 1, 4 do
+        local itemId = npc:getLocalVar(string.format('[caskets]ITEM%d', slot))
+        if itemId and itemId ~= 0 then
+            local numAugs = npc:getLocalVar(string.format('[caskets]ITEM%dNUMAUGS', slot)) or 0
+            local augments = {}
+            for j = 1, numAugs do
+                augments[j] =
+                {
+                    id    = npc:getLocalVar(string.format('[caskets]ITEM%dAUG%dID',  slot, j)),
+                    value = npc:getLocalVar(string.format('[caskets]ITEM%dAUG%dVAL', slot, j)) - 1,
+                }
+            end
+            items[#items + 1] = { id = itemId, augments = augments }
+        end
+    end
+    return items
+end
+
+-----------------------------------
+-- Gives a list of pre-extracted items (from extractNpcLoot) to a player.
+-- Augmented items are delivered with their augment exdata intact.
+-----------------------------------
+xi.caskets.deliverMimicLoot = function(player, items)
+    local zoneId = player:getZoneID()
+    local ID     = zones[zoneId]
+    for _, item in ipairs(items) do
+        if player:getFreeSlotsCount() == 0 then
+            if ID then
+                player:messageSpecial(ID.text.ITEM_CANNOT_BE_OBTAINED, item.id)
+            end
+        elseif #item.augments > 0 then
+            player:addItem(
+            {
+                id     = item.id,
+                exdata =
+                {
+                    augmentKind    = xi.augment.kind.HAS_AUGMENTS,
+                    augmentSubKind = xi.augment.subKind.STANDARD,
+                    augments       = item.augments,
+                },
+            })
+        else
+            player:addItem(item.id, 1)
+        end
+    end
+end
 
 xi.caskets.spawnCasket = function(player, mob, x, y, z, r)
     local chestId = getCasketID(mob)
