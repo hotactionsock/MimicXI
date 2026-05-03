@@ -139,4 +139,8 @@ xi.trait =
     SHIELD_BARRIER           = 136,
     TANDEM_STRIKE            = 137,
     TANDEM_BLOW              = 138,
+
+    CASKET_HUNTER            = 139,
+    CASKET_HUNTER_II         = 140,
+    CASKET_HUNTER_III        = 141,
 }

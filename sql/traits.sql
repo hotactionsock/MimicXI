@@ -764,6 +764,12 @@ INSERT INTO `traits` VALUES (138,'tandem blow',9,40,1,272,5,'ROV',0);
 INSERT INTO `traits` VALUES (138,'tandem blow',9,60,2,272,10,'ROV',0);
 INSERT INTO `traits` VALUES (138,'tandem blow',9,80,3,272,15,'ROV',0);
 
+-- Casket Hunter I/II/III (THF job 19) — gold casket appearance bonus
+-- modifier 0: no stat mod; effect applied in scripts/globals/caskets.lua
+INSERT INTO `traits` VALUES (139,'casket hunter',19,15,1,0,0,NULL,0);
+INSERT INTO `traits` VALUES (140,'casket hunter',19,35,2,0,0,NULL,0);
+INSERT INTO `traits` VALUES (141,'casket hunter',19,65,3,0,0,NULL,0);
+
 /*!40000 ALTER TABLE `traits` ENABLE KEYS */;
 UNLOCK TABLES;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
