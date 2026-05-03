@@ -5,127 +5,125 @@
 -- the failed chest position at spawn time.
 
 -- mob_groups: one row per zone (same groupid=200 is fine; PK is (zoneid,groupid))
-INSERT INTO `mob_groups` (groupid,poolid,zoneid,name,respawntime,spawntype,dropid,HP,MP,allegiance,content_tag) VALUES
-(200,2664,100,'Casket_Mimic',0,128,0,0,0,0,NULL) -- West_Ronfaure T1 lv12,
-(200,2664,101,'Casket_Mimic',0,128,0,0,0,0,NULL) -- East_Ronfaure T1 lv12,
-(200,2664,106,'Casket_Mimic',0,128,0,0,0,0,NULL) -- North_Gustaberg T1 lv12,
-(200,2664,107,'Casket_Mimic',0,128,0,0,0,0,NULL) -- South_Gustaberg T1 lv12,
-(200,2664,115,'Casket_Mimic',0,128,0,0,0,0,NULL) -- West_Sarutabaruta T1 lv12,
-(200,2664,116,'Casket_Mimic',0,128,0,0,0,0,NULL) -- East_Sarutabaruta T1 lv12,
-(200,2664,102,'Casket_Mimic',0,128,0,0,0,0,NULL) -- La_Theine_Plateau T2 lv22,
-(200,2664,108,'Casket_Mimic',0,128,0,0,0,0,NULL) -- Konschtat_Highlands T2 lv22,
-(200,2664,117,'Casket_Mimic',0,128,0,0,0,0,NULL) -- Tahrongi_Canyon T2 lv22,
-(200,2664,103,'Casket_Mimic',0,128,0,0,0,0,NULL) -- Valkurm_Dunes T2 lv22,
-(200,2664,104,'Casket_Mimic',0,128,0,0,0,0,NULL) -- Jugner_Forest T2 lv22,
-(200,2664,109,'Casket_Mimic',0,128,0,0,0,0,NULL) -- Pashhow_Marshlands T2 lv22,
-(200,2664,119,'Casket_Mimic',0,128,0,0,0,0,NULL) -- Meriphataud_Mountains T2 lv22,
-(200,2664,118,'Casket_Mimic',0,128,0,0,0,0,NULL) -- Buburimu_Peninsula T2 lv22,
-(200,2664,192,'Casket_Mimic',0,128,0,0,0,0,NULL) -- Inner_Horutoto_Ruins T2 lv22,
-(200,2664,172,'Casket_Mimic',0,128,0,0,0,0,NULL) -- Zeruhn_Mines T2 lv22,
-(200,2664,194,'Casket_Mimic',0,128,0,0,0,0,NULL) -- Outer_Horutoto_Ruins T2 lv22,
-(200,2664,191,'Casket_Mimic',0,128,0,0,0,0,NULL) -- Dangruf_Wadi T2 lv22,
-(200,2664,126,'Casket_Mimic',0,128,0,0,0,0,NULL) -- Qufim_Island T3 lv37,
-(200,2664,105,'Casket_Mimic',0,128,0,0,0,0,NULL) -- Batallia_Downs T3 lv37,
-(200,2664,110,'Casket_Mimic',0,128,0,0,0,0,NULL) -- Rolanberry_Fields T3 lv37,
-(200,2664,120,'Casket_Mimic',0,128,0,0,0,0,NULL) -- Sauromugue_Champaign T3 lv37,
-(200,2664,123,'Casket_Mimic',0,128,0,0,0,0,NULL) -- Yuhtunga_Jungle T3 lv37,
-(200,2664,124,'Casket_Mimic',0,128,0,0,0,0,NULL) -- Yhoator_Jungle T3 lv37,
-(200,2664,198,'Casket_Mimic',0,128,0,0,0,0,NULL) -- Maze_of_Shakhrami T3 lv37,
-(200,2664,193,'Casket_Mimic',0,128,0,0,0,0,NULL) -- Ordelles_Caves T3 lv37,
-(200,2664,190,'Casket_Mimic',0,128,0,0,0,0,NULL) -- King_Ranperres_Tomb T3 lv37,
-(200,2664,196,'Casket_Mimic',0,128,0,0,0,0,NULL) -- Gusgen_Mines T3 lv37,
-(200,2664,173,'Casket_Mimic',0,128,0,0,0,0,NULL) -- Korroloka_Tunnel T3 lv37,
-(200,2664,114,'Casket_Mimic',0,128,0,0,0,0,NULL) -- Eastern_Altepa_Desert T4 lv52,
-(200,2664,125,'Casket_Mimic',0,128,0,0,0,0,NULL) -- Western_Altepa_Desert T4 lv52,
-(200,2664,197,'Casket_Mimic',0,128,0,0,0,0,NULL) -- Crawlers_Nest T4 lv52,
-(200,2664,213,'Casket_Mimic',0,128,0,0,0,0,NULL) -- Labyrinth_of_Onzozo T4 lv52,
-(200,2664,121,'Casket_Mimic',0,128,0,0,0,0,NULL) -- The_Sanctuary_of_ZiTah T4 lv52,
-(200,2664,176,'Casket_Mimic',0,128,0,0,0,0,NULL) -- Sea_Serpent_Grotto T4 lv52,
-(200,2664,208,'Casket_Mimic',0,128,0,0,0,0,NULL) -- Quicksand_Caves T4 lv52,
-(200,2664,212,'Casket_Mimic',0,128,0,0,0,0,NULL) -- Gustav_Tunnel T4 lv52,
-(200,2664,113,'Casket_Mimic',0,128,0,0,0,0,NULL) -- Cape_Teriggan T4 lv52,
-(200,2664,174,'Casket_Mimic',0,128,0,0,0,0,NULL) -- Kuftal_Tunnel T4 lv52,
-(200,2664,184,'Casket_Mimic',0,128,0,0,0,0,NULL) -- Lower_Delkfutts_Tower T5 lv65,
-(200,2664,157,'Casket_Mimic',0,128,0,0,0,0,NULL) -- Middle_Delkfutts_Tower T5 lv65,
-(200,2664,158,'Casket_Mimic',0,128,0,0,0,0,NULL) -- Upper_Delkfutts_Tower T5 lv65,
-(200,2664,204,'Casket_Mimic',0,128,0,0,0,0,NULL) -- FeiYin T5 lv65,
-(200,2664,169,'Casket_Mimic',0,128,0,0,0,0,NULL) -- Toraimarai_Canal T5 lv65,
-(200,2664,167,'Casket_Mimic',0,128,0,0,0,0,NULL) -- Bostaunieux_Oubliette T5 lv65,
-(200,2664,159,'Casket_Mimic',0,128,0,0,0,0,NULL) -- Temple_of_Uggalepih T5 lv65,
-(200,2664,195,'Casket_Mimic',0,128,0,0,0,0,NULL) -- The_Eldieme_Necropolis T5 lv65,
-(200,2664,160,'Casket_Mimic',0,128,0,0,0,0,NULL) -- Den_of_Rancor T5 lv65,
-(200,2664,153,'Casket_Mimic',0,128,0,0,0,0,NULL) -- The_Boyahda_Tree T5 lv65,
-(200,2664,200,'Casket_Mimic',0,128,0,0,0,0,NULL) -- Garlaige_Citadel T6 lv72,
-(200,2664,205,'Casket_Mimic',0,128,0,0,0,0,NULL) -- Ifrits_Cauldron T6 lv72,
-(200,2664,122,'Casket_Mimic',0,128,0,0,0,0,NULL) -- RoMaeve T6 lv72,
-(200,2664,111,'Casket_Mimic',0,128,0,0,0,0,NULL) -- Beaucedine_Glacier T6 lv72,
-(200,2664,112,'Casket_Mimic',0,128,0,0,0,0,NULL) -- Xarcabard T6 lv72,
-(200,2664,128,'Casket_Mimic',0,128,0,0,0,0,NULL) -- Valley_of_Sorrows T6 lv72,
-(200,2664,127,'Casket_Mimic',0,128,0,0,0,0,NULL) -- Behemoths_Dominion T6 lv72,
-(200,2664,166,'Casket_Mimic',0,128,0,0,0,0,NULL) -- Ranguemont_Pass T7 lv75,
-(200,2664,130,'Casket_Mimic',0,128,0,0,0,0,NULL) -- RuAun_Gardens T7 lv75,
-(200,2664,177,'Casket_Mimic',0,128,0,0,0,0,NULL) -- VeLugannon_Palace T7 lv75,
-(200,2664,178,'Casket_Mimic',0,128,0,0,0,0,NULL) -- The_Shrine_of_RuAvitau T7 lv75;
+INSERT INTO `mob_groups` (groupid,poolid,zoneid,name,respawntime,spawntype,dropid,HP,MP,allegiance,content_tag) VALUES (200,2664,100,'Casket_Mimic',0,128,0,0,0,0,NULL); -- West_Ronfaure T1 lv12
+INSERT INTO `mob_groups` (groupid,poolid,zoneid,name,respawntime,spawntype,dropid,HP,MP,allegiance,content_tag) VALUES (200,2664,101,'Casket_Mimic',0,128,0,0,0,0,NULL); -- East_Ronfaure T1 lv12
+INSERT INTO `mob_groups` (groupid,poolid,zoneid,name,respawntime,spawntype,dropid,HP,MP,allegiance,content_tag) VALUES (200,2664,106,'Casket_Mimic',0,128,0,0,0,0,NULL); -- North_Gustaberg T1 lv12
+INSERT INTO `mob_groups` (groupid,poolid,zoneid,name,respawntime,spawntype,dropid,HP,MP,allegiance,content_tag) VALUES (200,2664,107,'Casket_Mimic',0,128,0,0,0,0,NULL); -- South_Gustaberg T1 lv12
+INSERT INTO `mob_groups` (groupid,poolid,zoneid,name,respawntime,spawntype,dropid,HP,MP,allegiance,content_tag) VALUES (200,2664,115,'Casket_Mimic',0,128,0,0,0,0,NULL); -- West_Sarutabaruta T1 lv12
+INSERT INTO `mob_groups` (groupid,poolid,zoneid,name,respawntime,spawntype,dropid,HP,MP,allegiance,content_tag) VALUES (200,2664,116,'Casket_Mimic',0,128,0,0,0,0,NULL); -- East_Sarutabaruta T1 lv12
+INSERT INTO `mob_groups` (groupid,poolid,zoneid,name,respawntime,spawntype,dropid,HP,MP,allegiance,content_tag) VALUES (200,2664,102,'Casket_Mimic',0,128,0,0,0,0,NULL); -- La_Theine_Plateau T2 lv22
+INSERT INTO `mob_groups` (groupid,poolid,zoneid,name,respawntime,spawntype,dropid,HP,MP,allegiance,content_tag) VALUES (200,2664,108,'Casket_Mimic',0,128,0,0,0,0,NULL); -- Konschtat_Highlands T2 lv22
+INSERT INTO `mob_groups` (groupid,poolid,zoneid,name,respawntime,spawntype,dropid,HP,MP,allegiance,content_tag) VALUES (200,2664,117,'Casket_Mimic',0,128,0,0,0,0,NULL); -- Tahrongi_Canyon T2 lv22
+INSERT INTO `mob_groups` (groupid,poolid,zoneid,name,respawntime,spawntype,dropid,HP,MP,allegiance,content_tag) VALUES (200,2664,103,'Casket_Mimic',0,128,0,0,0,0,NULL); -- Valkurm_Dunes T2 lv22
+INSERT INTO `mob_groups` (groupid,poolid,zoneid,name,respawntime,spawntype,dropid,HP,MP,allegiance,content_tag) VALUES (200,2664,104,'Casket_Mimic',0,128,0,0,0,0,NULL); -- Jugner_Forest T2 lv22
+INSERT INTO `mob_groups` (groupid,poolid,zoneid,name,respawntime,spawntype,dropid,HP,MP,allegiance,content_tag) VALUES (200,2664,109,'Casket_Mimic',0,128,0,0,0,0,NULL); -- Pashhow_Marshlands T2 lv22
+INSERT INTO `mob_groups` (groupid,poolid,zoneid,name,respawntime,spawntype,dropid,HP,MP,allegiance,content_tag) VALUES (200,2664,119,'Casket_Mimic',0,128,0,0,0,0,NULL); -- Meriphataud_Mountains T2 lv22
+INSERT INTO `mob_groups` (groupid,poolid,zoneid,name,respawntime,spawntype,dropid,HP,MP,allegiance,content_tag) VALUES (200,2664,118,'Casket_Mimic',0,128,0,0,0,0,NULL); -- Buburimu_Peninsula T2 lv22
+INSERT INTO `mob_groups` (groupid,poolid,zoneid,name,respawntime,spawntype,dropid,HP,MP,allegiance,content_tag) VALUES (200,2664,192,'Casket_Mimic',0,128,0,0,0,0,NULL); -- Inner_Horutoto_Ruins T2 lv22
+INSERT INTO `mob_groups` (groupid,poolid,zoneid,name,respawntime,spawntype,dropid,HP,MP,allegiance,content_tag) VALUES (200,2664,172,'Casket_Mimic',0,128,0,0,0,0,NULL); -- Zeruhn_Mines T2 lv22
+INSERT INTO `mob_groups` (groupid,poolid,zoneid,name,respawntime,spawntype,dropid,HP,MP,allegiance,content_tag) VALUES (200,2664,194,'Casket_Mimic',0,128,0,0,0,0,NULL); -- Outer_Horutoto_Ruins T2 lv22
+INSERT INTO `mob_groups` (groupid,poolid,zoneid,name,respawntime,spawntype,dropid,HP,MP,allegiance,content_tag) VALUES (200,2664,191,'Casket_Mimic',0,128,0,0,0,0,NULL); -- Dangruf_Wadi T2 lv22
+INSERT INTO `mob_groups` (groupid,poolid,zoneid,name,respawntime,spawntype,dropid,HP,MP,allegiance,content_tag) VALUES (200,2664,126,'Casket_Mimic',0,128,0,0,0,0,NULL); -- Qufim_Island T3 lv37
+INSERT INTO `mob_groups` (groupid,poolid,zoneid,name,respawntime,spawntype,dropid,HP,MP,allegiance,content_tag) VALUES (200,2664,105,'Casket_Mimic',0,128,0,0,0,0,NULL); -- Batallia_Downs T3 lv37
+INSERT INTO `mob_groups` (groupid,poolid,zoneid,name,respawntime,spawntype,dropid,HP,MP,allegiance,content_tag) VALUES (200,2664,110,'Casket_Mimic',0,128,0,0,0,0,NULL); -- Rolanberry_Fields T3 lv37
+INSERT INTO `mob_groups` (groupid,poolid,zoneid,name,respawntime,spawntype,dropid,HP,MP,allegiance,content_tag) VALUES (200,2664,120,'Casket_Mimic',0,128,0,0,0,0,NULL); -- Sauromugue_Champaign T3 lv37
+INSERT INTO `mob_groups` (groupid,poolid,zoneid,name,respawntime,spawntype,dropid,HP,MP,allegiance,content_tag) VALUES (200,2664,123,'Casket_Mimic',0,128,0,0,0,0,NULL); -- Yuhtunga_Jungle T3 lv37
+INSERT INTO `mob_groups` (groupid,poolid,zoneid,name,respawntime,spawntype,dropid,HP,MP,allegiance,content_tag) VALUES (200,2664,124,'Casket_Mimic',0,128,0,0,0,0,NULL); -- Yhoator_Jungle T3 lv37
+INSERT INTO `mob_groups` (groupid,poolid,zoneid,name,respawntime,spawntype,dropid,HP,MP,allegiance,content_tag) VALUES (200,2664,198,'Casket_Mimic',0,128,0,0,0,0,NULL); -- Maze_of_Shakhrami T3 lv37
+INSERT INTO `mob_groups` (groupid,poolid,zoneid,name,respawntime,spawntype,dropid,HP,MP,allegiance,content_tag) VALUES (200,2664,193,'Casket_Mimic',0,128,0,0,0,0,NULL); -- Ordelles_Caves T3 lv37
+INSERT INTO `mob_groups` (groupid,poolid,zoneid,name,respawntime,spawntype,dropid,HP,MP,allegiance,content_tag) VALUES (200,2664,190,'Casket_Mimic',0,128,0,0,0,0,NULL); -- King_Ranperres_Tomb T3 lv37
+INSERT INTO `mob_groups` (groupid,poolid,zoneid,name,respawntime,spawntype,dropid,HP,MP,allegiance,content_tag) VALUES (200,2664,196,'Casket_Mimic',0,128,0,0,0,0,NULL); -- Gusgen_Mines T3 lv37
+INSERT INTO `mob_groups` (groupid,poolid,zoneid,name,respawntime,spawntype,dropid,HP,MP,allegiance,content_tag) VALUES (200,2664,173,'Casket_Mimic',0,128,0,0,0,0,NULL); -- Korroloka_Tunnel T3 lv37
+INSERT INTO `mob_groups` (groupid,poolid,zoneid,name,respawntime,spawntype,dropid,HP,MP,allegiance,content_tag) VALUES (200,2664,114,'Casket_Mimic',0,128,0,0,0,0,NULL); -- Eastern_Altepa_Desert T4 lv52
+INSERT INTO `mob_groups` (groupid,poolid,zoneid,name,respawntime,spawntype,dropid,HP,MP,allegiance,content_tag) VALUES (200,2664,125,'Casket_Mimic',0,128,0,0,0,0,NULL); -- Western_Altepa_Desert T4 lv52
+INSERT INTO `mob_groups` (groupid,poolid,zoneid,name,respawntime,spawntype,dropid,HP,MP,allegiance,content_tag) VALUES (200,2664,197,'Casket_Mimic',0,128,0,0,0,0,NULL); -- Crawlers_Nest T4 lv52
+INSERT INTO `mob_groups` (groupid,poolid,zoneid,name,respawntime,spawntype,dropid,HP,MP,allegiance,content_tag) VALUES (200,2664,213,'Casket_Mimic',0,128,0,0,0,0,NULL); -- Labyrinth_of_Onzozo T4 lv52
+INSERT INTO `mob_groups` (groupid,poolid,zoneid,name,respawntime,spawntype,dropid,HP,MP,allegiance,content_tag) VALUES (200,2664,121,'Casket_Mimic',0,128,0,0,0,0,NULL); -- The_Sanctuary_of_ZiTah T4 lv52
+INSERT INTO `mob_groups` (groupid,poolid,zoneid,name,respawntime,spawntype,dropid,HP,MP,allegiance,content_tag) VALUES (200,2664,176,'Casket_Mimic',0,128,0,0,0,0,NULL); -- Sea_Serpent_Grotto T4 lv52
+INSERT INTO `mob_groups` (groupid,poolid,zoneid,name,respawntime,spawntype,dropid,HP,MP,allegiance,content_tag) VALUES (200,2664,208,'Casket_Mimic',0,128,0,0,0,0,NULL); -- Quicksand_Caves T4 lv52
+INSERT INTO `mob_groups` (groupid,poolid,zoneid,name,respawntime,spawntype,dropid,HP,MP,allegiance,content_tag) VALUES (200,2664,212,'Casket_Mimic',0,128,0,0,0,0,NULL); -- Gustav_Tunnel T4 lv52
+INSERT INTO `mob_groups` (groupid,poolid,zoneid,name,respawntime,spawntype,dropid,HP,MP,allegiance,content_tag) VALUES (200,2664,113,'Casket_Mimic',0,128,0,0,0,0,NULL); -- Cape_Teriggan T4 lv52
+INSERT INTO `mob_groups` (groupid,poolid,zoneid,name,respawntime,spawntype,dropid,HP,MP,allegiance,content_tag) VALUES (200,2664,174,'Casket_Mimic',0,128,0,0,0,0,NULL); -- Kuftal_Tunnel T4 lv52
+INSERT INTO `mob_groups` (groupid,poolid,zoneid,name,respawntime,spawntype,dropid,HP,MP,allegiance,content_tag) VALUES (200,2664,184,'Casket_Mimic',0,128,0,0,0,0,NULL); -- Lower_Delkfutts_Tower T5 lv65
+INSERT INTO `mob_groups` (groupid,poolid,zoneid,name,respawntime,spawntype,dropid,HP,MP,allegiance,content_tag) VALUES (200,2664,157,'Casket_Mimic',0,128,0,0,0,0,NULL); -- Middle_Delkfutts_Tower T5 lv65
+INSERT INTO `mob_groups` (groupid,poolid,zoneid,name,respawntime,spawntype,dropid,HP,MP,allegiance,content_tag) VALUES (200,2664,158,'Casket_Mimic',0,128,0,0,0,0,NULL); -- Upper_Delkfutts_Tower T5 lv65
+INSERT INTO `mob_groups` (groupid,poolid,zoneid,name,respawntime,spawntype,dropid,HP,MP,allegiance,content_tag) VALUES (200,2664,204,'Casket_Mimic',0,128,0,0,0,0,NULL); -- FeiYin T5 lv65
+INSERT INTO `mob_groups` (groupid,poolid,zoneid,name,respawntime,spawntype,dropid,HP,MP,allegiance,content_tag) VALUES (200,2664,169,'Casket_Mimic',0,128,0,0,0,0,NULL); -- Toraimarai_Canal T5 lv65
+INSERT INTO `mob_groups` (groupid,poolid,zoneid,name,respawntime,spawntype,dropid,HP,MP,allegiance,content_tag) VALUES (200,2664,167,'Casket_Mimic',0,128,0,0,0,0,NULL); -- Bostaunieux_Oubliette T5 lv65
+INSERT INTO `mob_groups` (groupid,poolid,zoneid,name,respawntime,spawntype,dropid,HP,MP,allegiance,content_tag) VALUES (200,2664,159,'Casket_Mimic',0,128,0,0,0,0,NULL); -- Temple_of_Uggalepih T5 lv65
+INSERT INTO `mob_groups` (groupid,poolid,zoneid,name,respawntime,spawntype,dropid,HP,MP,allegiance,content_tag) VALUES (200,2664,195,'Casket_Mimic',0,128,0,0,0,0,NULL); -- The_Eldieme_Necropolis T5 lv65
+INSERT INTO `mob_groups` (groupid,poolid,zoneid,name,respawntime,spawntype,dropid,HP,MP,allegiance,content_tag) VALUES (200,2664,160,'Casket_Mimic',0,128,0,0,0,0,NULL); -- Den_of_Rancor T5 lv65
+INSERT INTO `mob_groups` (groupid,poolid,zoneid,name,respawntime,spawntype,dropid,HP,MP,allegiance,content_tag) VALUES (200,2664,153,'Casket_Mimic',0,128,0,0,0,0,NULL); -- The_Boyahda_Tree T5 lv65
+INSERT INTO `mob_groups` (groupid,poolid,zoneid,name,respawntime,spawntype,dropid,HP,MP,allegiance,content_tag) VALUES (200,2664,200,'Casket_Mimic',0,128,0,0,0,0,NULL); -- Garlaige_Citadel T6 lv72
+INSERT INTO `mob_groups` (groupid,poolid,zoneid,name,respawntime,spawntype,dropid,HP,MP,allegiance,content_tag) VALUES (200,2664,205,'Casket_Mimic',0,128,0,0,0,0,NULL); -- Ifrits_Cauldron T6 lv72
+INSERT INTO `mob_groups` (groupid,poolid,zoneid,name,respawntime,spawntype,dropid,HP,MP,allegiance,content_tag) VALUES (200,2664,122,'Casket_Mimic',0,128,0,0,0,0,NULL); -- RoMaeve T6 lv72
+INSERT INTO `mob_groups` (groupid,poolid,zoneid,name,respawntime,spawntype,dropid,HP,MP,allegiance,content_tag) VALUES (200,2664,111,'Casket_Mimic',0,128,0,0,0,0,NULL); -- Beaucedine_Glacier T6 lv72
+INSERT INTO `mob_groups` (groupid,poolid,zoneid,name,respawntime,spawntype,dropid,HP,MP,allegiance,content_tag) VALUES (200,2664,112,'Casket_Mimic',0,128,0,0,0,0,NULL); -- Xarcabard T6 lv72
+INSERT INTO `mob_groups` (groupid,poolid,zoneid,name,respawntime,spawntype,dropid,HP,MP,allegiance,content_tag) VALUES (200,2664,128,'Casket_Mimic',0,128,0,0,0,0,NULL); -- Valley_of_Sorrows T6 lv72
+INSERT INTO `mob_groups` (groupid,poolid,zoneid,name,respawntime,spawntype,dropid,HP,MP,allegiance,content_tag) VALUES (200,2664,127,'Casket_Mimic',0,128,0,0,0,0,NULL); -- Behemoths_Dominion T6 lv72
+INSERT INTO `mob_groups` (groupid,poolid,zoneid,name,respawntime,spawntype,dropid,HP,MP,allegiance,content_tag) VALUES (200,2664,166,'Casket_Mimic',0,128,0,0,0,0,NULL); -- Ranguemont_Pass T7 lv75
+INSERT INTO `mob_groups` (groupid,poolid,zoneid,name,respawntime,spawntype,dropid,HP,MP,allegiance,content_tag) VALUES (200,2664,130,'Casket_Mimic',0,128,0,0,0,0,NULL); -- RuAun_Gardens T7 lv75
+INSERT INTO `mob_groups` (groupid,poolid,zoneid,name,respawntime,spawntype,dropid,HP,MP,allegiance,content_tag) VALUES (200,2664,177,'Casket_Mimic',0,128,0,0,0,0,NULL); -- VeLugannon_Palace T7 lv75
+INSERT INTO `mob_groups` (groupid,poolid,zoneid,name,respawntime,spawntype,dropid,HP,MP,allegiance,content_tag) VALUES (200,2664,178,'Casket_Mimic',0,128,0,0,0,0,NULL); -- The_Shrine_of_RuAvitau T7 lv75
 
 -- mob_spawn_points: one dormant entry per zone
-INSERT INTO `mob_spawn_points` (mobid,spawnslotid,mobname,polutils_name,groupid,minLevel,maxLevel,pos_x,pos_y,pos_z,pos_rot) VALUES
-(17190400,0,'Casket_Mimic','Casket Mimic',200,12,12,0.000,-9999.000,0.000,0) -- West_Ronfaure,
-(17194496,0,'Casket_Mimic','Casket Mimic',200,12,12,0.000,-9999.000,0.000,0) -- East_Ronfaure,
-(17214976,0,'Casket_Mimic','Casket Mimic',200,12,12,0.000,-9999.000,0.000,0) -- North_Gustaberg,
-(17219072,0,'Casket_Mimic','Casket Mimic',200,12,12,0.000,-9999.000,0.000,0) -- South_Gustaberg,
-(17251840,0,'Casket_Mimic','Casket Mimic',200,12,12,0.000,-9999.000,0.000,0) -- West_Sarutabaruta,
-(17255936,0,'Casket_Mimic','Casket Mimic',200,12,12,0.000,-9999.000,0.000,0) -- East_Sarutabaruta,
-(17198592,0,'Casket_Mimic','Casket Mimic',200,22,22,0.000,-9999.000,0.000,0) -- La_Theine_Plateau,
-(17223168,0,'Casket_Mimic','Casket Mimic',200,22,22,0.000,-9999.000,0.000,0) -- Konschtat_Highlands,
-(17260032,0,'Casket_Mimic','Casket Mimic',200,22,22,0.000,-9999.000,0.000,0) -- Tahrongi_Canyon,
-(17202688,0,'Casket_Mimic','Casket Mimic',200,22,22,0.000,-9999.000,0.000,0) -- Valkurm_Dunes,
-(17206784,0,'Casket_Mimic','Casket Mimic',200,22,22,0.000,-9999.000,0.000,0) -- Jugner_Forest,
-(17227264,0,'Casket_Mimic','Casket Mimic',200,22,22,0.000,-9999.000,0.000,0) -- Pashhow_Marshlands,
-(17268224,0,'Casket_Mimic','Casket Mimic',200,22,22,0.000,-9999.000,0.000,0) -- Meriphataud_Mountains,
-(17264128,0,'Casket_Mimic','Casket Mimic',200,22,22,0.000,-9999.000,0.000,0) -- Buburimu_Peninsula,
-(17567232,0,'Casket_Mimic','Casket Mimic',200,22,22,0.000,-9999.000,0.000,0) -- Inner_Horutoto_Ruins,
-(17485312,0,'Casket_Mimic','Casket Mimic',200,22,22,0.000,-9999.000,0.000,0) -- Zeruhn_Mines,
-(17575424,0,'Casket_Mimic','Casket Mimic',200,22,22,0.000,-9999.000,0.000,0) -- Outer_Horutoto_Ruins,
-(17563136,0,'Casket_Mimic','Casket Mimic',200,22,22,0.000,-9999.000,0.000,0) -- Dangruf_Wadi,
-(17296896,0,'Casket_Mimic','Casket Mimic',200,37,37,0.000,-9999.000,0.000,0) -- Qufim_Island,
-(17210880,0,'Casket_Mimic','Casket Mimic',200,37,37,0.000,-9999.000,0.000,0) -- Batallia_Downs,
-(17231360,0,'Casket_Mimic','Casket Mimic',200,37,37,0.000,-9999.000,0.000,0) -- Rolanberry_Fields,
-(17272320,0,'Casket_Mimic','Casket Mimic',200,37,37,0.000,-9999.000,0.000,0) -- Sauromugue_Champaign,
-(17284608,0,'Casket_Mimic','Casket Mimic',200,37,37,0.000,-9999.000,0.000,0) -- Yuhtunga_Jungle,
-(17288704,0,'Casket_Mimic','Casket Mimic',200,37,37,0.000,-9999.000,0.000,0) -- Yhoator_Jungle,
-(17591808,0,'Casket_Mimic','Casket Mimic',200,37,37,0.000,-9999.000,0.000,0) -- Maze_of_Shakhrami,
-(17571328,0,'Casket_Mimic','Casket Mimic',200,37,37,0.000,-9999.000,0.000,0) -- Ordelles_Caves,
-(17559040,0,'Casket_Mimic','Casket Mimic',200,37,37,0.000,-9999.000,0.000,0) -- King_Ranperres_Tomb,
-(17583616,0,'Casket_Mimic','Casket Mimic',200,37,37,0.000,-9999.000,0.000,0) -- Gusgen_Mines,
-(17489408,0,'Casket_Mimic','Casket Mimic',200,37,37,0.000,-9999.000,0.000,0) -- Korroloka_Tunnel,
-(17247744,0,'Casket_Mimic','Casket Mimic',200,52,52,0.000,-9999.000,0.000,0) -- Eastern_Altepa_Desert,
-(17292800,0,'Casket_Mimic','Casket Mimic',200,52,52,0.000,-9999.000,0.000,0) -- Western_Altepa_Desert,
-(17587712,0,'Casket_Mimic','Casket Mimic',200,52,52,0.000,-9999.000,0.000,0) -- Crawlers_Nest,
-(17653248,0,'Casket_Mimic','Casket Mimic',200,52,52,0.000,-9999.000,0.000,0) -- Labyrinth_of_Onzozo,
-(17276416,0,'Casket_Mimic','Casket Mimic',200,52,52,0.000,-9999.000,0.000,0) -- The_Sanctuary_of_ZiTah,
-(17501696,0,'Casket_Mimic','Casket Mimic',200,52,52,0.000,-9999.000,0.000,0) -- Sea_Serpent_Grotto,
-(17632768,0,'Casket_Mimic','Casket Mimic',200,52,52,0.000,-9999.000,0.000,0) -- Quicksand_Caves,
-(17649152,0,'Casket_Mimic','Casket Mimic',200,52,52,0.000,-9999.000,0.000,0) -- Gustav_Tunnel,
-(17243648,0,'Casket_Mimic','Casket Mimic',200,52,52,0.000,-9999.000,0.000,0) -- Cape_Teriggan,
-(17493504,0,'Casket_Mimic','Casket Mimic',200,52,52,0.000,-9999.000,0.000,0) -- Kuftal_Tunnel,
-(17534464,0,'Casket_Mimic','Casket Mimic',200,65,65,0.000,-9999.000,0.000,0) -- Lower_Delkfutts_Tower,
-(17423872,0,'Casket_Mimic','Casket Mimic',200,65,65,0.000,-9999.000,0.000,0) -- Middle_Delkfutts_Tower,
-(17427968,0,'Casket_Mimic','Casket Mimic',200,65,65,0.000,-9999.000,0.000,0) -- Upper_Delkfutts_Tower,
-(17616384,0,'Casket_Mimic','Casket Mimic',200,65,65,0.000,-9999.000,0.000,0) -- FeiYin,
-(17473024,0,'Casket_Mimic','Casket Mimic',200,65,65,0.000,-9999.000,0.000,0) -- Toraimarai_Canal,
-(17464832,0,'Casket_Mimic','Casket Mimic',200,65,65,0.000,-9999.000,0.000,0) -- Bostaunieux_Oubliette,
-(17432064,0,'Casket_Mimic','Casket Mimic',200,65,65,0.000,-9999.000,0.000,0) -- Temple_of_Uggalepih,
-(17579520,0,'Casket_Mimic','Casket Mimic',200,65,65,0.000,-9999.000,0.000,0) -- The_Eldieme_Necropolis,
-(17436160,0,'Casket_Mimic','Casket Mimic',200,65,65,0.000,-9999.000,0.000,0) -- Den_of_Rancor,
-(17407488,0,'Casket_Mimic','Casket Mimic',200,65,65,0.000,-9999.000,0.000,0) -- The_Boyahda_Tree,
-(17600000,0,'Casket_Mimic','Casket Mimic',200,72,72,0.000,-9999.000,0.000,0) -- Garlaige_Citadel,
-(17620480,0,'Casket_Mimic','Casket Mimic',200,72,72,0.000,-9999.000,0.000,0) -- Ifrits_Cauldron,
-(17280512,0,'Casket_Mimic','Casket Mimic',200,72,72,0.000,-9999.000,0.000,0) -- RoMaeve,
-(17235456,0,'Casket_Mimic','Casket Mimic',200,72,72,0.000,-9999.000,0.000,0) -- Beaucedine_Glacier,
-(17239552,0,'Casket_Mimic','Casket Mimic',200,72,72,0.000,-9999.000,0.000,0) -- Xarcabard,
-(17305088,0,'Casket_Mimic','Casket Mimic',200,72,72,0.000,-9999.000,0.000,0) -- Valley_of_Sorrows,
-(17300992,0,'Casket_Mimic','Casket Mimic',200,72,72,0.000,-9999.000,0.000,0) -- Behemoths_Dominion,
-(17460736,0,'Casket_Mimic','Casket Mimic',200,75,75,0.000,-9999.000,0.000,0) -- Ranguemont_Pass,
-(17313280,0,'Casket_Mimic','Casket Mimic',200,75,75,0.000,-9999.000,0.000,0) -- RuAun_Gardens,
-(17505792,0,'Casket_Mimic','Casket Mimic',200,75,75,0.000,-9999.000,0.000,0) -- VeLugannon_Palace,
-(17509888,0,'Casket_Mimic','Casket Mimic',200,75,75,0.000,-9999.000,0.000,0) -- The_Shrine_of_RuAvitau;
+INSERT INTO `mob_spawn_points` (mobid,spawnslotid,mobname,polutils_name,groupid,minLevel,maxLevel,pos_x,pos_y,pos_z,pos_rot) VALUES (17190400,0,'Casket_Mimic','Casket Mimic',200,12,12,0.000,-9999.000,0.000,0); -- West_Ronfaure
+INSERT INTO `mob_spawn_points` (mobid,spawnslotid,mobname,polutils_name,groupid,minLevel,maxLevel,pos_x,pos_y,pos_z,pos_rot) VALUES (17194496,0,'Casket_Mimic','Casket Mimic',200,12,12,0.000,-9999.000,0.000,0); -- East_Ronfaure
+INSERT INTO `mob_spawn_points` (mobid,spawnslotid,mobname,polutils_name,groupid,minLevel,maxLevel,pos_x,pos_y,pos_z,pos_rot) VALUES (17214976,0,'Casket_Mimic','Casket Mimic',200,12,12,0.000,-9999.000,0.000,0); -- North_Gustaberg
+INSERT INTO `mob_spawn_points` (mobid,spawnslotid,mobname,polutils_name,groupid,minLevel,maxLevel,pos_x,pos_y,pos_z,pos_rot) VALUES (17219072,0,'Casket_Mimic','Casket Mimic',200,12,12,0.000,-9999.000,0.000,0); -- South_Gustaberg
+INSERT INTO `mob_spawn_points` (mobid,spawnslotid,mobname,polutils_name,groupid,minLevel,maxLevel,pos_x,pos_y,pos_z,pos_rot) VALUES (17251840,0,'Casket_Mimic','Casket Mimic',200,12,12,0.000,-9999.000,0.000,0); -- West_Sarutabaruta
+INSERT INTO `mob_spawn_points` (mobid,spawnslotid,mobname,polutils_name,groupid,minLevel,maxLevel,pos_x,pos_y,pos_z,pos_rot) VALUES (17255936,0,'Casket_Mimic','Casket Mimic',200,12,12,0.000,-9999.000,0.000,0); -- East_Sarutabaruta
+INSERT INTO `mob_spawn_points` (mobid,spawnslotid,mobname,polutils_name,groupid,minLevel,maxLevel,pos_x,pos_y,pos_z,pos_rot) VALUES (17198592,0,'Casket_Mimic','Casket Mimic',200,22,22,0.000,-9999.000,0.000,0); -- La_Theine_Plateau
+INSERT INTO `mob_spawn_points` (mobid,spawnslotid,mobname,polutils_name,groupid,minLevel,maxLevel,pos_x,pos_y,pos_z,pos_rot) VALUES (17223168,0,'Casket_Mimic','Casket Mimic',200,22,22,0.000,-9999.000,0.000,0); -- Konschtat_Highlands
+INSERT INTO `mob_spawn_points` (mobid,spawnslotid,mobname,polutils_name,groupid,minLevel,maxLevel,pos_x,pos_y,pos_z,pos_rot) VALUES (17260032,0,'Casket_Mimic','Casket Mimic',200,22,22,0.000,-9999.000,0.000,0); -- Tahrongi_Canyon
+INSERT INTO `mob_spawn_points` (mobid,spawnslotid,mobname,polutils_name,groupid,minLevel,maxLevel,pos_x,pos_y,pos_z,pos_rot) VALUES (17202688,0,'Casket_Mimic','Casket Mimic',200,22,22,0.000,-9999.000,0.000,0); -- Valkurm_Dunes
+INSERT INTO `mob_spawn_points` (mobid,spawnslotid,mobname,polutils_name,groupid,minLevel,maxLevel,pos_x,pos_y,pos_z,pos_rot) VALUES (17206784,0,'Casket_Mimic','Casket Mimic',200,22,22,0.000,-9999.000,0.000,0); -- Jugner_Forest
+INSERT INTO `mob_spawn_points` (mobid,spawnslotid,mobname,polutils_name,groupid,minLevel,maxLevel,pos_x,pos_y,pos_z,pos_rot) VALUES (17227264,0,'Casket_Mimic','Casket Mimic',200,22,22,0.000,-9999.000,0.000,0); -- Pashhow_Marshlands
+INSERT INTO `mob_spawn_points` (mobid,spawnslotid,mobname,polutils_name,groupid,minLevel,maxLevel,pos_x,pos_y,pos_z,pos_rot) VALUES (17268224,0,'Casket_Mimic','Casket Mimic',200,22,22,0.000,-9999.000,0.000,0); -- Meriphataud_Mountains
+INSERT INTO `mob_spawn_points` (mobid,spawnslotid,mobname,polutils_name,groupid,minLevel,maxLevel,pos_x,pos_y,pos_z,pos_rot) VALUES (17264128,0,'Casket_Mimic','Casket Mimic',200,22,22,0.000,-9999.000,0.000,0); -- Buburimu_Peninsula
+INSERT INTO `mob_spawn_points` (mobid,spawnslotid,mobname,polutils_name,groupid,minLevel,maxLevel,pos_x,pos_y,pos_z,pos_rot) VALUES (17567232,0,'Casket_Mimic','Casket Mimic',200,22,22,0.000,-9999.000,0.000,0); -- Inner_Horutoto_Ruins
+INSERT INTO `mob_spawn_points` (mobid,spawnslotid,mobname,polutils_name,groupid,minLevel,maxLevel,pos_x,pos_y,pos_z,pos_rot) VALUES (17485312,0,'Casket_Mimic','Casket Mimic',200,22,22,0.000,-9999.000,0.000,0); -- Zeruhn_Mines
+INSERT INTO `mob_spawn_points` (mobid,spawnslotid,mobname,polutils_name,groupid,minLevel,maxLevel,pos_x,pos_y,pos_z,pos_rot) VALUES (17575424,0,'Casket_Mimic','Casket Mimic',200,22,22,0.000,-9999.000,0.000,0); -- Outer_Horutoto_Ruins
+INSERT INTO `mob_spawn_points` (mobid,spawnslotid,mobname,polutils_name,groupid,minLevel,maxLevel,pos_x,pos_y,pos_z,pos_rot) VALUES (17563136,0,'Casket_Mimic','Casket Mimic',200,22,22,0.000,-9999.000,0.000,0); -- Dangruf_Wadi
+INSERT INTO `mob_spawn_points` (mobid,spawnslotid,mobname,polutils_name,groupid,minLevel,maxLevel,pos_x,pos_y,pos_z,pos_rot) VALUES (17296896,0,'Casket_Mimic','Casket Mimic',200,37,37,0.000,-9999.000,0.000,0); -- Qufim_Island
+INSERT INTO `mob_spawn_points` (mobid,spawnslotid,mobname,polutils_name,groupid,minLevel,maxLevel,pos_x,pos_y,pos_z,pos_rot) VALUES (17210880,0,'Casket_Mimic','Casket Mimic',200,37,37,0.000,-9999.000,0.000,0); -- Batallia_Downs
+INSERT INTO `mob_spawn_points` (mobid,spawnslotid,mobname,polutils_name,groupid,minLevel,maxLevel,pos_x,pos_y,pos_z,pos_rot) VALUES (17231360,0,'Casket_Mimic','Casket Mimic',200,37,37,0.000,-9999.000,0.000,0); -- Rolanberry_Fields
+INSERT INTO `mob_spawn_points` (mobid,spawnslotid,mobname,polutils_name,groupid,minLevel,maxLevel,pos_x,pos_y,pos_z,pos_rot) VALUES (17272320,0,'Casket_Mimic','Casket Mimic',200,37,37,0.000,-9999.000,0.000,0); -- Sauromugue_Champaign
+INSERT INTO `mob_spawn_points` (mobid,spawnslotid,mobname,polutils_name,groupid,minLevel,maxLevel,pos_x,pos_y,pos_z,pos_rot) VALUES (17284608,0,'Casket_Mimic','Casket Mimic',200,37,37,0.000,-9999.000,0.000,0); -- Yuhtunga_Jungle
+INSERT INTO `mob_spawn_points` (mobid,spawnslotid,mobname,polutils_name,groupid,minLevel,maxLevel,pos_x,pos_y,pos_z,pos_rot) VALUES (17288704,0,'Casket_Mimic','Casket Mimic',200,37,37,0.000,-9999.000,0.000,0); -- Yhoator_Jungle
+INSERT INTO `mob_spawn_points` (mobid,spawnslotid,mobname,polutils_name,groupid,minLevel,maxLevel,pos_x,pos_y,pos_z,pos_rot) VALUES (17591808,0,'Casket_Mimic','Casket Mimic',200,37,37,0.000,-9999.000,0.000,0); -- Maze_of_Shakhrami
+INSERT INTO `mob_spawn_points` (mobid,spawnslotid,mobname,polutils_name,groupid,minLevel,maxLevel,pos_x,pos_y,pos_z,pos_rot) VALUES (17571328,0,'Casket_Mimic','Casket Mimic',200,37,37,0.000,-9999.000,0.000,0); -- Ordelles_Caves
+INSERT INTO `mob_spawn_points` (mobid,spawnslotid,mobname,polutils_name,groupid,minLevel,maxLevel,pos_x,pos_y,pos_z,pos_rot) VALUES (17559040,0,'Casket_Mimic','Casket Mimic',200,37,37,0.000,-9999.000,0.000,0); -- King_Ranperres_Tomb
+INSERT INTO `mob_spawn_points` (mobid,spawnslotid,mobname,polutils_name,groupid,minLevel,maxLevel,pos_x,pos_y,pos_z,pos_rot) VALUES (17583616,0,'Casket_Mimic','Casket Mimic',200,37,37,0.000,-9999.000,0.000,0); -- Gusgen_Mines
+INSERT INTO `mob_spawn_points` (mobid,spawnslotid,mobname,polutils_name,groupid,minLevel,maxLevel,pos_x,pos_y,pos_z,pos_rot) VALUES (17489408,0,'Casket_Mimic','Casket Mimic',200,37,37,0.000,-9999.000,0.000,0); -- Korroloka_Tunnel
+INSERT INTO `mob_spawn_points` (mobid,spawnslotid,mobname,polutils_name,groupid,minLevel,maxLevel,pos_x,pos_y,pos_z,pos_rot) VALUES (17247744,0,'Casket_Mimic','Casket Mimic',200,52,52,0.000,-9999.000,0.000,0); -- Eastern_Altepa_Desert
+INSERT INTO `mob_spawn_points` (mobid,spawnslotid,mobname,polutils_name,groupid,minLevel,maxLevel,pos_x,pos_y,pos_z,pos_rot) VALUES (17292800,0,'Casket_Mimic','Casket Mimic',200,52,52,0.000,-9999.000,0.000,0); -- Western_Altepa_Desert
+INSERT INTO `mob_spawn_points` (mobid,spawnslotid,mobname,polutils_name,groupid,minLevel,maxLevel,pos_x,pos_y,pos_z,pos_rot) VALUES (17587712,0,'Casket_Mimic','Casket Mimic',200,52,52,0.000,-9999.000,0.000,0); -- Crawlers_Nest
+INSERT INTO `mob_spawn_points` (mobid,spawnslotid,mobname,polutils_name,groupid,minLevel,maxLevel,pos_x,pos_y,pos_z,pos_rot) VALUES (17653248,0,'Casket_Mimic','Casket Mimic',200,52,52,0.000,-9999.000,0.000,0); -- Labyrinth_of_Onzozo
+INSERT INTO `mob_spawn_points` (mobid,spawnslotid,mobname,polutils_name,groupid,minLevel,maxLevel,pos_x,pos_y,pos_z,pos_rot) VALUES (17276416,0,'Casket_Mimic','Casket Mimic',200,52,52,0.000,-9999.000,0.000,0); -- The_Sanctuary_of_ZiTah
+INSERT INTO `mob_spawn_points` (mobid,spawnslotid,mobname,polutils_name,groupid,minLevel,maxLevel,pos_x,pos_y,pos_z,pos_rot) VALUES (17501696,0,'Casket_Mimic','Casket Mimic',200,52,52,0.000,-9999.000,0.000,0); -- Sea_Serpent_Grotto
+INSERT INTO `mob_spawn_points` (mobid,spawnslotid,mobname,polutils_name,groupid,minLevel,maxLevel,pos_x,pos_y,pos_z,pos_rot) VALUES (17632768,0,'Casket_Mimic','Casket Mimic',200,52,52,0.000,-9999.000,0.000,0); -- Quicksand_Caves
+INSERT INTO `mob_spawn_points` (mobid,spawnslotid,mobname,polutils_name,groupid,minLevel,maxLevel,pos_x,pos_y,pos_z,pos_rot) VALUES (17649152,0,'Casket_Mimic','Casket Mimic',200,52,52,0.000,-9999.000,0.000,0); -- Gustav_Tunnel
+INSERT INTO `mob_spawn_points` (mobid,spawnslotid,mobname,polutils_name,groupid,minLevel,maxLevel,pos_x,pos_y,pos_z,pos_rot) VALUES (17243648,0,'Casket_Mimic','Casket Mimic',200,52,52,0.000,-9999.000,0.000,0); -- Cape_Teriggan
+INSERT INTO `mob_spawn_points` (mobid,spawnslotid,mobname,polutils_name,groupid,minLevel,maxLevel,pos_x,pos_y,pos_z,pos_rot) VALUES (17493504,0,'Casket_Mimic','Casket Mimic',200,52,52,0.000,-9999.000,0.000,0); -- Kuftal_Tunnel
+INSERT INTO `mob_spawn_points` (mobid,spawnslotid,mobname,polutils_name,groupid,minLevel,maxLevel,pos_x,pos_y,pos_z,pos_rot) VALUES (17534464,0,'Casket_Mimic','Casket Mimic',200,65,65,0.000,-9999.000,0.000,0); -- Lower_Delkfutts_Tower
+INSERT INTO `mob_spawn_points` (mobid,spawnslotid,mobname,polutils_name,groupid,minLevel,maxLevel,pos_x,pos_y,pos_z,pos_rot) VALUES (17423872,0,'Casket_Mimic','Casket Mimic',200,65,65,0.000,-9999.000,0.000,0); -- Middle_Delkfutts_Tower
+INSERT INTO `mob_spawn_points` (mobid,spawnslotid,mobname,polutils_name,groupid,minLevel,maxLevel,pos_x,pos_y,pos_z,pos_rot) VALUES (17427968,0,'Casket_Mimic','Casket Mimic',200,65,65,0.000,-9999.000,0.000,0); -- Upper_Delkfutts_Tower
+INSERT INTO `mob_spawn_points` (mobid,spawnslotid,mobname,polutils_name,groupid,minLevel,maxLevel,pos_x,pos_y,pos_z,pos_rot) VALUES (17616384,0,'Casket_Mimic','Casket Mimic',200,65,65,0.000,-9999.000,0.000,0); -- FeiYin
+INSERT INTO `mob_spawn_points` (mobid,spawnslotid,mobname,polutils_name,groupid,minLevel,maxLevel,pos_x,pos_y,pos_z,pos_rot) VALUES (17473024,0,'Casket_Mimic','Casket Mimic',200,65,65,0.000,-9999.000,0.000,0); -- Toraimarai_Canal
+INSERT INTO `mob_spawn_points` (mobid,spawnslotid,mobname,polutils_name,groupid,minLevel,maxLevel,pos_x,pos_y,pos_z,pos_rot) VALUES (17464832,0,'Casket_Mimic','Casket Mimic',200,65,65,0.000,-9999.000,0.000,0); -- Bostaunieux_Oubliette
+INSERT INTO `mob_spawn_points` (mobid,spawnslotid,mobname,polutils_name,groupid,minLevel,maxLevel,pos_x,pos_y,pos_z,pos_rot) VALUES (17432064,0,'Casket_Mimic','Casket Mimic',200,65,65,0.000,-9999.000,0.000,0); -- Temple_of_Uggalepih
+INSERT INTO `mob_spawn_points` (mobid,spawnslotid,mobname,polutils_name,groupid,minLevel,maxLevel,pos_x,pos_y,pos_z,pos_rot) VALUES (17579520,0,'Casket_Mimic','Casket Mimic',200,65,65,0.000,-9999.000,0.000,0); -- The_Eldieme_Necropolis
+INSERT INTO `mob_spawn_points` (mobid,spawnslotid,mobname,polutils_name,groupid,minLevel,maxLevel,pos_x,pos_y,pos_z,pos_rot) VALUES (17436160,0,'Casket_Mimic','Casket Mimic',200,65,65,0.000,-9999.000,0.000,0); -- Den_of_Rancor
+INSERT INTO `mob_spawn_points` (mobid,spawnslotid,mobname,polutils_name,groupid,minLevel,maxLevel,pos_x,pos_y,pos_z,pos_rot) VALUES (17407488,0,'Casket_Mimic','Casket Mimic',200,65,65,0.000,-9999.000,0.000,0); -- The_Boyahda_Tree
+INSERT INTO `mob_spawn_points` (mobid,spawnslotid,mobname,polutils_name,groupid,minLevel,maxLevel,pos_x,pos_y,pos_z,pos_rot) VALUES (17600000,0,'Casket_Mimic','Casket Mimic',200,72,72,0.000,-9999.000,0.000,0); -- Garlaige_Citadel
+INSERT INTO `mob_spawn_points` (mobid,spawnslotid,mobname,polutils_name,groupid,minLevel,maxLevel,pos_x,pos_y,pos_z,pos_rot) VALUES (17620480,0,'Casket_Mimic','Casket Mimic',200,72,72,0.000,-9999.000,0.000,0); -- Ifrits_Cauldron
+INSERT INTO `mob_spawn_points` (mobid,spawnslotid,mobname,polutils_name,groupid,minLevel,maxLevel,pos_x,pos_y,pos_z,pos_rot) VALUES (17280512,0,'Casket_Mimic','Casket Mimic',200,72,72,0.000,-9999.000,0.000,0); -- RoMaeve
+INSERT INTO `mob_spawn_points` (mobid,spawnslotid,mobname,polutils_name,groupid,minLevel,maxLevel,pos_x,pos_y,pos_z,pos_rot) VALUES (17235456,0,'Casket_Mimic','Casket Mimic',200,72,72,0.000,-9999.000,0.000,0); -- Beaucedine_Glacier
+INSERT INTO `mob_spawn_points` (mobid,spawnslotid,mobname,polutils_name,groupid,minLevel,maxLevel,pos_x,pos_y,pos_z,pos_rot) VALUES (17239552,0,'Casket_Mimic','Casket Mimic',200,72,72,0.000,-9999.000,0.000,0); -- Xarcabard
+INSERT INTO `mob_spawn_points` (mobid,spawnslotid,mobname,polutils_name,groupid,minLevel,maxLevel,pos_x,pos_y,pos_z,pos_rot) VALUES (17305088,0,'Casket_Mimic','Casket Mimic',200,72,72,0.000,-9999.000,0.000,0); -- Valley_of_Sorrows
+INSERT INTO `mob_spawn_points` (mobid,spawnslotid,mobname,polutils_name,groupid,minLevel,maxLevel,pos_x,pos_y,pos_z,pos_rot) VALUES (17300992,0,'Casket_Mimic','Casket Mimic',200,72,72,0.000,-9999.000,0.000,0); -- Behemoths_Dominion
+INSERT INTO `mob_spawn_points` (mobid,spawnslotid,mobname,polutils_name,groupid,minLevel,maxLevel,pos_x,pos_y,pos_z,pos_rot) VALUES (17460736,0,'Casket_Mimic','Casket Mimic',200,75,75,0.000,-9999.000,0.000,0); -- Ranguemont_Pass
+INSERT INTO `mob_spawn_points` (mobid,spawnslotid,mobname,polutils_name,groupid,minLevel,maxLevel,pos_x,pos_y,pos_z,pos_rot) VALUES (17313280,0,'Casket_Mimic','Casket Mimic',200,75,75,0.000,-9999.000,0.000,0); -- RuAun_Gardens
+INSERT INTO `mob_spawn_points` (mobid,spawnslotid,mobname,polutils_name,groupid,minLevel,maxLevel,pos_x,pos_y,pos_z,pos_rot) VALUES (17505792,0,'Casket_Mimic','Casket Mimic',200,75,75,0.000,-9999.000,0.000,0); -- VeLugannon_Palace
+INSERT INTO `mob_spawn_points` (mobid,spawnslotid,mobname,polutils_name,groupid,minLevel,maxLevel,pos_x,pos_y,pos_z,pos_rot) VALUES (17509888,0,'Casket_Mimic','Casket Mimic',200,75,75,0.000,-9999.000,0.000,0); -- The_Shrine_of_RuAvitau
