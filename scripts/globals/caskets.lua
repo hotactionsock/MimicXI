@@ -222,7 +222,7 @@ end
 -----------------------------------
 -- Desc: Sets all the base localVar's, type of chest and if locked, sets the random number.
 -----------------------------------
-local function setCasketData(player, x, y, z, r, npc, partyID, mobLvl)
+local function setCasketData(player, x, y, z, r, npc, partyID, mob, mobLvl)
     -- Early return.
     if npc == nil then
         return
@@ -857,7 +857,7 @@ xi.caskets.spawnCasket = function(player, mob, x, y, z, r)
     local chestOwner = player:getLeaderID()
 
     if dropChance(player) then
-        setCasketData(player, x, y, z, r, npc, chestOwner, mob:getMainLvl())
+        setCasketData(player, x, y, z, r, npc, chestOwner, mob, mob:getMainLvl())
     end
 end
 
