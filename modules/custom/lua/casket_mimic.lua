@@ -17,11 +17,12 @@ xi.caskets = xi.caskets or {}
 xi.caskets.mimic = xi.caskets.mimic or {}
 
 -----------------------------------
--- Mob ID lookup:  0x1000000 | (zoneId << 12) | 0xE00
--- Matches the entries in sql/casket_mimic_spawns.sql.
+-- Mob ID lookup:  0x1000000 | (zoneId << 12) | 0x700
+-- Local index 0x700: bit-11 clear so zoneutils::GetEntity decodes as id & 0xFFF
+-- (matching the targid stored at load time).  Matches casket_mimic_spawns.sql.
 -----------------------------------
 local function getMimicMobId(zoneId)
-    return 0x1000000 + (zoneId * 4096) + 0xE00
+    return 0x1000000 + (zoneId * 4096) + 0x700
 end
 
 -----------------------------------
