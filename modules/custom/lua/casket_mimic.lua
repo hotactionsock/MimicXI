@@ -9,7 +9,6 @@
 -- SQL: apply sql/casket_mimic_spawns.sql once to register the dormant entries.
 -- Mob scripts: scripts/zones/<Zone>/mobs/Casket_Mimic.lua (one-liner stubs).
 -----------------------------------
-require('scripts/globals/augment')
 
 xi         = xi or {}
 xi.caskets = xi.caskets or {}
