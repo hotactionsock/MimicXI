@@ -10,6 +10,8 @@
 -- Mob scripts: scripts/zones/<Zone>/mobs/Casket_Mimic.lua (one-liner stubs).
 -----------------------------------
 
+local m = Module:new('casket_mimic')
+
 xi         = xi or {}
 xi.caskets = xi.caskets or {}
 xi.caskets.mimic = xi.caskets.mimic or {}
@@ -92,3 +94,5 @@ xi.caskets.mimic.onChestFail = function(player, npc)
         end
     end
 end
+
+return m
