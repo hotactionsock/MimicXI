@@ -20,7 +20,7 @@ xi.caskets.mimic = xi.caskets.mimic or {}
 -- Matches the entries in sql/casket_mimic_spawns.sql.
 -----------------------------------
 local function getMimicMobId(zoneId)
-    return 0x1000000 | (zoneId * 4096) | 0xE00
+    return 0x1000000 + (zoneId * 4096) + 0xE00
 end
 
 -----------------------------------
