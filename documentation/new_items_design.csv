@@ -1,0 +1,142 @@
+==============================================================
+  MIMICXI - NEW ITEM DESIGN SHEET (v1.0)
+  Levels 10-70 | 20 Items | 5 Weapons / 15 Armour
+  Item IDs start at 29700 (safe custom range above 29695)
+  Model IDs are all 3-digit (400-741 range) from ToAU/WotG
+  content - less commonly seen on standard 75-cap servers.
+
+  POWER TIERS
+  1 = Slightly weak for level (starter/consolation drops)
+  2 = Average for level (solid regular drops)
+  3 = Slightly strong (best-in-tier, worth farming)
+  4 = Strong/very strong (reserved for custom NMs in LQS)
+
+  SLOT BITMASKS: MAIN=1 | SUB=2 | MAIN+SUB=3 | RANGED=4
+                 HEAD=16 | BODY=32 | HANDS=64 | LEGS=128
+                 FEET=256 | NECK=512 | WAIST=1024 | BACK=32768
+
+  JOB BITMASKS (reference)
+  WAR=1   MNK=2    WHM=4     BLM=8     RDM=16    THF=32
+  PLD=64  DRK=128  BST=256   BRD=512   RNG=1024  SAM=2048
+  NIN=4096 DRG=8192 SMN=16384 BLU=32768 COR=65536 PUP=131072
+  DNC=262144 SCH=524288 GEO=1048576 RUN=2097152
+  ALL JOBS = 4194303
+==============================================================
+
+--- SECTION 1: OVERVIEW TABLE ---
+
+SuggestedItemID,InternalName,DisplayName,ItemType,EquipSlot,SlotBitmask,LevelReq,PowerTier,Source,ModelID,Jobs(Text),JobsBitmask
+29700,tarnished_gladius,Tarnished Gladius,Weapon,MAIN+SUB,3,15,2,Regular Drop,243,"WAR/MNK/THF/PLD/DRK/RDM/NIN/BLU/COR",102643
+29701,gale_axe,Gale Axe,Weapon,MAIN+SUB,3,30,2,Regular Drop,428,"WAR/DRK/BST/DRG",8577
+29702,thornwood_staff,Thornwood Staff,Weapon,MAIN,1,45,3,Custom NM Drop,516,"WHM/BLM/RDM/SMN/SCH/GEO",1589276
+29703,rimehunters_bow,Rimehunter's Bow,Weapon,RANGED,4,55,3,Custom NM Drop,623,"RNG/COR",66560
+29704,ashveil_katana,Ashveil Katana,Weapon,MAIN+SUB,3,65,4,Custom NM Drop,741,"NIN/SAM",6144
+29705,brushwood_helm,Brushwood Helm,Armour,HEAD,16,10,1,Regular Drop,416,"WAR/MNK/PLD/DRK/DRG/SAM/RUN",2107587
+29706,ashen_circlet,Ashen Circlet,Armour,HEAD,16,35,2,Regular Drop,435,"WHM/BLM/RDM/SMN/SCH/GEO",1589276
+29707,ironshroud_mask,Ironshroud Mask,Armour,HEAD,16,60,3,Custom NM Drop,643,"WAR/DRK/SAM/DRG",10369
+29708,pilgrims_coat,Pilgrim's Coat,Armour,BODY,32,20,1,Regular Drop,408,"WHM/RDM/SCH/GEO/PLD",1572948
+29709,ember_plate,Ember Plate,Armour,BODY,32,40,3,Custom NM Drop,519,"WAR/PLD/DRG/RUN",2105409
+29710,shadowweave_tunic,Shadowweave Tunic,Armour,BODY,32,62,4,Custom NM Drop,672,"THF/NIN/DNC/COR",331808
+29711,stormcaller_mitts,Stormcaller Mitts,Armour,HANDS,64,25,2,Regular Drop,421,"RNG/COR/BRD/BLU",99840
+29712,hammerfist_gauntlets,Hammerfist Gauntlets,Armour,HANDS,64,50,3,Custom NM Drop,583,"MNK/PUP",131074
+29713,dustwalker_subligar,Dustwalker Subligar,Armour,LEGS,128,15,1,Regular Drop,417,"THF/RNG/NIN/DNC/BST/COR",333088
+29714,crestfallen_slacks,Crestfallen Slacks,Armour,LEGS,128,45,2,Regular Drop,554,"BLM/WHM/SMN/SCH/RDM/GEO",1589276
+29715,mudstrider_boots,Mudstrider Boots,Armour,FEET,256,20,2,Regular Drop,432,"THF/NIN/DNC/BST/RNG/COR/BRD",333600
+29716,gloamstone_sabots,Gloamstone Sabots,Armour,FEET,256,55,3,Custom NM Drop,612,"BLM/RDM/SCH/GEO",1572888
+29717,cinnabar_necklace,Cinnabar Necklace,Armour,NECK,512,30,2,Regular Drop,0,All Jobs,4194303
+29718,burnished_sash,Burnished Sash,Armour,WAIST,1024,40,2,Regular Drop,0,"WHM/BLM/RDM/SMN/SCH/GEO/BLU/PLD",1622108
+29719,wanderers_mantle,Wanderer's Mantle,Armour,BACK,32768,50,3,Custom NM Drop,503,All Jobs,4194303
+
+--- SECTION 2: WEAPONS (5) ---
+
+ID,InternalName,DisplayName,LevelReq,PowerTier,Source,ModelID,Jobs,DEF,DMG,Delay,DmgType,WeaponSkill,PrimaryStats,SecondaryStats,FlavorText
+29700,tarnished_gladius,Tarnished Gladius,15,2,Regular Drop,243,"WAR/MNK/THF/PLD/DRK/RDM/NIN/BLU/COR",-,20,240,Slashing,Sword,DEX+2 / Accuracy+5,-,"A weathered blade with a surprisingly keen edge, unearthed from a crumbling waystation deep in bandit territory."
+29701,gale_axe,Gale Axe,30,2,Regular Drop,428,"WAR/DRK/BST/DRG",-,37,288,Slashing,Axe,STR+3 / Attack+8,-,"A single-headed axe etched with wind runes that emit a faint whistle when swung with force."
+29702,thornwood_staff,Thornwood Staff,45,3,Custom NM Drop,516,"WHM/BLM/RDM/SMN/SCH/GEO",-,52,366,Blunt,Staff,INT+5 / MND+4 / MP+30,Magic Accuracy+6,"A gnarled staff carved from the heartwood of a petrified treant. The wood still channels residual elemental energy."
+29703,rimehunters_bow,Rimehunter's Bow,55,3,Custom NM Drop,623,"RNG/COR",-,51,504,Ranged,Archery,AGI+5 / Ranged Accuracy+10,Ranged Attack+8,"A recurve bow fashioned from coldwood harvested in the highland barrens. Its limbs hold tension like a living creature."
+29704,ashveil_katana,Ashveil Katana,65,4,Custom NM Drop,741,"NIN/SAM",-,58,245,Slashing,Katana,"STR+4 / DEX+5 / Store TP+4","Critical Hit Rate+3%","A blade of pale grey steel whose edge shimmers like drifting smoke. Sought by shadow hunters. Peerless in swiftness."
+
+--- SECTION 3: ARMOUR (15) ---
+
+--- HEAD ARMOUR (3) ---
+
+ID,InternalName,DisplayName,LevelReq,PowerTier,Source,ModelID,Jobs,DEF,PrimaryStats,SecondaryStats,FlavorText
+29705,brushwood_helm,Brushwood Helm,10,1,Regular Drop,416,"WAR/MNK/PLD/DRK/DRG/SAM/RUN",13,HP+12 / VIT+2,-,"A rough-hewn helmet fashioned from hardened bark and cured leather. Offers modest protection for those just starting out."
+29706,ashen_circlet,Ashen Circlet,35,2,Regular Drop,435,"WHM/BLM/RDM/SMN/SCH/GEO",20,INT+4 / MND+3,Fast Cast+3,"A lightweight circlet set with a pale grey gemstone that quietly amplifies magical focus. Common among travelling mages."
+29707,ironshroud_mask,Ironshroud Mask,60,3,Custom NM Drop,643,"WAR/DRK/SAM/DRG",35,STR+5 / Attack+12,Haste+3,"A fearsome iron mask forged to resemble a snarling beast. Those who don it are said to take on the creature's ferocity."
+
+--- BODY ARMOUR (3) ---
+
+ID,InternalName,DisplayName,LevelReq,PowerTier,Source,ModelID,Jobs,DEF,PrimaryStats,SecondaryStats,FlavorText
+29708,pilgrims_coat,Pilgrim's Coat,20,1,Regular Drop,408,"WHM/RDM/SCH/GEO/PLD",25,MND+3 / MP+25,Divine Magic Skill+5,"A plain white coat bearing faded sigils of a forgotten faith. Worn by wandering healers across many regions."
+29709,ember_plate,Ember Plate,40,3,Custom NM Drop,519,"WAR/PLD/DRG/RUN",46,HP+45 / VIT+5,Phalanx+3,"Battle-worn plate still faintly warm to the touch as though embers smoulder within the steel. Stolen from a fire cultist warlord."
+29710,shadowweave_tunic,Shadowweave Tunic,62,4,Custom NM Drop,672,"THF/NIN/DNC/COR",40,DEX+6 / AGI+5,"Haste+4 / Triple Attack+1","A tunic woven from threads that absorb ambient light. The wearer moves with unnerving silence. Proof of a master assassin."
+
+--- HAND ARMOUR (2) ---
+
+ID,InternalName,DisplayName,LevelReq,PowerTier,Source,ModelID,Jobs,DEF,PrimaryStats,SecondaryStats,FlavorText
+29711,stormcaller_mitts,Stormcaller Mitts,25,2,Regular Drop,421,"RNG/COR/BRD/BLU",16,AGI+3 / Ranged Accuracy+7,Wind Elemental Magic Accuracy+5,"Supple leather mitts reinforced with copper wire that crackles faintly in stormy weather. A scout's favoured tool."
+29712,hammerfist_gauntlets,Hammerfist Gauntlets,50,3,Custom NM Drop,583,"MNK/PUP",30,STR+4 / H2H Skill+5,Subtle Blow+5,"Iron gauntlets engineered to convert raw force into surgical strikes. Built to humble rather than shatter."
+
+--- LEG ARMOUR (2) ---
+
+ID,InternalName,DisplayName,LevelReq,PowerTier,Source,ModelID,Jobs,DEF,PrimaryStats,SecondaryStats,FlavorText
+29713,dustwalker_subligar,Dustwalker Subligar,15,1,Regular Drop,417,"THF/RNG/NIN/DNC/BST/COR",17,HP+10 / Evasion+5,-,"Hardy leather legwear designed for those who spend long hours crossing rough terrain. Practical over pretty."
+29714,crestfallen_slacks,Crestfallen Slacks,45,2,Regular Drop,554,"BLM/WHM/SMN/SCH/RDM/GEO",31,INT+4 / MND+4 / MP+20,Conserve MP+3,"Slacks lined with a faintly humming enchanted weave. The name comes from the forlorn look of the scholar who first wore them."
+
+--- FEET ARMOUR (2) ---
+
+ID,InternalName,DisplayName,LevelReq,PowerTier,Source,ModelID,Jobs,DEF,PrimaryStats,SecondaryStats,FlavorText
+29715,mudstrider_boots,Mudstrider Boots,20,2,Regular Drop,432,"THF/NIN/DNC/BST/RNG/COR/BRD",12,AGI+2 / Evasion+5,Movement Speed+10,"Lightweight boots with an unusually flexible sole that leaves almost no footprint. A poacher's best kept secret."
+29716,gloamstone_sabots,Gloamstone Sabots,55,3,Custom NM Drop,612,"BLM/RDM/SCH/GEO",24,INT+5 / Enfeebling Magic Skill+8,Magic Accuracy+8,"Elegant sabots set with dull grey gemstones that pulse when a hex is cast. They sharpen the bite of debilitating magic."
+
+--- ACCESSORIES (3) ---
+
+ID,InternalName,DisplayName,Slot,LevelReq,PowerTier,Source,ModelID,Jobs,DEF,PrimaryStats,SecondaryStats,FlavorText
+29717,cinnabar_necklace,Cinnabar Necklace,NECK,30,2,Regular Drop,0,All Jobs,0,HP+20 / STR+3,VIT+2,"A necklace strung with polished crimson beads. A common talisman among mercenaries who can't afford proper armour."
+29718,burnished_sash,Burnished Sash,WAIST,40,2,Regular Drop,0,"WHM/BLM/RDM/SMN/SCH/GEO/BLU/PLD",0,MP+25 / INT+3,MND+3,"A waist sash of golden-threaded fabric. Worn as a mark of scholarly achievement in several schools of arcane study."
+29719,wanderers_mantle,Wanderer's Mantle,BACK,50,3,Custom NM Drop,503,All Jobs,8,AGI+5 / Evasion+8,"Ranged Accuracy+8 / Dual Wield+2","A well-travelled cape carrying the faint scent of distant lands. Light enough never to slow the wearer down."
+
+--- SECTION 4: IMPLEMENTATION REFERENCE ---
+
+ITEM TYPE CODES (item_basic.sql type column)
+  4 = ARMOR (all armour + accessories)
+  5 = WEAPON
+
+SQL FILES TO UPDATE PER ITEM
+  All items:   item_basic.sql      (itemid name type stackSize flags aH BaseSell)
+  All items:   item_equipment.sql  (itemId name level ilevel jobs MId shieldSize scriptType slot rslot rslotlook su_level)
+  All items:   item_mods.sql       (for stat bonuses)
+  Weapons only: item_weapon.sql    (itemId name skill subskill ilvl_skill ilvl_parry ilvl_macc dmgType hit delay dmg unlock_points)
+
+WEAPON SKILL CODES (reference for item_weapon.sql)
+  Sword=2 | Axe=3 | Staff=10 | Archery=14 | Katana=20
+
+DAMAGE TYPE CODES
+  Slashing=2 | Blunt=4 | Ranged=5
+
+FLAG SUGGESTIONS (item_basic.sql flags column)
+  Standard tradeable drop: 0x0000
+  EX/No-trade NM drop:     0x0C00  (RARE + EX)
+
+CUSTOM NM ITEMS (Tier 3-4) - to be designed in LQS
+  29702 Thornwood Staff     → NM concept: petrified treant guardian (Lv45-50 range)
+  29703 Rimehunter's Bow    → NM concept: highland coldwood creature (Lv55-60 range)
+  29704 Ashveil Katana      → NM concept: shadow hunter assassin NM (Lv65-70 range)
+  29707 Ironshroud Mask     → NM concept: iron beast warlord (Lv60-65 range)
+  29709 Ember Plate         → NM concept: fire cultist champion (Lv40-45 range)
+  29710 Shadowweave Tunic   → NM concept: master assassin NM (Lv62-70 range)
+  29712 Hammerfist Gauntlets→ NM concept: iron fist monastery guardian (Lv50-55 range)
+  29716 Gloamstone Sabots   → NM concept: hexcaster sorcerer NM (Lv55-60 range)
+  29719 Wanderer's Mantle   → NM concept: legendary wandering ronin (Lv50-55 range)
+
+NOTES
+  - Item IDs 29700-29719 (20 items). Next batch should start at 29720.
+  - Model IDs are 3-digit (243-741 range) from ToAU/WotG equipment visuals.
+    These models exist in the database but are uncommon in 75-cap gameplay.
+  - Accessories (neck/waist/back) use MId=0 except the mantle (503 = cape model).
+  - Movement Speed on Mudstrider Boots uses MOD_MOVE_SPEED in item_mods.sql.
+  - Phalanx on Ember Plate uses MOD_PHALANX_ECHO in item_mods.sql.
+  - Triple Attack on Shadowweave Tunic uses MOD_TRIPLE_ATTACK.
+  - Critical Hit Rate on Ashveil Katana uses MOD_CRITHITRATE.
+  - Dual Wield on Wanderer's Mantle uses MOD_DUAL_WIELD.
