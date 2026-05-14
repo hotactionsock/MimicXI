@@ -4,9 +4,10 @@
 -- When a Gold Casket's lock mini-game is failed there is a 25% chance the
 -- chest transforms into a Casket Mimic.  The Mimic spawns at -9999 (dormant
 -- SQL position) and is immediately snapped to the failed chest's coordinates.
--- On death the Mimic delivers the pre-rolled chest loot directly to the killer.
+-- On death the pre-rolled chest loot drops into the party treasure pool.
+-- Augmented items that cannot enter the pool are given directly to the killer.
 --
--- SQL: apply sql/casket_mimic_spawns.sql once to register the dormant entries.
+-- SQL: modules/custom/sql/casket_mimic_spawns.sql (loaded by dbtool via init.txt)
 -- Mob scripts: scripts/zones/<Zone>/mobs/Casket_Mimic.lua (one-liner stubs).
 -----------------------------------
 
@@ -49,7 +50,28 @@ xi.caskets.mimic.mobCallbacks.onMobDeath = function(mob, player, isKiller, noKil
     end
 
     xi.caskets.mimic.pendingLoot[zoneId] = nil
-    xi.caskets.deliverMimicLoot(player, loot.items)
+
+    -- Drop loot into the party treasure pool.  Augmented items cannot enter
+    -- the pool, so they are given directly to the killer instead.
+    local hasPool = player:getTreasurePool() ~= nil
+    for _, item in ipairs(loot.items) do
+        if hasPool and #item.augments == 0 then
+            player:addTreasure(item.id, mob, 1000)
+        elseif #item.augments > 0 then
+            player:addItem(
+            {
+                id     = item.id,
+                exdata =
+                {
+                    augmentKind    = xi.augment.kind.HAS_AUGMENTS,
+                    augmentSubKind = xi.augment.subKind.STANDARD,
+                    augments       = item.augments,
+                },
+            })
+        else
+            player:addItem(item.id, 1)
+        end
+    end
 end
 
 -----------------------------------

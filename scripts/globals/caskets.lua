@@ -817,35 +817,6 @@ xi.caskets.extractNpcLoot = function(npc)
     return items
 end
 
------------------------------------
--- Gives a list of pre-extracted items (from extractNpcLoot) to a player.
--- Augmented items are delivered with their augment exdata intact.
------------------------------------
-xi.caskets.deliverMimicLoot = function(player, items)
-    local zoneId = player:getZoneID()
-    local ID     = zones[zoneId]
-    for _, item in ipairs(items) do
-        if player:getFreeSlotsCount() == 0 then
-            if ID then
-                player:messageSpecial(ID.text.ITEM_CANNOT_BE_OBTAINED, item.id)
-            end
-        elseif #item.augments > 0 then
-            player:addItem(
-            {
-                id     = item.id,
-                exdata =
-                {
-                    augmentKind    = xi.augment.kind.HAS_AUGMENTS,
-                    augmentSubKind = xi.augment.subKind.STANDARD,
-                    augments       = item.augments,
-                },
-            })
-        else
-            player:addItem(item.id, 1)
-        end
-    end
-end
-
 xi.caskets.spawnCasket = function(player, mob, x, y, z, r)
     local chestId = getCasketID(mob)
 
