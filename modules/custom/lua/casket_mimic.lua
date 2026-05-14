@@ -6,8 +6,7 @@
 -- SQL position) and is immediately snapped to the failed chest's coordinates.
 -- On death the pre-rolled chest loot drops into the party treasure pool.
 -- Augmented items are passed to addTreasure with their augment data so the
--- pool applies them at award time; party members see the augments announced
--- via system message before lotting.
+-- pool applies them at award time; augments are visible on the item itself.
 --
 -- SQL: modules/custom/sql/casket_mimic_spawns.sql (loaded by dbtool via init.txt)
 -- Mob scripts: scripts/zones/<Zone>/mobs/Casket_Mimic.lua (one-liner stubs).
@@ -39,19 +38,6 @@ xi.caskets.mimic.pendingLoot = {}
 -----------------------------------
 xi.caskets.mimic.mobCallbacks = {}
 
------------------------------------
--- Build a human-readable augment string for a single item, e.g.
---   "DEX+3 / Accuracy+10"
------------------------------------
-local function augmentLabel(augments)
-    local parts = {}
-    for _, aug in ipairs(augments) do
-        local name = xi.augment.name and xi.augment.name[aug.id] or tostring(aug.id)
-        parts[#parts + 1] = name .. (aug.value > 0 and ('+' .. aug.value) or '')
-    end
-    return table.concat(parts, ' / ')
-end
-
 xi.caskets.mimic.mobCallbacks.onMobDeath = function(mob, player, isKiller, noKillIncrement)
     if not isKiller then return end
 
@@ -67,21 +53,6 @@ xi.caskets.mimic.mobCallbacks.onMobDeath = function(mob, player, isKiller, noKil
     xi.caskets.mimic.pendingLoot[zoneId] = nil
 
     local hasPool = player:getTreasurePool() ~= nil
-
-    -- Announce augmented items to the party before they enter the lot window.
-    if hasPool then
-        for _, item in ipairs(loot.items) do
-            if #item.augments > 0 then
-                local itemName = AH and AH.getItemName and AH.getItemName(item.id) or ('Item ' .. item.id)
-                local msg = string.format('[Mimic Loot] %s has augments: %s', itemName, augmentLabel(item.augments))
-                for _, member in ipairs(player:getAlliance()) do
-                    if member:getZoneID() == zoneId then
-                        member:printToPlayer(msg, xi.msg.channel.SYSTEM_3)
-                    end
-                end
-            end
-        end
-    end
 
     -- Drop all loot into the party treasure pool.  addTreasure accepts an
     -- optional augments table (4th arg); the pool applies augments at award time.
