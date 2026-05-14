@@ -925,7 +925,7 @@ public:
     uint32 getPool(); // Returns a mobs pool ID. If entity is not a mob, returns nil.
     uint32 getDropID();
     void   setDropID(uint32 dropID);
-    void   addTreasure(uint16 itemID, const sol::object& arg1, const sol::object& arg2);
+    void   addTreasure(uint16 itemID, const sol::object& arg1, const sol::object& arg2, const sol::object& arg3);
     auto   getTreasurePool() -> CTreasurePool*;
     uint16 getStealItem();
     uint16 getDespoilItem();                // gets ItemID of droplist despoil item from mob (steal item if no despoil item)

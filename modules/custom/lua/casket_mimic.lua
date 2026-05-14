@@ -5,7 +5,9 @@
 -- chest transforms into a Casket Mimic.  The Mimic spawns at -9999 (dormant
 -- SQL position) and is immediately snapped to the failed chest's coordinates.
 -- On death the pre-rolled chest loot drops into the party treasure pool.
--- Augmented items that cannot enter the pool are given directly to the killer.
+-- Augmented items are passed to addTreasure with their augment data so the
+-- pool applies them at award time; party members see the augments announced
+-- via system message before lotting.
 --
 -- SQL: modules/custom/sql/casket_mimic_spawns.sql (loaded by dbtool via init.txt)
 -- Mob scripts: scripts/zones/<Zone>/mobs/Casket_Mimic.lua (one-liner stubs).
@@ -37,6 +39,19 @@ xi.caskets.mimic.pendingLoot = {}
 -----------------------------------
 xi.caskets.mimic.mobCallbacks = {}
 
+-----------------------------------
+-- Build a human-readable augment string for a single item, e.g.
+--   "DEX+3 / Accuracy+10"
+-----------------------------------
+local function augmentLabel(augments)
+    local parts = {}
+    for _, aug in ipairs(augments) do
+        local name = xi.augment.name and xi.augment.name[aug.id] or tostring(aug.id)
+        parts[#parts + 1] = name .. (aug.value > 0 and ('+' .. aug.value) or '')
+    end
+    return table.concat(parts, ' / ')
+end
+
 xi.caskets.mimic.mobCallbacks.onMobDeath = function(mob, player, isKiller, noKillIncrement)
     if not isKiller then return end
 
@@ -51,25 +66,44 @@ xi.caskets.mimic.mobCallbacks.onMobDeath = function(mob, player, isKiller, noKil
 
     xi.caskets.mimic.pendingLoot[zoneId] = nil
 
-    -- Drop loot into the party treasure pool.  Augmented items cannot enter
-    -- the pool, so they are given directly to the killer instead.
     local hasPool = player:getTreasurePool() ~= nil
+
+    -- Announce augmented items to the party before they enter the lot window.
+    if hasPool then
+        for _, item in ipairs(loot.items) do
+            if #item.augments > 0 then
+                local itemName = AH and AH.getItemName and AH.getItemName(item.id) or ('Item ' .. item.id)
+                local msg = string.format('[Mimic Loot] %s has augments: %s', itemName, augmentLabel(item.augments))
+                for _, member in ipairs(player:getAlliance()) do
+                    if member:getZoneID() == zoneId then
+                        member:printToPlayer(msg, xi.msg.channel.SYSTEM_3)
+                    end
+                end
+            end
+        end
+    end
+
+    -- Drop all loot into the party treasure pool.  addTreasure accepts an
+    -- optional augments table (4th arg); the pool applies augments at award time.
     for _, item in ipairs(loot.items) do
-        if hasPool and #item.augments == 0 then
-            player:addTreasure(item.id, mob, 1000)
-        elseif #item.augments > 0 then
-            player:addItem(
-            {
-                id     = item.id,
-                exdata =
-                {
-                    augmentKind    = xi.augment.kind.HAS_AUGMENTS,
-                    augmentSubKind = xi.augment.subKind.STANDARD,
-                    augments       = item.augments,
-                },
-            })
+        if hasPool then
+            local augArg = (#item.augments > 0) and item.augments or nil
+            player:addTreasure(item.id, mob, 1000, augArg)
         else
-            player:addItem(item.id, 1)
+            if #item.augments > 0 then
+                player:addItem(
+                {
+                    id     = item.id,
+                    exdata =
+                    {
+                        augmentKind    = xi.augment.kind.HAS_AUGMENTS,
+                        augmentSubKind = xi.augment.subKind.STANDARD,
+                        augments       = item.augments,
+                    },
+                })
+            else
+                player:addItem(item.id, 1)
+            end
         end
     end
 end
