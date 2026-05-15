@@ -800,6 +800,8 @@ xi.casket_loot.casketItems =
             { itemId = xi.item.VELVET_SLOPS,                 weight =  490 },
             { itemId = xi.item.CUIR_HIGHBOOTS,               weight = 1120 },
             { itemId = xi.item.EBONY_SABOTS,                 weight =  390 },
+            { itemId = xi.item.CHUNK_OF_ICE_ORE,             weight =  220 },
+            { itemId = xi.item.CHUNK_OF_SNOWSTEEL_ORE,       weight =  160 },
         },
     },
     [xi.zone.XARCABARD] =
@@ -854,6 +856,11 @@ xi.casket_loot.casketItems =
             { itemId = xi.item.BONE_ROD,                weight =  450 },
             { itemId = xi.item.BONE_KNIFE,              weight =  840 },
             { itemId = xi.item.KHETEN,                  weight =   80 },
+            { itemId = xi.item.CHUNK_OF_ICE_ORE,        weight =  220 },
+            { itemId = xi.item.CHUNK_OF_SNOWSTEEL_ORE,  weight =  160 },
+            { itemId = xi.item.SNOW_GEM,                weight =  110 },
+            { itemId = xi.item.SHADOW_GEM,              weight =  220 },
+            { itemId = xi.item.CHUNK_OF_DARK_ORE,       weight =  160 },
         },
     },
     [xi.zone.CAPE_TERIGGAN] =
@@ -1467,6 +1474,7 @@ xi.casket_loot.casketItems =
             { itemId = xi.item.VELVET_SLOPS,                 weight =  490 },
             { itemId = xi.item.CUIR_HIGHBOOTS,               weight = 1120 },
             { itemId = xi.item.EBONY_SABOTS,                 weight =  390 },
+            { itemId = xi.item.LEAFKIN_FROND,                weight =  220 },
         },
     },
     [xi.zone.ROMAEVE] =
@@ -1623,6 +1631,8 @@ xi.casket_loot.casketItems =
             { itemId = xi.item.CUIR_HIGHBOOTS,               weight =  865 },
             { itemId = xi.item.LEGGINGS,                     weight =  645 },
             { itemId = xi.item.EBONY_SABOTS,                 weight =  230 },
+            { itemId = xi.item.LEAFKIN_FROND,                weight =  220 },
+            { itemId = xi.item.LOCK_OF_SIMIAN_MANE,          weight =  160 },
         },
     },
     [xi.zone.WESTERN_ALTEPA_DESERT] =
@@ -1967,6 +1977,9 @@ xi.casket_loot.casketItems =
             { itemId = xi.item.JUG_OF_SUN_WATER,                  weight = 1020 },
             { itemId = xi.item.JUG_OF_CHIRPING_GRASSHOPPER_BROTH, weight =  500 },
             { itemId = xi.item.JUG_OF_SAVAGE_MOLE_BROTH,          weight =  400 },
+            { itemId = xi.item.LEAFKIN_FROND,                      weight =  200 },
+            { itemId = xi.item.LOCK_OF_SIMIAN_MANE,                weight =  150 },
+            { itemId = xi.item.MANDRAGORA_SPROUT,                  weight =  100 },
         },
     },
     [xi.zone.MIDDLE_DELKFUTTS_TOWER] =
@@ -2203,6 +2216,7 @@ xi.casket_loot.casketItems =
             { itemId = xi.item.PRO_ETHER_P3,                      weight = 2700 },
             { itemId = xi.item.REMEDY,                            weight =  600 },
             { itemId = xi.item.JUG_OF_CHIRPING_GRASSHOPPER_BROTH, weight =  500 },
+            { itemId = xi.item.CHUNK_OF_ICE_ORE,                  weight =  200 },
         },
     },
     [xi.zone.BOSTAUNIEUX_OUBLIETTE] =
@@ -2810,6 +2824,8 @@ xi.casket_loot.casketItems =
             { itemId = xi.item.JUG_OF_SUN_WATER,                  weight = 1020 },
             { itemId = xi.item.JUG_OF_CHIRPING_GRASSHOPPER_BROTH, weight =  500 },
             { itemId = xi.item.JUG_OF_SAVAGE_MOLE_BROTH,          weight =  400 },
+            { itemId = xi.item.SHADOW_GEM,                         weight =  200 },
+            { itemId = xi.item.CHUNK_OF_DARK_ORE,                  weight =  150 },
         },
     },
     [xi.zone.LOWER_DELKFUTTS_TOWER] =

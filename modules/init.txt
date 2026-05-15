@@ -40,6 +40,7 @@ custom/LQS/cpp/lqs_util.cpp
 custom/commands/
 custom/lua/test_npcs_in_gm_home.lua
 custom/sql/casket_mimic_spawns.sql
+custom/lua/augment_crafter.lua
 custom/lua/casket_loot_starter_zones.lua
 custom/lua/casket_augment_tiers.lua
 custom/lua/casket_mimic.lua

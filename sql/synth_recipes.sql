@@ -4852,6 +4852,23 @@ INSERT INTO `synth_recipes` VALUES (77624,0,0,0,0,0,0,0,0,0,73,4096,4238,610,615
 -- INSERT INTO `synth_recipes` VALUES (77627,1,0,0,0,100,0,0,0,0,0,4100,4242,9933,0,0,0,0,0,0,0,2305,2305,1225,1225,2,4,2,4,'Golden Shell (Desynth)','TVR'); --  Placeholder, unknown goldsmithing cap, missing item_basic
 INSERT INTO `synth_recipes` VALUES (77628,0,2035,0,0,0,0,0,0,24,0,4101,4243,637,637,913,913,913,913,2131,0,4165,4165,4165,4165,8,10,12,12,'Silent Oil','ABYSSEA'); -- 2012.06.13 Trituration
 
+-- MIMICXI: Augment Catalyst Stone synthesis recipes
+-- Snow Stones (Alchemy, Ice Crystal) -- T1=Chunk of Ice Ore, T2=Chunk of Snowsteel Ore, T3=Snow Gem, T4=Snow God Core
+INSERT INTO `synth_recipes` VALUES (77629,0,0,0,0,0,0,0,0,50,0,4097,4239,1256,0,0,0,0,0,0,0,8931,8931,8931,8931,1,1,2,2,'Snowslit Stone +1','MIMICXI');
+INSERT INTO `synth_recipes` VALUES (77630,0,0,0,0,0,0,0,0,65,0,4097,4239,4023,0,0,0,0,0,0,0,8940,8940,8940,8940,1,1,2,2,'Snowtip Stone +1','MIMICXI');
+INSERT INTO `synth_recipes` VALUES (77631,0,0,0,0,0,0,0,0,80,0,4097,4239,3317,0,0,0,0,0,0,0,8949,8949,8949,8949,1,1,2,2,'Snowdim Stone +1','MIMICXI');
+INSERT INTO `synth_recipes` VALUES (77632,0,0,0,0,0,0,0,0,100,0,4097,4239,3246,0,0,0,0,0,0,0,8958,8958,8958,8958,1,1,2,2,'Snoworb Stone +1','MIMICXI');
+-- Leaf Stones (Clothcraft, Wind Crystal) -- T1=Leafkin Frond, T2=Lock of Simian Mane, T3=Mandragora Sprout, T4=Ladybird Leaf
+INSERT INTO `synth_recipes` VALUES (77633,0,0,0,0,0,50,0,0,0,0,4098,4240,3917,0,0,0,0,0,0,0,8934,8934,8934,8934,1,1,2,2,'Leafslit Stone +1','MIMICXI');
+INSERT INTO `synth_recipes` VALUES (77634,0,0,0,0,0,65,0,0,0,0,4098,4240,3870,0,0,0,0,0,0,0,8943,8943,8943,8943,1,1,2,2,'Leaftip Stone +1','MIMICXI');
+INSERT INTO `synth_recipes` VALUES (77635,0,0,0,0,0,80,0,0,0,0,4098,4240,4017,0,0,0,0,0,0,0,8952,8952,8952,8952,1,1,2,2,'Leafdim Stone +1','MIMICXI');
+INSERT INTO `synth_recipes` VALUES (77636,0,0,0,0,0,100,0,0,0,0,4098,4240,3241,0,0,0,0,0,0,0,8961,8961,8961,8961,1,1,2,2,'Leaforb Stone +1','MIMICXI');
+-- Dusk Stones (Goldsmithing, Dark Crystal) -- T1=Shadow Gem, T2=Chunk of Dark Ore, T3=Pouch of Voiddust, T4=Vial of Umbral Marrow
+INSERT INTO `synth_recipes` VALUES (77637,0,0,0,0,50,0,0,0,0,0,4103,4245,3323,0,0,0,0,0,0,0,8937,8937,8937,8937,1,1,2,2,'Duskslit Stone +1','MIMICXI');
+INSERT INTO `synth_recipes` VALUES (77638,0,0,0,0,65,0,0,0,0,0,4103,4245,1262,0,0,0,0,0,0,0,8946,8946,8946,8946,1,1,2,2,'Dusktip Stone +1','MIMICXI');
+INSERT INTO `synth_recipes` VALUES (77639,0,0,0,0,80,0,0,0,0,0,4103,4245,3450,0,0,0,0,0,0,0,8955,8955,8955,8955,1,1,2,2,'Duskdim Stone +1','MIMICXI');
+INSERT INTO `synth_recipes` VALUES (77640,0,0,0,0,100,0,0,0,0,0,4103,4245,3502,0,0,0,0,0,0,0,8964,8964,8964,8964,1,1,2,2,'Duskorb Stone +1','MIMICXI');
+
 -- -----------
 -- RECIPES END
 

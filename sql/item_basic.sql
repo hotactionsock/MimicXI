@@ -3231,7 +3231,7 @@ INSERT INTO `item_basic` VALUES (3237,0,'sand-caked_fang','sand-caked_fang','埋
 INSERT INTO `item_basic` VALUES (3238,0,'high-quality_dhalmel_hide','h.q._dhalmel_hide','上質なダルメル毛皮',@GENERAL_TYPE,1,@FLAG_MYSTERY_BOX | @FLAG_NOSALE | @FLAG_RARE,@MISC,0);
 INSERT INTO `item_basic` VALUES (3239,0,'vial_of_puppets_blood','puppets_blood','傀儡の血',@GENERAL_TYPE,1,@FLAG_MYSTERY_BOX | @FLAG_NOSALE | @FLAG_RARE,@MISC,0);
 INSERT INTO `item_basic` VALUES (3240,0,'high-quality_cockatrice_skin','h.q._cktrice._skin','上質なコカトリス皮',@GENERAL_TYPE,1,@FLAG_MYSTERY_BOX | @FLAG_NOSALE | @FLAG_RARE,@MISC,0);
-INSERT INTO `item_basic` VALUES (3241,0,'ladybird_leaf','ladybird_leaf','紅娘の葉',@GENERAL_TYPE,1,@FLAG_MYSTERY_BOX | @FLAG_NOSALE | @FLAG_RARE,@MISC,0);
+INSERT INTO `item_basic` VALUES (3241,0,'ladybird_leaf','ladybird_leaf','紅娘の葉',@GENERAL_TYPE,12,@FLAG_MYSTERY_BOX | @FLAG_NOSALE,@MISC,0);
 INSERT INTO `item_basic` VALUES (3242,0,'high-quality_scorpion_claw','h.q._scorpn._claw','上質な大サソリの爪',@GENERAL_TYPE,1,@FLAG_MYSTERY_BOX | @FLAG_NOSALE | @FLAG_RARE,@MISC,0);
 INSERT INTO `item_basic` VALUES (3243,0,'handful_of_sabulous_clay','sabulous_clay','砂漠の土',@GENERAL_TYPE,1,@FLAG_MYSTERY_BOX | @FLAG_NOSALE | @FLAG_RARE,@MISC,0);
 INSERT INTO `item_basic` VALUES (3244,0,'sprig_of_giant_mistletoe','giant_mistletoe','巨樹の宿木',@GENERAL_TYPE,1,@FLAG_MYSTERY_BOX | @FLAG_NOSALE | @FLAG_RARE,@MISC,0);
