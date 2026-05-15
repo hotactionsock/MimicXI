@@ -430,6 +430,15 @@ auto fromTable(CItem* item, const sol::table& data) -> bool
                             PEquip->ApplyAugment(slot);
                         }
                     }
+
+                    // Lua callers may explicitly pass augmentKind = HAS_AUGMENTS; clear it for
+                    // non-EX items so the client does not impose the EX flag on tradeable gear.
+                    if (!item->hasFlag(ItemFlag::Exclusive))
+                    {
+                        auto& augData         = item->exdata<AugmentStandard>();
+                        augData.AugmentKind    = AugmentKindFlags{};
+                        augData.AugmentSubKind = AugmentSubKindFlags{};
+                    }
                 }
             }
             return true;

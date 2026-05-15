@@ -436,10 +436,16 @@ void CItemEquipment::SetAugmentMod(uint16 type, uint8 value)
 
     if (type != 0)
     {
-        auto& augData = this->exdata<Exdata::AugmentStandard>();
         setSubType(ITEM_AUGMENTED);
-        augData.AugmentKind |= Exdata::AugmentKindFlags::HasAugments;
-        augData.AugmentSubKind |= Exdata::AugmentSubKindFlags::Standard;
+
+        // Only mark HasAugments in exdata for EX items. On non-EX items this byte causes
+        // the client to impose EX regardless of the item's base flags, preventing trades.
+        if (hasFlag(ItemFlag::Exclusive))
+        {
+            auto& augData = this->exdata<Exdata::AugmentStandard>();
+            augData.AugmentKind    |= Exdata::AugmentKindFlags::HasAugments;
+            augData.AugmentSubKind |= Exdata::AugmentSubKindFlags::Standard;
+        }
     }
 
     const auto& augmentDataModifiers = sAugmentData[type];
