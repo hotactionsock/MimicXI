@@ -5,7 +5,7 @@ import secrets
 from functools import wraps
 
 import bcrypt
-from flask import Flask, flash, redirect, render_template, request, session, url_for
+from flask import Flask, flash, jsonify, redirect, render_template, request, session, url_for
 
 from db import get_connection
 
@@ -258,6 +258,120 @@ def create():
         conn.rollback()
         flash(f'Character creation failed: {e}', 'error')
         return render_template('create.html', **ctx)
+    finally:
+        cur.close()
+        conn.autocommit = True
+        conn.close()
+
+
+# ── JSON API (consumed by React / CharacterCreator.jsx) ───────────────────────
+
+def _api_login_required(f):
+    @wraps(f)
+    def _inner(*args, **kwargs):
+        if 'accid' not in session:
+            return jsonify(error='Not authenticated'), 401
+        return f(*args, **kwargs)
+    return _inner
+
+
+@app.route('/api/characters')
+@_api_login_required
+def api_characters():
+    conn = get_connection()
+    cur = conn.cursor()
+    try:
+        cur.execute(
+            "SELECT c.charid, c.charname, cl.race, cl.face, c.nation "
+            "FROM chars c INNER JOIN char_look cl USING(charid) "
+            "WHERE c.accid = ? ORDER BY c.charid",
+            (session['accid'],),
+        )
+        rows = cur.fetchall()
+    finally:
+        cur.close()
+        conn.close()
+
+    return jsonify([
+        {
+            'charid': r[0],
+            'name':   r[1],
+            'race':   r[2],
+            'face':   r[3],
+            'nation': r[4],
+        }
+        for r in rows
+    ])
+
+
+@app.route('/api/create', methods=['POST'])
+@_api_login_required
+def api_create():
+    data   = request.get_json(force=True)
+    name   = str(data.get('name', '')).strip()
+    race   = int(data.get('race', 0))
+    face   = int(data.get('face', 0))
+    size   = int(data.get('size', 1))
+    job    = int(data.get('job', 1))
+    nation = int(data.get('nation', 0))
+
+    if not name or not (3 <= len(name) <= 15) or not name.isalpha():
+        return jsonify(error='Name must be 3–15 letters only.'), 400
+    if not 1 <= race <= 8:
+        return jsonify(error='Invalid race.'), 400
+    if not 0 <= face <= 23:
+        return jsonify(error='Invalid face.'), 400
+    if not 0 <= size <= 2:
+        return jsonify(error='Invalid size.'), 400
+    if not 1 <= job <= 6:
+        return jsonify(error='Invalid job.'), 400
+    if not 0 <= nation <= 2:
+        return jsonify(error='Invalid nation.'), 400
+
+    conn = get_connection()
+    cur = conn.cursor()
+    try:
+        cur.execute("SELECT charid FROM chars WHERE charname = ?", (name,))
+        if cur.fetchone():
+            return jsonify(error='That character name is already taken.'), 409
+
+        cur.execute("SELECT COALESCE(MAX(charid), 0) + 1 FROM chars")
+        charid   = cur.fetchone()[0]
+        pos_zone = random.choice(_STARTING_ZONES[nation])
+
+        conn.autocommit = False
+        cur.execute(
+            "INSERT INTO chars(charid,accid,charname,pos_zone,nation) VALUES(?,?,?,?,?)",
+            (charid, session['accid'], name, pos_zone, nation),
+        )
+        cur.execute(
+            "INSERT INTO char_look(charid,face,race,size) VALUES(?,?,?,?)",
+            (charid, face, race, size),
+        )
+        cur.execute("INSERT INTO char_stats(charid,mjob) VALUES(?,?)", (charid, job))
+        cur.execute(
+            "INSERT INTO char_exp(charid) VALUES(?) ON DUPLICATE KEY UPDATE charid=charid", (charid,))
+        cur.execute(
+            "INSERT INTO char_flags(charid) VALUES(?) ON DUPLICATE KEY UPDATE disconnecting=disconnecting", (charid,))
+        cur.execute(
+            "INSERT INTO char_jobs(charid) VALUES(?) ON DUPLICATE KEY UPDATE charid=charid", (charid,))
+        cur.execute(
+            "INSERT INTO char_points(charid) VALUES(?) ON DUPLICATE KEY UPDATE charid=charid", (charid,))
+        cur.execute(
+            "INSERT INTO char_unlocks(charid) VALUES(?) ON DUPLICATE KEY UPDATE charid=charid", (charid,))
+        cur.execute(
+            "INSERT INTO char_profile(charid) VALUES(?) ON DUPLICATE KEY UPDATE charid=charid", (charid,))
+        cur.execute(
+            "INSERT INTO char_storage(charid) VALUES(?) ON DUPLICATE KEY UPDATE charid=charid", (charid,))
+        cur.execute("DELETE FROM char_inventory WHERE charid=?", (charid,))
+        cur.execute("INSERT INTO char_inventory(charid) VALUES(?)", (charid,))
+        conn.commit()
+
+        return jsonify(charid=charid, name=name), 201
+
+    except Exception as e:
+        conn.rollback()
+        return jsonify(error=str(e)), 500
     finally:
         cur.close()
         conn.autocommit = True
