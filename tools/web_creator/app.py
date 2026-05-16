@@ -2,6 +2,7 @@
 import os
 import random
 import secrets
+import sys
 from functools import wraps
 
 import bcrypt
@@ -379,4 +380,5 @@ def api_create():
 
 
 if __name__ == '__main__':
-    app.run(debug=True, host='127.0.0.1', port=5000)
+    port = int(sys.argv[1]) if len(sys.argv) > 1 else 5000
+    app.run(debug=True, host='127.0.0.1', port=port)
