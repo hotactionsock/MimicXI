@@ -8,7 +8,7 @@ from datetime import datetime
 from functools import wraps
 
 import bcrypt
-from flask import Flask, flash, jsonify, redirect, render_template, request, session, url_for
+from flask import Flask, flash, jsonify, redirect, render_template, request, send_from_directory, session, url_for
 
 from db import get_connection
 
@@ -89,11 +89,29 @@ def login_required(f):
     return _inner
 
 
-# ── Routes ────────────────────────────────────────────────────────────────────
+# ── Static site (Option A — same-origin, no CORS needed) ─────────────────────
+# Drop the design site/ files into web_creator/public/ and they are served
+# at / and /site/<filename> alongside the Flask API routes.
+
+PUBLIC_DIR = os.path.join(os.path.dirname(__file__), 'public')
+os.makedirs(PUBLIC_DIR, exist_ok=True)
+
 
 @app.route('/')
 def index():
-    return redirect(url_for('characters') if 'accid' in session else url_for('login'))
+    index_html = os.path.join(PUBLIC_DIR, 'index.html')
+    if os.path.exists(index_html):
+        return send_from_directory(PUBLIC_DIR, 'index.html')
+    # Fallback while public/ is empty: redirect to sign-in
+    return redirect(url_for('login') if 'accid' not in session else url_for('characters'))
+
+
+@app.route('/site/<path:filename>')
+def public_site(filename):
+    return send_from_directory(PUBLIC_DIR, filename)
+
+
+# ── Routes ────────────────────────────────────────────────────────────────────
 
 
 @app.route('/login', methods=['GET', 'POST'])
