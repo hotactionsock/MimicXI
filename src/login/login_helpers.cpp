@@ -237,7 +237,7 @@ int32 createCharacter(session_t& session, uint8* buf, lpkt_chr_info_sub2& charIn
         return -1;
     }
 
-    if (createchar.m_look.face > 15) // Face 8B
+    if (createchar.m_look.face > 23) // Face 8C (includes custom C-variants 16-23)
     {
         ShowError(fmt::format("{} attempted to create character with invalid face {}", charName, createchar.m_look.face));
         return -1;
