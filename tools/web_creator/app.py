@@ -90,11 +90,26 @@ def login_required(f):
 
 
 # ── Static site (Option A — same-origin, no CORS needed) ─────────────────────
-# Drop the design site/ files into web_creator/public/ and they are served
-# at / and /site/<filename> alongside the Flask API routes.
+# Checks these directories in order and uses the first one that contains
+# an index.html, so it works wherever you put the design files.
 
-PUBLIC_DIR = os.path.join(os.path.dirname(__file__), 'public')
+def _find_public_dir():
+    here = os.path.dirname(os.path.abspath(__file__))
+    candidates = [
+        os.path.join(here, 'public'),
+        os.path.join(here, 'site'),
+        os.path.join(here, 'templates', 'site'),
+    ]
+    for path in candidates:
+        if os.path.isfile(os.path.join(path, 'index.html')):
+            return path
+    # None found — return the default so os.makedirs still works
+    return candidates[0]
+
+PUBLIC_DIR = _find_public_dir()
 os.makedirs(PUBLIC_DIR, exist_ok=True)
+print(f'[mimic] static site dir: {PUBLIC_DIR}')
+print(f'[mimic] index.html present: {os.path.isfile(os.path.join(PUBLIC_DIR, "index.html"))}')
 
 
 @app.route('/')
@@ -102,7 +117,7 @@ def index():
     index_html = os.path.join(PUBLIC_DIR, 'index.html')
     if os.path.exists(index_html):
         return send_from_directory(PUBLIC_DIR, 'index.html')
-    # Fallback while public/ is empty: redirect to sign-in
+    # Fallback while no site files are present yet
     return redirect(url_for('login') if 'accid' not in session else url_for('characters'))
 
 
