@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block title %}Login — MimicXI{% endblock %}
+
+{% block content %}
+<div class="auth-wrap">
+  <div class="card auth-card">
+    <h1 class="card-title">MimicXI</h1>
+    <p class="card-subtitle">Character Creator</p>
+
+    <form method="post" action="{{ url_for('login') }}" class="form" novalidate>
+      <div class="form-group">
+        <label for="username">Account Name</label>
+        <input id="username" name="username" type="text" class="input"
+               autocomplete="username" autofocus required
+               value="{{ request.form.get('username', '') }}">
+      </div>
+      <div class="form-group">
+        <label for="password">Password</label>
+        <input id="password" name="password" type="password" class="input"
+               autocomplete="current-password" required>
+      </div>
+      <button type="submit" class="btn btn-primary btn-full">Sign In</button>
+    </form>
+  </div>
+</div>
+{% endblock %}

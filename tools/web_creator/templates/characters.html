@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block title %}My Characters — MimicXI{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <h2 class="page-title">My Characters</h2>
+  <a href="{{ url_for('create') }}" class="btn btn-primary">+ Create Character</a>
+</div>
+
+{% if characters %}
+<div class="char-grid">
+  {% for char in characters %}
+  <div class="char-card">
+    <div class="char-avatar" aria-hidden="true">
+      <span class="char-initial">{{ char.name[0] }}</span>
+    </div>
+    <div class="char-info">
+      <h3 class="char-name">{{ char.name }}</h3>
+      <dl class="char-details">
+        <dt>Race</dt><dd>{{ char.race }}</dd>
+        <dt>Face</dt><dd>{{ char.face }}</dd>
+        <dt>Nation</dt><dd>{{ char.nation }}</dd>
+        <dt>ID</dt><dd class="char-id">#{{ char.charid }}</dd>
+      </dl>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% else %}
+<div class="empty-state">
+  <p>No characters yet.</p>
+  <a href="{{ url_for('create') }}" class="btn btn-primary">Create your first character</a>
+</div>
+{% endif %}
+{% endblock %}

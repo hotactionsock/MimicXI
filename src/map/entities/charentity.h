@@ -255,6 +255,15 @@ enum class CharFace : uint8
     Face7B = 13,
     Face8A = 14,
     Face8B = 15,
+    // Custom C-variant faces — values 16-23, requires custom client DATs
+    Face1C = 16,
+    Face2C = 17,
+    Face3C = 18,
+    Face4C = 19,
+    Face5C = 20,
+    Face6C = 21,
+    Face7C = 22,
+    Face8C = 23,
 };
 
 class CBasicPacket;

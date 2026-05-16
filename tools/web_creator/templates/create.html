@@ -1,0 +1,140 @@
+{% extends "base.html" %}
+{% block title %}Create Character — MimicXI{% endblock %}
+{% block head %}
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <h2 class="page-title">Create Character</h2>
+</div>
+
+<form method="post" action="{{ url_for('create') }}" id="create-form" novalidate>
+
+  {# ── Name ─────────────────────────────────────────────── #}
+  <section class="form-section">
+    <h3 class="section-title">Name</h3>
+    <div class="form-group" style="max-width:320px">
+      <label for="name">Character Name</label>
+      <input id="name" name="name" type="text" class="input"
+             minlength="3" maxlength="15" autocomplete="off" required
+             value="{{ request.form.get('name', '') }}"
+             placeholder="3–15 letters">
+      <span class="hint">Letters only. First character will be capitalised in-game.</span>
+    </div>
+  </section>
+
+  {# ── Race ─────────────────────────────────────────────── #}
+  <section class="form-section">
+    <h3 class="section-title">Race</h3>
+    <div class="race-grid" role="radiogroup" aria-label="Race">
+      {% for race_id, (race_name, gender) in races.items() %}
+      <label class="race-tile {% if request.form.get('race', '1')|int == race_id %}selected{% endif %}">
+        <input type="radio" name="race" value="{{ race_id }}"
+               {% if request.form.get('race', '1')|int == race_id %}checked{% endif %}>
+        <span class="race-icon" aria-hidden="true">{{ race_name[0] }}</span>
+        <span class="race-name">{{ race_name }}</span>
+        {% if gender %}<span class="race-gender">{{ gender }}</span>{% endif %}
+      </label>
+      {% endfor %}
+    </div>
+  </section>
+
+  {# ── Face ─────────────────────────────────────────────── #}
+  <section class="form-section">
+    <h3 class="section-title">Face
+      <span class="section-hint">— C variants are custom styles requiring matching client data</span>
+    </h3>
+
+    <input type="hidden" name="face" id="face-value"
+           value="{{ request.form.get('face', '0') }}">
+
+    <div class="face-grid" role="radiogroup" aria-label="Face">
+      <div class="face-grid-header">
+        <span></span>
+        <span class="face-col-label">A</span>
+        <span class="face-col-label">B</span>
+        <span class="face-col-label custom">C <span class="badge-custom">Custom</span></span>
+      </div>
+      {% for row in range(1, 9) %}
+      <div class="face-row">
+        <span class="face-row-label">{{ row }}</span>
+        {% for entry in face_grid if entry.num == row %}
+        <button type="button"
+                class="face-tile {% if entry.custom %}face-custom{% endif %} {% if request.form.get('face', '0')|int == entry.value %}face-selected{% endif %}"
+                data-value="{{ entry.value }}"
+                aria-label="Face {{ entry.num }}{{ entry.variant }}"
+                title="Face {{ entry.num }}{{ entry.variant }} (value {{ entry.value }})">
+          <span class="face-preview" aria-hidden="true">
+            {% if entry.custom %}✦{% else %}◉{% endif %}
+          </span>
+          <span class="face-label">{{ entry.variant }}</span>
+        </button>
+        {% endfor %}
+      </div>
+      {% endfor %}
+    </div>
+
+    <p class="face-selected-display">
+      Selected: <strong id="face-selected-label">
+        {% set fv = request.form.get('face', '0')|int %}
+        {% if fv <= 15 %}Face {{ fv // 2 + 1 }}{{ 'A' if fv % 2 == 0 else 'B' }}
+        {% else %}Face {{ fv - 15 }}C{% endif %}
+      </strong>
+    </p>
+  </section>
+
+  {# ── Size ─────────────────────────────────────────────── #}
+  <section class="form-section">
+    <h3 class="section-title">Size</h3>
+    <div class="size-group" role="radiogroup" aria-label="Size">
+      {% for size_id, size_name in sizes.items() %}
+      <label class="size-tile {% if request.form.get('size', '1')|int == size_id %}selected{% endif %}">
+        <input type="radio" name="size" value="{{ size_id }}"
+               {% if request.form.get('size', '1')|int == size_id %}checked{% endif %}>
+        {{ size_name }}
+      </label>
+      {% endfor %}
+    </div>
+  </section>
+
+  {# ── Job ──────────────────────────────────────────────── #}
+  <section class="form-section">
+    <h3 class="section-title">Starting Job</h3>
+    <div class="select-wrap" style="max-width:280px">
+      <select name="job" class="input select">
+        {% for job_id, job_name in jobs.items() %}
+        <option value="{{ job_id }}"
+          {% if request.form.get('job', '1')|int == job_id %}selected{% endif %}>
+          {{ job_name }}
+        </option>
+        {% endfor %}
+      </select>
+    </div>
+  </section>
+
+  {# ── Nation ───────────────────────────────────────────── #}
+  <section class="form-section">
+    <h3 class="section-title">Starting Nation</h3>
+    <div class="size-group" role="radiogroup" aria-label="Nation">
+      {% for nation_id, nation_name in nations.items() %}
+      <label class="size-tile {% if request.form.get('nation', '0')|int == nation_id %}selected{% endif %}">
+        <input type="radio" name="nation" value="{{ nation_id }}"
+               {% if request.form.get('nation', '0')|int == nation_id %}checked{% endif %}>
+        {{ nation_name }}
+      </label>
+      {% endfor %}
+    </div>
+  </section>
+
+  <div class="form-actions">
+    <a href="{{ url_for('characters') }}" class="btn btn-outline">Cancel</a>
+    <button type="submit" class="btn btn-primary">Create Character</button>
+  </div>
+
+</form>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/creator.js') }}"></script>
+{% endblock %}
