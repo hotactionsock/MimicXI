@@ -129,41 +129,90 @@ def public_site(filename):
 # ── Routes ────────────────────────────────────────────────────────────────────
 
 
+def _check_credentials(username, password):
+    """Return account row if credentials are valid, else None."""
+    conn = get_connection()
+    cur  = conn.cursor()
+    try:
+        cur.execute(
+            "SELECT id, password FROM accounts WHERE login = ? AND status > 0",
+            (username,),
+        )
+        row = cur.fetchone()
+    finally:
+        cur.close()
+        conn.close()
+    if row and bcrypt.checkpw(password.encode(), row[1].encode()):
+        return row
+    return None
+
+
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
-        username = request.form.get('username', '').strip()
-        password = request.form.get('password', '')
+        # Accept both form-encoded (Jinja UI) and JSON (design site fetch calls)
+        if request.is_json:
+            data     = request.get_json(silent=True) or {}
+            username = str(data.get('username', '')).strip()
+            password = str(data.get('password', ''))
+        else:
+            username = request.form.get('username', '').strip()
+            password = request.form.get('password', '')
+
+        print(f'[mimic] login attempt: username={username!r} json={request.is_json}')
 
         if not username or not password:
+            if request.is_json:
+                return jsonify(error='Username and password are required.'), 400
             flash('Username and password are required.', 'error')
             return render_template('login.html')
 
-        conn = get_connection()
-        cur = conn.cursor()
-        try:
-            cur.execute(
-                "SELECT id, password FROM accounts WHERE login = ? AND status > 0",
-                (username,),
-            )
-            row = cur.fetchone()
-        finally:
-            cur.close()
-            conn.close()
-
-        if row and bcrypt.checkpw(password.encode(), row[1].encode()):
-            session['accid'] = row[0]
+        row = _check_credentials(username, password)
+        if row:
+            session['accid']    = row[0]
             session['username'] = username
+            print(f'[mimic] login ok: accid={row[0]} username={username!r}')
+            if request.is_json:
+                return jsonify(accid=row[0], username=username), 200
             return redirect(url_for('characters'))
 
+        print(f'[mimic] login failed: username={username!r}')
+        if request.is_json:
+            return jsonify(error='Invalid username or password.'), 401
         flash('Invalid username or password.', 'error')
 
     return render_template('login.html')
 
 
-@app.route('/logout', methods=['POST'])
+@app.route('/api/login', methods=['POST'])
+def api_login():
+    """JSON login endpoint — used by the design site's signin.html."""
+    data     = request.get_json(force=True, silent=True) or {}
+    username = str(data.get('username', '')).strip()
+    password = str(data.get('password', ''))
+
+    print(f'[mimic] /api/login attempt: username={username!r}')
+
+    if not username or not password:
+        return jsonify(error='Username and password are required.'), 400
+
+    row = _check_credentials(username, password)
+    if row:
+        session['accid']    = row[0]
+        session['username'] = username
+        print(f'[mimic] /api/login ok: accid={row[0]} username={username!r}')
+        return jsonify(accid=row[0], username=username), 200
+
+    print(f'[mimic] /api/login failed: username={username!r}')
+    return jsonify(error='Invalid username or password.'), 401
+
+
+@app.route('/logout', methods=['POST', 'GET'])
 def logout():
+    print(f'[mimic] logout: clearing session for accid={session.get("accid")}')
     session.clear()
+    if request.is_json or request.args.get('json'):
+        return jsonify(ok=True), 200
     return redirect(url_for('login'))
 
 
