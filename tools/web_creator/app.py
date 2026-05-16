@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
 import os
 import random
+import re
 import secrets
 import sys
+from datetime import datetime
 from functools import wraps
 
 import bcrypt
@@ -263,6 +265,66 @@ def create():
         cur.close()
         conn.autocommit = True
         conn.close()
+
+
+# ── Registration & session ────────────────────────────────────────────────────
+
+@app.route('/api/register', methods=['POST'])
+def api_register():
+    data     = request.get_json(force=True, silent=True) or {}
+    username = str(data.get('username', '')).strip()
+    password = str(data.get('password', ''))
+    email    = str(data.get('email', '')).strip()
+
+    if not re.fullmatch(r'[A-Za-z0-9]{3,15}', username):
+        return jsonify(error='Account name must be 3–15 letters or numbers.'), 400
+    if len(password) < 8:
+        return jsonify(error='Password must be at least 8 characters.'), 400
+    if email and not re.fullmatch(r'[^@\s]+@[^@\s]+\.[^@\s]+', email):
+        return jsonify(error='Email address looks invalid.'), 400
+
+    pw_hash = bcrypt.hashpw(password.encode(), bcrypt.gensalt()).decode()
+
+    conn = get_connection()
+    cur  = conn.cursor()
+    try:
+        cur.execute("SELECT id FROM accounts WHERE login = ?", (username,))
+        if cur.fetchone():
+            return jsonify(error='That account name is already taken.'), 409
+
+        cur.execute("SELECT COALESCE(MAX(id), 0) + 1 FROM accounts")
+        new_id = cur.fetchone()[0]
+
+        now = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        cur.execute(
+            "INSERT INTO accounts("
+            "  id, login, password, current_email, registration_email,"
+            "  timecreate, timelastmodify,"
+            "  content_ids, expansions, features, status, priv"
+            ") VALUES (?, ?, ?, ?, ?, ?, ?, 16, 4094, 253, 1, 1)",
+            (new_id, username, pw_hash, email, email, now, now),
+        )
+
+        session['accid']    = new_id
+        session['username'] = username
+        return jsonify(accid=new_id, username=username), 201
+
+    except Exception as e:
+        return jsonify(error=str(e)), 500
+    finally:
+        cur.close()
+        conn.close()
+
+
+@app.route('/api/session')
+def api_session():
+    if 'accid' not in session:
+        return jsonify(authenticated=False), 200
+    return jsonify(
+        authenticated=True,
+        accid=session['accid'],
+        username=session.get('username'),
+    )
 
 
 # ── JSON API (consumed by React / CharacterCreator.jsx) ───────────────────────
