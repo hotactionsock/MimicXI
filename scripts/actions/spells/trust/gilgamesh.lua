@@ -21,8 +21,6 @@ spellObject.onMobSpawn = function(mob)
     mob:addGambit(ai.t.SELF, { ai.c.TP_LT,  1000   }, { ai.r.JA, ai.s.SPECIFIC, xi.ja.MEDITATE  })
     mob:addGambit(ai.t.SELF, { ai.c.HPP_LT, 75    }, { ai.r.JA, ai.s.SPECIFIC, xi.ja.HAGAKURE  })
 
-    mob:addGambit(ai.t.TARGET, { ai.c.TP_GTE, 1000 }, { ai.r.WS, ai.s.SPECIFIC, 152 }) -- Tachi: Kasha
-
     mob:setTrustTPSkillSettings(ai.tp.CLOSER_UNTIL_TP, ai.s.RANDOM, 2000)
 end
 

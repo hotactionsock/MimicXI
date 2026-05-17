@@ -28,8 +28,6 @@ spellObject.onMobSpawn = function(mob)
     -- Self-cure when critically wounded
     mob:addGambit(ai.t.SELF,   { ai.c.HPP_LT,     30 }, { ai.r.MA, ai.s.SPECIFIC,   xi.magic.spell.CURE_IV })
 
-    mob:addGambit(ai.t.TARGET, { ai.c.TP_GTE, 1000 }, { ai.r.WS, ai.s.SPECIFIC, 104 }) -- Spiral Hell
-
     mob:setTrustTPSkillSettings(ai.tp.CLOSER_UNTIL_TP, ai.s.RANDOM, 2000)
 end
 
