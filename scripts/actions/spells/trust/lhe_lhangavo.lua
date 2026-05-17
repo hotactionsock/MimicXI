@@ -14,6 +14,12 @@ end
 
 spellObject.onMobSpawn = function(mob)
     xi.trust.message(mob, xi.trust.messageOffset.SPAWN)
+
+    mob:addGambit(ai.t.SELF, { ai.c.ALWAYS,           0  }, { ai.r.JA, ai.s.SPECIFIC, xi.ja.DODGE   })
+    mob:addGambit(ai.t.SELF, { ai.c.NOT_HAS_TOP_ENMITY, 0 }, { ai.r.JA, ai.s.SPECIFIC, xi.ja.PROVOKE })
+    mob:addGambit(ai.t.SELF, { ai.c.HPP_LT,          50  }, { ai.r.JA, ai.s.SPECIFIC, xi.ja.CHAKRA  })
+
+    mob:setTrustTPSkillSettings(ai.tp.ASAP, ai.s.RANDOM)
 end
 
 spellObject.onMobDespawn = function(mob)
