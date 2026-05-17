@@ -226,35 +226,137 @@
 .fame-tier   { font-size: 0.8rem; color: var(--accent); text-align: right; }
 .fame-stars  { color: var(--accent); }
 
-/* ── Equipment placeholder ───────────────────────────────── */
-.equip-placeholder { display: flex; flex-direction: column; gap: 2rem; }
-
-.equip-slots {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
-  gap: 0.75rem;
+/* ── Equipment grid ──────────────────────────────────────── */
+.equip-loading {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  padding: 2rem 0;
+  text-align: center;
 }
+
+.equip-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.6rem;
+  max-width: 480px;
+}
+
 .equip-slot {
+  position: relative;
   aspect-ratio: 1;
   background: var(--bg-card);
-  border: 1px dashed var(--border);
+  border: 1px solid var(--border);
   border-radius: var(--radius);
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  gap: 0.35rem;
-  opacity: 0.45;
+  justify-content: flex-end;
+  padding: 0.3rem;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+  overflow: hidden;
 }
-.equip-slot-icon  { font-size: 1.6rem; }
-.equip-slot-label { font-size: 0.65rem; color: var(--text-muted); text-align: center; }
+.equip-slot:hover          { border-color: var(--accent-dim); background: #161d30; }
+.equip-slot.slot-filled    { border-color: rgba(212,175,55,0.35); }
+.equip-slot.slot-filled:hover { border-color: var(--accent); }
+.equip-slot.slot-active    { border-color: var(--accent); background: rgba(212,175,55,0.08); }
+.equip-slot.slot-empty     { cursor: default; opacity: 0.45; }
+.equip-slot.slot-empty:hover { border-color: var(--border); background: var(--bg-card); }
 
-.equip-coming-soon {
-  text-align: center;
-  padding: 1.5rem;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  background: var(--bg-card);
+.equip-slot-img {
+  position: absolute;
+  inset: 4px 4px 18px 4px;
+  object-fit: contain;
+  image-rendering: pixelated;
 }
-.equip-notice     { color: var(--text-muted); font-size: 0.9rem; margin-bottom: 0.35rem; }
-.equip-notice-sub { color: var(--text-muted); font-size: 0.78rem; opacity: 0.6; }
+.equip-slot-img.icon-placeholder {
+  opacity: 0.3;
+  width: calc(100% - 8px);
+  height: auto;
+  top: 4px;
+  left: 4px;
+}
+
+.equip-slot-label {
+  position: relative;
+  font-size: 0.58rem;
+  color: var(--text-muted);
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  width: 100%;
+  line-height: 1.2;
+  z-index: 1;
+}
+.slot-filled .equip-slot-label { color: var(--accent); }
+
+/* Hover tooltip showing item name */
+.equip-slot::before {
+  content: attr(data-item-name);
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: #070b14;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 4px 8px;
+  font-size: 0.72rem;
+  color: var(--text);
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.15s;
+  z-index: 10;
+  max-width: 180px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.equip-slot.slot-filled:hover::before { opacity: 1; }
+
+/* ── Item detail panel ───────────────────────────────────── */
+.equip-detail {
+  margin-top: 1.25rem;
+  background: var(--bg-card);
+  border: 1px solid var(--accent-dim);
+  border-radius: var(--radius-lg);
+  padding: 1.25rem;
+  display: flex;
+  gap: 1rem;
+  align-items: flex-start;
+  position: relative;
+  max-width: 480px;
+}
+.equip-detail-close {
+  position: absolute;
+  top: 0.6rem;
+  right: 0.75rem;
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 1rem;
+  cursor: pointer;
+  line-height: 1;
+}
+.equip-detail-close:hover { color: var(--text); }
+.equip-detail-icon {
+  width: 64px;
+  height: 64px;
+  object-fit: contain;
+  image-rendering: pixelated;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg-input);
+  flex-shrink: 0;
+}
+.equip-detail-body   { flex: 1; min-width: 0; }
+.equip-detail-name   { font-size: 1rem; color: var(--accent); margin-bottom: 0.5rem; }
+.equip-detail-stats  {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.25rem 0.75rem;
+  font-size: 0.8rem;
+}
+.equip-detail-stats dt { color: var(--text-muted); }
+.equip-detail-stats dd { color: var(--text); }

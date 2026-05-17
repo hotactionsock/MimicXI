@@ -104,13 +104,19 @@
 
     <!-- ── Equipment tab ────────────────────────────────────── -->
     <section class="tab-panel" id="tab-equipment">
-      <div class="equip-placeholder">
-        <div class="equip-slots" id="equip-slots">
-          <!-- Slot grid rendered by JS -->
+      <div id="equip-loading" class="equip-loading">Loading equipment…</div>
+      <div id="equip-wrap" style="display:none">
+        <div class="equip-grid" id="equip-grid">
+          <!-- 4×4 slot grid rendered by JS -->
         </div>
-        <div class="equip-coming-soon">
-          <p class="equip-notice">Equipment viewer coming soon</p>
-          <p class="equip-notice-sub">Item data will appear here once the viewer is implemented.</p>
+        <!-- Item detail panel — shown on slot click -->
+        <div class="equip-detail" id="equip-detail" style="display:none">
+          <button class="equip-detail-close" id="equip-detail-close">✕</button>
+          <img class="equip-detail-icon" id="equip-detail-icon" src="" alt="">
+          <div class="equip-detail-body">
+            <h3 class="equip-detail-name" id="equip-detail-name"></h3>
+            <dl class="equip-detail-stats" id="equip-detail-stats"></dl>
+          </div>
         </div>
       </div>
     </section>

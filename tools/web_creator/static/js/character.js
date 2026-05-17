@@ -115,20 +115,92 @@ function renderFame(d) {
   }).join('');
 }
 
-function renderEquipment() {
-  const slots = [
-    ['🪖','Head'], ['🥋','Body'], ['🧤','Hands'],
-    ['👖','Legs'], ['👢','Feet'], ['💍','Ring 1'],
-    ['💍','Ring 2'], ['📿','Neck'], ['⌚','Waist'],
-    ['🏹','Ranged'], ['⚔️','Main'], ['🛡️','Sub'],
-    ['🎯','Ammo'], ['🏷️','Back'],
-  ];
-  qs('#equip-slots').innerHTML = slots.map(([icon, label]) => `
-    <div class="equip-slot">
-      <span class="equip-slot-icon">${icon}</span>
-      <span class="equip-slot-label">${label}</span>
-    </div>`).join('');
+async function loadEquipment(charid) {
+  const loading = qs('#equip-loading');
+  const wrap    = qs('#equip-wrap');
+
+  let slots;
+  try {
+    const res = await fetch(`/api/character/${charid}/equipment`, { credentials: 'include' });
+    slots = await res.json();
+    if (!res.ok) throw new Error(slots.error || 'Failed to load equipment.');
+  } catch (e) {
+    if (loading) loading.textContent = `Could not load equipment: ${e.message}`;
+    return;
+  }
+
+  const grid = qs('#equip-grid');
+  grid.innerHTML = slots.map(slot => {
+    const filled   = slot.item_id != null;
+    const cls      = ['equip-slot', filled ? 'slot-filled' : 'slot-empty'].join(' ');
+    const nameAttr = filled ? `data-item-name="${escHtml(slot.name)}"` : '';
+    const iconSrc  = filled ? `/item-icon/${slot.item_id}` : '';
+
+    const imgTag = filled
+      ? `<img class="equip-slot-img" src="${iconSrc}"
+             alt="${escHtml(slot.name)}"
+             onerror="this.src='/item-icon/0'">`
+      : '';
+
+    return `
+      <div class="${cls}" ${nameAttr}
+           data-slot-id="${slot.slot_id}"
+           data-item-id="${slot.item_id ?? ''}"
+           data-slot-name="${escHtml(slot.slot_name)}">
+        ${imgTag}
+        <span class="equip-slot-label">${escHtml(slot.slot_name)}</span>
+      </div>`;
+  }).join('');
+
+  // Click → detail panel
+  grid.querySelectorAll('.equip-slot.slot-filled').forEach(tile => {
+    tile.addEventListener('click', () => showItemDetail(tile, slots));
+  });
+
+  if (loading) hide(loading);
+  show(wrap);
 }
+
+function escHtml(str) {
+  return String(str ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function showItemDetail(tile, slots) {
+  const slotId = parseInt(tile.dataset.slotId, 10);
+  const slot   = slots.find(s => s.slot_id === slotId);
+  if (!slot || !slot.item_id) return;
+
+  // Highlight active slot
+  document.querySelectorAll('.equip-slot').forEach(t => t.classList.remove('slot-active'));
+  tile.classList.add('slot-active');
+
+  const panel = qs('#equip-detail');
+  qs('#equip-detail-icon').src = `/item-icon/${slot.item_id}`;
+  qs('#equip-detail-name').textContent = slot.name ?? `Item #${slot.item_id}`;
+
+  const stats = [];
+  if (slot.req_level) stats.push(['Lv. Req', slot.req_level]);
+  if (slot.ilevel)    stats.push(['iLevel', slot.ilevel]);
+  stats.push(['Slot', slot.slot_name]);
+  stats.push(['Item ID', slot.item_id]);
+
+  qs('#equip-detail-stats').innerHTML = stats
+    .map(([k,v]) => `<dt>${k}</dt><dd>${v}</dd>`)
+    .join('');
+
+  show(panel);
+}
+
+// Close detail panel
+document.addEventListener('DOMContentLoaded', () => {
+  const closeBtn = qs('#equip-detail-close');
+  if (closeBtn) {
+    closeBtn.addEventListener('click', () => {
+      hide(qs('#equip-detail'));
+      document.querySelectorAll('.equip-slot').forEach(t => t.classList.remove('slot-active'));
+    });
+  }
+});
 
 // ── Main ──────────────────────────────────────────────────────────────────────
 
@@ -179,11 +251,21 @@ async function main() {
     show(qs('#private-banner'));
   }
 
-  // ── Tabs
+  // ── Tabs: render static tabs immediately
   renderOverview(data);
   renderJobs(data);
   renderFame(data);
-  renderEquipment();
+
+  // Equipment loads lazily when the tab is first clicked
+  let equipLoaded = false;
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      if (btn.dataset.tab === 'equipment' && !equipLoaded) {
+        equipLoaded = true;
+        loadEquipment(charid);
+      }
+    });
+  });
 
   // ── Swap loading → profile
   hide(qs('#state-loading'));
