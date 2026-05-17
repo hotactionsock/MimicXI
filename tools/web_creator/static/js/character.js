@@ -183,16 +183,20 @@ function buildTooltipHtml(data, slotName) {
 
   let body = '';
   if (data.description) {
-    const lines = data.description.split('\n').map(l => l.trim()).filter(Boolean);
+    const lines = data.description.split('\\n').map(l => l.trim()).filter(Boolean);
     body = lines.map(l => `<div class="tt-line">${parseDescLine(l)}</div>`).join('');
   }
 
-  const levelLine = data.level
-    ? `<div class="tt-level-line">Lv. ${data.level}</div>`
+  const footerParts = [];
+  if (data.level)  footerParts.push(`Lv. ${data.level}`);
+  if (data.ilvl)   footerParts.push(`iLv. ${data.ilvl}`);
+  if (data.jobs && data.jobs.length) footerParts.push(data.jobs.join(' '));
+  const footer = footerParts.length
+    ? `<div class="tt-level-line">${escHtml(footerParts.join('  '))}</div>`
     : '';
 
-  return header + (body || levelLine
-    ? `<div class="tt-body">${body}${levelLine}</div>`
+  return header + (body || footer
+    ? `<div class="tt-body">${body}${footer}</div>`
     : '');
 }
 
@@ -335,7 +339,7 @@ function showItemDetail(tile, slots) {
       // Fetch and fill asynchronously
       fetchItemData(slot.item_id).then(data => {
         if (data?.description) {
-          const lines = data.description.split('\n').map(l => l.trim()).filter(Boolean);
+          const lines = data.description.split('\\n').map(l => l.trim()).filter(Boolean);
           descEl.innerHTML = lines.map(l => `<div class="tt-line">${parseDescLine(l)}</div>`).join('');
           show(descEl);
         }

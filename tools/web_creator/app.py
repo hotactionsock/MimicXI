@@ -700,14 +700,9 @@ def api_character(charid):
 
 # ── Equipment ─────────────────────────────────────────────────────────────────
 
-# Field names ShiningFantasia uses — tried in order for icon, description, etc.
-# After running /api/sf-debug you can update these to match the actual keys.
-_SF_ICON_KEYS = ['icon', 'Icon', 'iconData', 'icon_data', 'ImageData', 'image', 'img']
-_SF_DESC_KEYS = ['description', 'Description', 'rawDescription', 'raw_description', 'desc', 'text', 'log_en', 'logEn']
-_SF_NAME_KEYS = ['name', 'Name', 'itemName', 'item_name', 'en', 'enName', 'name_en', 'english']
-_SF_LV_KEYS   = ['level', 'Level', 'lv', 'reqLevel', 'req_level', 'LevelReq', 'elvl']
-_SF_JOBS_KEYS = ['jobs', 'Jobs', 'jobFlags', 'job_flags', 'usableJobs', 'JobRestrictions']
-# Field names that might hold the item ID inside a bulk array/dict
+# ShiningFantasia field names (confirmed from /api/sf-debug output)
+_SF_ICON_KEYS = ['iconTextureBase64', 'icon', 'Icon', 'iconData', 'icon_data', 'ImageData', 'image', 'img']
+# englishText is an array: [0]=name, [4]=description — handled specially in _sf_item_detail
 _SF_ID_KEYS   = ['id', 'Id', 'ID', 'itemId', 'item_id', 'ItemId', 'itemID']
 
 # Bulk JSON files that contain all items (large aggregates, no per-item files)
@@ -822,13 +817,27 @@ def _sf_item_detail(item_id: int):
     raw = cache.get(item_id)
     if not raw:
         return None
+
+    # englishText is an array: [0]=display name, [4]=description text
+    english = raw.get('englishText', [])
+    if isinstance(english, list):
+        name = english[0] if len(english) > 0 and english[0] else f'Item #{item_id}'
+        desc = english[4] if len(english) > 4 and english[4] else ''
+    else:
+        name = str(english) or f'Item #{item_id}'
+        desc = ''
+
     return {
-        'item_id':   item_id,
-        'name':      _pick(raw, _SF_NAME_KEYS, f'Item #{item_id}'),
-        'description': _pick(raw, _SF_DESC_KEYS, ''),
-        'level':     _pick(raw, _SF_LV_KEYS, 0),
-        'jobs':      _pick(raw, _SF_JOBS_KEYS, ''),
-        '_raw':      raw,
+        'item_id':     item_id,
+        'name':        name,
+        'description': desc,
+        'level':       raw.get('level', 0),
+        'jobs':        raw.get('jobs', []),
+        'slots':       raw.get('slots', []),
+        'dmg':         raw.get('dmg'),
+        'delay':       raw.get('delay'),
+        'ilvl':        raw.get('ilvl', 0),
+        '_raw':        raw,
     }
 
 
@@ -909,6 +918,10 @@ def item_data_route(item_id):
             'description': detail['description'],
             'level':       detail['level'],
             'jobs':        detail['jobs'],
+            'slots':       detail['slots'],
+            'dmg':         detail['dmg'],
+            'delay':       detail['delay'],
+            'ilvl':        detail['ilvl'],
         })
 
     # DB fallback
