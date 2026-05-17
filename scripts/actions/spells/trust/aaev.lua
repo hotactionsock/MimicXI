@@ -35,9 +35,10 @@ spellObject.onMobSpawn = function(mob)
     mob:setMod(xi.mod.SHIELDBLOCKRATE, 45) -- 45% base block rate
     mob:addMod(xi.mod.FASTCAST, 30)
     mob:addMod(xi.mod.CURE_POTENCY, 50)
-    mob:addMod(xi.mod.DMG, -10)
-    mob:addMod(xi.mod.HPP, 20)
+    mob:addMod(xi.mod.DMG,  -10)
+    mob:addMod(xi.mod.HPP,   20)
     mob:addMod(xi.mod.ABSORB_PHYSDMG_TO_MP, 5)
+    mob:addMod(xi.mod.DEF,   80) -- extra tank DEF on top of the global skill multiplier
     local lastSynergyBonus = 0
 
     -- Dynamic modifier that checks party member list on tick to apply

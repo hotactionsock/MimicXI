@@ -180,7 +180,7 @@ xi.settings.map =
     -- Adjust max HP pool for NMs, regular mobs, players, and trusts/fellows. Acts as a multiplier, so default is 1. Valid range: 0.1 to 2.0
     NM_HP_MULTIPLIER        = 1.0,
     MOB_HP_MULTIPLIER       = 1.0,
-    ALTER_EGO_HP_MULTIPLIER = 1.0,
+    ALTER_EGO_HP_MULTIPLIER = 1.5, -- MimicXI: 75-cap trusts need extra HP to survive end-game content
 
     -- Adjust max MP pool for NMs, regular mobs, players, and trusts/fellows. Acts as a multiplier, so default is 1. Valid range: 0.1 to 2.0
     NM_MP_MULTIPLIER        = 1.0,
@@ -203,10 +203,11 @@ xi.settings.map =
     -- Adjust base stats (str/vit/etc.) for NMs, regular mobs, players, and trusts/fellows. Acts as a multiplier, so default is 1.0. Valid range: 0.1 to 2.0
     NM_STAT_MULTIPLIER        = 1.0,
     MOB_STAT_MULTIPLIER       = 1.0,
-    ALTER_EGO_STAT_MULTIPLIER = 1.0,
+    ALTER_EGO_STAT_MULTIPLIER = 1.3, -- MimicXI: boosted to help trusts compete at lv75 cap
 
     -- Adjust skill caps for trusts/fellows. Acts as a multiplier, so default is 1.
-    ALTER_EGO_SKILL_MULTIPLIER = 1.0,
+    -- Also scales DEF/EVA/ATT/ACC base combat mods (extended from upstream).
+    ALTER_EGO_SKILL_MULTIPLIER = 1.3, -- MimicXI: boosted to help trusts compete at lv75 cap
 
     -- Adjust the recast time for abilities. Acts as a multiplier, so default is 1
     ABILITY_RECAST_MULTIPLIER = 1.0,

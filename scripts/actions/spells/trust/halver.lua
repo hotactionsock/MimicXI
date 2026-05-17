@@ -25,6 +25,8 @@ spellObject.onMobSpawn = function(mob)
 
     mob:addGambit(ai.t.TARGET, { ai.c.TP_GTE, 1000 }, { ai.r.WS, ai.s.SPECIFIC, 42 }) -- Savage Blade
 
+    mob:addMod(xi.mod.DEF, 60) -- extra tank DEF on top of the global skill multiplier
+
     mob:setTrustTPSkillSettings(ai.tp.CLOSER_UNTIL_TP, ai.s.RANDOM, 1000)
 end
 
