@@ -1,0 +1,260 @@
+/* Character profile page styles */
+:root {
+  --bg:         #0a0e1a;
+  --bg-card:    #111827;
+  --bg-input:   #1a2035;
+  --border:     #2d3748;
+  --accent:     #d4af37;
+  --accent-dim: #9a7d1a;
+  --custom:     #9b59b6;
+  --text:       #e2d5b0;
+  --text-muted: #8a7a5a;
+  --error:      #e74c3c;
+  --success:    #27ae60;
+  --radius:     6px;
+  --radius-lg:  10px;
+}
+
+.char-body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Georgia', serif;
+  min-height: 100vh;
+}
+
+/* ── Loading / error screens ─────────────────────────────── */
+.state-screen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 60vh;
+  gap: 1rem;
+  color: var(--text-muted);
+}
+.spinner {
+  width: 2.5rem;
+  height: 2.5rem;
+  border: 3px solid var(--border);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.error-msg { color: var(--error); font-size: 1.1rem; }
+
+/* ── Layout ──────────────────────────────────────────────── */
+.profile-wrap {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem 4rem;
+}
+
+/* ── Character header ────────────────────────────────────── */
+.char-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 1.75rem;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid var(--border);
+}
+.char-avatar-lg {
+  width: 5rem;
+  height: 5rem;
+  border-radius: 50%;
+  background: var(--accent-dim);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
+  font-weight: bold;
+  color: #0a0e1a;
+  flex-shrink: 0;
+  border: 3px solid var(--accent);
+}
+.char-name-lg   { font-size: 2rem; color: var(--accent); margin-bottom: 0.25rem; }
+.char-sub       { color: var(--text-muted); font-size: 0.9rem; margin-bottom: 0.2rem; }
+.char-job-line  { font-size: 1rem; color: var(--text); margin-bottom: 0.2rem; }
+.char-playtime  { font-size: 0.8rem; color: var(--text-muted); }
+
+/* ── Private banner (owner only) ─────────────────────────── */
+.private-banner {
+  background: rgba(212,175,55,0.06);
+  border: 1px solid rgba(212,175,55,0.2);
+  border-radius: var(--radius-lg);
+  padding: 1rem 1.5rem;
+  margin-bottom: 1.5rem;
+}
+.private-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 0.75rem;
+}
+.private-stat   { display: flex; flex-direction: column; gap: 0.15rem; }
+.private-label  { font-size: 0.72rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.06em; }
+.private-value  { font-size: 1.1rem; color: var(--accent); font-weight: bold; }
+
+/* ── Tabs ────────────────────────────────────────────────── */
+.tab-nav {
+  display: flex;
+  gap: 0;
+  border-bottom: 2px solid var(--border);
+  margin-bottom: 1.75rem;
+}
+.tab-btn {
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -2px;
+  padding: 0.65rem 1.25rem;
+  color: var(--text-muted);
+  font-family: inherit;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s;
+}
+.tab-btn:hover  { color: var(--text); }
+.tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+.tab-panel { display: none; }
+.tab-panel.active { display: block; }
+
+/* ── Overview ────────────────────────────────────────────── */
+.overview-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 1.25rem;
+}
+.info-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 1.25rem 1.5rem;
+}
+.info-card-title {
+  font-size: 0.8rem;
+  color: var(--accent);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-bottom: 0.75rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--border);
+}
+.detail-list {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.4rem 1rem;
+  font-size: 0.875rem;
+}
+.detail-list dt { color: var(--text-muted); white-space: nowrap; }
+.detail-list dd { color: var(--text); }
+.rank-badge {
+  display: inline-block;
+  background: rgba(212,175,55,0.15);
+  color: var(--accent);
+  border-radius: 3px;
+  padding: 1px 6px;
+  font-size: 0.8rem;
+}
+
+/* ── Jobs grid ───────────────────────────────────────────── */
+.jobs-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  gap: 0.5rem;
+}
+.job-row {
+  display: grid;
+  grid-template-columns: 3.5rem 1fr 2.5rem;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.4rem 0;
+}
+.job-row.job-inactive { opacity: 0.35; }
+.job-abbr {
+  font-size: 0.8rem;
+  font-weight: bold;
+  color: var(--accent);
+  text-align: right;
+}
+.job-inactive .job-abbr { color: var(--text-muted); }
+.job-bar-wrap {
+  height: 8px;
+  background: var(--border);
+  border-radius: 4px;
+  overflow: hidden;
+}
+.job-bar-fill {
+  height: 100%;
+  background: var(--accent);
+  border-radius: 4px;
+  transition: width 0.4s ease;
+}
+.job-inactive .job-bar-fill { background: var(--text-muted); }
+.job-level {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  text-align: right;
+}
+.job-row.job-main .job-abbr  { color: #fff; }
+.job-row.job-main .job-bar-fill { background: linear-gradient(90deg, var(--accent-dim), var(--accent)); }
+.job-row.job-main .job-level  { color: var(--accent); font-weight: bold; }
+
+/* ── Fame list ───────────────────────────────────────────── */
+.fame-list { display: flex; flex-direction: column; gap: 0.85rem; }
+.fame-row {
+  display: grid;
+  grid-template-columns: 9rem 1fr 4rem 3.5rem;
+  align-items: center;
+  gap: 0.75rem;
+}
+.fame-label   { font-size: 0.85rem; color: var(--text); }
+.fame-bar-wrap {
+  height: 8px;
+  background: var(--border);
+  border-radius: 4px;
+  overflow: hidden;
+}
+.fame-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #4a6fa5, var(--accent));
+  border-radius: 4px;
+  transition: width 0.4s ease;
+}
+.fame-value  { font-size: 0.75rem; color: var(--text-muted); text-align: right; }
+.fame-tier   { font-size: 0.8rem; color: var(--accent); text-align: right; }
+.fame-stars  { color: var(--accent); }
+
+/* ── Equipment placeholder ───────────────────────────────── */
+.equip-placeholder { display: flex; flex-direction: column; gap: 2rem; }
+
+.equip-slots {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
+  gap: 0.75rem;
+}
+.equip-slot {
+  aspect-ratio: 1;
+  background: var(--bg-card);
+  border: 1px dashed var(--border);
+  border-radius: var(--radius);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  opacity: 0.45;
+}
+.equip-slot-icon  { font-size: 1.6rem; }
+.equip-slot-label { font-size: 0.65rem; color: var(--text-muted); text-align: center; }
+
+.equip-coming-soon {
+  text-align: center;
+  padding: 1.5rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--bg-card);
+}
+.equip-notice     { color: var(--text-muted); font-size: 0.9rem; margin-bottom: 0.35rem; }
+.equip-notice-sub { color: var(--text-muted); font-size: 0.78rem; opacity: 0.6; }
