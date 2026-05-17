@@ -291,29 +291,75 @@
 }
 .slot-filled .equip-slot-label { color: var(--accent); }
 
-/* Hover tooltip showing item name */
-.equip-slot::before {
-  content: attr(data-item-name);
-  position: absolute;
-  bottom: calc(100% + 6px);
-  left: 50%;
-  transform: translateX(-50%);
-  background: #070b14;
-  border: 1px solid var(--border);
-  border-radius: 4px;
-  padding: 4px 8px;
-  font-size: 0.72rem;
+/* ── Rich item tooltip (JS-driven) ───────────────────────────── */
+.item-tooltip {
+  position: fixed;
+  z-index: 9999;
+  min-width: 220px;
+  max-width: 320px;
+  background: #070c18;
+  border: 1px solid var(--accent-dim);
+  border-radius: var(--radius-lg);
+  padding: 0.75rem;
+  font-family: 'Georgia', serif;
+  font-size: 0.8rem;
   color: var(--text);
-  white-space: nowrap;
   pointer-events: none;
+  box-shadow: 0 6px 24px rgba(0,0,0,0.7);
   opacity: 0;
-  transition: opacity 0.15s;
-  z-index: 10;
-  max-width: 180px;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  transform: translateY(4px);
+  transition: opacity 0.12s, transform 0.12s;
 }
-.equip-slot.slot-filled:hover::before { opacity: 1; }
+.item-tooltip.tt-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.tt-header {
+  display: flex;
+  gap: 0.6rem;
+  align-items: flex-start;
+  margin-bottom: 0.5rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--border);
+}
+.tt-icon {
+  width: 40px;
+  height: 40px;
+  object-fit: contain;
+  image-rendering: pixelated;
+  flex-shrink: 0;
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  background: var(--bg-input);
+}
+.tt-title { min-width: 0; }
+.tt-name {
+  font-size: 0.88rem;
+  color: var(--accent);
+  font-weight: bold;
+  line-height: 1.3;
+  word-break: break-word;
+}
+.tt-slot-name {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  margin-top: 0.1rem;
+}
+
+.tt-body { display: flex; flex-direction: column; gap: 0.25rem; }
+.tt-line { line-height: 1.5; }
+
+/* Stat token colours */
+.tt-key    { color: var(--accent); }          /* DMG: Delay: */
+.tt-keyval { color: var(--accent); font-weight: bold; }
+.tt-stat   { color: var(--text); }            /* stat name (STR, Accuracy…) */
+.tt-pos    { color: #4fc36a; font-weight: bold; } /* +value — green */
+.tt-neg    { color: #e74c3c; font-weight: bold; } /* -value — red  */
+.tt-ability { color: #b48edd; }               /* "Store TP" — soft purple */
+.tt-plain  { color: var(--text-muted); }
+.tt-level-line { color: var(--text-muted); margin-top: 0.3rem; font-size: 0.75rem; }
+.tt-loading { color: var(--text-muted); font-size: 0.75rem; padding: 0.25rem 0; }
 
 /* ── Item detail panel ───────────────────────────────────── */
 .equip-detail {
@@ -360,3 +406,12 @@
 }
 .equip-detail-stats dt { color: var(--text-muted); }
 .equip-detail-stats dd { color: var(--text); }
+.equip-detail-desc {
+  margin-top: 0.6rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid var(--border);
+  font-size: 0.8rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}

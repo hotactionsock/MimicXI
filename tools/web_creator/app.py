@@ -700,8 +700,28 @@ def api_character(charid):
 
 # ── Equipment ─────────────────────────────────────────────────────────────────
 
+# Field names ShiningFantasia uses — tried in order for icon and description.
+_SF_ICON_KEYS = ['icon', 'Icon', 'iconData', 'icon_data', 'ImageData', 'image', 'img']
+_SF_DESC_KEYS = ['description', 'Description', 'rawDescription', 'raw_description', 'desc', 'text']
+_SF_NAME_KEYS = ['name', 'Name', 'itemName', 'item_name']
+_SF_LV_KEYS   = ['level', 'Level', 'lv', 'reqLevel', 'req_level', 'LevelReq']
+_SF_JOBS_KEYS = ['jobs', 'Jobs', 'jobFlags', 'job_flags', 'usableJobs', 'JobRestrictions']
+
+
+def _sf_json_path(item_id: int):
+    candidates = [
+        os.path.join(_SF_DIR, 'items', f'{item_id}.json'),
+        os.path.join(_SF_DIR,          f'{item_id}.json'),
+        os.path.join(_SF_DIR, 'items', f'{item_id:05d}.json'),
+        os.path.join(_SF_DIR,          f'{item_id:05d}.json'),
+    ]
+    for p in candidates:
+        if os.path.isfile(p):
+            return p
+    return None
+
+
 def _sf_icon_path(item_id: int):
-    """Try common ShiningFantasia icon export path patterns."""
     candidates = [
         os.path.join(_SF_DIR, 'items', 'icons', f'{item_id}.png'),
         os.path.join(_SF_DIR, 'icons',           f'{item_id}.png'),
@@ -716,19 +736,31 @@ def _sf_icon_path(item_id: int):
     return None
 
 
-def _sf_json_path(item_id: int):
-    candidates = [
-        os.path.join(_SF_DIR, 'items', f'{item_id}.json'),
-        os.path.join(_SF_DIR,          f'{item_id}.json'),
-        os.path.join(_SF_DIR, 'items', f'{item_id:05d}.json'),
-    ]
-    for p in candidates:
-        if os.path.isfile(p):
-            return p
-    return None
+def _pick(d: dict, keys: list, default=None):
+    for k in keys:
+        if k in d:
+            return d[k]
+    return default
 
 
-def _placeholder_svg(label: str) -> str:
+def _extract_icon_bytes(data: dict):
+    """Return (bytes, mime_type) or (None, None) from a ShiningFantasia item dict."""
+    import base64
+    raw = _pick(data, _SF_ICON_KEYS)
+    if not raw or not isinstance(raw, str):
+        return None, None
+    try:
+        if raw.startswith('data:'):
+            header, b64 = raw.split(',', 1)
+            mime = header.split(':')[1].split(';')[0]
+            return base64.b64decode(b64), mime
+        else:
+            return base64.b64decode(raw), 'image/png'
+    except Exception:
+        return None, None
+
+
+def _placeholder_svg(label: str = '?') -> str:
     ch = (label[0] if label else '?').upper()
     return (
         '<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64">'
@@ -739,12 +771,33 @@ def _placeholder_svg(label: str) -> str:
     )
 
 
+def _sf_item_detail(item_id: int):
+    """Return a normalised item dict from the ShiningFantasia JSON, or None."""
+    import json as _json
+    sf_path = _sf_json_path(item_id)
+    if not sf_path:
+        return None
+    try:
+        with open(sf_path, encoding='utf-8') as f:
+            raw = _json.load(f)
+        return {
+            'item_id':     item_id,
+            'name':        _pick(raw, _SF_NAME_KEYS, f'Item #{item_id}'),
+            'description': _pick(raw, _SF_DESC_KEYS, ''),
+            'level':       _pick(raw, _SF_LV_KEYS, 0),
+            'jobs':        _pick(raw, _SF_JOBS_KEYS, ''),
+            '_raw_keys':   list(raw.keys()),   # included so debug endpoint works
+            '_raw':        raw,                # kept for icon extraction
+        }
+    except Exception:
+        return None
+
+
 @app.route('/api/character/<int:charid>/equipment')
 def api_equipment(charid):
     conn = get_connection()
     cur  = conn.cursor()
     try:
-        # Join char_equip → char_inventory → item data
         cur.execute(
             "SELECT ce.equipslotid, ci.itemId,"
             "  COALESCE(ie.name, ib.name) AS name,"
@@ -779,34 +832,52 @@ def api_equipment(charid):
             'req_level': item['req_level'] if item else None,
             'ilevel':    item['ilevel']    if item else None,
         })
-
     return jsonify(slots)
 
 
 @app.route('/item-icon/<int:item_id>')
 def item_icon(item_id):
+    # 1 — try base64 icon embedded in ShiningFantasia JSON
+    detail = _sf_item_detail(item_id)
+    if detail:
+        img_bytes, mime = _extract_icon_bytes(detail['_raw'])
+        if img_bytes:
+            return img_bytes, 200, {
+                'Content-Type': mime,
+                'Cache-Control': 'max-age=86400',
+            }
+
+    # 2 — try physical PNG file
     path = _sf_icon_path(item_id)
     if path:
         return send_from_directory(os.path.dirname(path), os.path.basename(path))
-    # Fallback: named placeholder SVG
-    slot_name = next((s for _, s in _EQUIP_GRID), '?')
-    return _placeholder_svg('?'), 200, {'Content-Type': 'image/svg+xml', 'Cache-Control': 'max-age=3600'}
+
+    # 3 — SVG placeholder
+    return _placeholder_svg(), 200, {
+        'Content-Type': 'image/svg+xml',
+        'Cache-Control': 'max-age=3600',
+    }
 
 
 @app.route('/item-data/<int:item_id>')
 def item_data_route(item_id):
-    """Return item detail JSON — ShiningFantasia file first, DB fallback."""
-    import json as _json
-    sf_path = _sf_json_path(item_id)
-    if sf_path:
-        with open(sf_path, encoding='utf-8') as f:
-            return jsonify(_json.load(f))
+    """Full item detail for tooltip — ShiningFantasia JSON first, DB fallback."""
+    detail = _sf_item_detail(item_id)
+    if detail:
+        return jsonify({
+            'item_id':     detail['item_id'],
+            'name':        detail['name'],
+            'description': detail['description'],
+            'level':       detail['level'],
+            'jobs':        detail['jobs'],
+        })
 
+    # DB fallback
     conn = get_connection()
     cur  = conn.cursor()
     try:
         cur.execute(
-            "SELECT COALESCE(ie.name, ib.name), ie.level, ie.ilevel, ie.jobs"
+            "SELECT COALESCE(ie.name, ib.name), ie.level, ie.ilevel"
             " FROM item_equipment ie"
             " LEFT JOIN item_basic ib USING(itemId)"
             " WHERE ie.itemId = ?",
@@ -815,12 +886,34 @@ def item_data_route(item_id):
         row = cur.fetchone()
         if not row:
             cur.execute("SELECT name FROM item_basic WHERE itemId = ?", (item_id,))
-            row2 = cur.fetchone()
-            return jsonify({'name': row2[0] if row2 else f'Item #{item_id}'})
-        return jsonify({'name': row[0], 'req_level': row[1], 'ilevel': row[2], 'jobs_mask': row[3]})
+            r2 = cur.fetchone()
+            return jsonify({'item_id': item_id, 'name': r2[0] if r2 else f'Item #{item_id}',
+                            'description': '', 'level': 0, 'jobs': ''})
+        return jsonify({'item_id': item_id, 'name': row[0], 'description': '',
+                        'level': row[1], 'ilevel': row[2], 'jobs': ''})
     finally:
         cur.close()
         conn.close()
+
+
+@app.route('/api/item-debug/<int:item_id>')
+def item_debug(item_id):
+    """Return raw JSON keys from ShiningFantasia so field names can be confirmed."""
+    import json as _json
+    sf_path = _sf_json_path(item_id)
+    if not sf_path:
+        return jsonify(error=f'No ShiningFantasia JSON found for item {item_id}',
+                       sf_dir=_SF_DIR, sf_dir_exists=os.path.isdir(_SF_DIR)), 404
+    with open(sf_path, encoding='utf-8') as f:
+        raw = _json.load(f)
+    # Return keys + value types + truncated string values (no icon blobs)
+    summary = {}
+    for k, v in raw.items():
+        if isinstance(v, str) and len(v) > 120:
+            summary[k] = f'<string len={len(v)}>'
+        else:
+            summary[k] = v
+    return jsonify({'path': sf_path, 'keys': list(raw.keys()), 'values': summary})
 
 
 if __name__ == '__main__':
