@@ -233,32 +233,31 @@ local function setCasketData(player, x, y, z, r, npc, partyID, mob, mobLvl)
     local attempts   = math.random(4, 6)
 
     -- Get casket type.
-    local kupowersBonus  = 0 -- TODO: Kupowers add a 20% chance.
-    local zoneId         = player:getZoneID()
-    local zoneItems      = xi.casket_loot.casketItems[zoneId]
-    local zoneHasRarePol = xi.caskets.rarePools ~= nil and xi.caskets.rarePools[zoneId] ~= nil
-    local roll           = math.random(1, 100)
+    local kupowersBonus = 0 -- TODO: Kupowers add a 20% chance.
+    local zoneId        = player:getZoneID()
+    local zoneItems     = xi.casket_loot.casketItems[zoneId]
+    local roll          = math.random(1, 100)
 
     -- Casket Hunter (THF trait): boost gold casket chance if a THF landed a hit.
     -- Checks the mob's enmity list so any THF in the party counts, not just the killer.
+    -- Gold caskets are possible in every casket zone; zones without a dedicated rare
+    -- pool fall back to the standard item table (handled in loot distribution below).
     local goldChance = 5
-    if zoneHasRarePol then
-        for _, entry in ipairs(mob:getEnmityList() or {}) do
-            local e = entry.entity
-            if e and e:getMainJob() == xi.job.THF then
-                local lvl = e:getMainJobLevel()
-                local bonus = lvl >= 65 and 30 or lvl >= 35 and 15 or lvl >= 15 and 7 or 0
-                if bonus > 0 then
-                    goldChance = goldChance + bonus
-                    break -- use the first qualifying THF found
-                end
+    for _, entry in ipairs(mob:getEnmityList() or {}) do
+        local e = entry.entity
+        if e and e:getMainJob() == xi.job.THF then
+            local lvl = e:getMainJobLevel()
+            local bonus = lvl >= 65 and 30 or lvl >= 35 and 15 or lvl >= 15 and 7 or 0
+            if bonus > 0 then
+                goldChance = goldChance + bonus
+                break -- use the first qualifying THF found
             end
         end
     end
 
-    if zoneHasRarePol and roll <= goldChance then
+    if roll <= goldChance then
         chestStyle = 969 -- Gold: rare HQ casket
-    elseif roll <= (zoneHasRarePol and 20 or 15) + kupowersBonus then
+    elseif roll <= 20 + kupowersBonus then
         chestStyle = 966 -- Brown locked
     else
         chestStyle = 965 -- Blue
