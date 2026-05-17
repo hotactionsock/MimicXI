@@ -23,6 +23,8 @@ spellObject.onMobSpawn = function(mob)
     mob:addGambit(ai.t.SELF,   { ai.c.NOT_STATUS,       xi.effect.RAMPART  }, { ai.r.JA, ai.s.SPECIFIC, xi.ja.RAMPART       })
     mob:addGambit(ai.t.PARTY,  { ai.c.HPP_LT,           75                }, { ai.r.MA, ai.s.HIGHEST,   xi.magic.spellFamily.CURE })
 
+    mob:addGambit(ai.t.TARGET, { ai.c.TP_GTE, 1000 }, { ai.r.WS, ai.s.SPECIFIC, 42 }) -- Savage Blade
+
     mob:setTrustTPSkillSettings(ai.tp.CLOSER_UNTIL_TP, ai.s.RANDOM, 1000)
 end
 

@@ -36,6 +36,8 @@ spellObject.onMobSpawn = function(mob)
     -- Status removal and healing
     mob:addGambit(ai.t.PARTY, { ai.c.STATUS_FLAG, xi.effectFlag.ERASABLE }, { ai.r.MA, ai.s.SPECIFIC, xi.magic.spell.ERASE })
     mob:addGambit(ai.t.PARTY, { ai.c.HPP_LT, 50                          }, { ai.r.MA, ai.s.HIGHEST,  xi.magic.spellFamily.CURE })
+
+    mob:setAutoAttackEnabled(false)
 end
 
 spellObject.onMobDespawn = function(mob)
