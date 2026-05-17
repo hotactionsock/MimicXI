@@ -14,6 +14,13 @@ end
 
 spellObject.onMobSpawn = function(mob)
     xi.trust.message(mob, xi.trust.messageOffset.SPAWN)
+
+    mob:addGambit(ai.t.SELF, { ai.c.NOT_STATUS,  xi.effect.HASSO }, { ai.r.JA, ai.s.SPECIFIC, xi.ja.HASSO     })
+    mob:addGambit(ai.t.SELF, { ai.c.HAS_TOP_ENMITY, 0            }, { ai.r.JA, ai.s.SPECIFIC, xi.ja.THIRD_EYE })
+    mob:addGambit(ai.t.SELF, { ai.c.ALWAYS,      0               }, { ai.r.JA, ai.s.SPECIFIC, xi.ja.SEKKANOKI  })
+    mob:addGambit(ai.t.SELF, { ai.c.TP_LT,       1000            }, { ai.r.JA, ai.s.SPECIFIC, xi.ja.MEDITATE  })
+
+    mob:setTrustTPSkillSettings(ai.tp.CLOSER_UNTIL_TP, ai.s.RANDOM, 2000)
 end
 
 spellObject.onMobDespawn = function(mob)
