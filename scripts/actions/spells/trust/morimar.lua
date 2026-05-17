@@ -14,6 +14,12 @@ end
 
 spellObject.onMobSpawn = function(mob)
     xi.trust.message(mob, xi.trust.messageOffset.SPAWN)
+
+    mob:addGambit(ai.t.SELF,   { ai.c.ALWAYS, 0    }, { ai.r.JA, ai.s.SPECIFIC, xi.ja.BERSERK })
+    mob:addGambit(ai.t.SELF,   { ai.c.ALWAYS, 0    }, { ai.r.JA, ai.s.SPECIFIC, xi.ja.WARCRY  })
+    mob:addGambit(ai.t.TARGET, { ai.c.TP_GTE, 1000 }, { ai.r.WS, ai.s.SPECIFIC, 81            }) -- Iron Tempest
+
+    mob:setTrustTPSkillSettings(ai.tp.ASAP, ai.s.RANDOM)
 end
 
 spellObject.onMobDespawn = function(mob)
