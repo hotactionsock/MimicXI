@@ -126,6 +126,22 @@ def public_site(filename):
     return send_from_directory(PUBLIC_DIR, filename)
 
 
+@app.route('/<path:filename>')
+def public_root(filename):
+    """Serve site assets (CSS, JS, images, fonts) at the root path.
+
+    The design pages use relative hrefs like `account.css`, so when
+    index.html is served from `/` the browser fetches `/account.css`.
+    Flask checks all explicit routes first, so /login, /logout, /api/*
+    etc. are never intercepted here — only unmatched paths reach this.
+    """
+    filepath = os.path.join(PUBLIC_DIR, filename)
+    if os.path.isfile(filepath):
+        return send_from_directory(PUBLIC_DIR, filename)
+    from flask import abort
+    abort(404)
+
+
 # ── Routes ────────────────────────────────────────────────────────────────────
 
 
