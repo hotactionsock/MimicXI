@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Character Profile — MimicXI</title>
+  <link rel="stylesheet" href="/static/css/style.css">
+  <link rel="stylesheet" href="/static/css/character.css">
+  <!-- Also pull in the design site's account.css if present -->
+  <link rel="stylesheet" href="/account.css" onerror="this.remove()">
+</head>
+<body class="char-body">
+
+  <nav class="navbar">
+    <a class="navbar-brand" href="/">MimicXI</a>
+    <div class="navbar-links">
+      <a href="/site/account.html" class="nav-link" id="nav-account">My Characters</a>
+      <span id="nav-user" class="nav-muted"></span>
+      <form method="post" action="/logout" style="display:inline" id="logout-form">
+        <button type="submit" class="btn btn-sm btn-outline" id="nav-logout" style="display:none">Logout</button>
+      </form>
+    </div>
+  </nav>
+
+  <!-- Loading state -->
+  <div id="state-loading" class="state-screen">
+    <div class="spinner"></div>
+    <p>Loading character…</p>
+  </div>
+
+  <!-- Error state -->
+  <div id="state-error" class="state-screen" style="display:none">
+    <p class="error-msg" id="error-text">Character not found.</p>
+    <a href="/site/account.html" class="btn btn-outline" style="margin-top:1rem">← Back</a>
+  </div>
+
+  <!-- Profile -->
+  <main id="profile" class="profile-wrap" style="display:none">
+
+    <!-- ── Header ──────────────────────────────────────────── -->
+    <header class="char-header">
+      <div class="char-avatar-lg" id="char-avatar"></div>
+      <div class="char-header-info">
+        <h1 class="char-name-lg" id="char-name"></h1>
+        <p class="char-sub" id="char-sub"></p>
+        <p class="char-job-line" id="char-job-line"></p>
+        <p class="char-playtime" id="char-playtime"></p>
+      </div>
+    </header>
+
+    <!-- ── Owner-only private banner ───────────────────────── -->
+    <div id="private-banner" class="private-banner" style="display:none">
+      <div class="private-grid">
+        <div class="private-stat">
+          <span class="private-label">Gil</span>
+          <span class="private-value" id="stat-gil">—</span>
+        </div>
+        <div class="private-stat">
+          <span class="private-label">San d'Oria CP</span>
+          <span class="private-value" id="stat-cp-s">—</span>
+        </div>
+        <div class="private-stat">
+          <span class="private-label">Bastok CP</span>
+          <span class="private-value" id="stat-cp-b">—</span>
+        </div>
+        <div class="private-stat">
+          <span class="private-label">Windurst CP</span>
+          <span class="private-value" id="stat-cp-w">—</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Tab navigation ──────────────────────────────────── -->
+    <nav class="tab-nav">
+      <button class="tab-btn active" data-tab="overview">Overview</button>
+      <button class="tab-btn" data-tab="jobs">Jobs</button>
+      <button class="tab-btn" data-tab="fame">Fame &amp; Rank</button>
+      <button class="tab-btn" data-tab="equipment">Equipment</button>
+    </nav>
+
+    <!-- ── Overview tab ────────────────────────────────────── -->
+    <section class="tab-panel active" id="tab-overview">
+      <div class="overview-grid">
+        <div class="info-card">
+          <h3 class="info-card-title">Character</h3>
+          <dl class="detail-list" id="detail-character"></dl>
+        </div>
+        <div class="info-card">
+          <h3 class="info-card-title">Nation Rank</h3>
+          <dl class="detail-list" id="detail-ranks"></dl>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── Jobs tab ─────────────────────────────────────────── -->
+    <section class="tab-panel" id="tab-jobs">
+      <div class="jobs-grid" id="jobs-grid"></div>
+    </section>
+
+    <!-- ── Fame tab ─────────────────────────────────────────── -->
+    <section class="tab-panel" id="tab-fame">
+      <div class="fame-list" id="fame-list"></div>
+    </section>
+
+    <!-- ── Equipment tab ────────────────────────────────────── -->
+    <section class="tab-panel" id="tab-equipment">
+      <div class="equip-placeholder">
+        <div class="equip-slots" id="equip-slots">
+          <!-- Slot grid rendered by JS -->
+        </div>
+        <div class="equip-coming-soon">
+          <p class="equip-notice">Equipment viewer coming soon</p>
+          <p class="equip-notice-sub">Item data will appear here once the viewer is implemented.</p>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <script src="/static/js/character.js"></script>
+</body>
+</html>

@@ -54,6 +54,39 @@ NATIONS = {
 
 SIZES = {0: 'Small', 1: 'Medium', 2: 'Large'}
 
+# All 22 jobs — order matches char_jobs column order
+_JOB_COLS = [
+    ('war','Warrior','WAR'), ('mnk','Monk','MNK'),
+    ('whm','White Mage','WHM'), ('blm','Black Mage','BLM'),
+    ('rdm','Red Mage','RDM'), ('thf','Thief','THF'),
+    ('pld','Paladin','PLD'), ('drk','Dark Knight','DRK'),
+    ('bst','Beastmaster','BST'), ('brd','Bard','BRD'),
+    ('rng','Ranger','RNG'), ('sam','Samurai','SAM'),
+    ('nin','Ninja','NIN'), ('drg','Dragoon','DRG'),
+    ('smn','Summoner','SMN'), ('blu','Blue Mage','BLU'),
+    ('cor','Corsair','COR'), ('pup','Puppetmaster','PUP'),
+    ('dnc','Dancer','DNC'), ('sch','Scholar','SCH'),
+    ('geo','Geomancer','GEO'), ('run','Rune Fencer','RUN'),
+]
+_JOB_BY_ID = {
+    1:'WAR', 2:'MNK', 3:'WHM', 4:'BLM', 5:'RDM', 6:'THF',
+    7:'PLD', 8:'DRK', 9:'BST', 10:'BRD', 11:'RNG', 12:'SAM',
+    13:'NIN', 14:'DRG', 15:'SMN', 16:'BLU', 17:'COR', 18:'PUP',
+    19:'DNC', 20:'SCH', 21:'GEO', 22:'RUN',
+}
+_FAME_FIELDS = [
+    ('sandoria', "San d'Oria"), ('bastok', 'Bastok'),
+    ('windurst', 'Windurst'), ('norg', 'Norg'),
+    ('jeuno', 'Jeuno'), ('adoulin', 'Adoulin'),
+]
+
+
+def _fame_tier(v):
+    for threshold, tier in [(1500,8),(1000,7),(650,6),(400,5),(200,4),(100,3),(50,2)]:
+        if v >= threshold:
+            return tier
+    return 1
+
 # Starting zones per nation — matches login_helpers.cpp
 _STARTING_ZONES = {
     0: [0xE6, 0xE7, 0xE8],
@@ -536,6 +569,119 @@ def api_create():
     finally:
         cur.close()
         conn.autocommit = True
+        conn.close()
+
+
+# ── Character profile ─────────────────────────────────────────────────────────
+
+@app.route('/character')
+def character_page():
+    return render_template('character.html')
+
+
+@app.route('/api/character/<int:charid>')
+def api_character(charid):
+    conn = get_connection()
+    cur  = conn.cursor()
+    try:
+        cur.execute(
+            "SELECT c.charid, c.accid, c.charname, c.nation, c.playtime,"
+            "  cs.mjob, cs.sjob, cs.mlvl, cs.slvl,"
+            "  cl.race, cl.face, cl.size"
+            " FROM chars c"
+            " INNER JOIN char_stats cs USING(charid)"
+            " INNER JOIN char_look  cl USING(charid)"
+            " WHERE c.charid = ?",
+            (charid,),
+        )
+        row = cur.fetchone()
+        if not row:
+            return jsonify(error='Character not found.'), 404
+
+        (cid, accid, name, nation, playtime,
+         mjob_id, sjob_id, mlvl, slvl, race, face, size) = row
+
+        is_owner = (session.get('accid') == accid)
+
+        # Job levels
+        col_list = ','.join(c for c,_,_ in _JOB_COLS)
+        cur.execute(f"SELECT {col_list} FROM char_jobs WHERE charid = ?", (charid,))
+        jobs_row = cur.fetchone() or ([0] * len(_JOB_COLS))
+        jobs = [
+            {'col': col, 'name': name_, 'abbr': abbr, 'level': lvl}
+            for (col, name_, abbr), lvl in zip(_JOB_COLS, jobs_row)
+        ]
+
+        # Fame and nation rank
+        cur.execute(
+            "SELECT rank_sandoria, rank_bastok, rank_windurst,"
+            "  fame_sandoria, fame_bastok, fame_windurst,"
+            "  fame_norg, fame_jeuno, fame_adoulin"
+            " FROM char_profile WHERE charid = ?",
+            (charid,),
+        )
+        prof = cur.fetchone()
+        ranks = {}
+        fame  = {}
+        if prof:
+            ranks = {'sandoria': prof[0], 'bastok': prof[1], 'windurst': prof[2]}
+            for i, (key, label) in enumerate(_FAME_FIELDS):
+                val = prof[3 + i]
+                fame[key] = {'label': label, 'value': val, 'tier': _fame_tier(val)}
+
+        result = {
+            'charid':          cid,
+            'name':            name,
+            'nation':          nation,
+            'nation_name':     NATIONS.get(nation, f'Nation {nation}'),
+            'race_name':       ' '.join(p for p in RACES.get(race, ('?', '')) if p).strip(),
+            'size':            SIZES.get(size, ''),
+            'face_label':      _face_label(face),
+            'playtime_hours':  (playtime or 0) // 3600,
+            'playtime_mins':   ((playtime or 0) % 3600) // 60,
+            'main_job':        _JOB_BY_ID.get(mjob_id, '???'),
+            'main_job_level':  mlvl,
+            'sub_job':         _JOB_BY_ID.get(sjob_id) if sjob_id else None,
+            'sub_job_level':   slvl if sjob_id else None,
+            'jobs':            jobs,
+            'ranks':           ranks,
+            'fame':            fame,
+            'is_owner':        is_owner,
+        }
+
+        if is_owner:
+            gil = 0
+            try:
+                cur.execute(
+                    "SELECT quantity FROM char_inventory"
+                    " WHERE charid = ? AND itemid = 65535 LIMIT 1",
+                    (charid,),
+                )
+                gr = cur.fetchone()
+                if gr:
+                    gil = gr[0]
+            except Exception:
+                pass
+
+            cur.execute(
+                "SELECT sandoria_cp, bastok_cp, windurst_cp"
+                " FROM char_points WHERE charid = ?",
+                (charid,),
+            )
+            cp = cur.fetchone()
+            result['private'] = {
+                'gil': gil,
+                'conquest_points': {
+                    'sandoria': cp[0] if cp else 0,
+                    'bastok':   cp[1] if cp else 0,
+                    'windurst': cp[2] if cp else 0,
+                },
+            }
+
+        return jsonify(result)
+
+    finally:
+        cur.close()
         conn.close()
 
 
