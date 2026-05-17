@@ -54,6 +54,19 @@ NATIONS = {
 
 SIZES = {0: 'Small', 1: 'Medium', 2: 'Large'}
 
+# Equipment slot IDs (matches SLOTTYPE enum in battleentity.h)
+# Grid order: Main Sub Ranged Ammo / Head Neck EarL EarR / Body Hands RingL RingR / Back Waist Legs Feet
+_EQUIP_GRID = [
+    (0,  'Main'),    (1,  'Sub'),     (2,  'Ranged'),  (3,  'Ammo'),
+    (4,  'Head'),    (9,  'Neck'),    (11, 'Ear L'),   (12, 'Ear R'),
+    (5,  'Body'),    (6,  'Hands'),   (13, 'Ring L'),  (14, 'Ring R'),
+    (15, 'Back'),    (10, 'Waist'),   (7,  'Legs'),    (8,  'Feet'),
+]
+
+# Path to ShiningFantasia data for item icons and JSON details.
+# Override with SHINING_FANTASIA_PATH environment variable.
+_SF_DIR = os.environ.get('SHINING_FANTASIA_PATH', r'G:\Games\FFXI\ShiningFantasia')
+
 # All 22 jobs — order matches char_jobs column order
 _JOB_COLS = [
     ('war','Warrior','WAR'), ('mnk','Monk','MNK'),
@@ -685,6 +698,132 @@ def api_character(charid):
         conn.close()
 
 
+# ── Equipment ─────────────────────────────────────────────────────────────────
+
+def _sf_icon_path(item_id: int):
+    """Try common ShiningFantasia icon export path patterns."""
+    candidates = [
+        os.path.join(_SF_DIR, 'items', 'icons', f'{item_id}.png'),
+        os.path.join(_SF_DIR, 'icons',           f'{item_id}.png'),
+        os.path.join(_SF_DIR, 'items',            f'{item_id}.png'),
+        os.path.join(_SF_DIR,                     f'{item_id}.png'),
+        os.path.join(_SF_DIR, 'items', 'icons', f'{item_id:05d}.png'),
+        os.path.join(_SF_DIR,                   f'{item_id:05d}.png'),
+    ]
+    for p in candidates:
+        if os.path.isfile(p):
+            return p
+    return None
+
+
+def _sf_json_path(item_id: int):
+    candidates = [
+        os.path.join(_SF_DIR, 'items', f'{item_id}.json'),
+        os.path.join(_SF_DIR,          f'{item_id}.json'),
+        os.path.join(_SF_DIR, 'items', f'{item_id:05d}.json'),
+    ]
+    for p in candidates:
+        if os.path.isfile(p):
+            return p
+    return None
+
+
+def _placeholder_svg(label: str) -> str:
+    ch = (label[0] if label else '?').upper()
+    return (
+        '<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64">'
+        '<rect width="64" height="64" fill="#111827" rx="6"/>'
+        f'<text x="32" y="42" font-size="26" text-anchor="middle" '
+        f'fill="#2d3748" font-family="sans-serif" font-weight="bold">{ch}</text>'
+        '</svg>'
+    )
+
+
+@app.route('/api/character/<int:charid>/equipment')
+def api_equipment(charid):
+    conn = get_connection()
+    cur  = conn.cursor()
+    try:
+        # Join char_equip → char_inventory → item data
+        cur.execute(
+            "SELECT ce.equipslotid, ci.itemId,"
+            "  COALESCE(ie.name, ib.name) AS name,"
+            "  COALESCE(ie.level, 0)      AS req_level,"
+            "  COALESCE(ie.ilevel, 0)     AS ilevel"
+            " FROM char_equip ce"
+            " INNER JOIN char_inventory ci"
+            "   ON ci.charid = ce.charid"
+            "   AND ci.location = ce.containerid"
+            "   AND ci.slot = ce.slotid"
+            " LEFT JOIN item_equipment ie ON ie.itemId = ci.itemId"
+            " LEFT JOIN item_basic     ib ON ib.itemId = ci.itemId"
+            " WHERE ce.charid = ? AND ce.equipslotid <= 15",
+            (charid,),
+        )
+        rows = cur.fetchall()
+    finally:
+        cur.close()
+        conn.close()
+
+    equipped = {r[0]: {'item_id': r[1], 'name': r[2] or f'Item #{r[1]}',
+                        'req_level': r[3], 'ilevel': r[4]} for r in rows}
+
+    slots = []
+    for slot_id, slot_name in _EQUIP_GRID:
+        item = equipped.get(slot_id)
+        slots.append({
+            'slot_id':   slot_id,
+            'slot_name': slot_name,
+            'item_id':   item['item_id']   if item else None,
+            'name':      item['name']      if item else None,
+            'req_level': item['req_level'] if item else None,
+            'ilevel':    item['ilevel']    if item else None,
+        })
+
+    return jsonify(slots)
+
+
+@app.route('/item-icon/<int:item_id>')
+def item_icon(item_id):
+    path = _sf_icon_path(item_id)
+    if path:
+        return send_from_directory(os.path.dirname(path), os.path.basename(path))
+    # Fallback: named placeholder SVG
+    slot_name = next((s for _, s in _EQUIP_GRID), '?')
+    return _placeholder_svg('?'), 200, {'Content-Type': 'image/svg+xml', 'Cache-Control': 'max-age=3600'}
+
+
+@app.route('/item-data/<int:item_id>')
+def item_data_route(item_id):
+    """Return item detail JSON — ShiningFantasia file first, DB fallback."""
+    import json as _json
+    sf_path = _sf_json_path(item_id)
+    if sf_path:
+        with open(sf_path, encoding='utf-8') as f:
+            return jsonify(_json.load(f))
+
+    conn = get_connection()
+    cur  = conn.cursor()
+    try:
+        cur.execute(
+            "SELECT COALESCE(ie.name, ib.name), ie.level, ie.ilevel, ie.jobs"
+            " FROM item_equipment ie"
+            " LEFT JOIN item_basic ib USING(itemId)"
+            " WHERE ie.itemId = ?",
+            (item_id,),
+        )
+        row = cur.fetchone()
+        if not row:
+            cur.execute("SELECT name FROM item_basic WHERE itemId = ?", (item_id,))
+            row2 = cur.fetchone()
+            return jsonify({'name': row2[0] if row2 else f'Item #{item_id}'})
+        return jsonify({'name': row[0], 'req_level': row[1], 'ilevel': row[2], 'jobs_mask': row[3]})
+    finally:
+        cur.close()
+        conn.close()
+
+
 if __name__ == '__main__':
     port = int(sys.argv[1]) if len(sys.argv) > 1 else 5000
+    print(f'[mimic] ShiningFantasia path: {_SF_DIR} (exists: {os.path.isdir(_SF_DIR)})')
     app.run(debug=True, host='127.0.0.1', port=port)
