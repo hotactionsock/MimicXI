@@ -3435,7 +3435,9 @@ INSERT INTO `mob_skill_lists` VALUES ('TRUST_Trion',1020,35);   -- Flat Blade
 INSERT INTO `mob_skill_lists` VALUES ('TRUST_Trion',1020,42);   -- Savage Blade
 INSERT INTO `mob_skill_lists` VALUES ('TRUST_Trion',1020,3193); -- Royal Bash
 INSERT INTO `mob_skill_lists` VALUES ('TRUST_Trion',1020,3194); -- Royal Saviour
--- INSERT INTO `mob_skill_lists` VALUES ('TRUST_Zeid',1021,0);
+INSERT INTO `mob_skill_lists` VALUES ('TRUST_Zeid',1021,99);  -- Nightmare Scythe
+INSERT INTO `mob_skill_lists` VALUES ('TRUST_Zeid',1021,102); -- Guillotine
+INSERT INTO `mob_skill_lists` VALUES ('TRUST_Zeid',1021,104); -- Spiral Hell
 INSERT INTO `mob_skill_lists` VALUES ('TRUST_Lion',1022,3198); -- Grapeshot
 INSERT INTO `mob_skill_lists` VALUES ('TRUST_Lion',1022,3199); -- Pirate Pummel
 INSERT INTO `mob_skill_lists` VALUES ('TRUST_Lion',1022,3200); -- Powder Keg
@@ -3488,13 +3490,16 @@ INSERT INTO `mob_skill_lists` VALUES ('TRUST_Lehko_Habhoka',1037,3231); -- Debon
 INSERT INTO `mob_skill_lists` VALUES ('TRUST_Lehko_Habhoka',1037,3232); -- Iridal Pierce
 INSERT INTO `mob_skill_lists` VALUES ('TRUST_Lehko_Habhoka',1037,3233); -- Lunar Revolution
 INSERT INTO `mob_skill_lists` VALUES ('TRUST_Nashmeira',1038,3243); -- Imperial Authority
--- INSERT INTO `mob_skill_lists` VALUES ('TRUST_Zazarg',1039,0);
+INSERT INTO `mob_skill_lists` VALUES ('TRUST_Zazarg',1039,5);  -- Raging Fists
+INSERT INTO `mob_skill_lists` VALUES ('TRUST_Zazarg',1039,7);  -- Howling Fist
+INSERT INTO `mob_skill_lists` VALUES ('TRUST_Zazarg',1039,9);  -- Asuran Fists
 -- INSERT INTO `mob_skill_lists` VALUES ('TRUST_Ovjang',1040,0);
 -- INSERT INTO `mob_skill_lists` VALUES ('TRUST_Mnejing',1041,0);
 -- INSERT INTO `mob_skill_lists` VALUES ('TRUST_Sakura',1042,0);
 -- INSERT INTO `mob_skill_lists` VALUES ('TRUST_Luzaf',1043,0);
 -- INSERT INTO `mob_skill_lists` VALUES ('TRUST_Najelith',1044,0);
--- INSERT INTO `mob_skill_lists` VALUES ('TRUST_Aldo',1045,0);
+INSERT INTO `mob_skill_lists` VALUES ('TRUST_Aldo',1045,23); -- Dancing Edge
+INSERT INTO `mob_skill_lists` VALUES ('TRUST_Aldo',1045,25); -- Evisceration
 -- INSERT INTO `mob_skill_lists` VALUES ('TRUST_Moogle',1046,0);
 INSERT INTO `mob_skill_lists` VALUES ('TRUST_Fablinix',1047,3261); -- Bomb Toss
 INSERT INTO `mob_skill_lists` VALUES ('TRUST_Fablinix',1047,3262); -- Goblin Rush
@@ -3512,7 +3517,9 @@ INSERT INTO `mob_skill_lists` VALUES ('TRUST_Karaha-Baruha',1051,179); -- Starbu
 INSERT INTO `mob_skill_lists` VALUES ('TRUST_Karaha-Baruha',1051,180); -- Sunburst
 -- INSERT INTO `mob_skill_lists` VALUES ('TRUST_Karaha-Baruha',1051,3337); -- Lunar Bay,disable wrong animation
 -- INSERT INTO `mob_skill_lists` VALUES ('TRUST_Cid',1052,0);
--- INSERT INTO `mob_skill_lists` VALUES ('TRUST_Gilgamesh',1053,0);
+INSERT INTO `mob_skill_lists` VALUES ('TRUST_Gilgamesh',1053,150); -- Tachi: Yukikaze
+INSERT INTO `mob_skill_lists` VALUES ('TRUST_Gilgamesh',1053,151); -- Tachi: Gekko
+INSERT INTO `mob_skill_lists` VALUES ('TRUST_Gilgamesh',1053,152); -- Tachi: Kasha
 INSERT INTO `mob_skill_lists` VALUES ('TRUST_Areuhat',1054,37); -- Seraph Blade
 INSERT INTO `mob_skill_lists` VALUES ('TRUST_Areuhat',1054,40); -- Vorpal Blade
 INSERT INTO `mob_skill_lists` VALUES ('TRUST_Areuhat',1054,42); -- Savage Blade
@@ -3529,7 +3536,8 @@ INSERT INTO `mob_skill_lists` VALUES ('TRUST_Ferreous_Coffin',1059,170); -- Rand
 -- INSERT INTO `mob_skill_lists` VALUES ('TRUST_Lilisette',1060,0);
 INSERT INTO `mob_skill_lists` VALUES ('TRUST_Mumor',1061,165); -- Skullbreaker
 INSERT INTO `mob_skill_lists` VALUES ('TRUST_Uka_Totlihn',1062,167); -- Judgement
--- INSERT INTO `mob_skill_lists` VALUES ('TRUST_Klara',1063,0);
+INSERT INTO `mob_skill_lists` VALUES ('TRUST_Klara',1063,81); -- Iron Tempest
+INSERT INTO `mob_skill_lists` VALUES ('TRUST_Klara',1063,82); -- Sturmwind
 -- INSERT INTO `mob_skill_lists` VALUES ('TRUST_Romaa_Mihgo',1064,0);
 -- INSERT INTO `mob_skill_lists` VALUES ('TRUST_Kuyin_Hathdenna',1065,0);
 INSERT INTO `mob_skill_lists` VALUES ('TRUST_Rahal', 1066, 32); -- Fast Blade
@@ -3551,7 +3559,9 @@ INSERT INTO `mob_skill_lists` VALUES ('TRUST_Rughadjeen',1075,3237); -- Victory 
 -- INSERT INTO `mob_skill_lists` VALUES ('TRUST_Kukki-Chebukki',1076,0);
 -- INSERT INTO `mob_skill_lists` VALUES ('TRUST_Margret',1077,0);
 -- INSERT INTO `mob_skill_lists` VALUES ('TRUST_Chacharoon',1078,0);
--- INSERT INTO `mob_skill_lists` VALUES ('TRUST_Lhe_Lhangavo',1079,0);
+INSERT INTO `mob_skill_lists` VALUES ('TRUST_Lhe_Lhangavo',1079,5); -- Raging Fists
+INSERT INTO `mob_skill_lists` VALUES ('TRUST_Lhe_Lhangavo',1079,7); -- Howling Fist
+INSERT INTO `mob_skill_lists` VALUES ('TRUST_Lhe_Lhangavo',1079,9); -- Asuran Fists
 -- INSERT INTO `mob_skill_lists` VALUES ('TRUST_Arciela',1080,0);
 -- INSERT INTO `mob_skill_lists` VALUES ('TRUST_Mayakov',1081,0);
 INSERT INTO `mob_skill_lists` VALUES ('TRUST_Qultada',1082,33);  -- Burning Blade
@@ -3570,9 +3580,13 @@ INSERT INTO `mob_skill_lists` VALUES ('TRUST_Mildaurion',1086,3470); -- Great Wh
 INSERT INTO `mob_skill_lists` VALUES ('TRUST_Mildaurion',1086,3471); -- Light Blade
 INSERT INTO `mob_skill_lists` VALUES ('TRUST_Mildaurion',1086,3472); -- Vortex
 INSERT INTO `mob_skill_lists` VALUES ('TRUST_Mildaurion',1086,3473); -- Stellar Burst
--- INSERT INTO `mob_skill_lists` VALUES ('TRUST_Halver',1087,0);
--- INSERT INTO `mob_skill_lists` VALUES ('TRUST_Rongelouts',1088,0);
--- INSERT INTO `mob_skill_lists` VALUES ('TRUST_Leonoyne',1089,0);
+INSERT INTO `mob_skill_lists` VALUES ('TRUST_Halver',1087,40); -- Vorpal Blade
+INSERT INTO `mob_skill_lists` VALUES ('TRUST_Halver',1087,42); -- Savage Blade
+INSERT INTO `mob_skill_lists` VALUES ('TRUST_Rongelouts',1088,81); -- Iron Tempest
+INSERT INTO `mob_skill_lists` VALUES ('TRUST_Rongelouts',1088,82); -- Sturmwind
+INSERT INTO `mob_skill_lists` VALUES ('TRUST_Leonoyne',1089,99);  -- Nightmare Scythe
+INSERT INTO `mob_skill_lists` VALUES ('TRUST_Leonoyne',1089,102); -- Guillotine
+INSERT INTO `mob_skill_lists` VALUES ('TRUST_Leonoyne',1089,104); -- Spiral Hell
 -- INSERT INTO `mob_skill_lists` VALUES ('TRUST_Maximilian',1090,0);
 -- INSERT INTO `mob_skill_lists` VALUES ('TRUST_Kayeel-Payeel',1091,0);
 -- INSERT INTO `mob_skill_lists` VALUES ('TRUST_Robel-Akbel',1092,0);
@@ -3595,8 +3609,13 @@ INSERT INTO `mob_skill_lists` VALUES ('TRUST_August',1099,3658); -- No Quarter
 -- INSERT INTO `mob_skill_lists` VALUES ('TRUST_Ullegore',1102,0);
 -- INSERT INTO `mob_skill_lists` VALUES ('TRUST_Makki-Chebukki',1103,0);
 -- INSERT INTO `mob_skill_lists` VALUES ('TRUST_King_of_Hearts',1104,0);
--- INSERT INTO `mob_skill_lists` VALUES ('TRUST_Morimar',1105,0);
--- INSERT INTO `mob_skill_lists` VALUES ('TRUST_Darrcuiln',1106,0);
+INSERT INTO `mob_skill_lists` VALUES ('TRUST_Morimar',1105,81);  -- Iron Tempest
+INSERT INTO `mob_skill_lists` VALUES ('TRUST_Morimar',1105,82);  -- Sturmwind
+INSERT INTO `mob_skill_lists` VALUES ('TRUST_Morimar',1105,88);  -- Steel Cyclone
+INSERT INTO `mob_skill_lists` VALUES ('TRUST_Darrcuiln',1106,81); -- Iron Tempest
+INSERT INTO `mob_skill_lists` VALUES ('TRUST_Darrcuiln',1106,82); -- Sturmwind
+INSERT INTO `mob_skill_lists` VALUES ('TRUST_Darrcuiln',1106,88); -- Steel Cyclone
+INSERT INTO `mob_skill_lists` VALUES ('TRUST_Darrcuiln',1106,91); -- Fell Cleave
 -- TODO: Verify these
 INSERT INTO `mob_skill_lists` VALUES ('TRUST_AAHM',1107,3706); -- Cross Reaver
 INSERT INTO `mob_skill_lists` VALUES ('TRUST_AAHM',1107,3708); -- Swift Blade
@@ -3624,7 +3643,9 @@ INSERT INTO `mob_skill_lists` VALUES ('TRUST_AAGK',1111,3726); -- Tachi: Fudo
 -- Reserved for future Trust 6002 (ID: 1117)
 -- Reserved for future Trust 6003 (ID: 1118) (Formerly Cornelia)
 -- INSERT INTO `mob_skill_lists` VALUES ('TRUST_Excenmille_S',1119,0);
--- INSERT INTO `mob_skill_lists` VALUES ('TRUST_Ayame_UC',1120,0);
+INSERT INTO `mob_skill_lists` VALUES ('TRUST_Ayame_UC',1120,150); -- Tachi: Yukikaze
+INSERT INTO `mob_skill_lists` VALUES ('TRUST_Ayame_UC',1120,151); -- Tachi: Gekko
+INSERT INTO `mob_skill_lists` VALUES ('TRUST_Ayame_UC',1120,152); -- Tachi: Kasha
 INSERT INTO `mob_skill_lists` VALUES ('TRUST_Maat_UC',1121,3496);
 -- INSERT INTO `mob_skill_lists` VALUES ('TRUST_Aldo_UC',1122,0);
 -- INSERT INTO `mob_skill_lists` VALUES ('TRUST_Naja_Salaheem_UC',1123,0);
