@@ -700,40 +700,85 @@ def api_character(charid):
 
 # ── Equipment ─────────────────────────────────────────────────────────────────
 
-# Field names ShiningFantasia uses — tried in order for icon and description.
+# Field names ShiningFantasia uses — tried in order for icon, description, etc.
+# After running /api/sf-debug you can update these to match the actual keys.
 _SF_ICON_KEYS = ['icon', 'Icon', 'iconData', 'icon_data', 'ImageData', 'image', 'img']
-_SF_DESC_KEYS = ['description', 'Description', 'rawDescription', 'raw_description', 'desc', 'text']
-_SF_NAME_KEYS = ['name', 'Name', 'itemName', 'item_name']
-_SF_LV_KEYS   = ['level', 'Level', 'lv', 'reqLevel', 'req_level', 'LevelReq']
+_SF_DESC_KEYS = ['description', 'Description', 'rawDescription', 'raw_description', 'desc', 'text', 'log_en', 'logEn']
+_SF_NAME_KEYS = ['name', 'Name', 'itemName', 'item_name', 'en', 'enName', 'name_en', 'english']
+_SF_LV_KEYS   = ['level', 'Level', 'lv', 'reqLevel', 'req_level', 'LevelReq', 'elvl']
 _SF_JOBS_KEYS = ['jobs', 'Jobs', 'jobFlags', 'job_flags', 'usableJobs', 'JobRestrictions']
+# Field names that might hold the item ID inside a bulk array/dict
+_SF_ID_KEYS   = ['id', 'Id', 'ID', 'itemId', 'item_id', 'ItemId', 'itemID']
+
+# Bulk JSON files that contain all items (large aggregates, no per-item files)
+_SF_BULK_FILES = ['mydata', 'myarmor', 'armor2']
+
+# In-memory cache: {item_id: raw_dict} populated lazily on first request.
+# None = not yet attempted; {} = loaded but empty.
+_sf_bulk_cache: dict | None = None
 
 
-def _sf_json_path(item_id: int):
-    candidates = [
-        os.path.join(_SF_DIR, 'items', f'{item_id}.json'),
-        os.path.join(_SF_DIR,          f'{item_id}.json'),
-        os.path.join(_SF_DIR, 'items', f'{item_id:05d}.json'),
-        os.path.join(_SF_DIR,          f'{item_id:05d}.json'),
-    ]
-    for p in candidates:
-        if os.path.isfile(p):
-            return p
-    return None
+def _load_sf_bulk() -> dict:
+    """Parse all bulk JSON files into a single {item_id: raw_dict} map."""
+    global _sf_bulk_cache
+    if _sf_bulk_cache is not None:
+        return _sf_bulk_cache
 
+    import json as _json
+    _sf_bulk_cache = {}
 
-def _sf_icon_path(item_id: int):
-    candidates = [
-        os.path.join(_SF_DIR, 'items', 'icons', f'{item_id}.png'),
-        os.path.join(_SF_DIR, 'icons',           f'{item_id}.png'),
-        os.path.join(_SF_DIR, 'items',            f'{item_id}.png'),
-        os.path.join(_SF_DIR,                     f'{item_id}.png'),
-        os.path.join(_SF_DIR, 'items', 'icons', f'{item_id:05d}.png'),
-        os.path.join(_SF_DIR,                   f'{item_id:05d}.png'),
-    ]
-    for p in candidates:
-        if os.path.isfile(p):
-            return p
-    return None
+    for fname in _SF_BULK_FILES:
+        fpath = os.path.join(_SF_DIR, f'{fname}.json')
+        if not os.path.isfile(fpath):
+            continue
+        try:
+            with open(fpath, encoding='utf-8') as f:
+                data = _json.load(f)
+
+            if isinstance(data, list):
+                # Array of item dicts — look for an id-like field in each
+                for item in data:
+                    if not isinstance(item, dict):
+                        continue
+                    for id_key in _SF_ID_KEYS:
+                        if id_key in item:
+                            try:
+                                iid = int(item[id_key])
+                                _sf_bulk_cache.setdefault(iid, item)
+                                break
+                            except (ValueError, TypeError):
+                                pass
+
+            elif isinstance(data, dict):
+                # Could be {"10375": {...}, ...} or {"items": [...]}
+                for k, v in data.items():
+                    try:
+                        iid = int(k)
+                        # Top-level key is the item ID
+                        if isinstance(v, dict):
+                            _sf_bulk_cache.setdefault(iid, v)
+                        continue
+                    except (ValueError, TypeError):
+                        pass
+                    # Non-integer key — might be a wrapper like "items"
+                    if isinstance(v, list):
+                        for item in v:
+                            if not isinstance(item, dict):
+                                continue
+                            for id_key in _SF_ID_KEYS:
+                                if id_key in item:
+                                    try:
+                                        iid = int(item[id_key])
+                                        _sf_bulk_cache.setdefault(iid, item)
+                                        break
+                                    except (ValueError, TypeError):
+                                        pass
+
+        except Exception as exc:
+            print(f'[mimic] Failed to load {fpath}: {exc}')
+
+    print(f'[mimic] ShiningFantasia bulk cache: {len(_sf_bulk_cache)} items from {_SF_DIR}')
+    return _sf_bulk_cache
 
 
 def _pick(d: dict, keys: list, default=None):
@@ -772,25 +817,19 @@ def _placeholder_svg(label: str = '?') -> str:
 
 
 def _sf_item_detail(item_id: int):
-    """Return a normalised item dict from the ShiningFantasia JSON, or None."""
-    import json as _json
-    sf_path = _sf_json_path(item_id)
-    if not sf_path:
+    """Return a normalised item dict from ShiningFantasia bulk cache, or None."""
+    cache = _load_sf_bulk()
+    raw = cache.get(item_id)
+    if not raw:
         return None
-    try:
-        with open(sf_path, encoding='utf-8') as f:
-            raw = _json.load(f)
-        return {
-            'item_id':     item_id,
-            'name':        _pick(raw, _SF_NAME_KEYS, f'Item #{item_id}'),
-            'description': _pick(raw, _SF_DESC_KEYS, ''),
-            'level':       _pick(raw, _SF_LV_KEYS, 0),
-            'jobs':        _pick(raw, _SF_JOBS_KEYS, ''),
-            '_raw_keys':   list(raw.keys()),   # included so debug endpoint works
-            '_raw':        raw,                # kept for icon extraction
-        }
-    except Exception:
-        return None
+    return {
+        'item_id':   item_id,
+        'name':      _pick(raw, _SF_NAME_KEYS, f'Item #{item_id}'),
+        'description': _pick(raw, _SF_DESC_KEYS, ''),
+        'level':     _pick(raw, _SF_LV_KEYS, 0),
+        'jobs':      _pick(raw, _SF_JOBS_KEYS, ''),
+        '_raw':      raw,
+    }
 
 
 @app.route('/api/character/<int:charid>/equipment')
@@ -896,24 +935,68 @@ def item_data_route(item_id):
         conn.close()
 
 
+@app.route('/api/sf-debug')
+def sf_debug():
+    """Peek at the bulk JSON file structure (first item per file) to confirm field names."""
+    import json as _json
+
+    result = {'sf_dir': _SF_DIR, 'sf_dir_exists': os.path.isdir(_SF_DIR), 'files': {}}
+    for fname in _SF_BULK_FILES:
+        fpath = os.path.join(_SF_DIR, f'{fname}.json')
+        if not os.path.isfile(fpath):
+            result['files'][fname] = {'exists': False}
+            continue
+        try:
+            with open(fpath, encoding='utf-8') as f:
+                data = _json.load(f)
+
+            def _sample(d):
+                return {k: (f'<string len={len(v)}>' if isinstance(v, str) and len(v) > 100 else v)
+                        for k, v in d.items()} if isinstance(d, dict) else str(type(d))
+
+            if isinstance(data, list):
+                first = data[0] if data else {}
+                result['files'][fname] = {
+                    'type': 'array', 'count': len(data),
+                    'first_keys': list(first.keys()) if isinstance(first, dict) else [],
+                    'first_sample': _sample(first),
+                }
+            elif isinstance(data, dict):
+                first_k = next(iter(data), None)
+                first_v = data[first_k] if first_k is not None else {}
+                result['files'][fname] = {
+                    'type': 'object', 'count': len(data),
+                    'first_key': first_k,
+                    'first_value_keys': list(first_v.keys()) if isinstance(first_v, dict) else [],
+                    'first_value_sample': _sample(first_v) if isinstance(first_v, dict) else str(first_v)[:200],
+                }
+        except Exception as exc:
+            result['files'][fname] = {'error': str(exc)}
+
+    return jsonify(result)
+
+
 @app.route('/api/item-debug/<int:item_id>')
 def item_debug(item_id):
-    """Return raw JSON keys from ShiningFantasia so field names can be confirmed."""
-    import json as _json
-    sf_path = _sf_json_path(item_id)
-    if not sf_path:
-        return jsonify(error=f'No ShiningFantasia JSON found for item {item_id}',
-                       sf_dir=_SF_DIR, sf_dir_exists=os.path.isdir(_SF_DIR)), 404
-    with open(sf_path, encoding='utf-8') as f:
-        raw = _json.load(f)
-    # Return keys + value types + truncated string values (no icon blobs)
-    summary = {}
-    for k, v in raw.items():
-        if isinstance(v, str) and len(v) > 120:
-            summary[k] = f'<string len={len(v)}>'
-        else:
-            summary[k] = v
-    return jsonify({'path': sf_path, 'keys': list(raw.keys()), 'values': summary})
+    """Return the ShiningFantasia data for one item (truncated blobs)."""
+    cache = _load_sf_bulk()
+    raw = cache.get(item_id)
+    if not raw:
+        bulk_info = []
+        for fname in _SF_BULK_FILES:
+            fp = os.path.join(_SF_DIR, f'{fname}.json')
+            bulk_info.append({'file': fname, 'exists': os.path.isfile(fp)})
+        return jsonify(
+            error=f'Item {item_id} not found in ShiningFantasia bulk cache',
+            sf_dir=_SF_DIR,
+            sf_dir_exists=os.path.isdir(_SF_DIR),
+            bulk_cache_size=len(cache),
+            bulk_files=bulk_info,
+        ), 404
+
+    summary = {k: (f'<string len={len(v)}>' if isinstance(v, str) and len(v) > 120 else v)
+               for k, v in raw.items()}
+    return jsonify({'item_id': item_id, 'keys': list(raw.keys()), 'values': summary})
 
 
 if __name__ == '__main__':
