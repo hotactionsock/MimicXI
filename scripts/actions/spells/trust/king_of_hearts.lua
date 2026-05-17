@@ -24,12 +24,13 @@ spellObject.onMobSpawn = function(mob)
     mob:addGambit(ai.t.SELF, { ai.c.NOT_STATUS, xi.effect.SHELL   }, { ai.r.MA, ai.s.HIGHEST,  xi.magic.spellFamily.SHELL   })
     mob:addGambit(ai.t.SELF, { ai.c.ALWAYS,     0                 }, { ai.r.MA, ai.s.SPECIFIC, xi.magic.spell.TEMPER        }, 180)
 
-    -- Enfeebling
-    mob:addGambit(ai.t.TARGET, { ai.c.ALWAYS, 0 }, { ai.r.MA, ai.s.SPECIFIC, xi.magic.spell.DIA_III }, 30)
+    -- Enfeebling (Saboteur boosts potency of next enfeeble)
+    mob:addGambit(ai.t.SELF,   { ai.c.NOT_STATUS, xi.effect.SABOTEUR }, { ai.r.JA, ai.s.SPECIFIC, xi.ja.SABOTEUR                        })
+    mob:addGambit(ai.t.TARGET, { ai.c.ALWAYS,     0                  }, { ai.r.MA, ai.s.SPECIFIC, xi.magic.spell.DIA_III }, 30)
 
     -- Party buffs
-    mob:addGambit(ai.t.PARTY, { ai.c.NOT_STATUS, xi.effect.HASTE   }, { ai.r.MA, ai.s.SPECIFIC, xi.magic.spell.HASTE   })
-    mob:addGambit(ai.t.PARTY, { ai.c.NOT_STATUS, xi.effect.REFRESH }, { ai.r.MA, ai.s.SPECIFIC, xi.magic.spell.REFRESH })
+    mob:addGambit(ai.t.PARTY, { ai.c.NOT_STATUS, xi.effect.HASTE   }, { ai.r.MA, ai.s.SPECIFIC, xi.magic.spell.HASTE_II })
+    mob:addGambit(ai.t.PARTY, { ai.c.NOT_STATUS, xi.effect.REFRESH }, { ai.r.MA, ai.s.SPECIFIC, xi.magic.spell.REFRESH_II })
     mob:addGambit(ai.t.PARTY, { ai.c.NOT_STATUS, xi.effect.PHALANX }, { ai.r.MA, ai.s.SPECIFIC, xi.magic.spell.PHALANX })
 
     -- Status removal and healing

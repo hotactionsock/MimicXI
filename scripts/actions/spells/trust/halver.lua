@@ -15,7 +15,8 @@ end
 spellObject.onMobSpawn = function(mob)
     xi.trust.message(mob, xi.trust.messageOffset.SPAWN)
 
-    mob:addGambit(ai.t.TARGET, { ai.c.NOT_STATUS,      xi.effect.FLASH    }, { ai.r.MA, ai.s.SPECIFIC, xi.magic.spell.FLASH })
+    mob:addGambit(ai.t.SELF,   { ai.c.NOT_STATUS, xi.effect.DIVINE_EMBLEM }, { ai.r.JA, ai.s.SPECIFIC, xi.ja.DIVINE_EMBLEM  })
+    mob:addGambit(ai.t.TARGET, { ai.c.NOT_STATUS, xi.effect.FLASH         }, { ai.r.MA, ai.s.SPECIFIC, xi.magic.spell.FLASH  })
     mob:addGambit(ai.t.SELF,   { ai.c.NOT_HAS_TOP_ENMITY, 0               }, { ai.r.JA, ai.s.SPECIFIC, xi.ja.PROVOKE        })
     mob:addGambit(ai.t.SELF,   { ai.c.ALWAYS,           0                 }, { ai.r.JA, ai.s.SPECIFIC, xi.ja.SHIELD_BASH    })
     mob:addGambit(ai.t.SELF,   { ai.c.NOT_STATUS,       xi.effect.SENTINEL }, { ai.r.JA, ai.s.SPECIFIC, xi.ja.SENTINEL      })
