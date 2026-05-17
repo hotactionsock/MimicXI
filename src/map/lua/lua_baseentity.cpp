@@ -18833,7 +18833,7 @@ void CLuaBaseEntity::setDropID(uint32 dropID)
  *  Example : targ:addTreasure(itemId, dropper)
  ************************************************************************/
 
-void CLuaBaseEntity::addTreasure(uint16 itemID, const sol::object& arg1, const sol::object& arg2)
+void CLuaBaseEntity::addTreasure(uint16 itemID, const sol::object& arg1, const sol::object& arg2, const sol::object& arg3)
 {
     if (m_PBaseEntity->objtype != TYPE_PC)
     {
@@ -18848,24 +18848,56 @@ void CLuaBaseEntity::addTreasure(uint16 itemID, const sol::object& arg1, const s
         return;
     }
 
-    if (PChar->PTreasurePool != nullptr)
+    if (PChar->PTreasurePool == nullptr)
     {
-        if ((arg1 != sol::lua_nil) && arg1.is<CLuaBaseEntity*>())
+        return;
+    }
+
+    // Build augment list if a 4th argument (table of {id,value} pairs) was given.
+    std::vector<std::pair<uint16, uint8>> augments;
+    const sol::object& augArg = arg3;
+    if (augArg != sol::lua_nil && augArg.is<sol::table>())
+    {
+        auto augTable = augArg.as<sol::table>();
+        augTable.for_each([&](const sol::object& /*k*/, const sol::object& v)
         {
-            uint16 droprate = (arg2 != sol::lua_nil) ? arg2.as<uint16>() : 1000;
+            if (!v.is<sol::table>())
+            {
+                return;
+            }
+            auto entry  = v.as<sol::table>();
+            uint16 augId  = entry.get_or<uint16>("id", 0);
+            uint8  augVal = static_cast<uint8>(entry.get_or<uint16>("value", 0));
+            if (augId != 0)
+            {
+                augments.emplace_back(augId, augVal);
+            }
+        });
+    }
 
-            // The specified PEntity can be a Mob or NPC
-            CLuaBaseEntity* PLuaBaseEntity = arg1.as<CLuaBaseEntity*>();
-            CBaseEntity*    PEntity        = PLuaBaseEntity->GetBaseEntity();
+    CBaseEntity* PEntity  = nullptr;
+    uint16       droprate = 1000;
 
-            charutils::DistributeItem(PChar, PEntity, itemID, droprate);
-        }
-        else // Entity can be nullptr - this is intentional
-        {
-            uint16 droprate = (arg1 != sol::lua_nil) ? arg1.as<uint16>() : 1000;
+    if ((arg1 != sol::lua_nil) && arg1.is<CLuaBaseEntity*>())
+    {
+        PEntity  = arg1.as<CLuaBaseEntity*>()->GetBaseEntity();
+        droprate = (arg2 != sol::lua_nil) ? arg2.as<uint16>() : 1000;
+    }
+    else if (arg1 != sol::lua_nil)
+    {
+        droprate = arg1.as<uint16>();
+    }
 
-            charutils::DistributeItem(PChar, nullptr, itemID, droprate);
-        }
+    auto   thDropRateFunction = lua["xi"]["combat"]["treasureHunter"]["getDropRate"];
+    uint16 thDropRate         = droprate * 10;
+    if (auto* PMob = dynamic_cast<CMobEntity*>(PEntity))
+    {
+        thDropRate = thDropRateFunction(PMob->m_THLvl, thDropRate);
+    }
+
+    if (thDropRate > 0 && (1 + xirand::GetRandomNumber(10000)) <= thDropRate * settings::get<float>("map.DROP_RATE_MULTIPLIER"))
+    {
+        PChar->PTreasurePool->addItem(itemID, PEntity, std::move(augments));
     }
 }
 

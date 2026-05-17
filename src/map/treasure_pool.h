@@ -24,6 +24,7 @@
 
 #include "common/cbasetypes.h"
 
+#include <utility>
 #include <vector>
 
 // Update xi.treasurePool accordingly when making changes
@@ -60,7 +61,8 @@ struct TreasurePoolItem
     uint8             SlotID;
     timer::time_point TimeStamp;
 
-    std::vector<LotInfo> Lotters;
+    std::vector<LotInfo>              Lotters;
+    std::vector<std::pair<uint16, uint8>> Augments; // augment id + value pairs (max 5), set for mimic loot
 
     TreasurePoolItem()
     : ID(0)
@@ -76,7 +78,7 @@ public:
 
     auto getPoolType() const -> TreasurePoolType;
 
-    auto addItem(uint16 ItemID, CBaseEntity*) -> uint8;
+    auto addItem(uint16 ItemID, CBaseEntity*, std::vector<std::pair<uint16, uint8>> augments = {}) -> uint8;
     void lotItem(CCharEntity* PChar, uint8 SlotID, uint16 Lot);
     void passItem(CCharEntity* PChar, uint8 SlotID);
     bool hasLottedItem(CCharEntity* PChar, uint8 SlotID);

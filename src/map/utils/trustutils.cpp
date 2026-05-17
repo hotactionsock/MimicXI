@@ -686,13 +686,15 @@ void LoadTrustStatsAndSkills(CTrustEntity* PTrust)
         }
     }
 
-    PTrust->addModifier(Mod::DEF, mobutils::GetBaseSkill(PTrust, PTrust->defRank));
-    PTrust->addModifier(Mod::EVA, mobutils::GetBaseSkill(PTrust, PTrust->evaRank));
-    PTrust->addModifier(Mod::ATT, mobutils::GetBaseSkill(PTrust, PTrust->attRank));
-    PTrust->addModifier(Mod::ACC, mobutils::GetBaseSkill(PTrust, PTrust->accRank));
-
-    PTrust->addModifier(Mod::RATT, mobutils::GetBaseSkill(PTrust, PTrust->attRank));
-    PTrust->addModifier(Mod::RACC, mobutils::GetBaseSkill(PTrust, PTrust->accRank));
+    // Apply the skill multiplier to combat mods so ALTER_EGO_SKILL_MULTIPLIER
+    // affects survivability (DEF/EVA) and offensive output (ATT/ACC) as well as weapon skills.
+    auto skillMult = settings::get<float>("map.ALTER_EGO_SKILL_MULTIPLIER");
+    PTrust->addModifier(Mod::DEF,  static_cast<int16>(mobutils::GetBaseSkill(PTrust, PTrust->defRank) * skillMult));
+    PTrust->addModifier(Mod::EVA,  static_cast<int16>(mobutils::GetBaseSkill(PTrust, PTrust->evaRank) * skillMult));
+    PTrust->addModifier(Mod::ATT,  static_cast<int16>(mobutils::GetBaseSkill(PTrust, PTrust->attRank) * skillMult));
+    PTrust->addModifier(Mod::ACC,  static_cast<int16>(mobutils::GetBaseSkill(PTrust, PTrust->accRank) * skillMult));
+    PTrust->addModifier(Mod::RATT, static_cast<int16>(mobutils::GetBaseSkill(PTrust, PTrust->attRank) * skillMult));
+    PTrust->addModifier(Mod::RACC, static_cast<int16>(mobutils::GetBaseSkill(PTrust, PTrust->accRank) * skillMult));
 
     // Natural magic evasion
     PTrust->addModifier(Mod::MEVA, mobutils::GetMagicEvasion(PTrust));

@@ -37,6 +37,8 @@ spellObject.onMobSpawn = function(mob)
     -- Healing
     mob:addGambit(ai.t.PARTY, { ai.c.HPP_LT, 25 }, { ai.r.MA, ai.s.HIGHEST, xi.magic.spellFamily.CURE })
     mob:addGambit(ai.t.PARTY, { ai.c.HPP_LT, 75 }, { ai.r.MA, ai.s.HIGHEST, xi.magic.spellFamily.CURE })
+
+    mob:setAutoAttackEnabled(false)
 end
 
 spellObject.onMobDespawn = function(mob)

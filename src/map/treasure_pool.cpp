@@ -21,6 +21,8 @@
 
 #include "common/logging.h"
 #include "common/timer.h"
+#include "enums/exdata.h"
+#include "items/exdata/augment_standard.h"
 #include "roe.h"
 
 #include "packets/s2c/0x0d2_trophy_list.h"
@@ -163,7 +165,7 @@ void CTreasurePool::delMember(CCharEntity* PChar)
  *                                                                       *
  ************************************************************************/
 
-uint8 CTreasurePool::addItem(uint16 ItemID, CBaseEntity* PEntity)
+uint8 CTreasurePool::addItem(uint16 ItemID, CBaseEntity* PEntity, std::vector<std::pair<uint16, uint8>> augments)
 {
     uint8             SlotID     = 0;
     uint8             FreeSlotID = -1;
@@ -263,6 +265,7 @@ uint8 CTreasurePool::addItem(uint16 ItemID, CBaseEntity* PEntity)
     m_count++;
     m_PoolItems[FreeSlotID].ID        = ItemID;
     m_PoolItems[FreeSlotID].TimeStamp = timer::now() - treasure_checktime;
+    m_PoolItems[FreeSlotID].Augments  = std::move(augments);
 
     for (const auto& member : m_Members)
     {
@@ -502,6 +505,30 @@ void CTreasurePool::checkTreasureItem(timer::time_point tick, uint8 SlotID)
         (memberCount() == 1 && m_Members[0]->getStorage(LOC_INVENTORY)->GetFreeSlotsCount() != 0) ||
         m_PoolItems[SlotID].Lotters.size() == memberCount())
     {
+        // Award the item to a recipient, applying pre-rolled augments if present.
+        auto awardItem = [this, SlotID](CCharEntity* recipient) -> bool
+        {
+            if (!m_PoolItems[SlotID].Augments.empty())
+            {
+                CItem* PItem = itemutils::GetItem(m_PoolItems[SlotID].ID);
+                if (!PItem)
+                {
+                    return false;
+                }
+                auto& aug        = PItem->exdata<Exdata::AugmentStandard>();
+                aug.AugmentKind    = Exdata::AugmentKindFlags::HasAugments;
+                aug.AugmentSubKind = Exdata::AugmentSubKindFlags::Standard;
+                const auto& srcAugs = m_PoolItems[SlotID].Augments;
+                for (size_t i = 0; i < srcAugs.size() && i < 5; ++i)
+                {
+                    aug.Augments[i].Id    = srcAugs[i].first;
+                    aug.Augments[i].Value = srcAugs[i].second;
+                }
+                return charutils::AddItem(recipient, LOC_INVENTORY, PItem, true) != ERROR_SLOTID;
+            }
+            return charutils::AddItem(recipient, LOC_INVENTORY, m_PoolItems[SlotID].ID, 1, true) != ERROR_SLOTID;
+        };
+
         // Find item's highest lotter
         LotInfo highestInfo;
 
@@ -519,7 +546,7 @@ void CTreasurePool::checkTreasureItem(timer::time_point tick, uint8 SlotID)
             if (highestInfo.member->getStorage(LOC_INVENTORY)->GetFreeSlotsCount() != 0)
             {
                 // add item as they have room!
-                if (charutils::AddItem(highestInfo.member, LOC_INVENTORY, m_PoolItems[SlotID].ID, 1, true) != ERROR_SLOTID)
+                if (awardItem(highestInfo.member))
                 {
                     treasureWon(highestInfo.member, SlotID);
                 }
@@ -559,7 +586,7 @@ void CTreasurePool::checkTreasureItem(timer::time_point tick, uint8 SlotID)
             {
                 // select random member from this pool to give item to
                 CCharEntity* PChar = candidates.at(xirand::GetRandomNumber(candidates.size()));
-                if (charutils::AddItem(PChar, LOC_INVENTORY, m_PoolItems[SlotID].ID, 1, true) != ERROR_SLOTID)
+                if (awardItem(PChar))
                 {
                     treasureWon(PChar, SlotID);
                 }
@@ -590,6 +617,7 @@ void CTreasurePool::treasureWon(CCharEntity* winner, uint8 SlotID)
 
     m_PoolItems[SlotID].ID = 0;
     m_PoolItems[SlotID].Lotters.clear();
+    m_PoolItems[SlotID].Augments.clear();
 }
 
 void CTreasurePool::treasureError(CCharEntity* winner, uint8 SlotID)
@@ -610,6 +638,7 @@ void CTreasurePool::treasureError(CCharEntity* winner, uint8 SlotID)
 
     m_PoolItems[SlotID].ID = 0;
     m_PoolItems[SlotID].Lotters.clear();
+    m_PoolItems[SlotID].Augments.clear();
 }
 
 void CTreasurePool::treasureLost(uint8 SlotID)
@@ -630,4 +659,5 @@ void CTreasurePool::treasureLost(uint8 SlotID)
 
     m_PoolItems[SlotID].ID = 0;
     m_PoolItems[SlotID].Lotters.clear();
+    m_PoolItems[SlotID].Augments.clear();
 }
