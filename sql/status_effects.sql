@@ -723,6 +723,7 @@ INSERT INTO `status_effects` VALUES (818,'draconic_resonance',@FLAG_DEATH | @FLA
 INSERT INTO `status_effects` VALUES (819,'wyvern_blessing',@FLAG_DEATH | @FLAG_ON_ZONE | @FLAG_NO_LOSS_MESSAGE,0,0,0,0,0,0,0,0,NULL);
 INSERT INTO `status_effects` VALUES (820,'breach',@FLAG_DEATH | @FLAG_ON_ZONE | @FLAG_NO_LOSS_MESSAGE,0,0,0,0,0,0,0,0,NULL);
 INSERT INTO `status_effects` VALUES (821,'ward_resonance',@FLAG_DEATH | @FLAG_ON_ZONE | @FLAG_NO_LOSS_MESSAGE,0,0,0,0,0,0,0,0,NULL);
+INSERT INTO `status_effects` VALUES (822,'dead_aim',@FLAG_DEATH | @FLAG_ON_ZONE | @FLAG_NO_LOSS_MESSAGE,0,0,0,0,0,0,0,0,NULL);
 
 /*!40000 ALTER TABLE `status_effects` ENABLE KEYS */;
 UNLOCK TABLES;

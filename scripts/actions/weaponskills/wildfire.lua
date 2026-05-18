@@ -27,6 +27,20 @@ weaponskillObject.onUseWeaponSkill = function(player, target, wsID, tp, primary,
 
     -- TODO: needs to give enmity down at varying tp percent's that is treated separately than the gear cap of -50% enmity http://www.bg-wiki.com/bg/Wildfire
 
+    -- Dead Aim: consume stacks from Quick Draw hits for bonus fTP (COR main only)
+    local deadAimStacks = player:getLocalVar('DEAD_AIM_STACKS')
+    if deadAimStacks > 0 and player:getMainJob() == xi.job.COR then
+        local bonus = 1 + deadAimStacks * 0.12
+        for i, v in ipairs(params.ftpMod) do
+            params.ftpMod[i] = v * bonus
+        end
+        player:setLocalVar('DEAD_AIM_STACKS', 0)
+        player:delStatusEffectSilent(xi.effect.DEAD_AIM)
+        if xi.settings.map.MIMIC_COMBAT_NOTIFICATIONS then
+            player:printToPlayer(string.format('Dead Aim: %d stacks (+%d%% fTP)', deadAimStacks, deadAimStacks * 12), xi.msg.channel.SYSTEM_3, '')
+        end
+    end
+
     -- Apply aftermath
     xi.aftermath.addStatusEffect(player, tp, xi.slot.RANGED, xi.aftermath.type.EMPYREAN)
 

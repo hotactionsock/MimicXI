@@ -83,6 +83,10 @@ abilityObject.onUseAbility = function(player, target, ability, action)
         end
     end
 
+    if dmg > 0 and player:getMainJob() == xi.job.COR then
+        xi.job_utils.corsair.onQuickDrawHit(player)
+    end
+
     local _ = player:delItem(xi.item.WATER_CARD, 1) or player:delItem(xi.item.TRUMP_CARD, 1)
     target:updateClaim(player)
 

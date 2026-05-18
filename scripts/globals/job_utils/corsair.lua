@@ -331,6 +331,18 @@ xi.job_utils.corsair.onDoubleUpAbilityCheck = function(player, target, ability)
     end
 end
 
+-- Called by elemental shot scripts when a Quick Draw deals damage.
+-- Builds Dead Aim stacks (max 5) with a 30s refresh timer.
+xi.job_utils.corsair.onQuickDrawHit = function(player)
+    local stacks = math.min(5, player:getLocalVar('DEAD_AIM_STACKS') + 1)
+    player:setLocalVar('DEAD_AIM_STACKS', stacks)
+    player:delStatusEffectSilent(xi.effect.DEAD_AIM)
+    player:addStatusEffect(xi.effect.DEAD_AIM, stacks, 0, 30)
+    if xi.settings.map.MIMIC_COMBAT_NOTIFICATIONS then
+        player:printToPlayer(string.format('Dead Aim: %d/5 (+%d%% ranged WS)', stacks, stacks * 12), xi.msg.channel.SYSTEM_3, '')
+    end
+end
+
 xi.job_utils.corsair.onRollEffectLose = function(player, effect)
     -- Ignore effect loss if COR is doubling up
     if player:getLocalVar('corsairApplyingRoll') == 1 then

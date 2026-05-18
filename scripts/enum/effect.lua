@@ -693,7 +693,8 @@ xi.effect =
     WYVERN_BLESSING          = 819, -- DRG: granted when Healing Breath heals master; next WS deals bonus damage scaled to HP restored (cap +50%)
     BREACH                   = 820, -- DRG: granted when Angon lands; next jump deals +35% bonus damage
     WARD_RESONANCE           = 821, -- SMN: each Ward BP builds 1 stack (max 5, 30s refresh); consumed by next Rage BP for +15% per stack (up to +75%)
+    DEAD_AIM                 = 822, -- COR: each Quick Draw hit adds 1 stack (max 5, 30s refresh); consumed on ranged WS for +12% fTP per stack (up to +60%)
 
-    -- MAX_EFFECTID in src/map/status_effect.h is 822. Next available ID: 822.
+    -- MAX_EFFECTID in src/map/status_effect.h is 823. Next available ID: 823.
     -- Bump MAX_EFFECTID and add a SQL row before adding new effects.
 }

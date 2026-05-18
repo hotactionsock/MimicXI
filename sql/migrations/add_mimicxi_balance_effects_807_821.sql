@@ -1,6 +1,6 @@
--- MimicXI Balance Pass: Add custom status effects 807-821
+-- MimicXI Balance Pass: Add custom status effects 807-822
 -- Run this on existing databases that already have status_effects populated.
--- Also requires server recompile after raising MAX_EFFECTID to 822 in src/map/status_effect.h.
+-- Also requires server recompile after raising MAX_EFFECTID to 823 in src/map/status_effect.h.
 
 SET @FLAG_DEATH            = 32;
 SET @FLAG_ON_ZONE          = 256;
@@ -21,3 +21,4 @@ INSERT IGNORE INTO `status_effects` VALUES (818,'draconic_resonance', @FLAG_DEAT
 INSERT IGNORE INTO `status_effects` VALUES (819,'wyvern_blessing',    @FLAG_DEATH | @FLAG_ON_ZONE | @FLAG_NO_LOSS_MESSAGE,0,0,0,0,0,0,0,0,NULL);
 INSERT IGNORE INTO `status_effects` VALUES (820,'breach',             @FLAG_DEATH | @FLAG_ON_ZONE | @FLAG_NO_LOSS_MESSAGE,0,0,0,0,0,0,0,0,NULL);
 INSERT IGNORE INTO `status_effects` VALUES (821,'ward_resonance',     @FLAG_DEATH | @FLAG_ON_ZONE | @FLAG_NO_LOSS_MESSAGE,0,0,0,0,0,0,0,0,NULL);
+INSERT IGNORE INTO `status_effects` VALUES (822,'dead_aim',           @FLAG_DEATH | @FLAG_ON_ZONE | @FLAG_NO_LOSS_MESSAGE,0,0,0,0,0,0,0,0,NULL);

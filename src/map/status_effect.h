@@ -756,7 +756,7 @@ enum EFFECT : uint16
     // 807-1022
     // EFFECT_PLACEHOLDER           = 1023 // The client dat file seems to have only this many "slots", results of exceeding that are untested.
 };
-#define MAX_EFFECTID 822 // 768 real + 39 original custom + 15 MimicXI balance-pass custom
+#define MAX_EFFECTID 823 // 768 real + 39 original custom + 16 MimicXI balance-pass custom
 DECLARE_FORMAT_AS_UNDERLYING(EFFECT);
 
 /************************************************************************
