@@ -276,10 +276,10 @@ INSERT INTO `abilities` VALUES (257,'double_shot',11,79,1,180,126,0,0,225,2000,0
 INSERT INTO `abilities` VALUES (258,'sengikori',12,77,1,180,141,100,0,226,2000,0,6,0,0,0,1,80,0,0,NULL);
 INSERT INTO `abilities` VALUES (259,'futae',13,77,1,180,148,0,0,227,2000,0,6,0,0,0,1,0,0,0,'ABYSSEA');
 INSERT INTO `abilities` VALUES (260,'spirit_jump',14,77,4,60,166,100,0,204,2000,0,3,8,0,0,1,80,1218,0,NULL);
-INSERT INTO `abilities` VALUES (261,'presto',19,77,1,15,236,100,0,229,2000,0,6,0,0,0,1,80,0,0,NULL);
+INSERT INTO `abilities` VALUES (261,'presto',19,75,1,15,236,100,0,229,2000,0,6,0,0,0,1,80,0,0,NULL);
 INSERT INTO `abilities` VALUES (262,'divine_waltz_ii',19,78,27,20,190,102,0,34,2000,0,14,10,1,10,1,80,0,0,NULL);
 INSERT INTO `abilities` VALUES (263,'flourishes_iii',19,80,1,0,226,0,0,0,2000,0,14,0,0,0,0,0,0,0,NULL);
-INSERT INTO `abilities` VALUES (264,'climactic_flourish',19,80,1,90,226,100,0,230,2000,0,6,0,0,0,1,80,0,0,NULL);
+INSERT INTO `abilities` VALUES (264,'climactic_flourish',19,75,1,90,226,100,0,230,2000,0,6,0,0,0,1,80,0,0,NULL);
 INSERT INTO `abilities` VALUES (265,'libra',20,76,4,60,237,100,0,231,2000,0,6,10,0,0,0,0,0,0,NULL);
 INSERT INTO `abilities` VALUES (266,'tactical_switch',18,79,1,180,213,100,0,232,2000,0,6,0,0,0,0,0,0,0,NULL);
 INSERT INTO `abilities` VALUES (267,'blood_rage',1,87,1,300,11,319,0,239,2000,0,6,0,1,14,1,300,0,0,NULL);
@@ -318,7 +318,7 @@ INSERT INTO `abilities` VALUES (305,'avengers_roll',17,97,1,60,193,420,0,266,200
 INSERT INTO `abilities` VALUES (309,'cooldown',18,95,1,300,114,100,0,264,2000,0,6,0,0,0,0,0,0,0,NULL);
 INSERT INTO `abilities` VALUES (310,'deus_ex_automata',18,5,1,60,115,0,0,83,2000,0,6,0,0,0,1,80,0,0,'ABYSSEA');
 INSERT INTO `abilities` VALUES (311,'curing_waltz_v',19,87,27,14,189,102,0,35,2000,0,14,20,0,0,0,0,0,0,'ABYSSEA');
-INSERT INTO `abilities` VALUES (312,'feather_step',19,83,4,5,220,591,0,17,2000,0,14,3,0,0,1,0,0,0,NULL);
+INSERT INTO `abilities` VALUES (312,'feather_step',19,75,4,5,220,591,0,17,2000,0,14,3,0,0,1,0,0,0,NULL);
 INSERT INTO `abilities` VALUES (313,'striking_flourish',19,89,1,30,226,100,0,243,2000,0,14,0,0,0,1,80,0,0,NULL);
 INSERT INTO `abilities` VALUES (314,'ternary_flourish',19,93,1,30,226,100,0,260,2000,0,14,0,0,0,1,80,0,0,NULL);
 INSERT INTO `abilities` VALUES (316,'perpetuance',20,87,1,1,231,100,0,244,2000,0,6,0,0,0,1,80,0,16,'ABYSSEA');

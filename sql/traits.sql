@@ -488,7 +488,7 @@ INSERT INTO `traits` VALUES (98,'crit. atk. bonus',6,91,3,421,11,'ABYSSEA',0);
 INSERT INTO `traits` VALUES (98,'crit. atk. bonus',6,97,4,421,14,'ABYSSEA',0);
 INSERT INTO `traits` VALUES (98,'crit. atk. bonus',8,85,1,421,5,'ABYSSEA',0);
 INSERT INTO `traits` VALUES (98,'crit. atk. bonus',8,95,2,421,8,'ABYSSEA',0);
-INSERT INTO `traits` VALUES (98,'crit. atk. bonus',19,80,1,421,5,'ABYSSEA',0);
+INSERT INTO `traits` VALUES (98,'crit. atk. bonus',19,75,1,421,5,'ABYSSEA',0);
 INSERT INTO `traits` VALUES (98,'crit. atk. bonus',19,88,2,421,8,'ABYSSEA',0);
 INSERT INTO `traits` VALUES (98,'crit. atk. bonus',19,99,3,421,11,'ABYSSEA',0);
 INSERT INTO `traits` VALUES (99,'crit. def. bonus',7,79,1,908,5,'ABYSSEA',0);   -- Paladin

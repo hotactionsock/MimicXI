@@ -152,6 +152,18 @@ local function getFlourishAnimation(weaponSkillType)
 end
 
 -----------------------------------
+-- SC Resonance: grant 1 FM when DNC closes a skillchain.
+-- Called from weaponskills.lua after takeWeaponskillDamage.
+-----------------------------------
+xi.job_utils.dancer.onSkillchainClose = function(player)
+    local effect  = player:getStatusEffect(xi.effect.FINISHING_MOVE_1)
+    local current = effect and effect:getPower() or 0
+    if current < getMaxFinishingMoves(player) then
+        setFinishingMoves(player, current + 1)
+    end
+end
+
+-----------------------------------
 -- Ability Check.
 -----------------------------------
 xi.job_utils.dancer.checkStepAbility = function(player, target, ability)

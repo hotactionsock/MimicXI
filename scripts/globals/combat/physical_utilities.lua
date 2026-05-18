@@ -934,6 +934,12 @@ xi.combat.physical.criticalRateFromFlourish = function(actor)
         if effectPower >= 3 then
             buildingFlourishBonus = (10 + effectSubPower) / 100
         end
+
+        -- Saber Dance synergy: each FM spent on Building Flourish grants +5% crit.
+        -- Rewards committing to offensive mode at the cost of Waltzes.
+        if actor:hasStatusEffect(xi.effect.SABER_DANCE) then
+            buildingFlourishBonus = buildingFlourishBonus + effectPower * 0.05
+        end
     end
 
     return buildingFlourishBonus

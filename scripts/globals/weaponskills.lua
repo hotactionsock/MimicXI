@@ -1021,9 +1021,16 @@ xi.weaponskills.takeWeaponskillDamage = function(defender, attacker, wsParams, p
     -- Core does not modify the TP for the 10 TP/hit like it should, so we're doing it here
     local storeTPModifier = 1 + attacker:getMod(xi.mod.STORETP) / 100 -- TODO, make a global function to get this (inhibit TP is not accounted for properly in core)
 
+    -- SC Resonance: capture SC state before takeWeaponskillDamage resolves the chain.
+    local hadSkillchain = defender:hasStatusEffect(xi.effect.SKILLCHAIN)
+
     finaldmg = defender:takeWeaponskillDamage(attacker, finaldmg, attack.type, attack.damageType, attack.slot, primaryMsg, wsResults.tpHitsLanded * attackerTPMult, (wsResults.extraHitsLanded * 10 * storeTPModifier) + wsResults.bonusTP, targetTPMult)
     if wsResults.tpHitsLanded + wsResults.extraHitsLanded > 0 then
         action:recordDamage(defender, attack.type, math.abs(finaldmg), wsResults.criticalHit)
+        -- SC Resonance: DNC gains 1 FM when closing a skillchain.
+        if hadSkillchain and attacker:getMainJob() == xi.job.DNC then
+            xi.job_utils.dancer.onSkillchainClose(attacker)
+        end
     end
 
     local enmityEntity = wsResults.taChar or attacker
