@@ -1634,6 +1634,85 @@ bool CGambitsContainer::TryTrustSkill()
 
                 break;
             }
+            case G_SELECT::SPECIAL_MATSUI_P:
+            {
+                // Shadow gate: do not fire without Utsusemi shadows.
+                if (!POwner->StatusEffectContainer->HasStatusEffect(EFFECT_COPY_IMAGE))
+                {
+                    break;
+                }
+
+                // Closer: if a SC is open on the target, try to close it.
+                auto* PSCEffect = target->StatusEffectContainer->GetStatusEffect(EFFECT_SKILLCHAIN);
+                if (PSCEffect)
+                {
+                    std::list<SKILLCHAIN_ELEMENT> resonanceProperties;
+                    if (uint16 power = PSCEffect->GetPower())
+                    {
+                        resonanceProperties.emplace_back((SKILLCHAIN_ELEMENT)(power & 0xF));
+                        resonanceProperties.emplace_back((SKILLCHAIN_ELEMENT)(power >> 4 & 0xF));
+                        resonanceProperties.emplace_back((SKILLCHAIN_ELEMENT)(power >> 8));
+                    }
+                    for (auto& skill : tp_skills)
+                    {
+                        std::list<SKILLCHAIN_ELEMENT> skillProperties;
+                        skillProperties.emplace_back((SKILLCHAIN_ELEMENT)skill.primary);
+                        skillProperties.emplace_back((SKILLCHAIN_ELEMENT)skill.secondary);
+                        skillProperties.emplace_back((SKILLCHAIN_ELEMENT)skill.tertiary);
+                        if (SKILLCHAIN_ELEMENT sc = battleutils::FormSkillchain(resonanceProperties, skillProperties);
+                            sc != SC_NONE)
+                        {
+                            if (sc >= chosen_skillchain)
+                            {
+                                chosen_skill      = skill;
+                                chosen_skillchain = sc;
+                            }
+                        }
+                    }
+                    if (chosen_skill)
+                    {
+                        break;
+                    }
+                }
+
+                // Opener: pick a WS that lets the master close into Light or Darkness.
+                {
+                    auto* PMaster           = static_cast<CCharEntity*>(POwner->PMaster);
+                    auto* PMasterController = static_cast<CPlayerController*>(PMaster->PAI->GetController());
+                    auto* PMasterLastWS     = PMasterController->getLastWeaponSkill();
+                    if (PMasterLastWS)
+                    {
+                        std::list<SKILLCHAIN_ELEMENT> masterProperties;
+                        masterProperties.emplace_back((SKILLCHAIN_ELEMENT)PMasterLastWS->getPrimarySkillchain());
+                        masterProperties.emplace_back((SKILLCHAIN_ELEMENT)PMasterLastWS->getSecondarySkillchain());
+                        masterProperties.emplace_back((SKILLCHAIN_ELEMENT)PMasterLastWS->getTertiarySkillchain());
+                        for (auto& skill : tp_skills)
+                        {
+                            std::list<SKILLCHAIN_ELEMENT> resonanceProperties;
+                            resonanceProperties.emplace_back((SKILLCHAIN_ELEMENT)skill.primary);
+                            resonanceProperties.emplace_back((SKILLCHAIN_ELEMENT)skill.secondary);
+                            resonanceProperties.emplace_back((SKILLCHAIN_ELEMENT)skill.tertiary);
+                            if (SKILLCHAIN_ELEMENT sc = battleutils::FormSkillchain(resonanceProperties, masterProperties);
+                                sc >= SC_LIGHT)
+                            {
+                                if (sc >= chosen_skillchain)
+                                {
+                                    chosen_skill      = skill;
+                                    chosen_skillchain = sc;
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // 3000 TP fallback: fire random when no SC-qualifying WS found.
+                if (!chosen_skill && POwner->health.tp >= tp_value)
+                {
+                    chosen_skill = xirand::GetRandomElement(tp_skills);
+                }
+
+                break;
+            }
             default:
             {
                 break;

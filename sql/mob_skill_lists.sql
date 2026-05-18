@@ -3646,7 +3646,16 @@ INSERT INTO `mob_skill_lists` VALUES ('TRUST_AAGK',1111,3726); -- Tachi: Fudo
 -- INSERT INTO `mob_skill_lists` VALUES ('TRUST_Iroha',1112,0);
 -- INSERT INTO `mob_skill_lists` VALUES ('TRUST_Ygnas',1113,0);
 -- INSERT INTO `mob_skill_lists` VALUES ('TRUST_Monberaux',1114,0);
--- Reserved for future Trust 6000 (ID: 1115)
+-- TRUST_Matsui-P (1115) — pool 6000
+INSERT INTO `mob_skill_lists` VALUES ('TRUST_Matsui-P',1115,128); -- Blade: Rin  (Scission)
+INSERT INTO `mob_skill_lists` VALUES ('TRUST_Matsui-P',1115,129); -- Blade: Retsu (Impaction)
+INSERT INTO `mob_skill_lists` VALUES ('TRUST_Matsui-P',1115,133); -- Blade: Ei   (Gravitation)
+INSERT INTO `mob_skill_lists` VALUES ('TRUST_Matsui-P',1115,134); -- Blade: Jin  (Distortion)
+INSERT INTO `mob_skill_lists` VALUES ('TRUST_Matsui-P',1115,135); -- Blade: Ten  (Fusion)
+INSERT INTO `mob_skill_lists` VALUES ('TRUST_Matsui-P',1115,136); -- Blade: Ku   (Light/Darkness)
+INSERT INTO `mob_skill_lists` VALUES ('TRUST_Matsui-P',1115,138); -- Blade: Kamu (Darkness)
+INSERT INTO `mob_skill_lists` VALUES ('TRUST_Matsui-P',1115,140); -- Blade: Hi   (Light/Darkness)
+INSERT INTO `mob_skill_lists` VALUES ('TRUST_Matsui-P',1115,141); -- Blade: Shun (Distortion)
 -- Reserved for future Trust 6001 (ID: 1116)
 -- Reserved for future Trust 6002 (ID: 1117)
 -- Reserved for future Trust 6003 (ID: 1118) (Formerly Cornelia)
