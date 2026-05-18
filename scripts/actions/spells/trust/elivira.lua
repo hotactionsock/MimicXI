@@ -5,10 +5,10 @@
 -- Holds position at engagement distance — neither advances nor retreats.
 -- Abilities: Berserk (WAR), Barrage, Double Shot, Decoy Shot (RNG).
 -- WS: Split Shot, Slug Shot, Heavy Shot, Coronach. ASAP at 1000 TP; closes SCs when available.
--- Store TP+30 passive. Coronach relic aftermath: enmity -10 (permanent mod approximation;
+-- Store TP-30 passive. Coronach relic aftermath: enmity -10 (permanent mod approximation;
 -- retail behavior is a temporary timed effect triggered per Coronach cast).
 -- Note: per-weapon TP values (127 sword / 178 marksmanship) cannot be differentiated with
--- current mods; STORETP=30 reflects the stated Store TP+30 trait only.
+-- current mods; STORETP=-30 reflects the stated Store TP-30 trait only.
 ---@type TSpellTrust
 local spellObject = {}
 
@@ -26,8 +26,8 @@ spellObject.onMobSpawn = function(mob)
     -- Holds position at engagement range; does not advance or retreat.
     mob:setMobMod(xi.mobMod.TRUST_DISTANCE, xi.trust.movementType.NO_MOVE)
 
-    -- Store TP+30 passive trait.
-    mob:addMod(xi.mod.STORETP, 30)
+    -- Store TP-30 passive trait.
+    mob:addMod(xi.mod.STORETP, -30)
 
     -- Coronach relic aftermath: enmity -10.
     mob:addMod(xi.mod.ENMITY, -10)
