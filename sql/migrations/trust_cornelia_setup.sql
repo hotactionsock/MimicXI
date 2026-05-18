@@ -1,55 +1,9 @@
 -- MimicXI: Cornelia trust setup
--- Creates spell (ID 1003) and mob pool (ID 6003) for the Cornelia aura trust.
---
+-- Spell ID 1003 → pool ID 6003 (trust system: pool = spell + 5000).
 -- Aura: Haste +20%, Accuracy +30, Ranged Accuracy +30, Magic Accuracy +30
--- Applied to all PC party members via COMBAT_TICK while summoned.
---
--- modelid uses her NPC look bytes (MODEL_EQUIPPED, size=1) from npc_list.sql.
--- All retail trusts use MODEL_STANDARD (size=0) with a 16-bit client trust model ID,
--- but Cornelia has no retail trust model. MODEL_EQUIPPED sends the full humanoid
--- appearance (race/face/gear) and should render correctly if the client accepts it
--- for trust entities. If not, replace with: 0x0000{lo}{hi}000... (16-bit model ID, LE).
+-- Applied to all PC party members via COMBAT_TICK listener in cornelia.lua.
+-- Model: 0x00002F0C (AltanaView: ROM/310/11, 16-bit 0x0C2F).
 
-INSERT IGNORE INTO `spell_list` VALUES (
-    1003,           -- spell ID
-    'cornelia',     -- name (must match Lua file: scripts/actions/spells/trust/cornelia.lua)
-    0x01010101010101010101010101010101010101010101,  -- job mask (all jobs, trust)
-    8,              -- spell type (ALTER_EGO / trust)
-    0,              -- element
-    @ELEMENT_LIGHT,
-    0,              -- targets self (spawn on caster)
-    1,              -- valid targets
-    @SKILL_NONE,
-    0,              -- MP cost
-    2000,           -- cast time (ms)
-    240000,         -- recast time (ms)
-    0, 0,
-    939,            -- spell animation (standard trust cast)
-    1500,
-    0, 0,
-    1.00,
-    0, 0, 0, 0, 0,
-    NULL
-);
+INSERT IGNORE INTO `spell_list` VALUES (1003,'cornelia',0x01010101010101010101010101010101010101010101,8,0,@ELEMENT_LIGHT,0,1,@SKILL_NONE,0,2000,240000,0,0,939,1500,0,0,1.00,0,0,0,0,0,NULL);
 
-INSERT IGNORE INTO `mob_pools` VALUES (
-    6003,           -- pool ID
-    'cornelia',     -- internal name
-    'Cornelia',     -- display name
-    145,            -- family (Hume)
-    0x01000F0204101820113011401150006000700000,
-    21,             -- level (max support trust level)
-    0,              -- sub_level
-    3,              -- pos (standing)
-    240,            -- cmbDelay (irrelevant; auto-attack disabled in Lua)
-    30,             -- cmbDmgMult (low; pure support)
-    0, 0, 0, 0, 0, 0,
-    32,             -- systemGroup
-    0,
-    3,
-    0, 0, 0, 0, 0,
-    1118,           -- skill_list_id
-    145,            -- defFamily
-    NULL,
-    NULL
-);
+INSERT IGNORE INTO `mob_pools` VALUES (6003,'cornelia','Cornelia',145,0x00002F0C00000000000000000000000000000000,21,0,3,240,30,0,0,0,0,0,0,32,0,3,0,0,0,0,0,1118,145,1,17);
