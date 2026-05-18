@@ -23,6 +23,14 @@ mobskillObject.onMobWeaponSkill = function(mob, target, skill, action)
     local info = xi.mobskills.mobPhysicalMove(mob, target, skill, action, params)
 
     if xi.mobskills.processDamage(mob, target, skill, action, info) then
+        -- Jug pet bonus: +40% damage if target is currently sleeping (Sheep Song setup).
+        if xi.mobskills.isJugPet(mob) then
+            if target:hasStatusEffect(xi.effect.SLEEP_I) or target:hasStatusEffect(xi.effect.SLEEP_II) then
+                info.damage = math.floor(info.damage * 1.4)
+            end
+            info.damage = math.floor(info.damage * xi.mobskills.getJugPetDamageBonus(mob))
+        end
+
         target:takeDamage(info.damage, mob, info.attackType, info.damageType)
     end
 

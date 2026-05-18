@@ -13,8 +13,9 @@ end
 mobskillObject.onMobWeaponSkill = function(mob, target, skill, action)
     local params = {}
 
+    local isJug           = xi.mobskills.isJugPet(mob)
     params.baseDamage     = mob:getMainLvl() + 2
-    params.fTP            = { 2.5, 2.5, 2.5 }
+    params.fTP            = isJug and { 3.5, 3.5, 3.5 } or { 2.5, 2.5, 2.5 }
     params.element        = xi.element.FIRE
     params.attackType     = xi.attackType.MAGICAL
     params.damageType     = xi.damageType.FIRE
@@ -23,7 +24,12 @@ mobskillObject.onMobWeaponSkill = function(mob, target, skill, action)
     local info = xi.mobskills.mobMagicalMove(mob, target, skill, action, params)
 
     if xi.mobskills.processDamage(mob, target, skill, action, info) then
+        info.damage = math.floor(info.damage * xi.mobskills.getJugPetDamageBonus(mob))
         target:takeDamage(info.damage, mob, info.attackType, info.damageType)
+        -- Jug lizard: leaves a Burn DoT.
+        if isJug then
+            xi.mobskills.mobStatusEffectMove(mob, target, xi.effect.BURN, 3, 3, 30)
+        end
     end
 
     return info.damage

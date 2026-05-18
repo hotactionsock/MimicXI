@@ -19,6 +19,18 @@ mobskillObject.onMobWeaponSkill = function(mob, target, skill, action)
     end
     ]]
     skill:setMsg(xi.mobskills.mobBuffMove(target, xi.effect.STONESKIN, power, 0, 300))
+
+    -- Jug beetle: also grant the BST master Stoneskin. Named pets give a stronger shield.
+    if xi.mobskills.isJugPet(mob) then
+        local master = mob:getMaster()
+        if not master:hasStatusEffect(xi.effect.STONESKIN) then
+            local petID   = mob:getPetID()
+            local isNamed = petID == xi.petId.PANZER_GALAHAD or petID == xi.petId.MAILBUSTER_CETAS
+            local mPower  = isNamed and 200 or 100
+            master:addStatusEffect(xi.effect.STONESKIN, { power = mPower, duration = 60, origin = mob })
+        end
+    end
+
     return xi.effect.STONESKIN
 end
 

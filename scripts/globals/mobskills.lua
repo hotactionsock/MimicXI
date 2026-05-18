@@ -1835,3 +1835,20 @@ xi.mobskills.handleHybridDamage = function(mob, target, physicalDamage, element)
 
     return magicDamage
 end
+
+-- Returns true if the mob is a BST jug pet (not a charmed mob or other pet type).
+xi.mobskills.isJugPet = function(mob)
+    return mob:isPet() and
+           mob:getMaster() ~= nil and
+           mob:getMaster():getMainJob() == xi.job.BST and
+           mob:getPetID() >= xi.petId.SHEEP_FAMILIAR
+end
+
+-- Returns a damage multiplier for jug pet mobskills scaled to the BST master's level.
+-- Level 99 BST yields ~1.66x. Regular mobs and non-jug pets return 1.0.
+xi.mobskills.getJugPetDamageBonus = function(mob)
+    if xi.mobskills.isJugPet(mob) then
+        return 1 + mob:getMaster():getMainLvl() / 150
+    end
+    return 1
+end

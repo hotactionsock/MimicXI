@@ -27,13 +27,23 @@ mobskillObject.onMobWeaponSkill = function(mob, target, skill, action)
     local info = xi.mobskills.mobBreathMove(mob, target, skill, action, params)
 
     if xi.mobskills.processDamage(mob, target, skill, action, info) then
+        info.damage = math.floor(info.damage * xi.mobskills.getJugPetDamageBonus(mob))
         target:takeDamage(info.damage, mob, info.attackType, info.damageType)
 
-        local power    = 10
-        local duration = 180
-        -- TODO: Dreamland Dynamis Power
-
-        xi.mobskills.mobStatusEffectMove(mob, target, xi.effect.STR_DOWN, power, 9, duration)
+        if xi.mobskills.isJugPet(mob) then
+            -- Jug pet version: potent Slow instead of the STR Down that wild crabs apply.
+            xi.mobskills.mobStatusEffectMove(mob, target, xi.effect.SLOW, 3000, 0, 120, nil, nil, 7)
+            -- Named crabs (Courier Carrie, Shellbuster Orob) also apply Weight.
+            local petID = mob:getPetID()
+            if petID == xi.petId.COURIER_CARRIE or petID == xi.petId.SHELLBUSTER_OROB then
+                xi.mobskills.mobStatusEffectMove(mob, target, xi.effect.WEIGHT, 50, 0, 60)
+            end
+        else
+            local power    = 10
+            local duration = 180
+            -- TODO: Dreamland Dynamis Power
+            xi.mobskills.mobStatusEffectMove(mob, target, xi.effect.STR_DOWN, power, 9, duration)
+        end
     end
 
     return info.damage

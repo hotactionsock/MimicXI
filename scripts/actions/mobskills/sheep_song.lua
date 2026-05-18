@@ -10,7 +10,19 @@ mobskillObject.onMobSkillCheck = function(target, mob, skill)
 end
 
 mobskillObject.onMobWeaponSkill = function(mob, target, skill, action)
-    skill:setMsg(xi.mobskills.mobStatusEffectMove(mob, target, xi.effect.SLEEP_I, 1, 0, 45))
+    local power    = 1
+    local duration = 45
+
+    if xi.mobskills.isJugPet(mob) then
+        local petID   = mob:getPetID()
+        local isNamed = petID == xi.petId.LULLABY_MELODIA or
+                        petID == xi.petId.KEENEARED_STEFFI or
+                        petID == xi.petId.NURSERY_NAZUNA
+        power    = 2
+        duration = isNamed and 90 or 60
+    end
+
+    skill:setMsg(xi.mobskills.mobStatusEffectMove(mob, target, xi.effect.SLEEP_I, power, 0, duration))
 
     return xi.effect.SLEEP_I
 end

@@ -13,9 +13,10 @@ end
 mobskillObject.onMobWeaponSkill = function(mob, target, skill, action)
     local params = {}
 
+    local isSaber = xi.mobskills.isJugPet(mob) and mob:getPetID() == xi.petId.SABER_SIRAVARDE
     params.baseDamage     = mob:getWeaponDmg()
-    params.numHits        = 1
-    params.fTP            = { 3.0, 3.0, 3.0 } -- TODO: Capture fTPs
+    params.numHits        = isSaber and 2 or 1
+    params.fTP            = { 3.0, 3.0, 3.0 }
     params.attackType     = xi.attackType.PHYSICAL
     params.damageType     = xi.damageType.PIERCING
     params.shadowBehavior = xi.mobskills.shadowBehavior.NUMSHADOWS_1
@@ -23,6 +24,7 @@ mobskillObject.onMobWeaponSkill = function(mob, target, skill, action)
     local info = xi.mobskills.mobPhysicalMove(mob, target, skill, action, params)
 
     if xi.mobskills.processDamage(mob, target, skill, action, info) then
+        info.damage = math.floor(info.damage * xi.mobskills.getJugPetDamageBonus(mob))
         target:takeDamage(info.damage, mob, info.attackType, info.damageType)
     end
 

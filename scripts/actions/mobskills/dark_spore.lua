@@ -26,12 +26,18 @@ mobskillObject.onMobWeaponSkill = function(mob, target, skill, action)
     local info = xi.mobskills.mobBreathMove(mob, target, skill, action, params)
 
     if xi.mobskills.processDamage(mob, target, skill, action, info) then
+        info.damage = math.floor(info.damage * xi.mobskills.getJugPetDamageBonus(mob))
         target:takeDamage(info.damage, mob, info.attackType, info.damageType)
 
-        local duration = 90
-        -- TODO: Jugpet Differences
-
-        xi.mobskills.mobStatusEffectMove(mob, target, xi.effect.BLINDNESS, 30, 0, duration)
+        local power, duration = 30, 90
+        if xi.mobskills.isJugPet(mob) then
+            power, duration = 40, 120
+            local petID = mob:getPetID()
+            if petID == xi.petId.FLOWERPOT_BILL or petID == xi.petId.FLOWERPOT_BEN or petID == xi.petId.FLOWERPOT_MERLE then
+                xi.mobskills.mobStatusEffectMove(mob, target, xi.effect.DISEASE, 1, 0, 180)
+            end
+        end
+        xi.mobskills.mobStatusEffectMove(mob, target, xi.effect.BLINDNESS, power, 0, duration)
     end
 
     return info.damage

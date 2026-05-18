@@ -29,9 +29,20 @@ mobskillObject.onMobWeaponSkill = function(mob, target, skill, action)
     local info = xi.mobskills.mobPhysicalMove(mob, target, skill, action, params)
 
     if xi.mobskills.processDamage(mob, target, skill, action, info) then
+        local isJug = xi.mobskills.isJugPet(mob)
+        if isJug then
+            info.damage = math.floor(info.damage * xi.mobskills.getJugPetDamageBonus(mob))
+        end
         target:takeDamage(info.damage, mob, info.attackType, info.damageType)
 
         xi.mobskills.mobStatusEffectMove(mob, target, xi.effect.DISEASE, 1, 0, 720)
+        if isJug then
+            xi.mobskills.mobStatusEffectMove(mob, target, xi.effect.SLOW, 2000, 0, 90, nil, nil, 6)
+            local petID = mob:getPetID()
+            if petID == xi.petId.FLOWERPOT_BILL or petID == xi.petId.FLOWERPOT_BEN or petID == xi.petId.FLOWERPOT_MERLE then
+                xi.mobskills.mobStatusEffectMove(mob, target, xi.effect.POISON, 4, 3, 60)
+            end
+        end
     end
 
     skill:setFinalAnimationSub(3)

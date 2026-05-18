@@ -23,11 +23,16 @@ mobskillObject.onMobWeaponSkill = function(mob, target, skill, action)
     local info = xi.mobskills.mobMagicalMove(mob, target, skill, action, params)
 
     if xi.mobskills.processDamage(mob, target, skill, action, info) then
+        info.damage = math.floor(info.damage * xi.mobskills.getJugPetDamageBonus(mob))
         target:takeDamage(info.damage, mob, info.attackType, info.damageType)
 
-        local power = math.floor(mob:getMainLvl() / 10 * 2)
-
-        xi.mobskills.mobStatusEffectMove(mob, target, xi.effect.POISON, power, 3, 60)
+        if xi.mobskills.isJugPet(mob) then
+            -- Jug lizard: Defense Down instead of Poison — the acid eats through armour.
+            xi.mobskills.mobStatusEffectMove(mob, target, xi.effect.DEFENSE_DOWN, 10, 0, 60)
+        else
+            local power = math.floor(mob:getMainLvl() / 10 * 2)
+            xi.mobskills.mobStatusEffectMove(mob, target, xi.effect.POISON, power, 3, 60)
+        end
     end
 
     return info.damage

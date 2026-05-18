@@ -16,16 +16,21 @@ mobskillObject.onMobWeaponSkill = function(mob, target, skill, action)
 
     params.baseDamage       = mob:getWeaponDmg()
     params.numHits          = 1
-    params.fTP              = { 1.0, 1.0, 1.0 } -- TODO: Capture fTPs
+    params.fTP              = { 1.0, 1.0, 1.0 }
     params.attackType       = xi.attackType.PHYSICAL
     params.damageType       = xi.damageType.SLASHING
-    params.shadowBehavior   = xi.mobskills.shadowBehavior.NUMSHADOWS_3 -- TODO: Capture shadowBehavior
+    params.shadowBehavior   = xi.mobskills.shadowBehavior.NUMSHADOWS_3
     params.attackMultiplier = { 1.5, 1.5, 1.5 }
 
     local info = xi.mobskills.mobPhysicalMove(mob, target, skill, action, params)
 
     if xi.mobskills.processDamage(mob, target, skill, action, info) then
+        info.damage = math.floor(info.damage * xi.mobskills.getJugPetDamageBonus(mob))
         target:takeDamage(info.damage, mob, info.attackType, info.damageType)
+        -- Jug fly: spreads plague on contact.
+        if xi.mobskills.isJugPet(mob) then
+            xi.mobskills.mobStatusEffectMove(mob, target, xi.effect.PLAGUE, 3, 3, 60)
+        end
     end
 
     return info.damage

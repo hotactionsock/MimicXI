@@ -21,8 +21,9 @@ end
 mobskillObject.onMobWeaponSkill = function(mob, target, skill, action)
     local params = {}
 
+    local isJug               = xi.mobskills.isJugPet(mob)
     params.baseDamage         = mob:getMainLvl() + 2
-    params.fTP                = { 2.0, 2.0, 2.0 }
+    params.fTP                = isJug and { 3.5, 3.5, 3.5 } or { 2.0, 2.0, 2.0 }
     params.element            = xi.element.NONE
     params.attackType         = xi.attackType.MAGICAL
     params.damageType         = xi.damageType.NONE
@@ -32,7 +33,17 @@ mobskillObject.onMobWeaponSkill = function(mob, target, skill, action)
     local info = xi.mobskills.mobMagicalMove(mob, target, skill, action, params)
 
     if xi.mobskills.processDamage(mob, target, skill, action, info) then
+        info.damage = math.floor(info.damage * xi.mobskills.getJugPetDamageBonus(mob))
         skill:setMsg(xi.mobskills.mobDrainMove(mob, target, xi.mobskills.drainType.HP, info.damage))
+        -- Jug fly: share 25% of the drain with the BST master.
+        -- Lifedrinker Lars also restores a portion of master MP.
+        if isJug then
+            local master = mob:getMaster()
+            master:addHP(math.floor(info.damage * 0.25))
+            if mob:getPetID() == xi.petId.LIFEDRINKER_LARS then
+                master:addMP(math.floor(info.damage * 0.10))
+            end
+        end
     end
 
     return info.damage
