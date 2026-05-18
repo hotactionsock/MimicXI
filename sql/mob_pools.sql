@@ -6061,7 +6061,8 @@ INSERT INTO `mob_pools` VALUES (5999,'monberaux','Monberaux',145,0x0000300C00000
 -- Reserved for future Trust 6000
 -- Reserved for future Trust 6001
 -- Reserved for future Trust 6002
--- Reserved for future Trust 6003
+-- TODO: modelid 0x0000F20B is placeholder; replace with Cornelia's actual client model ID
+INSERT INTO `mob_pools` VALUES (6003,'cornelia','Cornelia',145,0x0000F20B00000000000000000000000000000000,21,0,3,240,30,0,0,0,0,0,0,32,0,3,0,0,0,0,0,1118,145,NULL,NULL);
 INSERT INTO `mob_pools` VALUES (6004,'excenmille_s','Excenmille',145,0x0000EC0B00000000000000000000000000000000,1,0,3,240,100,0,0,0,0,0,0,32,0,3,0,0,0,0,0,1119,145,NULL,NULL);
 INSERT INTO `mob_pools` VALUES (6005,'ayame_uc','Ayame',149,0x0000F70B00000000000000000000000000000000,12,0,3,240,100,0,0,0,0,0,0,32,0,3,0,0,0,0,0,1120,149,NULL,NULL);
 INSERT INTO `mob_pools` VALUES (6006,'maat_uc','Maat',149,0x0000F80B00000000000000000000000000000000,2,1,3,240,100,0,0,0,0,0,0,32,0,3,0,0,0,0,0,1121,149,NULL,NULL);
