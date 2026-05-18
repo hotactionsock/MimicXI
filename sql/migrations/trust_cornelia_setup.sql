@@ -4,8 +4,11 @@
 -- Aura: Haste +20%, Accuracy +30, Ranged Accuracy +30, Magic Accuracy +30
 -- Applied to all PC party members via COMBAT_TICK while summoned.
 --
--- NOTE: modelid below uses Pieuje UC's model as a placeholder.
---       Replace 0x0000F20B with Cornelia's correct client model ID before shipping.
+-- modelid uses her NPC look bytes (MODEL_EQUIPPED, size=1) from npc_list.sql.
+-- All retail trusts use MODEL_STANDARD (size=0) with a 16-bit client trust model ID,
+-- but Cornelia has no retail trust model. MODEL_EQUIPPED sends the full humanoid
+-- appearance (race/face/gear) and should render correctly if the client accepts it
+-- for trust entities. If not, replace with: 0x0000{lo}{hi}000... (16-bit model ID, LE).
 
 INSERT IGNORE INTO `spell_list` VALUES (
     1003,           -- spell ID
@@ -34,8 +37,7 @@ INSERT IGNORE INTO `mob_pools` VALUES (
     'cornelia',     -- internal name
     'Cornelia',     -- display name
     145,            -- family (Hume)
-    -- TODO: Replace 0x0000F20B with Cornelia's actual client model ID
-    0x0000F20B00000000000000000000000000000000,
+    0x01000F0204101820113011401150006000700000,
     21,             -- level (max support trust level)
     0,              -- sub_level
     3,              -- pos (standing)
