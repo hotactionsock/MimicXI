@@ -3,10 +3,7 @@
 -----------------------------------
 -- THF/NIN melee. Dual wields swords (Fast Blade, Vorpal Blade, Swift Blade).
 -- Passive traits: Treasure Hunter I, Dual Wield, Triple Attack.
--- SC opener: fires a random WS when the player reaches 1500 TP (not with trusts).
--- SC closer: closes with players/trusts when possible; otherwise fires at 2500 TP.
--- NOTE: No combined OPENER+CLOSER mode exists; using OPENER as primary behaviour.
---       CLOSER_UNTIL_TP (2500) can be substituted once a combined mode is available.
+-- SC priority: close open SCs → open when a PC reaches 1500 TP (ignores trusts) → fire at 2500 TP.
 ---@type TSpellTrust
 local spellObject = {}
 
@@ -28,8 +25,8 @@ spellObject.onMobSpawn = function(mob)
     mob:addMod(xi.mod.DUAL_WIELD,      25)  -- NIN dual wield
     mob:addMod(xi.mod.TRIPLE_ATTACK,    5)  -- THF triple attack
 
-    -- Open skillchains when the player hits 1500 TP; WS chosen at random.
-    mob:setTrustTPSkillSettings(ai.tp.OPENER, ai.s.RANDOM)
+    -- Close SCs when available; open with player at 1500 TP (not trusts); fire at 2500 otherwise.
+    mob:setTrustTPSkillSettings(ai.tp.OPENER_AND_CLOSER_UNTIL_TP, ai.s.RANDOM, 2500)
 end
 
 spellObject.onMobDespawn = function(mob)

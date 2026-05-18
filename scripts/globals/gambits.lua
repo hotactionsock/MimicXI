@@ -136,9 +136,10 @@ ai.s = ai.select
 -- TP Move Trigger
 ai.tp =
 {
-    ASAP            = 0,
-    RANDOM          = 1,
-    OPENER          = 2,
-    CLOSER          = 3,    -- Will Hold TP Indefinitely to close a SC
-    CLOSER_UNTIL_TP = 4,    -- Will Hold TP to close a SC until a certain threshold
+    ASAP                       = 0,
+    RANDOM                     = 1,
+    OPENER                     = 2,
+    CLOSER                     = 3,    -- Will Hold TP Indefinitely to close a SC
+    CLOSER_UNTIL_TP            = 4,    -- Will Hold TP to close a SC until a certain threshold
+    OPENER_AND_CLOSER_UNTIL_TP = 5,    -- Close SCs when available; open with PC members at 1500 TP; fire at threshold otherwise
 }

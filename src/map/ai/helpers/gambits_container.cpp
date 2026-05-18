@@ -1405,6 +1405,40 @@ bool CGambitsContainer::TryTrustSkill()
                 return PSCEffect && PSCEffect->GetStartTime() + 3s < timer::now() && PSCEffect->GetTier() == 0;
                 break;
             }
+            case G_TP_TRIGGER::OPENER_AND_CLOSER_UNTIL_TP:
+            {
+                // Priority 1: Close an open skillchain if one is available.
+                auto* PSCEffect = target->StatusEffectContainer->GetStatusEffect(EFFECT_SKILLCHAIN);
+                if (PSCEffect && PSCEffect->GetStartTime() + 3s < timer::now() && PSCEffect->GetTier() == 0)
+                {
+                    return true;
+                }
+
+                // Priority 2: Open a skillchain when a PC party member reaches 1500 TP.
+                // Intentionally ignores other trusts — only reacts to the player's TP.
+                bool pcHasTP = false;
+                // clang-format off
+                    static_cast<CCharEntity*>(POwner->PMaster)->ForPartyWithTrusts([&](CBattleEntity* PMember)
+                    {
+                        if (PMember->objtype == TYPE_PC && PMember->health.tp >= 1500)
+                        {
+                            pcHasTP = true;
+                        }
+                    });
+                // clang-format on
+                if (pcHasTP)
+                {
+                    return true;
+                }
+
+                // Priority 3: Fall back to firing at the configured TP threshold.
+                if (tp_value < 2500)
+                {
+                    tp_value = 2500;
+                }
+                return POwner->health.tp >= tp_value;
+                break;
+            }
             default:
             {
                 return false;
