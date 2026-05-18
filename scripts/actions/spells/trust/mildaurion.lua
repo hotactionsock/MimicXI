@@ -5,7 +5,6 @@
 -- From wikis:
 -- "Tries to open skillchains when the player reaches 1500 TP. Does not try to open skillchains with other trusts."
 -- "Will close skillchains with players and other trusts if possible, otherwise uses a weapon skill at 3000 TP."
--- TODO: We don't have a combination of OPENER and CLOSER for TP skill settings, so leaving as OPENER for now.
 -----------------------------------
 ---@type TSpellTrust
 local spellObject = {}
@@ -33,7 +32,8 @@ spellObject.onMobSpawn = function(mob)
 
     mob:addMod(xi.mod.MPP, 100)
 
-    mob:setTrustTPSkillSettings(ai.tp.OPENER, ai.s.RANDOM)
+    -- Close SCs when available; open with player at 1500 TP (not trusts); fire at 3000 otherwise.
+    mob:setTrustTPSkillSettings(ai.tp.OPENER_AND_CLOSER_UNTIL_TP, ai.s.RANDOM, 3000)
 end
 
 spellObject.onMobDespawn = function(mob)

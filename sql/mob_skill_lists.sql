@@ -3529,7 +3529,10 @@ INSERT INTO `mob_skill_lists` VALUES ('TRUST_Semih_Lafihna',1055,3487); -- Sidew
 INSERT INTO `mob_skill_lists` VALUES ('TRUST_Semih_Lafihna',1055,3488); -- Arching Arrow (Semih Lafihna)
 INSERT INTO `mob_skill_lists` VALUES ('TRUST_Semih_Lafihna',1055,3489); -- Lux Arrow
 INSERT INTO `mob_skill_lists` VALUES ('TRUST_Semih_Lafihna',1055,3490); -- Stellar Arrow
--- INSERT INTO `mob_skill_lists` VALUES ('TRUST_Elivira',1056,0);
+INSERT INTO `mob_skill_lists` VALUES ('TRUST_Elivira',1056,209);  -- Split Shot
+INSERT INTO `mob_skill_lists` VALUES ('TRUST_Elivira',1056,212);  -- Slug Shot
+INSERT INTO `mob_skill_lists` VALUES ('TRUST_Elivira',1056,214);  -- Heavy Shot
+INSERT INTO `mob_skill_lists` VALUES ('TRUST_Elivira',1056,216);  -- Coronach
 -- INSERT INTO `mob_skill_lists` VALUES ('TRUST_Noillurie',1057,0);
 -- INSERT INTO `mob_skill_lists` VALUES ('TRUST_Lhu_Mhakaracca',1058,0);
 INSERT INTO `mob_skill_lists` VALUES ('TRUST_Ferreous_Coffin',1059,170); -- Randgrith
@@ -3551,7 +3554,10 @@ INSERT INTO `mob_skill_lists` VALUES ('TRUST_Rahal', 1066, 41); -- Swift Blade
 -- INSERT INTO `mob_skill_lists` VALUES ('TRUST_Jakoh_Wahcondalo_UC',1071,0);
 -- INSERT INTO `mob_skill_lists` VALUES ('TRUST_Flaviria_UC',1072,0);
 -- INSERT INTO `mob_skill_lists` VALUES ('TRUST_Babban',1073,0);
--- INSERT INTO `mob_skill_lists` VALUES ('TRUST_Abenzio',1074,0);
+INSERT INTO `mob_skill_lists` VALUES ('TRUST_Abenzio',1074,581);  -- Blow (damage + stun)
+INSERT INTO `mob_skill_lists` VALUES ('TRUST_Abenzio',1074,584);  -- Uppercut
+INSERT INTO `mob_skill_lists` VALUES ('TRUST_Abenzio',1074,586);  -- Blank Gaze (conal paralysis)
+INSERT INTO `mob_skill_lists` VALUES ('TRUST_Abenzio',1074,587);  -- Antiphase (AoE silence)
 INSERT INTO `mob_skill_lists` VALUES ('TRUST_Rughadjeen',1075,49);   -- Power Slash
 INSERT INTO `mob_skill_lists` VALUES ('TRUST_Rughadjeen',1075,54);   -- Sickle Moon
 INSERT INTO `mob_skill_lists` VALUES ('TRUST_Rughadjeen',1075,56);   -- Ground Strike
@@ -3587,7 +3593,9 @@ INSERT INTO `mob_skill_lists` VALUES ('TRUST_Rongelouts',1088,82); -- Sturmwind
 INSERT INTO `mob_skill_lists` VALUES ('TRUST_Leonoyne',1089,99);  -- Nightmare Scythe
 INSERT INTO `mob_skill_lists` VALUES ('TRUST_Leonoyne',1089,102); -- Guillotine
 INSERT INTO `mob_skill_lists` VALUES ('TRUST_Leonoyne',1089,104); -- Spiral Hell
--- INSERT INTO `mob_skill_lists` VALUES ('TRUST_Maximilian',1090,0);
+INSERT INTO `mob_skill_lists` VALUES ('TRUST_Maximilian',1090,32);  -- Fast Blade
+INSERT INTO `mob_skill_lists` VALUES ('TRUST_Maximilian',1090,40);  -- Vorpal Blade
+INSERT INTO `mob_skill_lists` VALUES ('TRUST_Maximilian',1090,41);  -- Swift Blade
 -- INSERT INTO `mob_skill_lists` VALUES ('TRUST_Kayeel-Payeel',1091,0);
 -- INSERT INTO `mob_skill_lists` VALUES ('TRUST_Robel-Akbel',1092,0);
 -- INSERT INTO `mob_skill_lists` VALUES ('TRUST_Kupofried',1093,0);
@@ -3641,7 +3649,7 @@ INSERT INTO `mob_skill_lists` VALUES ('TRUST_AAGK',1111,3726); -- Tachi: Fudo
 -- Reserved for future Trust 6000 (ID: 1115)
 -- Reserved for future Trust 6001 (ID: 1116)
 -- Reserved for future Trust 6002 (ID: 1117)
--- Reserved for future Trust 6003 (ID: 1118) (Formerly Cornelia)
+-- TRUST_Cornelia (1118) — pool 6003, spell 1003; no weapon skills (support-only)
 -- INSERT INTO `mob_skill_lists` VALUES ('TRUST_Excenmille_S',1119,0);
 INSERT INTO `mob_skill_lists` VALUES ('TRUST_Ayame_UC',1120,150); -- Tachi: Yukikaze
 INSERT INTO `mob_skill_lists` VALUES ('TRUST_Ayame_UC',1120,151); -- Tachi: Gekko
@@ -3668,7 +3676,16 @@ INSERT INTO `mob_skill_lists` VALUES ('TRUST_Shantotto_II',1134,3740); -- final_
 INSERT INTO `mob_skill_lists` VALUES ('TRUST_Shantotto_II',1134,3741); -- doctors_orders
 INSERT INTO `mob_skill_lists` VALUES ('TRUST_Shantotto_II',1134,3742); -- empirical_research
 INSERT INTO `mob_skill_lists` VALUES ('TRUST_Shantotto_II',1134,3743); -- lesson_in_pain
--- Reserved for future Trust 6020 (ID: 1135)
+-- TRUST_Matsui-P (1135) — pool 6020, spell 1020
+INSERT INTO `mob_skill_lists` VALUES ('TRUST_Matsui-P',1135,128); -- Blade: Rin  (Scission)
+INSERT INTO `mob_skill_lists` VALUES ('TRUST_Matsui-P',1135,129); -- Blade: Retsu (Impaction)
+INSERT INTO `mob_skill_lists` VALUES ('TRUST_Matsui-P',1135,133); -- Blade: Ei   (Gravitation)
+INSERT INTO `mob_skill_lists` VALUES ('TRUST_Matsui-P',1135,134); -- Blade: Jin  (Distortion)
+INSERT INTO `mob_skill_lists` VALUES ('TRUST_Matsui-P',1135,135); -- Blade: Ten  (Fusion)
+INSERT INTO `mob_skill_lists` VALUES ('TRUST_Matsui-P',1135,136); -- Blade: Ku   (Light/Darkness)
+INSERT INTO `mob_skill_lists` VALUES ('TRUST_Matsui-P',1135,138); -- Blade: Kamu (Darkness)
+INSERT INTO `mob_skill_lists` VALUES ('TRUST_Matsui-P',1135,140); -- Blade: Hi   (Light/Darkness)
+INSERT INTO `mob_skill_lists` VALUES ('TRUST_Matsui-P',1135,141); -- Blade: Shun (Distortion)
 -- Reserved for future Trust 6021 (ID: 1136)
 -- Reserved for future Trust 6022 (ID: 1137)
 

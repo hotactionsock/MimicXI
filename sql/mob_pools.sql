@@ -6061,7 +6061,12 @@ INSERT INTO `mob_pools` VALUES (5999,'monberaux','Monberaux',145,0x0000300C00000
 -- Reserved for future Trust 6000
 -- Reserved for future Trust 6001
 -- Reserved for future Trust 6002
--- Reserved for future Trust 6003
+-- modelid uses her NPC look bytes (MODEL_EQUIPPED, size=1) from npc_list.sql.
+-- Trusts normally use MODEL_STANDARD (size=0) with a client trust model ID, but Cornelia
+-- has no retail trust model. MODEL_EQUIPPED renders the full humanoid appearance with gear.
+-- If the client does not accept MODEL_EQUIPPED for trusts, replace with an appropriate
+-- MODEL_STANDARD entry: 0x0000{lo}{hi}000... where {lo}{hi} is the 16-bit model ID LE.
+INSERT INTO `mob_pools` VALUES (6003,'cornelia','Cornelia',145,0x00002F0C00000000000000000000000000000000,21,0,3,240,30,0,0,0,0,0,0,32,0,3,0,0,0,0,0,1118,145,1,17);
 INSERT INTO `mob_pools` VALUES (6004,'excenmille_s','Excenmille',145,0x0000EC0B00000000000000000000000000000000,1,0,3,240,100,0,0,0,0,0,0,32,0,3,0,0,0,0,0,1119,145,NULL,NULL);
 INSERT INTO `mob_pools` VALUES (6005,'ayame_uc','Ayame',149,0x0000F70B00000000000000000000000000000000,12,0,3,240,100,0,0,0,0,0,0,32,0,3,0,0,0,0,0,1120,149,NULL,NULL);
 INSERT INTO `mob_pools` VALUES (6006,'maat_uc','Maat',149,0x0000F80B00000000000000000000000000000000,2,1,3,240,100,0,0,0,0,0,0,32,0,3,0,0,0,0,0,1121,149,NULL,NULL);
@@ -6078,7 +6083,7 @@ INSERT INTO `mob_pools` VALUES (6016,'ingrid_ii','Ingrid',149,0x00001E0C00000000
 INSERT INTO `mob_pools` VALUES (6017,'arciela_ii','Arciela',149,0x00000D0C00000000000000000000000000000000,5,0,3,240,100,0,0,0,0,0,0,32,0,3,0,0,426,0,0,1132,149,1,12);
 INSERT INTO `mob_pools` VALUES (6018,'iroha_ii','Iroha',149,0x0000280C00000000000000000000000000000000,12,3,3,240,100,0,0,0,0,0,0,32,0,3,0,0,427,0,0,1133,149,0,12);
 INSERT INTO `mob_pools` VALUES (6019,'shantotto_ii','Shantotto',153,0x0000260C00000000000000000000000000000000,4,0,2,240,100,0,0,0,0,0,0,32,0,3,0,0,428,0,0,1134,153,0,15);
--- Reserved for future Trust 6020
+INSERT INTO `mob_pools` VALUES (6020,'matsui_p','Matsui',149,0x0000310C00000000000000000000000000000000,13,4,3,240,100,0,0,0,0,0,0,32,0,3,0,0,435,0,0,1135,149,1,17);
 -- Reserved for future Trust 6021
 -- Reserved for future Trust 6022
 -- Reserved for future Trust 6023
