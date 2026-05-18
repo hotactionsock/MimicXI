@@ -3590,7 +3590,9 @@ INSERT INTO `mob_skill_lists` VALUES ('TRUST_Rongelouts',1088,82); -- Sturmwind
 INSERT INTO `mob_skill_lists` VALUES ('TRUST_Leonoyne',1089,99);  -- Nightmare Scythe
 INSERT INTO `mob_skill_lists` VALUES ('TRUST_Leonoyne',1089,102); -- Guillotine
 INSERT INTO `mob_skill_lists` VALUES ('TRUST_Leonoyne',1089,104); -- Spiral Hell
--- INSERT INTO `mob_skill_lists` VALUES ('TRUST_Maximilian',1090,0);
+INSERT INTO `mob_skill_lists` VALUES ('TRUST_Maximilian',1090,32);  -- Fast Blade
+INSERT INTO `mob_skill_lists` VALUES ('TRUST_Maximilian',1090,40);  -- Vorpal Blade
+INSERT INTO `mob_skill_lists` VALUES ('TRUST_Maximilian',1090,41);  -- Swift Blade
 -- INSERT INTO `mob_skill_lists` VALUES ('TRUST_Kayeel-Payeel',1091,0);
 -- INSERT INTO `mob_skill_lists` VALUES ('TRUST_Robel-Akbel',1092,0);
 -- INSERT INTO `mob_skill_lists` VALUES ('TRUST_Kupofried',1093,0);
