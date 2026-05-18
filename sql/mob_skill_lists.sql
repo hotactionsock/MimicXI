@@ -3529,7 +3529,10 @@ INSERT INTO `mob_skill_lists` VALUES ('TRUST_Semih_Lafihna',1055,3487); -- Sidew
 INSERT INTO `mob_skill_lists` VALUES ('TRUST_Semih_Lafihna',1055,3488); -- Arching Arrow (Semih Lafihna)
 INSERT INTO `mob_skill_lists` VALUES ('TRUST_Semih_Lafihna',1055,3489); -- Lux Arrow
 INSERT INTO `mob_skill_lists` VALUES ('TRUST_Semih_Lafihna',1055,3490); -- Stellar Arrow
--- INSERT INTO `mob_skill_lists` VALUES ('TRUST_Elivira',1056,0);
+INSERT INTO `mob_skill_lists` VALUES ('TRUST_Elivira',1056,209);  -- Split Shot
+INSERT INTO `mob_skill_lists` VALUES ('TRUST_Elivira',1056,212);  -- Slug Shot
+INSERT INTO `mob_skill_lists` VALUES ('TRUST_Elivira',1056,214);  -- Heavy Shot
+INSERT INTO `mob_skill_lists` VALUES ('TRUST_Elivira',1056,216);  -- Coronach
 -- INSERT INTO `mob_skill_lists` VALUES ('TRUST_Noillurie',1057,0);
 -- INSERT INTO `mob_skill_lists` VALUES ('TRUST_Lhu_Mhakaracca',1058,0);
 INSERT INTO `mob_skill_lists` VALUES ('TRUST_Ferreous_Coffin',1059,170); -- Randgrith
