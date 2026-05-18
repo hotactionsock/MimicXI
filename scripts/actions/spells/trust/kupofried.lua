@@ -21,7 +21,7 @@ spellObject.onMobSpawn = function(mob)
     local function applyDedication(party)
         for _, member in pairs(party) do
             if member:getObjType() == xi.objType.PC and not member:hasStatusEffect(xi.effect.DEDICATION) then
-                member:addStatusEffect(xi.effect.DEDICATION, { power = 20, duration = 0, origin = member, subPower = 10000 })
+                member:addStatusEffect(xi.effect.DEDICATION, { power = 20, duration = 0, origin = member, subPower = 32767 })
             end
         end
     end
