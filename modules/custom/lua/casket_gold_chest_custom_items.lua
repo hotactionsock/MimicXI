@@ -139,35 +139,93 @@ local tier4CustomItems =
 }
 
 -----------------------------------
--- Helper: append a list of item entries to an existing pool table.
--- Safe to call with a nil pool (no-ops silently).
+-- Helper: append items to every zone in a list.
+-- Tracks already-modified pool tables so that zones sharing the same
+-- underlying table (as casket_augment_tiers sets up) are only appended
+-- to once, preventing duplicate entries in the drop pool.
 -----------------------------------
-local function appendToPool(zone, items)
-    local pool = xi.caskets.rarePools[zone]
-    if not pool then
-        return
-    end
-    for _, entry in ipairs(items) do
-        pool[#pool + 1] = entry
+local function appendToZones(zones, items)
+    local seen = {}
+    for _, zone in ipairs(zones) do
+        local pool = xi.caskets.rarePools[zone]
+        if pool and not seen[pool] then
+            seen[pool] = true
+            for _, entry in ipairs(items) do
+                pool[#pool + 1] = entry
+            end
+        end
     end
 end
 
 -----------------------------------
--- Starter zones
--- Each nation pair shares one pool table, so we append via one zone
--- per pair to avoid duplicate entries.
+-- Starter zones (lv1-15)
 -----------------------------------
-appendToPool(xi.zone.WEST_RONFAURE,     starterCustomItems) -- covers EAST_RONFAURE
-appendToPool(xi.zone.NORTH_GUSTABERG,   starterCustomItems) -- covers SOUTH_GUSTABERG
-appendToPool(xi.zone.WEST_SARUTABARUTA, starterCustomItems) -- covers EAST_SARUTABARUTA
+appendToZones(
+{
+    xi.zone.WEST_RONFAURE,
+    xi.zone.EAST_RONFAURE,
+    xi.zone.NORTH_GUSTABERG,
+    xi.zone.SOUTH_GUSTABERG,
+    xi.zone.WEST_SARUTABARUTA,
+    xi.zone.EAST_SARUTABARUTA,
+},
+starterCustomItems)
 
 -----------------------------------
--- Tiered zones
--- All zones within a tier share one pool table, so one representative
--- zone per tier is sufficient.
+-- Tier 2 zones (lv15-30)
 -----------------------------------
-appendToPool(xi.zone.LA_THEINE_PLATEAU,     tier2CustomItems) -- all T2 zones
-appendToPool(xi.zone.QUFIM_ISLAND,          tier3CustomItems) -- all T3 zones
-appendToPool(xi.zone.EASTERN_ALTEPA_DESERT, tier4CustomItems) -- all T4 zones
+appendToZones(
+{
+    xi.zone.LA_THEINE_PLATEAU,
+    xi.zone.KONSCHTAT_HIGHLANDS,
+    xi.zone.TAHRONGI_CANYON,
+    xi.zone.VALKURM_DUNES,
+    xi.zone.JUGNER_FOREST,
+    xi.zone.PASHHOW_MARSHLANDS,
+    xi.zone.MERIPHATAUD_MOUNTAINS,
+    xi.zone.BUBURIMU_PENINSULA,
+    xi.zone.INNER_HORUTOTO_RUINS,
+    xi.zone.ZERUHN_MINES,
+    xi.zone.OUTER_HORUTOTO_RUINS,
+    xi.zone.DANGRUF_WADI,
+},
+tier2CustomItems)
+
+-----------------------------------
+-- Tier 3 zones (lv30-45)
+-----------------------------------
+appendToZones(
+{
+    xi.zone.QUFIM_ISLAND,
+    xi.zone.BATALLIA_DOWNS,
+    xi.zone.ROLANBERRY_FIELDS,
+    xi.zone.SAUROMUGUE_CHAMPAIGN,
+    xi.zone.YUHTUNGA_JUNGLE,
+    xi.zone.YHOATOR_JUNGLE,
+    xi.zone.MAZE_OF_SHAKHRAMI,
+    xi.zone.ORDELLES_CAVES,
+    xi.zone.KING_RANPERRES_TOMB,
+    xi.zone.GUSGEN_MINES,
+    xi.zone.KORROLOKA_TUNNEL,
+},
+tier3CustomItems)
+
+-----------------------------------
+-- Tier 4 zones (lv45-60)
+-----------------------------------
+appendToZones(
+{
+    xi.zone.EASTERN_ALTEPA_DESERT,
+    xi.zone.WESTERN_ALTEPA_DESERT,
+    xi.zone.CRAWLERS_NEST,
+    xi.zone.LABYRINTH_OF_ONZOZO,
+    xi.zone.THE_SANCTUARY_OF_ZITAH,
+    xi.zone.SEA_SERPENT_GROTTO,
+    xi.zone.QUICKSAND_CAVES,
+    xi.zone.GUSTAV_TUNNEL,
+    xi.zone.CAPE_TERIGGAN,
+    xi.zone.KUFTAL_TUNNEL,
+},
+tier4CustomItems)
 
 return m
