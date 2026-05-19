@@ -6058,10 +6058,9 @@ INSERT INTO `mob_pools` VALUES (5996,'aagk','ArkGK',146,0x00002D0C00000000000000
 INSERT INTO `mob_pools` VALUES (5997,'iroha','Iroha',149,0x0000270C00000000000000000000000000000000,12,4,3,240,100,0,0,0,0,0,0,32,0,3,0,0,410,0,0,1112,149,0,12);
 INSERT INTO `mob_pools` VALUES (5998,'ygnas','Ygnas',455,0x00002E0C00000000000000000000000000000000,3,0,3,240,100,0,0,0,0,0,0,32,0,3,0,0,411,0,0,1113,455,1,8);
 INSERT INTO `mob_pools` VALUES (5999,'monberaux','Monberaux',145,0x0000300C00000000000000000000000000000000,7,22,3,240,100,0,0,0,0,0,0,32,0,3,0,0,0,0,0,1114,145,1,20);
--- Reserved for future Trust 6000
+INSERT INTO `mob_pools` VALUES (6000,'cornelia','Cornelia',149,0x00002F0C00000000000000000000000000000000,21,0,3,240,100,0,0,0,0,0,0,32,0,3,0,0,0,0,0,1118,149,1,17);
 -- Reserved for future Trust 6001
 -- Reserved for future Trust 6002
--- modelid uses her NPC look bytes (MODEL_EQUIPPED, size=1) from npc_list.sql.
 -- Trusts normally use MODEL_STANDARD (size=0) with a client trust model ID, but Cornelia
 -- has no retail trust model. MODEL_EQUIPPED renders the full humanoid appearance with gear.
 -- If the client does not accept MODEL_EQUIPPED for trusts, replace with an appropriate

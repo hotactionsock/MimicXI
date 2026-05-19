@@ -1199,6 +1199,7 @@ xi.magic.spell =
     YGNAS                 =  998,
     MONBERAUX             =  999,
 
+    CORNELIA              = 1000,
     MATSUI_P              = 1003,
     EXCENMILLE_S          = 1004,
     AYAME_UC              = 1005,
@@ -1216,6 +1217,5 @@ xi.magic.spell =
     ARCIELA_II            = 1017,
     IROHA_II              = 1018,
     SHANTOTTO_II          = 1019,
-    -- CORNELIA: ID TBD (test !addspell 1000-1002 to find client slot)
 }
 
