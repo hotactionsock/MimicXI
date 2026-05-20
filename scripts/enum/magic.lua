@@ -1199,7 +1199,8 @@ xi.magic.spell =
     YGNAS                 =  998,
     MONBERAUX             =  999,
 
-    CORNELIA              = 1003,
+    CORNELIA              = 1000,
+    MATSUI_P              = 1003,
     EXCENMILLE_S          = 1004,
     AYAME_UC              = 1005,
     MAAT_UC               = 1006,
@@ -1216,5 +1217,5 @@ xi.magic.spell =
     ARCIELA_II            = 1017,
     IROHA_II              = 1018,
     SHANTOTTO_II          = 1019,
-    MATSUI_P              = 1020,
 }
+

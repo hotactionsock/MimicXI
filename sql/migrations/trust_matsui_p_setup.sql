@@ -1,13 +1,14 @@
 -- MimicXI: Matsui-P trust setup
--- Spell 1020 → pool 6020 (trust system: pool = spell + 5000).
+-- Spell 1003 → pool 6003 (trust system: pool = spell + 5000).
+-- Client-confirmed: !addspell 1003 shows "Matsui-P" in the FFXI client.
 -- Model: 0x0000310C (AltanaView: ROM/310/13, 16-bit 0x0C31).
 -- Spell list 435 (mob_spell_lists), skill list 1135 (mob_skill_lists).
 
 -- Trust spell
-INSERT IGNORE INTO `spell_list` VALUES (1020,'matsui_p',0x01010101010101010101010101010101010101010101,8,0,@ELEMENT_LIGHT,0,1,@SKILL_NONE,0,2000,240000,0,0,939,1500,0,0,1.00,0,0,0,0,0,NULL);
+INSERT IGNORE INTO `spell_list` VALUES (1003,'matsui_p',0x01010101010101010101010101010101010101010101,8,0,@ELEMENT_LIGHT,0,1,@SKILL_NONE,0,2000,240000,0,0,939,1500,0,0,1.00,0,0,0,0,0,NULL);
 
--- Mob pool: NIN/BLM Hume (pool 6020, spellList 435, skill_list 1135)
-INSERT IGNORE INTO `mob_pools` VALUES (6020,'matsui_p','Matsui',149,0x0000310C00000000000000000000000000000000,13,4,3,240,100,0,0,0,0,0,0,32,0,3,0,0,435,0,0,1135,149,1,17);
+-- Mob pool: NIN/BLM Hume (pool 6003, spellList 435, skill_list 1135)
+INSERT IGNORE INTO `mob_pools` VALUES (6003,'matsui_p','Matsui',149,0x0000310C00000000000000000000000000000000,13,4,3,240,100,0,0,0,0,0,0,32,0,3,0,0,435,0,0,1135,149,1,17);
 
 -- Spell list 435: spells for HIGHEST/MB_ELEMENT gambit resolution
 INSERT IGNORE INTO `mob_spell_lists` VALUES ('TRUST_Matsui-P',435,144,10,255); -- fire
