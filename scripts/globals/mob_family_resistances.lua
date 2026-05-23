@@ -30,6 +30,13 @@
 -- 4. Per-mob onMobSpawn scripts that call mob:setMod() after this module
 --    runs will silently override any value set here for that specific mob.
 -----------------------------------
+-- scripts/enum/ files are loaded via safe_script_file (not require), so they
+-- are NOT in package.loaded.  Explicitly require them here so xi.ecosystem
+-- and xi.mod constants are guaranteed to exist when this file runs via the
+-- conquest → garrison → mobs → mob_family_resistances require chain.
+require('scripts/enum/ecosystem')
+require('scripts/enum/mod')
+
 xi = xi or {}
 xi.mob = xi.mob or {}
 xi.mob.resistances = xi.mob.resistances or {}
