@@ -61,6 +61,7 @@ end
 -----------------------------------
 xi.caskets.mimic.mobCallbacks.onMobSpawn = function(mob)
     mob:setAnimationSub(0)
+    mob:removeListener('DEATH_SPAWN_CASKET') -- zone mixin would spawn a second casket; loot is handled in onMobDeath
 end
 
 xi.caskets.mimic.mobCallbacks.onMobEngage = function(mob, target)
