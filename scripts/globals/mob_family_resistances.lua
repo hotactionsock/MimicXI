@@ -35,8 +35,11 @@ xi.mob = xi.mob or {}
 xi.mob.resistances = xi.mob.resistances or {}
 
 -- SDT value constants
-local WEAK   = 10000  -- 2.0× damage taken
+local WEAK   = 5000  -- 1.5× damage taken
+local VWEAK = 10000 -- 2.0x damage taken
 local RESIST = -5000  -- 0.5× damage taken
+local VRESIST = -10000 -- 0.25x damage taken
+
 
 -- ---------------------------------------------------------------------------
 -- Ecosystem resistance / weakness table
@@ -57,7 +60,7 @@ xi.mob.resistances.ecosystemTable =
         [xi.mod.HTH_SDT]     = RESIST, -- fists sink in without effect
         [xi.mod.FIRE_SDT]    = WEAK,   -- heat coagulates and burns the mass
         [xi.mod.ICE_SDT]     = WEAK,   -- freezing shatters the gel
-        [xi.mod.THUNDER_SDT] = WEAK,   -- electricity conducts through fluid body
+        [xi.mod.THUNDER_SDT] = VWEAK,   -- electricity conducts through fluid body
     },
 
     -- AQUAN: Water-adapted creatures (fish, crabs, sea monks, soulflayers).
@@ -65,10 +68,12 @@ xi.mob.resistances.ecosystemTable =
     -- makes them vulnerable to lightning, and freezing water damages them.
     [xi.ecosystem.AQUAN] =
     {
-        [xi.mod.FIRE_SDT]    = RESIST, -- bodies are saturated with water
-        [xi.mod.EARTH_SDT]   = RESIST, -- at home in aquatic environments
-        [xi.mod.THUNDER_SDT] = WEAK,   -- water conducts electricity
-        [xi.mod.ICE_SDT]     = WEAK,   -- freezing water is lethal
+        [xi.mod.FIRE_SDT]    = VRESIST, -- bodies are saturated with water
+        [xi.mod.EARTH_SDT]   = VRESIST, -- at home in aquatic environments
+        [xi.mod.THUNDER_SDT] = VWEAK,   -- water conducts electricity
+        [xi.mod.H2H_SDT]     = VWEAK,   -- Shells crack under pressure
+        [xi.mod.IMPACT_SDT]  = WEAK, -- blunt force disperses harmlessly
+        
     },
 
     -- ARCANA: Magical constructs (bombs, spheres, dolls, fomors).
@@ -80,8 +85,8 @@ xi.mob.resistances.ecosystemTable =
         [xi.mod.PIERCE_SDT]  = RESIST,
         [xi.mod.IMPACT_SDT]  = RESIST,
         [xi.mod.HTH_SDT]     = RESIST,
-        [xi.mod.DARK_SDT]    = WEAK,   -- void energy unravels magic
-        [xi.mod.LIGHT_SDT]   = WEAK,   -- divine light dispels constructs
+        [xi.mod.DARK_SDT]    = VWEAK,   -- void energy unravels magic
+        [xi.mod.LIGHT_SDT]   = VWEAK,   -- divine light dispels constructs
     },
 
     -- ARCHAICMACHINE: Ancient mechanical constructs (iron giants, gears).
@@ -90,9 +95,9 @@ xi.mob.resistances.ecosystemTable =
     [xi.ecosystem.ARCHAICMACHINE] =
     {
         [xi.mod.ICE_SDT]     = RESIST, -- metal is unaffected by cold
-        [xi.mod.WIND_SDT]    = RESIST, -- solid frames ignore wind
+        [xi.mod.WIND_SDT]    = VRESIST, -- solid frames ignore wind
         [xi.mod.EARTH_SDT]   = RESIST, -- machines do not tire or corrode easily
-        [xi.mod.THUNDER_SDT] = WEAK,   -- electricity fries internal mechanisms
+        [xi.mod.THUNDER_SDT] = VWEAK,   -- electricity fries internal mechanisms
         [xi.mod.WATER_SDT]   = WEAK,   -- water shorts out arcane circuitry
     },
 
@@ -103,6 +108,7 @@ xi.mob.resistances.ecosystemTable =
     {
         [xi.mod.SLASH_SDT]   = RESIST, -- semi-physical form deflects blades
         [xi.mod.DARK_SDT]    = RESIST, -- divine nature resists darkness
+        [xi.mod.PIERCE_SDT]  = VWEAK,
         [xi.mod.EARTH_SDT]   = WEAK,   -- celestial beings are rooted by earth
         [xi.mod.LIGHT_SDT]   = WEAK,   -- opposing divine force destabilises them
     },
@@ -112,9 +118,10 @@ xi.mob.resistances.ecosystemTable =
     -- well-grounded musculature shrugs off lightning and earth.
     [xi.ecosystem.BEAST] =
     {
+        [xi.mod.SLASH_SDT]   = WEAK, -- semi-physical form deflects blades
         [xi.mod.THUNDER_SDT] = RESIST, -- instinctive grounding reduces shock
         [xi.mod.EARTH_SDT]   = RESIST, -- native terrain adaptation
-        [xi.mod.FIRE_SDT]    = WEAK,   -- fur and flesh burn readily
+        [xi.mod.FIRE_SDT]    = VWEAK,   -- fur and flesh burn readily
         [xi.mod.ICE_SDT]     = WEAK,   -- cold slows and damages warm-blooded bodies
     },
 
@@ -126,7 +133,7 @@ xi.mob.resistances.ecosystemTable =
         [xi.mod.EARTH_SDT]   = RESIST, -- grown up fighting on brutal terrain
         [xi.mod.DARK_SDT]    = RESIST, -- accustomed to dark dwellings
         [xi.mod.FIRE_SDT]    = WEAK,   -- primal fear of fire
-        [xi.mod.LIGHT_SDT]   = WEAK,   -- divine power cuts through brutish nature
+        [xi.mod.LIGHT_SDT]   = VWEAK,   -- divine power cuts through brutish nature
     },
 
     -- BIRD: Flying creatures (rocs, ravens, ziz, birds of paradise).
@@ -134,6 +141,7 @@ xi.mob.resistances.ecosystemTable =
     -- skies and ice freezing wings are classic predators of the skies.
     [xi.ecosystem.BIRD] =
     {
+        [xi.mod.PIERCE_SDT]  = VWEAK, -- Birds weak to piercing
         [xi.mod.WIND_SDT]    = RESIST, -- native to the sky
         [xi.mod.EARTH_SDT]   = RESIST, -- light bones, little contact with ground
         [xi.mod.ICE_SDT]     = WEAK,   -- cold freezes wing joints and feathers
@@ -145,9 +153,10 @@ xi.mob.resistances.ecosystemTable =
     -- infernal nature. They are born of flame and darkness.
     [xi.ecosystem.DEMON] =
     {
+        [xi.mod.SLASH_SDT]   = RESIST, -- semi-physical form deflects blades
         [xi.mod.FIRE_SDT]    = RESIST, -- born in and of hellfire
         [xi.mod.DARK_SDT]    = RESIST, -- native to dark planes
-        [xi.mod.LIGHT_SDT]   = WEAK,   -- holy power is anathema
+        [xi.mod.LIGHT_SDT]   = VWEAK,   -- holy power is anathema
         [xi.mod.ICE_SDT]     = WEAK,   -- cold opposes their infernal nature
     },
 
@@ -158,6 +167,7 @@ xi.mob.resistances.ecosystemTable =
     {
         [xi.mod.FIRE_SDT]    = RESIST, -- fire-resistant scales
         [xi.mod.SLASH_SDT]   = RESIST, -- overlapping scales deflect blades
+        [xi.mod.PIERCE_SDT]  = WEAK, -- semi-physical form deflects blades
         [xi.mod.ICE_SDT]     = WEAK,   -- cold penetrates draconic hide
         [xi.mod.THUNDER_SDT] = WEAK,   -- lightning cracks through armour
     },
@@ -168,10 +178,10 @@ xi.mob.resistances.ecosystemTable =
     -- immunity is handled per-mob by individual scripts or the database.
     [xi.ecosystem.ELEMENTAL] =
     {
-        [xi.mod.SLASH_SDT]   = RESIST,
-        [xi.mod.PIERCE_SDT]  = RESIST,
-        [xi.mod.IMPACT_SDT]  = RESIST,
-        [xi.mod.HTH_SDT]     = RESIST,
+        [xi.mod.SLASH_SDT]   = VRESIST,
+        [xi.mod.PIERCE_SDT]  = VRESIST,
+        [xi.mod.IMPACT_SDT]  = VRESIST,
+        [xi.mod.HTH_SDT]     = VRESIST,
     },
 
     -- EMPTY: Void-born entities from Promyvion (shadows, reapers, gorgers).
@@ -182,6 +192,7 @@ xi.mob.resistances.ecosystemTable =
         [xi.mod.PIERCE_SDT]  = RESIST, -- void form is hard to skewer
         [xi.mod.SLASH_SDT]   = RESIST, -- blades pass through shadow
         [xi.mod.DARK_SDT]    = RESIST, -- void absorbs dark energy
+        [xi.mod.IMPACT_SDT]   = VWEAK, -- 
         [xi.mod.LIGHT_SDT]   = WEAK,   -- light dissolves emptiness
         [xi.mod.FIRE_SDT]    = WEAK,   -- warmth drives back the void
     },
@@ -210,6 +221,7 @@ xi.mob.resistances.ecosystemTable =
         [xi.mod.SLASH_SDT]   = RESIST,
         [xi.mod.PIERCE_SDT]  = RESIST,
         [xi.mod.IMPACT_SDT]  = RESIST,
+        [xi.mod.H2H_SDT]   = WEAK,
         [xi.mod.THUNDER_SDT] = WEAK,
         [xi.mod.LIGHT_SDT]   = WEAK,
     },
@@ -253,9 +265,10 @@ xi.mob.resistances.ecosystemTable =
         [xi.mod.DARK_SDT]    = RESIST, -- animated by dark energy
         [xi.mod.PIERCE_SDT]  = RESIST, -- skewering bones or passing through ghosts
         [xi.mod.SLASH_SDT]   = RESIST, -- blades catch little on bone or ether
-        [xi.mod.LIGHT_SDT]   = WEAK,   -- holy power undoes undead existence
+        [xi.mod.LIGHT_SDT]   = VWEAK,   -- holy power undoes undead existence
         [xi.mod.FIRE_SDT]    = WEAK,   -- fire burns even unliving flesh and bone
         [xi.mod.IMPACT_SDT]  = WEAK,   -- blunt force shatters skeletal structures
+        [xi.mod.H2H_SDT]   = VWEAK, -- semi-physical form deflects blades
     },
 
     -- VERMIN: Insects, crawlers, and colony creatures (bees, beetles, flies).
