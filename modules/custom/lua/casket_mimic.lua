@@ -52,6 +52,25 @@ local function augmentLabel(augments)
     return table.concat(parts, ' / ')
 end
 
+-----------------------------------
+-- On spawn, clear the chest animationsub so the Mimic appears as the creature
+-- model (not a chest).  The pool definition sets animationsub=13 (chest) as a
+-- MOBMOD_SPAWN_ANIMATIONSUB, so Spawn() would leave it at 13 without this.
+-- animationsub=13 causes the client to treat the entity as a non-combat chest
+-- (untargetable via Tab/right-click; no combat animations visible).
+-----------------------------------
+xi.caskets.mimic.mobCallbacks.onMobSpawn = function(mob)
+    mob:setAnimationSub(0)
+end
+
+xi.caskets.mimic.mobCallbacks.onMobEngage = function(mob, target)
+    mob:setTP(3000)
+end
+
+xi.caskets.mimic.mobCallbacks.onMobMobskillChoose = function(mob, target, skillId)
+    return xi.mobSkill.DEATH_TRAP
+end
+
 xi.caskets.mimic.mobCallbacks.onMobDeath = function(mob, player, isKiller, noKillIncrement)
     if not isKiller then return end
 
