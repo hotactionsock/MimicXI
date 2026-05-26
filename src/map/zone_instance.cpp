@@ -24,6 +24,7 @@
 #include "common/timer.h"
 #include "entities/charentity.h"
 #include "lua/luautils.h"
+#include "packets/s2c/0x053_systemmes.h"
 #include "status_effect_container.h"
 #include "utils/charutils.h"
 #include "utils/zoneutils.h"
@@ -147,6 +148,21 @@ void CZoneInstance::DecreaseZoneCounter(CCharEntity* PChar)
     CInstance* PInstance = PChar->PInstance;
     if (PInstance)
     {
+        // Block voluntary zone-out for alive players while the fight is locked.
+        // shuttingDown == 2 means the player is transitioning to another zone (not logging out or disconnecting).
+        if (PInstance->IsLocked() && PChar->isAlive() && PChar->PSession->shuttingDown == 2)
+        {
+            PChar->PSession->shuttingDown = 0;
+            PChar->pushPacket<GP_SERV_COMMAND_SYSTEMMES>(0, 0, MsgStd::CouldNotEnter);
+            return;
+        }
+
+        // Player is leaving while locked (KO'd, logout, or disconnect): record the exit so they cannot re-enter.
+        if (PInstance->IsLocked())
+        {
+            PInstance->MarkExited(PChar->id);
+        }
+
         PInstance->DecreaseZoneCounter(PChar);
         PInstance->DespawnPC(PChar);
         CharZoneOut(PChar);
@@ -584,4 +600,12 @@ CInstance* CZoneInstance::CreateInstance(uint32 instanceid)
 
     m_InstanceList.emplace_back(std::make_unique<CInstance>(scheduler_, config_, this, instanceid));
     return m_InstanceList.back().get();
+}
+
+uint32 CZoneInstance::CountInstancesOf(uint32 instanceid) const
+{
+    TracyZoneScoped;
+
+    return static_cast<uint32>(std::count_if(m_InstanceList.begin(), m_InstanceList.end(),
+                                             [instanceid](const auto& inst) { return inst->GetID() == instanceid; }));
 }

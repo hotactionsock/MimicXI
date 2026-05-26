@@ -81,6 +81,12 @@ public:
     void Cancel();                   // Sets instance to fail without calling onInstanceFailure
     bool CheckFirstEntry(uint32 id); // Checks if this is the first time a char is entering
 
+    void Lock();                        // Prevent alive players from leaving the instance
+    void Unlock();                      // Remove the fight lock
+    bool IsLocked() const;
+    void MarkExited(uint32 charId);     // Record that a player left mid-fight (removes registration)
+    bool HasExited(uint32 charId) const;
+
     uint16 GetSoloBattleMusic();
     uint16 GetPartyBattleMusic();
     uint16 GetBackgroundMusicDay();
@@ -105,8 +111,10 @@ private:
     position_t          m_entryloc{};
     zoneMusicOverride_t m_zone_music_override{};
     INSTANCE_STATUS     m_status{ INSTANCE_NORMAL };
+    bool                m_fightLocked{ false };
     std::vector<uint32> m_registeredChars;
     std::set<uint32>    m_enteredChars;
+    std::set<uint32>    m_exitedChars;
 
     std::unordered_map<std::string, uint64_t> localVars_;
 };

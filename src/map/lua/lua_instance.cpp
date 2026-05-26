@@ -24,6 +24,7 @@
 #include "common/logging.h"
 #include "common/timer.h"
 
+#include "entities/charentity.h"
 #include "instance.h"
 #include "lua_baseentity.h"
 #include "luautils.h"
@@ -236,6 +237,30 @@ bool CLuaInstance::completed()
     return m_PLuaInstance->Completed();
 }
 
+void CLuaInstance::lock()
+{
+    m_PLuaInstance->Lock();
+}
+
+void CLuaInstance::unlock()
+{
+    m_PLuaInstance->Unlock();
+}
+
+bool CLuaInstance::isLocked()
+{
+    return m_PLuaInstance->IsLocked();
+}
+
+bool CLuaInstance::hasExited(CLuaBaseEntity* PChar)
+{
+    if (!PChar || PChar->GetBaseEntity()->objtype != TYPE_PC)
+    {
+        return false;
+    }
+    return m_PLuaInstance->HasExited(PChar->GetBaseEntity()->id);
+}
+
 auto CLuaInstance::insertAlly(uint32 groupid) -> CBaseEntity*
 {
     CMobEntity* PAlly = mobutils::InstantiateAlly(groupid, m_PLuaInstance->GetZone()->GetID(), m_PLuaInstance);
@@ -286,6 +311,10 @@ void CLuaInstance::Register()
     SOL_REGISTER("failed", CLuaInstance::failed);
     SOL_REGISTER("complete", CLuaInstance::complete);
     SOL_REGISTER("completed", CLuaInstance::completed);
+    SOL_REGISTER("lock", CLuaInstance::lock);
+    SOL_REGISTER("unlock", CLuaInstance::unlock);
+    SOL_REGISTER("isLocked", CLuaInstance::isLocked);
+    SOL_REGISTER("hasExited", CLuaInstance::hasExited);
     SOL_REGISTER("insertAlly", CLuaInstance::insertAlly);
     SOL_REGISTER("insertDynamicEntity", CLuaInstance::insertDynamicEntity);
     SOL_REGISTER("getLocalVar", CLuaInstance::getLocalVar);

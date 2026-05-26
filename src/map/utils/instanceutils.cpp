@@ -28,6 +28,7 @@
 
 #include "instance_loader.h"
 #include "map_engine.h"
+#include "zone_instance.h"
 #include "zoneutils.h"
 
 #include <queue>
@@ -115,6 +116,17 @@ void CheckInstance()
             return;
         }
         auto instanceId = requestPair.second;
+
+        auto  instanceData = GetInstanceData(instanceId);
+        auto* PZone        = zoneutils::GetZone(instanceData.instance_zone);
+        if (auto* PZoneInst = dynamic_cast<CZoneInstance*>(PZone))
+        {
+            if (PZoneInst->CountInstancesOf(instanceId) >= 3)
+            {
+                luautils::OnInstanceCapacityReached(PRequester);
+                return;
+            }
+        }
 
         auto loader = std::make_unique<CInstanceLoader>(instanceId, PRequester);
         loader->LoadInstance();

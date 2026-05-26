@@ -4664,6 +4664,24 @@ void OnInstanceCreated(CInstance* PInstance)
     }
 }
 
+void OnInstanceCapacityReached(CCharEntity* PChar)
+{
+    TracyZoneScoped;
+
+    auto onInstanceCapacityReached = lua["xi"]["instance"]["onInstanceCapacityReached"];
+    if (!onInstanceCapacityReached.valid())
+    {
+        return;
+    }
+
+    auto result = onInstanceCapacityReached(PChar);
+    if (!result.valid())
+    {
+        sol::error err = result;
+        ShowError("luautils::OnInstanceCapacityReached %s", err.what());
+    }
+}
+
 void OnInstanceProgressUpdate(CInstance* PInstance)
 {
     TracyZoneScoped;

@@ -414,6 +414,7 @@ void  OnInstanceTimeUpdate(CZone* PZone, CInstance* PInstance, uint32 time); // 
 void  OnInstanceFailure(CInstance* PInstance);                               // triggers when an instance is failed
 void  OnInstanceCreatedCallback(CCharEntity* PChar, CInstance* PInstance);   // triggers when an instance is created (per character - waiting outside for entry)
 void  OnInstanceCreated(CInstance* PInstance);                               // triggers when an instance is created (instance setup)
+void  OnInstanceCapacityReached(CCharEntity* PChar);                         // triggers when instance creation is rejected due to the concurrent instance cap
 void  OnInstanceProgressUpdate(CInstance* PInstance);
 void  OnInstanceStageChange(CInstance* PInstance);
 void  OnInstanceComplete(CInstance* PInstance);
