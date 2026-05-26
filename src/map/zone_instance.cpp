@@ -24,6 +24,7 @@
 #include "common/timer.h"
 #include "entities/charentity.h"
 #include "lua/luautils.h"
+#include "enums/msg_std.h"
 #include "packets/s2c/0x053_systemmes.h"
 #include "status_effect_container.h"
 #include "utils/charutils.h"
