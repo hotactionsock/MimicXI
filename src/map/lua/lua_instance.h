@@ -75,6 +75,11 @@ public:
     void complete();
     bool completed();
 
+    void lock();
+    void unlock();
+    bool isLocked();
+    bool hasExited(CLuaBaseEntity* PChar);
+
     auto insertAlly(uint32 groupid) -> CBaseEntity*;
     auto insertDynamicEntity(sol::table table) -> CBaseEntity*;
 

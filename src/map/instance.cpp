@@ -291,8 +291,35 @@ void CInstance::ClearEntities()
         });
 }
 
+void CInstance::Lock()
+{
+    m_fightLocked = true;
+}
+
+void CInstance::Unlock()
+{
+    m_fightLocked = false;
+}
+
+bool CInstance::IsLocked() const
+{
+    return m_fightLocked;
+}
+
+void CInstance::MarkExited(uint32 charId)
+{
+    m_registeredChars.erase(std::remove(m_registeredChars.begin(), m_registeredChars.end(), charId), m_registeredChars.end());
+    m_exitedChars.insert(charId);
+}
+
+bool CInstance::HasExited(uint32 charId) const
+{
+    return m_exitedChars.count(charId) > 0;
+}
+
 void CInstance::Fail()
 {
+    Unlock();
     Cancel();
 
     ClearEntities();
@@ -307,6 +334,7 @@ bool CInstance::Failed()
 
 void CInstance::Complete()
 {
+    Unlock();
     m_status = INSTANCE_COMPLETE;
 
     ClearEntities();
