@@ -365,7 +365,7 @@ CUSTOM NM ITEMS (Tier 3-4) - to be designed in LQS
     29779 Galeshroud Cloak      → nameless duelist NM (lv68-72)
 
 NOTES
-  - Total: 80 items across IDs 29700-29779. Next batch starts at 29780.
+  - Total: 120 items across IDs 29700-29819. Next batch starts at 29820.
   - Model IDs: 3-digit range (413-759) from ToAU/WotG equipment visuals.
   - Accessories (neck/waist/ear/ring) use MId=0 (no visible worn model).
   - Back pieces use MId=503 (cape) where a visual is appropriate; MId=0
@@ -373,3 +373,142 @@ NOTES
   - Dual Wield hard cap: +1 per item, per balance ruling.
   - Double/Triple Attack: +1% max, Tier 3-4 NM drops only.
   - Haste: max +2 on non-body slots; max +3 on body (Tier 4 NM only).
+
+==============================================================
+  BATCH 3 - OVERVIEW (IDs 29780-29819)  [NEW]
+  7 Weapons / 4 Head / 4 Body / 4 Hands / 4 Legs / 3 Feet
+  3 Neck / 3 Waist / 2 Earring / 2 Ring / 3 Back = 40 Items
+  First batch to introduce regular-drop items in T5 (lv60-70).
+==============================================================
+
+SuggestedItemID,InternalName,DisplayName,ItemType,EquipSlot,SlotBitmask,LevelReq,PowerTier,Source,ModelID,Jobs(Text),JobsBitmask
+29780,rustbite_greatsword,Rustbite Greatsword,Weapon,MAIN,1,22,2,Regular Drop,499,"WAR/PLD/DRK/RUN",2097345
+29781,moonblade,Moonblade,Weapon,MAIN+SUB,3,40,2,Regular Drop,527,"WAR/PLD/RDM/NIN/BLU",36945
+29782,needlefang_knife,Needlefang Knife,Weapon,MAIN+SUB,3,10,1,Regular Drop,415,"THF/NIN/RDM/COR/DNC/BRD",332336
+29783,shadewhisper_blade,Shadewhisper Blade,Weapon,MAIN+SUB,3,35,2,Regular Drop,491,"NIN/SAM",6144
+29784,bonereap_scythe,Bonereap Scythe,Weapon,MAIN,1,25,1,Regular Drop,460,"DRK",128
+29785,copperlock_crossbow,Copperlock Crossbow,Weapon,RANGED,4,35,2,Regular Drop,498,"RNG/COR",66560
+29786,elderwood_staff,Elderwood Staff,Weapon,MAIN,1,60,2,Regular Drop,694,"WHM/BLM/RDM/SMN/SCH/GEO",1589276
+29787,ironpaw_knuckles,Ironpaw Knuckles,Weapon,MAIN+SUB,3,60,2,Regular Drop,686,"MNK/PUP",131074
+29788,riveted_visor,Riveted Visor,Armour,HEAD,16,25,2,Regular Drop,444,"WAR/PLD/DRK/DRG/SAM/RUN",2107585
+29789,silkweave_hood,Silkweave Hood,Armour,HEAD,16,42,2,Regular Drop,526,"BLM/SMN/SCH/GEO/RDM",1589272
+29790,trackers_cap,Tracker's Cap,Armour,HEAD,16,55,2,Regular Drop,630,"RNG/COR/BST/THF/DNC",328992
+29791,iron_sentinel_helm,Iron Sentinel Helm,Armour,HEAD,16,65,2,Regular Drop,726,"WAR/PLD/DRK/DRG/SAM/RUN",2107585
+29792,mudcloth_gi,Mudcloth Gi,Armour,BODY,32,25,1,Regular Drop,445,"MNK/PUP/BST",131330
+29793,verdant_robe,Verdant Robe,Armour,BODY,32,38,2,Regular Drop,515,"SMN/WHM/SCH/GEO/RDM",1589268
+29794,rangers_surcoat,Ranger's Surcoat,Armour,BODY,32,52,2,Regular Drop,587,"RNG/COR/BST",66816
+29795,tempered_coat,Tempered Coat,Armour,BODY,32,65,2,Regular Drop,733,"WAR/MNK/THF/DRK/SAM/NIN/DNC",268451
+29796,featherlight_wraps,Featherlight Wraps,Armour,HANDS,64,18,1,Regular Drop,425,"MNK/PUP/BST/DNC",393474
+29797,channelers_cuffs,Channeler's Cuffs,Armour,HANDS,64,55,2,Regular Drop,627,"WHM/BLM/RDM/SMN/SCH/GEO",1589276
+29798,ironveil_gauntlets,Ironveil Gauntlets,Armour,HANDS,64,65,2,Regular Drop,744,"WAR/DRK/SAM/DRG/RUN",2107521
+29799,bonehide_knuckle_guards,Bonehide Knuckle-Guards,Armour,HANDS,64,38,2,Regular Drop,511,"WAR/DRK/MNK/SAM",2179
+29800,wanderers_kecks,Wanderer's Kecks,Armour,LEGS,128,22,2,Regular Drop,442,"WHM/BLM/RDM/SMN/SCH/GEO/BRD",1589788
+29801,boneweave_kecks,Boneweave Kecks,Armour,LEGS,128,52,2,Regular Drop,577,"WAR/DRK/MNK/SAM/RUN/DRG",2107523
+29802,dawnspun_slops,Dawnspun Slops,Armour,LEGS,128,65,2,Regular Drop,729,"WHM/BLM/RDM/SMN/SCH/GEO",1589276
+29803,muddled_breeches,Muddled Breeches,Armour,LEGS,128,32,2,Regular Drop,488,"THF/NIN/DNC/BST/COR/RNG",333088
+29804,brass_shod_boots,Brass-Shod Boots,Armour,FEET,256,18,1,Regular Drop,427,"WAR/MNK/PLD/DRK/DRG/SAM/RUN",2107587
+29805,plodders_clogs,Plodder's Clogs,Armour,FEET,256,38,2,Regular Drop,510,"BST/RNG/THF/DNC/COR/BRD",329504
+29806,ironveil_sabatons,Ironveil Sabatons,Armour,FEET,256,65,2,Regular Drop,742,"WAR/PLD/DRK/DRG/SAM/RUN",2107585
+29807,menders_gorget,Mender's Gorget,Armour,NECK,512,15,1,Regular Drop,0,All Jobs,4194303
+29808,raiders_necklace,Raider's Necklace,Armour,NECK,512,48,2,Regular Drop,0,All Jobs,4194303
+29809,arcane_collar,Arcane Collar,Armour,NECK,512,62,2,Regular Drop,0,All Jobs,4194303
+29810,rough_sash,Rough Sash,Armour,WAIST,1024,15,1,Regular Drop,0,All Jobs,4194303
+29811,warriors_tassels,Warrior's Tassels,Armour,WAIST,1024,48,2,Regular Drop,0,"WAR/MNK/DRK/SAM/DRG/PLD/RUN",2107587
+29812,spellbinders_belt,Spellbinder's Belt,Armour,WAIST,1024,62,2,Regular Drop,0,"WHM/BLM/RDM/SMN/SCH/GEO/BLU",1622044
+29813,scouts_earring,Scout's Earring,Armour,EAR,6144,18,2,Regular Drop,0,All Jobs,4194303
+29814,savants_earring,Savant's Earring,Armour,EAR,6144,62,2,Regular Drop,0,All Jobs,4194303
+29815,toughened_ring,Toughened Ring,Armour,RING,24576,28,2,Regular Drop,0,All Jobs,4194303
+29816,battlemage_band,Battlemage Band,Armour,RING,24576,62,2,Regular Drop,0,All Jobs,4194303
+29817,brigands_cape,Brigand's Cape,Armour,BACK,32768,22,2,Regular Drop,503,"THF/NIN/DNC/COR/BST/RNG/BRD",333600
+29818,menders_mantle,Mender's Mantle,Armour,BACK,32768,42,2,Regular Drop,503,"WHM/BLM/RDM/SMN/SCH/GEO/BLU",1622044
+29819,soldiers_cloak,Soldier's Cloak,Armour,BACK,32768,62,2,Regular Drop,503,"WAR/PLD/DRK/DRG/SAM/MNK/RUN",2107587
+
+==============================================================
+  BATCH 3 - WEAPONS (IDs 29780-29787)
+==============================================================
+
+ID,InternalName,DisplayName,LevelReq,PowerTier,Source,ModelID,Jobs,DMG,Delay,DmgType,WeaponSkill,PrimaryStats,SecondaryStats,FlavorText
+29780,rustbite_greatsword,Rustbite Greatsword,22,2,Regular Drop,499,"WAR/PLD/DRK/RUN",44,396,Slashing,Great Sword,STR+3 / VIT+2,-,"A broad two-hander whose edge is pocked with rust that somehow never spreads. The weight alone does half the work."
+29781,moonblade,Moonblade,40,2,Regular Drop,527,"WAR/PLD/RDM/NIN/BLU",38,240,Slashing,Sword,MND+3 / Accuracy+5,Magic Accuracy+4,"A slim blade whose steel takes on a pale lustre at dusk. Favoured by battle mages who prefer their options open."
+29782,needlefang_knife,Needlefang Knife,10,1,Regular Drop,415,"THF/NIN/RDM/COR/DNC/BRD",12,210,Piercing,Dagger,DEX+2,Evasion+3,"A narrow blade tapered to a vicious point. Cheap to make, easy to conceal, and surprisingly effective in the right hands."
+29783,shadewhisper_blade,Shadewhisper Blade,35,2,Regular Drop,491,"NIN/SAM",34,245,Slashing,Katana,DEX+3 / Accuracy+5,-,"A katana with a darkened blade that hides its movements in shadow. Said to whisper faintly when drawn from the scabbard."
+29784,bonereap_scythe,Bonereap Scythe,25,1,Regular Drop,460,"DRK",35,480,Slashing,Scythe,STR+2 / INT+2,-,"A crude scythe fashioned from a salvaged blade and a long ashwood haft. Standard kit for a dark knight finding their footing."
+29785,copperlock_crossbow,Copperlock Crossbow,35,2,Regular Drop,498,"RNG/COR",34,528,Piercing,Marksmanship,AGI+2,Ranged Accuracy+5,"A compact crossbow with a copper-inlaid lock mechanism that reduces misfires. Reliable over flashy."
+29786,elderwood_staff,Elderwood Staff,60,2,Regular Drop,694,"WHM/BLM/RDM/SMN/SCH/GEO",62,366,Blunt,Staff,MND+4 / INT+4,MP+20,"A staff of ancient elderwood with a grain so tight it seems almost stone. Casters in remote regions prize it as a dependable tool."
+29787,ironpaw_knuckles,Ironpaw Knuckles,60,2,Regular Drop,686,"MNK/PUP",24,96,Blunt,H2H,STR+4,Accuracy+6,"Iron-reinforced knuckle guards with a textured grip that never slips. Simple, durable, and exactly as effective as they look."
+
+==============================================================
+  BATCH 3 - ARMOUR (IDs 29788-29819)
+==============================================================
+
+--- HEAD (4) ---
+
+ID,InternalName,DisplayName,LevelReq,PowerTier,Source,ModelID,Jobs,DEF,PrimaryStats,SecondaryStats,FlavorText
+29788,riveted_visor,Riveted Visor,25,2,Regular Drop,444,"WAR/PLD/DRK/DRG/SAM/RUN",18,STR+2 / VIT+3,HP+12,"A plain iron visor riveted to a leather cap. Covers the essentials without any pretence of elegance."
+29789,silkweave_hood,Silkweave Hood,42,2,Regular Drop,526,"BLM/SMN/SCH/GEO/RDM",21,INT+3 / MP+18,Elemental Magic Skill+4,"A close-fitting hood woven from silk threaded with ether-conducting filaments. Keeps the caster's mind unnervingly still."
+29790,trackers_cap,Tracker's Cap,55,2,Regular Drop,630,"RNG/COR/BST/THF/DNC",28,AGI+4 / Ranged Accuracy+5,Evasion+4,"A wide-brimmed cap dyed in muted earth tones. Designed to keep the wearer unseen at the same time they are watching."
+29791,iron_sentinel_helm,Iron Sentinel Helm,65,2,Regular Drop,726,"WAR/PLD/DRK/DRG/SAM/RUN",38,VIT+4 / HP+30,Accuracy+6,"A full-coverage helm worn by frontier sentinels on extended postings. Heavy, unadorned, and built to last decades."
+
+--- BODY (4) ---
+
+ID,InternalName,DisplayName,LevelReq,PowerTier,Source,ModelID,Jobs,DEF,PrimaryStats,SecondaryStats,FlavorText
+29792,mudcloth_gi,Mudcloth Gi,25,1,Regular Drop,445,"MNK/PUP/BST",26,HP+20 / VIT+2,Subtle Blow+2,"A training gi dyed in muddy earth tones with panels reinforced against repeated impact. Hard-wearing and comfortable."
+29793,verdant_robe,Verdant Robe,38,2,Regular Drop,515,"SMN/WHM/SCH/GEO/RDM",30,MND+4 / MP+25,Elemental Magic Skill+4,"A robe the colour of deep forest. Its fabric holds a faint charge that supplements the wearer's magical reserves."
+29794,rangers_surcoat,Ranger's Surcoat,52,2,Regular Drop,587,"RNG/COR/BST",38,AGI+4 / Ranged Accuracy+5,Ranged Attack+5,"A surcoat cut for freedom of movement, with hardened leather panels across the chest. Smells persistently of pine resin."
+29795,tempered_coat,Tempered Coat,65,2,Regular Drop,733,"WAR/MNK/THF/DRK/SAM/NIN/DNC",48,STR+4 / DEX+3,Accuracy+8,"A coat of close-fitted tempered steel strips over a padded base. Favoured by career soldiers who value flexibility over bulk."
+
+--- HANDS (4) ---
+
+ID,InternalName,DisplayName,LevelReq,PowerTier,Source,ModelID,Jobs,DEF,PrimaryStats,SecondaryStats,FlavorText
+29796,featherlight_wraps,Featherlight Wraps,18,1,Regular Drop,425,"MNK/PUP/BST/DNC",11,DEX+2 / HP+8,Subtle Blow+2,"Thin cotton wraps reinforced at the knuckles with a stiffened inner layer. Worn to nothing and replaced often."
+29797,channelers_cuffs,Channeler's Cuffs,55,2,Regular Drop,627,"WHM/BLM/RDM/SMN/SCH/GEO",20,MND+4 / INT+3,Fast Cast+3,"Close-fitting cuffs stitched with silver channelling thread along every seam. Marginally speeds the onset of spellcasting."
+29798,ironveil_gauntlets,Ironveil Gauntlets,65,2,Regular Drop,744,"WAR/DRK/SAM/DRG/RUN",30,STR+4 / Attack+10,Accuracy+5,"Gauntlets of overlapping iron vanes that protect without slowing the arm. Standard workshop output from a competent smithy."
+29799,bonehide_knuckle_guards,Bonehide Knuckle-Guards,38,2,Regular Drop,511,"WAR/DRK/MNK/SAM",22,STR+3,Accuracy+5,"Guards fashioned from laminated bone and thick hide. Heavier than they look and satisfyingly loud on contact."
+
+--- LEGS (4) ---
+
+ID,InternalName,DisplayName,LevelReq,PowerTier,Source,ModelID,Jobs,DEF,PrimaryStats,SecondaryStats,FlavorText
+29800,wanderers_kecks,Wanderer's Kecks,22,2,Regular Drop,442,"WHM/BLM/RDM/SMN/SCH/GEO/BRD",20,MP+18 / MND+2,INT+2,"Loose travelling kecks with deep pockets. Mages wear them for the mobility; scholars wear them because they have too many scrolls."
+29801,boneweave_kecks,Boneweave Kecks,52,2,Regular Drop,577,"WAR/DRK/MNK/SAM/RUN/DRG",36,STR+3 / VIT+3,Attack+7,"Kecks of interlocked bone plates over padded linen. Built for fighters who expect to be hit as often as they hit."
+29802,dawnspun_slops,Dawnspun Slops,65,2,Regular Drop,729,"WHM/BLM/RDM/SMN/SCH/GEO",34,INT+5 / MND+4,MP+25,"Slops woven at dawn from thread treated with early-morning dew. An affectation that somehow results in genuinely superior channelling."
+29803,muddled_breeches,Muddled Breeches,32,2,Regular Drop,488,"THF/NIN/DNC/BST/COR/RNG",27,DEX+3 / AGI+3,Evasion+5,"Wide-legged breeches in a mottled pattern that is either camouflage or a laundry accident. Either way they do the job."
+
+--- FEET (3) ---
+
+ID,InternalName,DisplayName,LevelReq,PowerTier,Source,ModelID,Jobs,DEF,PrimaryStats,SecondaryStats,FlavorText
+29804,brass_shod_boots,Brass-Shod Boots,18,1,Regular Drop,427,"WAR/MNK/PLD/DRK/DRG/SAM/RUN",11,HP+10 / VIT+2,-,"Sturdy leather boots with brass toecaps. Inelegant and effective. The mud never really comes off."
+29805,plodders_clogs,Plodder's Clogs,38,2,Regular Drop,510,"BST/RNG/THF/DNC/COR/BRD",16,AGI+3 / Movement Speed+8,Evasion+4,"Thick-soled clogs with a surprisingly quiet footfall. Plodder is a nickname. The people who wear them are anything but."
+29806,ironveil_sabatons,Ironveil Sabatons,65,2,Regular Drop,742,"WAR/PLD/DRK/DRG/SAM/RUN",26,STR+3 / Attack+8,Haste+2,"Iron sabatons with an articulated veil of small plates across the instep. Allow a full range of motion without sacrificing coverage."
+
+--- NECK (3) ---
+
+ID,InternalName,DisplayName,Slot,LevelReq,PowerTier,Source,ModelID,Jobs,DEF,PrimaryStats,SecondaryStats,FlavorText
+29807,menders_gorget,Mender's Gorget,NECK,15,1,Regular Drop,0,All Jobs,0,MP+12 / MND+2,-,"A plain gorget stitched with a small white sigil. Healers starting out often trade one among themselves as a gesture of solidarity."
+29808,raiders_necklace,Raider's Necklace,NECK,48,2,Regular Drop,0,All Jobs,0,STR+3 / DEX+3,Attack+5,"A braided cord hung with a single metal fang. Popular among fighters who prefer their accessories to carry a message."
+29809,arcane_collar,Arcane Collar,NECK,62,2,Regular Drop,0,All Jobs,0,INT+4 / MND+3,Magic Accuracy+6,"A stiffened collar inscribed with concentric rings of notation. Scholars argue over whether the inscription is a formula or a poem."
+
+--- WAIST (3) ---
+
+ID,InternalName,DisplayName,Slot,LevelReq,PowerTier,Source,ModelID,Jobs,DEF,PrimaryStats,SecondaryStats,FlavorText
+29810,rough_sash,Rough Sash,WAIST,15,1,Regular Drop,0,All Jobs,0,HP+12 / STR+2,-,"A length of rough cord knotted at the waist. The enchantment on it is modest. The price is modest. Fair trade."
+29811,warriors_tassels,Warrior's Tassels,WAIST,48,2,Regular Drop,0,"WAR/MNK/DRK/SAM/DRG/PLD/RUN",0,STR+3 / Attack+6,Accuracy+4,"A belt hung with iron tassels that clatter when the wearer moves. Soldiers who know them find the sound reassuring."
+29812,spellbinders_belt,Spellbinder's Belt,WAIST,62,2,Regular Drop,0,"WHM/BLM/RDM/SMN/SCH/GEO/BLU",0,MP+25 / INT+4,Conserve MP+3,"A wide belt embroidered with binding sigils. Casters claim it keeps their concentration from fraying at the edges of long fights."
+
+--- EARRING (2) ---
+
+ID,InternalName,DisplayName,Slot,LevelReq,PowerTier,Source,ModelID,Jobs,DEF,PrimaryStats,SecondaryStats,FlavorText
+29813,scouts_earring,Scout's Earring,EAR,18,2,Regular Drop,0,All Jobs,0,AGI+2,Evasion+3,"A small hooked earring worn by forward scouts. The enchantment is subtle enough that most opponents don't notice it working."
+29814,savants_earring,Savant's Earring,EAR,62,2,Regular Drop,0,All Jobs,0,INT+3 / MND+2,Magic Accuracy+4,"A teardrop stud of polished dark stone. The kind of earring a scholar wears to signal they have stopped trying to impress people."
+
+--- RING (2) ---
+
+ID,InternalName,DisplayName,Slot,LevelReq,PowerTier,Source,ModelID,Jobs,DEF,PrimaryStats,SecondaryStats,FlavorText
+29815,toughened_ring,Toughened Ring,RING,28,2,Regular Drop,0,All Jobs,0,VIT+3 / HP+12,-,"A thick iron ring with a blunt surface finish. Worn by soldiers who want a ring that will survive the same things they do."
+29816,battlemage_band,Battlemage Band,RING,62,2,Regular Drop,0,All Jobs,0,STR+2 / INT+2,Accuracy+4,"A narrow band set with two stones — one red, one blue. Said to represent the balance a true battlemage must maintain."
+
+--- BACK (3) ---
+
+ID,InternalName,DisplayName,Slot,LevelReq,PowerTier,Source,ModelID,Jobs,DEF,PrimaryStats,SecondaryStats,FlavorText
+29817,brigands_cape,Brigand's Cape,BACK,22,2,Regular Drop,503,"THF/NIN/DNC/COR/BST/RNG/BRD",5,AGI+2,Evasion+5,"A short, dark cape cut to fall just below the shoulder blades. Worn by half the brigands on the continent and none of the merchants."
+29818,menders_mantle,Mender's Mantle,BACK,42,2,Regular Drop,503,"WHM/BLM/RDM/SMN/SCH/GEO/BLU",6,MND+3 / MP+20,-,"A healer's mantle embroidered with small white stitching along the hem. Given to field medics who have earned a bit of comfort."
+29819,soldiers_cloak,Soldier's Cloak,BACK,62,2,Regular Drop,503,"WAR/PLD/DRK/DRG/SAM/MNK/RUN",9,STR+3 / VIT+3,HP+20,"A soldier's campaign cloak bearing no rank insignia. Whoever wore it served long enough that the markings simply wore away."
