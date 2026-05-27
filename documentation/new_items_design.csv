@@ -1,8 +1,10 @@
 ==============================================================
-  MIMICXI - NEW ITEM DESIGN SHEET (v2.0)
-  Levels 10-70 | 80 Items Total
+  MIMICXI - NEW ITEM DESIGN SHEET (v3.0)
+  Levels 10-75 | 131 Items Total
   Batch 1 (29700-29719): 5 Weapons / 15 Armour  [REVISED]
-  Batch 2 (29720-29779): 10 Weapons / 50 Armour  [NEW]
+  Batch 2 (29720-29779): 10 Weapons / 50 Armour
+  Batch 3 (29780-29819): 8 Weapons / 32 Armour
+  Tier 6  (29840-29850): 3 Weapons / 8 Armour/Accessories  [Endgame BiS, NM-only]
 
   POWER TIERS
   1 = Slightly weak for level (starter / consolation drops)
@@ -365,7 +367,8 @@ CUSTOM NM ITEMS (Tier 3-4) - to be designed in LQS
     29779 Galeshroud Cloak      → nameless duelist NM (lv68-72)
 
 NOTES
-  - Total: 120 items across IDs 29700-29819. Next batch starts at 29820.
+  - Total: 131 items across IDs 29700-29819 (Batches 1-3) + 29840-29850 (Tier 6).
+  - Next regular batch starts at 29820. Next Tier 6 batch starts at 29851.
   - Model IDs: 3-digit range (413-759) from ToAU/WotG equipment visuals.
   - Accessories (neck/waist/ear/ring) use MId=0 (no visible worn model).
   - Back pieces use MId=503 (cape) where a visual is appropriate; MId=0
@@ -512,3 +515,149 @@ ID,InternalName,DisplayName,Slot,LevelReq,PowerTier,Source,ModelID,Jobs,DEF,Prim
 29817,brigands_cape,Brigand's Cape,BACK,22,2,Regular Drop,503,"THF/NIN/DNC/COR/BST/RNG/BRD",5,AGI+2,Evasion+5,"A short, dark cape cut to fall just below the shoulder blades. Worn by half the brigands on the continent and none of the merchants."
 29818,menders_mantle,Mender's Mantle,BACK,42,2,Regular Drop,503,"WHM/BLM/RDM/SMN/SCH/GEO/BLU",6,MND+3 / MP+20,-,"A healer's mantle embroidered with small white stitching along the hem. Given to field medics who have earned a bit of comfort."
 29819,soldiers_cloak,Soldier's Cloak,BACK,62,2,Regular Drop,503,"WAR/PLD/DRK/DRG/SAM/MNK/RUN",9,STR+3 / VIT+3,HP+20,"A soldier's campaign cloak bearing no rank insignia. Whoever wore it served long enough that the markings simply wore away."
+
+==============================================================
+  TIER 6 - ENDGAME BATCH (IDs 29840-29850)
+  Power Tier 4 — All items EX/Rare, NM drops from endgame zones only.
+  Levels 70-72 | Best-in-Slot or Situational BiS
+  3 Weapons / 4 Bodies / 1 Head / 3 Accessories = 11 Items
+  Jobs not found in earlier batches at this quality: BST (29850), RNG (29846)
+==============================================================
+
+SuggestedItemID,InternalName,DisplayName,ItemType,EquipSlot,SlotBitmask,LevelReq,PowerTier,Source,ModelID,Jobs(Text),JobsBitmask
+29840,voidheart_haubergeon,Voidheart Haubergeon,Armour,BODY,32,72,4,Custom NM Drop,762,"WAR/MNK/THF/DRK/SAM/NIN/DRG",14499
+29841,covenant_plate,Covenant Plate,Armour,BODY,32,70,4,Custom NM Drop,763,"PLD/WAR/RUN",2097217
+29842,starweavers_robe,Starweaver's Robe,Armour,BODY,32,72,4,Custom NM Drop,764,"BLM/RDM/SMN/SCH/GEO",1589272
+29843,saintwood_staff,Saintwood Staff,Weapon,MAIN,1,72,4,Custom NM Drop,760,"WHM/SCH",524292
+29844,eclipse_katana,Eclipse Katana,Weapon,MAIN+SUB,3,72,4,Custom NM Drop,761,"NIN/SAM",6144
+29845,abyssal_tabar,Abyssal Tabar,Weapon,MAIN,1,70,4,Custom NM Drop,765,"WAR/DRK",129
+29846,vantage_crown,Vantage Crown,Armour,HEAD,16,70,4,Custom NM Drop,767,"RNG/COR",66560
+29847,fateweaver_mantle,Fateweaver Mantle,Armour,BACK,32768,70,4,Custom NM Drop,503,"SMN/BST",16640
+29848,requiem_torque,Requiem Torque,Armour,NECK,512,72,4,Custom NM Drop,0,All Jobs,4194303
+29849,shadowstrike_ring,Shadowstrike Ring,Armour,RING,24576,70,4,Custom NM Drop,0,All Jobs,4194303
+29850,feral_warders_cuirass,Feral Warder's Cuirass,Armour,BODY,32,70,4,Custom NM Drop,768,"BST",256
+
+==============================================================
+  TIER 6 - WEAPONS (IDs 29843-29845)
+==============================================================
+
+ID,InternalName,DisplayName,LevelReq,PowerTier,Source,ModelID,Jobs,DMG,Delay,DmgType,WeaponSkill,PrimaryStats,SecondaryStats,FlavorText
+29843,saintwood_staff,Saintwood Staff,72,4,Custom NM Drop,760,"WHM/SCH",69,366,Blunt,Staff,MND+6 / Healing Skill+10 / Cure Potency+10%,Refresh+1,"A staff of elder-growth wood that has absorbed centuries of prayer. The grain runs upward. Healers say it already knows what they are about to cast."
+29844,eclipse_katana,Eclipse Katana,72,4,Custom NM Drop,761,"NIN/SAM",64,245,Slashing,Katana,DEX+6 / Store TP+6 / Dual Wield+1,Critical Hit Rate+3%,"A katana whose blade darkens entirely at the moment of the eclipse. Found sheathed in the chest of a shadow that refused to cast one."
+29845,abyssal_tabar,Abyssal Tabar,70,4,Custom NM Drop,765,"WAR/DRK",100,444,Slashing,Great Axe,STR+6 / Accuracy+8 / Attack+18 / Double Attack+1%,Smite+20,"A greataxe fashioned from ore extracted from the valley's deep ruin. It never needed sharpening. The edge was already there."
+
+==============================================================
+  TIER 6 - ARMOUR & ACCESSORIES (IDs 29840-29842 / 29846-29850)
+==============================================================
+
+--- BODY (4) ---
+
+ID,InternalName,DisplayName,LevelReq,PowerTier,Source,ModelID,Jobs,DEF,PrimaryStats,SecondaryStats,FlavorText
+29840,voidheart_haubergeon,Voidheart Haubergeon,72,4,Custom NM Drop,762,"WAR/MNK/THF/DRK/SAM/NIN/DRG",58,STR+5 / DEX+4 / Accuracy+10 / Attack+14,Haste+3% / Double Attack+1%,"Armour recovered from a Zilartian guardian whose allegiance was consumed by centuries of isolation. The metal is cold in a way that has nothing to do with temperature."
+29841,covenant_plate,Covenant Plate,70,4,Custom NM Drop,763,"PLD/WAR/RUN",65,HP+60 / VIT+6 / Enmity+8,Magic Damage Taken-8% / Shield Block Rate+5%,"Plate forged to honour a vow taken before a god that no longer answers. The inscription inside the collar reads only: hold."
+29842,starweavers_robe,Starweaver's Robe,72,4,Custom NM Drop,764,"BLM/RDM/SMN/SCH/GEO",38,INT+7 / MND+5 / MP+50,Haste+2% / Magic Burst Bonus+10%,"A robe that hums with frequencies too low to hear but not to feel. Woven from materials that absorb light without re-emitting it."
+29850,feral_warders_cuirass,Feral Warder's Cuirass,70,4,Custom NM Drop,768,"BST",55,STR+4 / Pet ATK+20 / Pet ACC+15,Reward HP Potency+15% / Pet TP Bonus+1000,"A cuirass of interlinked scales taken from a beast that had spent its life being the apex of things. It does not fit comfortably. Nothing that powerful does."
+
+--- HEAD (1) ---
+
+ID,InternalName,DisplayName,LevelReq,PowerTier,Source,ModelID,Jobs,DEF,PrimaryStats,SecondaryStats,FlavorText
+29846,vantage_crown,Vantage Crown,70,4,Custom NM Drop,767,"RNG/COR",32,AGI+5 / Ranged Accuracy+8,Snapshot+7% / Ranged Critical Damage+5%,"A helm of beaten silver fitted with a rangefinder lens. Belonged to a scout who was never tracked despite three decades of work in hostile territory."
+
+--- ACCESSORIES (3) ---
+
+ID,InternalName,DisplayName,Slot,LevelReq,PowerTier,Source,ModelID,Jobs,DEF,PrimaryStats,SecondaryStats,FlavorText
+29847,fateweaver_mantle,Fateweaver Mantle,BACK,70,4,Custom NM Drop,503,"SMN/BST",10,MND+3 / Blood Pact Rage Damage+10%,Blood Pact Delay-10 / Avatar Perpetuation Cost-2,"A mantle stitched in patterns too complex to follow. Every avatar that has worn it grew stronger, then older, then was gone."
+29848,requiem_torque,Requiem Torque,NECK,72,4,Custom NM Drop,0,All Jobs,0,CHR+6 / Singing Skill+8,Song Duration Bonus+15%,"A torque of pale iron inscribed with musical notation that does not correspond to any known piece. Those who wear it hear an additional voice in every song."
+29849,shadowstrike_ring,Shadowstrike Ring,RING,70,4,Custom NM Drop,0,All Jobs,0,DEX+5 / AGI+4,Sneak Attack DEX Bonus+5% / Triple Attack+1%,"A ring inset with shadow-glass. The face of the last person who saw the previous owner wearing it is reportedly still visible in the stone."
+
+==============================================================
+  NM MASTER REFERENCE — ALL BATCHES
+  For use when wiring NMs and quests via LQS local branch.
+
+  DIFFICULTY KEY
+  A  Solo-friendly      lv45-55 solo recommended, any level with backup
+  B  Light group (2-3)  lv58-65 duo/trio recommended
+  C  Party (4-6)        lv65-70 full party recommended
+  D  Endgame group      lv70-75 skilled party or full alliance
+
+  All NM items use flag 0x0C00 (RARE + EX / No-trade).
+==============================================================
+
+NMItemID,ItemName,NMInternalName,NMDisplayName,Zone,MobFamily,Difficulty,ApproxNMLevel,SpawnNotes,SpecialMechanics,FlavorSummary
+
+--- DIFFICULTY A: ENTRY NMs (lv40-52, Solo-friendly) ---
+
+29702,Thornwood Staff,grovekeeper_rootwall,Grovekeeper Rootwall,Yuhtunga Jungle,Plantoid (Treant),A,47,Spawns in the deeper grove section away from the main paths. ~1.5hr respawn.,Absorbs Earth-based magic. Recommended: piercing damage and wind-element spells.,"An ancient treant warped by decades of dark energy pooling in the jungle floor. Bark armour and long reach. Patient."
+29709,Ember Plate,pyrecult_drayven,Pyrecult Drayven,Garlaige Citadel,Humanoid (Dark Knight),A,42,Patrols the upper section near the first banishing gate. ~1hr respawn.,Fire-based weaponskills. Uses Souleater at 50% HP — healers should expect spike damage.,"A fire cultist who traded holy allegiance for pyroclast ambition. The plate he wears absorbed enough flame that it never fully cooled."
+29719,Wanderers Mantle,ashwind_yoichi,Ashwind Yoichi,Batallia Downs,Humanoid (Samurai),A,52,Wanders the central plains. Rare spawn (~2hr). Does not aggro.,High evasion. Uses melee WS chains rapidly. Kiting effective if solo. Ranged parties recommended.,"A ronin with no nation and no name left to use. Carries everything he owns. Has never lost a fight outdoors."
+29712,Hammerfist Gauntlets,ironmonk_kujazan,Ironmonk Kujazan,Crawlers Nest,Humanoid (Monk),A,52,Found in the upper beetle tunnel section. ~1hr respawn.,AoE Counter-type ability activates when hit from the front. Engage from behind or use ranged.,"A monastery enforcer who outlived the order that trained him. Keeps discipline out of habit."
+29723,Wraithreap Scythe,soulrend_hagalaz,Soulrend Hagalaz,Gusgen Mines,Undead (Ghost/Skeleton hybrid),A,52,Spawns in the lower mine shafts. Darkness required to navigate safely. ~1.5hr respawn.,Drains HP on hit and uses dark-element spells. Dispel recommended. Light-based damage most effective.,"Something that used to be a miner. The scythe predates whatever it has become."
+
+--- DIFFICULTY B: MID-TIER NMs (lv55-63, Duo/Trio) ---
+
+29703,Rimehunters Bow,glacefang_velthar,Glacefang Velthar,Cape Teriggan,Beast (Ram family - ice affinity),B,57,Roams the northern coastal cliffs. ~1.5hr respawn.,High Ranged Accuracy when enraged. Ice-based breath attack. Wind-element magic most effective.,"A highland predator that learned to hunt at range. The coldwood the beast favoured for scratching became the weapon."
+29716,Gloamstone Sabots,blight_serafi_yzen,Blight Serafi Yzen,The Sanctuary of Zitah,Humanoid (Black Mage),B,57,Spawns near the magical stone formations in the inner sanctuary. ~2hr respawn.,Casts Tier III black magic and enfeebling spells. Silencing as priority. Does not have high HP but hits hard.,"A hexcaster who found the Zi'Tah's stones amplified her reach considerably. She never left."
+29733,Templar Crown,ironvow_godefret,Ironvow Godefret,Bostaunieux Oubliette,Humanoid (Paladin),B,57,Patrols the lower prison corridors. ~1.5hr respawn.,Generates high enmity and uses a self-Invincible-type ability at 30% HP. Do not burst — wait it out.,A captain of a holy order disbanded by political decree. Still enforces laws no one else remembers.
+29778,Spellward Mantle,runeseeker_valdris,Runeseeker Valdris,Toraimarai Canal,Humanoid (Red Mage),B,57,Found in the arcane chamber sections of the canal. ~1.5hr respawn.,Casts Stoneskin and Phalanx repeatedly. Dispel before properly engaging. Uses Chainspell-type at 25% HP.,"A runeward arcanist who sealed himself into the canal's lower passages. He is still working on the same problem."
+29738,Cloistered Surcoat,prior_elosenne,Prior Elosenne,Bostaunieux Oubliette,Humanoid (White Mage/Monk),B,60,Shares the dungeon with Ironvow Godefret — both farmable in the same run. Inner chamber. ~2hr.,Self-cures aggressively and uses AoE knockback. Silence is mandatory. High MND makes enfeebles unreliable.,"A monastery elder who refused to leave when the institution fell. The passages became his sanctuary by default."
+29727,Ashlock Musket,coldshot_meridia,Coldshot Meridia,Cape Teriggan,Humanoid (Ranger),B-C,62,Shares zone with Glacefang Velthar — farmable in the same excursion. Inner cape cliff section.,Extremely high Ranged Accuracy and uses Eagle Eye Shot-type ability at 50% HP. Approach from downhill.,"A sharpshooter who operates entirely at range. Has never been caught in melee. Prefers it that way."
+29707,Ironshroud Mask,warbound_korvash,Warbound Korvash,Gustav Tunnel,Beast (Gnole warlord - high DEF),B-C,62,Lurks in the wider tunnel chambers past the halfway point. ~2hr respawn.,Very high physical defence — magic users or armour-penetrating WSs recommended. Slow but high ATK.,"A Gnole that reached warlord through the standard method: outlasting everyone who tried to stop it."
+29769,Hunters Earring,razorfang_kellath,Razorfang Kellath,The Sanctuary of Zitah,Beast (Manticore family),B-C,62,Shares zone with Blight Serafi Yzen — farmable in same run. Outer sanctuary paths.,High AGI and uses Ranged-type claw rush attacks. Silence ineffective — focus on kiting or stun rotation.,"The largest predator in the Zi'Tah. Its earring is actually one of its own teeth."
+
+--- DIFFICULTY C: PARTY NMs (lv65-70, Full Party) ---
+
+29710,Shadowweave Tunic,ebonveil_tachirak,Ebonveil Tachirak,Temple of Uggalepih,Shadow/Humanoid (Thief),C,65,Ambush-type NM — does not aggro but links with Tonberry trash. Inner temple. ~3hr respawn.,High evasion. Uses Perfect Dodge once. Will attempt to kite and re-engage. Can be bound effectively.,"A master assassin who took a contract that led him into the temple. He's still working on the exit."
+29748,Shadowstep Hakama,veilstep_manirak,Veilstep Manirak,Den of Rancor,Shadow/Humanoid (Dancer),C,62,Found in Den of Rancor mid-section. ~2hr respawn. Aggros by sight.,Uses AoE Skillchain-type ability. Very high AGI and evasion. DEX-build parties outperform brute-force.,"A blade-dancer who treats combat as choreography. The choreography is lethal."
+29753,Thornwalker Boots,stalkshroud_rektan,Stalkshroud Rektan,Yhoator Jungle,Humanoid (BST/Ranger hybrid),C,65,Inner jungle paths near the Tonberry territory. ~2hr respawn.,Calls a jug-pet-type add at pull. Defeat the pet first or it will be resumm oned. Add has moderate HP.,"A poacher lord who made the Yhoator his territory through persistence and strategic cruelty."
+29728,Ironbone Greataxe,marrowlord_calagor,Marrowlord Calagor,The Eldieme Necropolis,Undead (Skeleton - Large family),C,67,Deep necropolis section. High-level undead trash. ~2.5hr respawn.,Extremely high HP. AoE physical WS with wide range. Thunder-element magic and piercing damage recommended.,"A skeleton so old it has a name. What it was before is unclear. What it is now is very clear."
+29774,Champions Ring,bladeghost_arthek,Bladeghost Arthek,Feiyin,Ghost/Undead (Paladin subtype),C,67,Inner Feiyin sanctum. Shares zone with Iron-Knuckle Borvaag and The Nameless Blade — all three farmable per trip. ~2.5hr.,Uses shield-type abilities and HP drain on hit. Light-based magic most effective. Keep distance.,"The ghost of a tournament champion who won everything and then lost the one fight that mattered."
+29704,Ashveil Katana,ashveil_ryouken,Ashveil Ryouken,Den of Rancor,Shadow/Humanoid (Ninja),C,67,Deep Den of Rancor. Shares zone with Veilstep Manirak. ~3hr respawn.,Uses Utsusemi and high-tier Ninjutsu. Bind/Gravity are effective. Rotate hate carefully — will punish backline.,"A shadow hunter who followed the darkness long enough that the darkness followed back."
+29743,Duelists Gages,argent_blade_veskan,Argent Blade Veskan,Sea Serpent Grotto,Humanoid (Red Mage),C,62,Upper grotto chambers above the serpent territory. ~2hr respawn.,Dual-wields and casts enfeebles simultaneously. Resistant to Sleep. Dispel Stoneskin before engaging properly.,"A mage-swordsman who found the grotto's acoustics improved his casting. He stayed for the solitude."
+29759,Wardens Torque,ironpost_valdren,Ironpost Valdren,Kuftal Tunnel,Humanoid (Warrior captain),C,70,Deeper tunnel section. ~2hr respawn.,Calls two archer adds at 50% HP. Eliminate adds quickly — they apply a stacking ranged accuracy down.,"A frontier captain who refused evacuation orders. The tunnel is his post. It will remain so."
+29764,Titans Girdle,iron_knuckle_borvaag,Iron-Knuckle Borvaag,Feiyin,Ghost/Undead (Galka Monk),C,70,Inner Feiyin sanctum. Shares zone with Bladeghost Arthek and The Nameless Blade. ~2.5hr.,Massive HP pool. Uses Chakra repeatedly and has a high Counter rate. Blunt damage is absorbed — use slashing or piercing.,"A Galka champion who simply did not stop after death. Old habits."
+29779,Galeshroud Cloak,the_nameless_blade,The Nameless Blade,Feiyin,Shadow/Humanoid,C-D,70,Inner sanctum. Shares zone with other Feiyin NMs. ~3hr respawn. Hardest NM in Feiyin.,Uses multiple WSs per round below 30% HP. Extremely high evasion. AoE knockback on TP. Most dangerous of the Feiyin trio.,"No name on record. The cloak has been found three times on three different bodies in the same place."
+29734,Phantom Visor,voidface_halkyr,Voidface Halkyr,Middle Delkfutt Tower,Shadow/Humanoid (Blue Mage),C,70,Mid-tower spawn between floors 4 and 6. ~2.5hr respawn.,Uses Blue Magic abilities — toolkit varies. Silence is unreliable. Bring diverse debuff options.,"A faceless duelist who climbed the tower and never came back down. The visor is welded shut."
+
+--- DIFFICULTY D: HIGH-TIER NMs (lv70-72, Skilled Party) ---
+
+29749,Warlords Cuisses,warscourge_orthek,Warscourge Orthek,Den of Rancor,Humanoid (Warrior/Dark Knight),D,72,Deep Den of Rancor. Shares zone with other Den NMs. ~3hr respawn.,Uses Souleater-type drain strikes and high-STR WSs. Healers must pre-cure. Brings a single bodyguard add.,"A warlord who found the Den of Rancor and decided it suited him. It does."
+29754,Gravewarden Sabatons,gravewatch_ardan,Gravewatch Ardan,The Eldieme Necropolis,Undead/Knight (Paladin ghost),D,72,Deeper tomb section. Shares zone with Marrowlord Calagor. ~3hr respawn.,Very high physical resistance — magic is the primary damage vector. Uses AoE holy-damage pulse at full HP.,"An armoured knight who was entombed standing. He has been standing ever since."
+29744,Ironwill Gauntlets,rampart_vaskorath,Rampart Vaskorath,Upper Delkfutt Tower,Arcana (Golem - Fortress Guard),D,72,Top floors of Delkfutt. Challenging trash on the approach. ~3hr respawn.,Very high DEF and HP. Uses AoE Blind and Stoneskin. Thunder and fire magic recommended. Bring Dispel.,"A golem built to guard the tower's summit. No one specified when it should stop."
+29739,Reavers Coat,blackmantle_sorvath,Blackmantle Sorvath,The Boyahda Tree,Humanoid (Dark Knight/Warrior),D,72,Deeper grove section. Tough tree-based trash on approach. ~3hr respawn.,Uses Souleater-type attacks and has extremely high base ATK. Healers are the priority target for hate rotation.,"The mark of a reaver: someone who cut a path through stronger opponents. Sorvath cut a long one."
+
+--- DIFFICULTY D: ENDGAME NMs (lv72-75, Alliance or elite 6-man) ---
+
+29840,Voidheart Haubergeon,the_hollow_warden,The Hollow Warden,Ru'Aun Gardens,Celestial Warrior (Zilartian),D,74,Central gardens. Access requires Zilart progression. Rare spawn (~4hr or forced via ???).,Uses powerful physical WSs and AoE Void Pulse at 50% and 25% HP. Resistant to elemental magic. Requires coordinated hate rotation.,"A Zilartian guardian whose allegiance was consumed by isolation. Still holds its post. The post no longer exists."
+29841,Covenant Plate,ironvault_golem_rusavat,Ironvault Golem Ru'Savat,Shrine of Ruavitau,Arcana (Golem - large),D,74,Central shrine chamber. Sky access required. ~4hr respawn.,Very high DEF and HP. Casts Stoneskin and physical Barrier repeatedly. Thunder and fire magic best. Bring two Dispel sources.,"Forged to enforce a covenant between the Zilartians and something older. The covenant was forgotten. The golem was not."
+29842,Starweavers Robe,nullweave_sorcant,Nullweave Sorcant,The Garden of Ruhmet,Empty (Jailer family),D,75,Sea-tier zone. Requires CoP progression. Hardest item to obtain in this set.,Casts high-tier elemental magic and Dispels party buffs on TP. Resistant to enfeebles. Bring Magic Defense Bonus food.,"An arcanist consumed by the Emptiness without losing its spellcraft. It uses what remains to considerable effect."
+29843,Saintwood Staff,luminary_aethos,Luminary Aethos,Romaeve,Elemental (Light family),D,73,Inner temple sanctum. Spawns only during specific Lightsday windows. ~3hr window respawn.,Cures itself and uses AoE light damage pulses. Dark magic is most effective. Do not engage on Lightsday — damage cap applies.,"A light-elemental spirit that has been resident in Ro'Maeve since before the temple had a name."
+29844,Eclipse Katana,duskblade_soraiken,Duskblade Soraiken,Den of Rancor,Shadow/Humanoid (Ninja-Samurai master),D,73,Deepest Den of Rancor section. Hardest NM in the Den. ~4hr respawn.,Uses Utsusemi and a Meikyo Shisui-type TP-flush. Attacks twice per round below 50% HP. Bind/Gravity effective early only.,"The most feared NM in the Den of Rancor. Has a name in three languages. None of them translate cleanly."
+29845,Abyssal Tabar,bonelord_galvrak,Bonelord Galvrak,Valley of Sorrows,Giant (Gigas family - corrupted),D,72,Valley approach. Difficult path through high-level Gigas trash. ~3hr respawn.,Massive HP. AoE Great Axe WS with wide radius. High base STR. Evasion strategies ineffective — stun rotation recommended.,"A Gigas warlord whose corruption made him stronger and considerably less interested in conversation."
+29846,Vantage Crown,stormwing_halcyren,Stormwing Halcyren,Ruaun Gardens,Bird/Zilartian Beast (aerial),D,72,Outer garden perimeter. Sky access required. ~3hr respawn.,Agile with high movement speed. Uses AoE Wing Blast at melee range — engage at ranged distance. Ranged parties recommended.,"An ancient aerial hunter bound to the gardens by the Zilartians. Still hunts. The gardens are smaller than it remembers."
+29847,Fateweaver Mantle,fatebound_summoner_arishai,Fatebound Summoner Arishai,Romaeve,Ghost/Humanoid (Ancient Summoner),D,73,Outer temple wings. ~3hr respawn. Shares zone with Luminary Aethos.,Summons a scaled avatar add at 70% HP — defeat it before re-engaging the NM. SMN counterstrategy recommended.,"An ancient summoner whose body is gone but whose contracts remain active. The avatars still answer."
+29848,Requiem Torque,the_last_songwright,The Last Songwright,The Eldieme Necropolis,Ghost/Undead (Bard),D,73,Upper necropolis section. Shares zone with Marrowlord Calagor and Gravewatch Ardan.,Sings combat songs that simultaneously buff itself and debuff the party. Silence as priority. AoE Lullaby — spread party before each song cast.,"The ghost of a bard whose final performance was interrupted. It has been continuing ever since."
+29849,Shadowstrike Ring,gutrender_thiask,Gutrender Thiask,Temple of Uggalepih,Tonberry (Named champion),D,73,Deep temple. Shares zone with Ebonveil Tachirak. Challenging Tonberry trash on approach. ~4hr.,Uses Sneak Attack-type assassination and a stronger version of Tonberry's Grudge. Face NM away from party at all times.,"The Tonberry clan's champion. Unlike most Tonberries it is not patient. It has already decided what it is going to do."
+29850,Feral Warders Cuirass,primalhide_varrakh,Primalhide Varrakh,The Sanctuary of Zitah,Beast (Manticore - apex variant),D,72,Far eastern boundary of the Zi'Tah. Shares zone with Razorfang Kellath and Blight Serafi Yzen.,Uses AoE Rush charge ability. Unique mechanic: weakens slightly when the engaging player has an active pet. BST charm attempt possible but success rate extremely low.,"The largest beast in the Zi'Tah. Every other predator in the zone gives it space. The players should probably do the same."
+
+--- DIFFICULTY C/D: PENDING BATCH (IDs 29820-29839) — Awaiting design approval ---
+
+29820,Soulreaver Blade,[PENDING],[PENDING],TBD,Humanoid (RDM/BLU subtype),C,40,[Pending zone assignment],[Pending mechanics],"Enspell-focused sword — RDM/BLU NM drop (lv40)."
+29821,Dawnbringer Staff,[PENDING],[PENDING],TBD,Elemental or Humanoid,C,55,[Pending zone assignment],[Pending mechanics],"WHM healing staff with Cure Potency — NM drop (lv55)."
+29822,Bonebreaker,[PENDING],[PENDING],TBD,Humanoid or Beast,C,60,[Pending zone assignment],[Pending mechanics],"MNK H2H weapon with Smite — NM drop (lv60)."
+29823,Occultists Rod,[PENDING],[PENDING],TBD,Elemental or Humanoid,C,50,[Pending zone assignment],[Pending mechanics],"BLM magic burst staff — NM drop (lv50)."
+29824,Phantoms Coif,[PENDING],[PENDING],TBD,Shadow/Humanoid,C,50,[Pending zone assignment],[Pending mechanics],"NIN tool-save head — NM drop (lv50)."
+29825,Hexweave Tiara,[PENDING],[PENDING],TBD,Elemental or Humanoid,C,60,[Pending zone assignment],[Pending mechanics],"BLM Occult Acumen head — NM drop (lv60)."
+29826,Souleaters Cuirass,[PENDING],[PENDING],TBD,Humanoid (DRK subtype),C,55,[Pending zone assignment],[Pending mechanics],"DRK Souleater body — NM drop (lv55)."
+29827,Wraithguard Cuirass,[PENDING],[PENDING],TBD,Arcana or Humanoid,C,60,[Pending zone assignment],[Pending mechanics],"PLD/RUN magic mitigation body — NM drop (lv60)."
+29828,Hexbinder Cuffs,[PENDING],[PENDING],TBD,Humanoid (mage subtype),C,45,[Pending zone assignment],[Pending mechanics],"Spell interrupt resist hands — NM drop (lv45)."
+29829,Stormwarden Gages,[PENDING],[PENDING],TBD,Humanoid or Beast,C,55,[Pending zone assignment],[Pending mechanics],"RNG Snapshot/Barrage hands — NM drop (lv55)."
+29830,Wardens Tassets,[PENDING],[PENDING],TBD,Humanoid (WAR/PLD subtype),B,40,[Pending zone assignment],[Pending mechanics],"Shield block tank legs — NM drop (lv40)."
+29831,Resonance Hakama,[PENDING],[PENDING],TBD,Humanoid (SAM subtype),C,55,[Pending zone assignment],[Pending mechanics],"SAM Store TP/Skillchain legs — NM drop (lv55)."
+29832,Counterfall Greaves,[PENDING],[PENDING],TBD,Humanoid or Arcana,B,45,[Pending zone assignment],[Pending mechanics],"MNK Counter/Kick feet — NM drop (lv45)."
+29833,Darksole Boots,[PENDING],[PENDING],TBD,Humanoid (DRK/SAM subtype),C,60,[Pending zone assignment],[Pending mechanics],"Regain feet for DRK/SAM — NM drop (lv60)."
+29834,Trueshot Gorget,[PENDING],[PENDING],TBD,Humanoid or Beast,C,55,[Pending zone assignment],[Pending mechanics],"RNG Barrage accuracy neck — NM drop (lv55)."
+29835,Arbiters Band,[PENDING],[PENDING],TBD,Humanoid (RDM subtype),B,35,[Pending zone assignment],[Pending mechanics],"RDM enfeeble ring — NM drop (lv35)."
+29836,Bloodfeast Earring,[PENDING],[PENDING],TBD,Undead or Humanoid (DRK subtype),B,45,[Pending zone assignment],[Pending mechanics],"DRK Drain/Aspir earring — NM drop (lv45)."
+29837,Bladedancers Sash,[PENDING],[PENDING],TBD,Humanoid (SAM/NIN subtype),C,50,[Pending zone assignment],[Pending mechanics],"SAM/NIN Store TP waist — NM drop (lv50)."
+29838,Vortex Cord,[PENDING],[PENDING],TBD,Humanoid or Beast,C,55,[Pending zone assignment],[Pending mechanics],"RNG Rapid Shot waist — NM drop (lv55)."
+29839,Tempest Mantle,[PENDING],[PENDING],TBD,Humanoid or Ghost (BRD subtype),C-D,65,[Pending zone assignment],[Pending mechanics],"BRD Song Duration back — NM drop (lv65)."
