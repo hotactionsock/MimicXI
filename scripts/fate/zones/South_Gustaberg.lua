@@ -286,6 +286,102 @@ xi.fate.zones[xi.zone.SOUTH_GUSTABERG] =
             },
         },
         -----------------------------------
+        -- Full Ram Ahead
+        -- A massive Rampaging Ram driven
+        -- from Konschtat Highlands tears
+        -- through the zone. Requires a
+        -- coordinated group to bring down.
+        -----------------------------------
+        {
+            id          = "SG_BOSS_01",
+            name        = "Full Ram Ahead",
+            level       = 16,
+            duration    = 900,
+            chainOnly   = false,
+            isBoss      = true,
+            progressVal = 2,
+
+            objective = { type = "kill", count = 1 },
+
+            area =
+            {
+                x      = 0,
+                y      = 0,
+                z      = 0,
+                radius = 70,
+            },
+
+            entryPos = { x = 0, y = 0, z = 0, rot = 0 },
+
+            mobs =
+            {
+                {
+                    base         = { 108, 29 },
+                    name         = "Rampaging Ram",
+                    count        = 1,
+                    isBoss       = true,
+                    hpMultiplier = 8,
+                    spawnPoints  =
+                    {
+                        { x = 0, y = 0, z = 0, rot = 0 },
+                    },
+                },
+                {
+                    base        = { 107, 12 },
+                    name        = "Ornery Sheep",
+                    count       = 3,
+                    spawnPoints =
+                    {
+                        { x = 10,  y = 0, z = 5,  rot = 180 },
+                        { x = -10, y = 0, z = 5,  rot = 0   },
+                        { x = 0,   y = 0, z = -10, rot = 90 },
+                    },
+                },
+            },
+
+            rewards =
+            {
+                victory =
+                {
+                    gold   = { exp = 4000 },
+                    silver = { exp = 2500 },
+                    bronze = { exp = 1200 },
+                },
+                fail =
+                {
+                    gold   = { exp = 500 },
+                    silver = { exp = 300 },
+                    bronze = { exp = 150 },
+                },
+            },
+
+            loot =
+            {
+                victory =
+                {
+                    guaranteed = { { xi.item.RAM_HORN, 1000 } },
+                    bronze = { { xi.item.CLUMP_OF_SHEEP_WOOL,    240 },
+                               { xi.item.SHEEP_TOOTH,            150 } },
+                    silver = { { xi.item.CLUMP_OF_SHEEP_WOOL,    240 },
+                               { xi.item.SHEEP_TOOTH,            200 },
+                               { xi.item.CHUNK_OF_IRON_ORE,      150 } },
+                    gold   = { { xi.item.WAILING_RAM_HORN,       200 },
+                               { xi.item.CLUMP_OF_SHEEP_WOOL,    240 },
+                               { xi.item.CHUNK_OF_IRON_ORE,      200 },
+                               { xi.item.SHEEP_TOOTH,            200 } },
+                },
+                fail =
+                {
+                    guaranteed = {},
+                    bronze = {},
+                    silver = { { xi.item.CLUMP_OF_SHEEP_WOOL,     50 } },
+                    gold   = { { xi.item.CLUMP_OF_SHEEP_WOOL,    100 },
+                               { xi.item.SHEEP_TOOTH,             50 } },
+                },
+            },
+        },
+
+        -----------------------------------
         -- Shell Shock
         -- Chains from Quadav Incursion.
         -- Veteran Quadav push hard to hold
