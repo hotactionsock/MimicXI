@@ -5281,13 +5281,23 @@ void DistributeExperiencePoints(CCharEntity* PChar, CMobEntity* PMob)
                                 if (isSynced && !isSyncTarget && realLevel >= syncLevel + minDiff)
                                 {
                                     // Mentor: veteran synced down at least SYNC_MIN_LEVEL_DIFF levels
-                                    exp *= (1.0f + settings::get<float>("map.SYNC_MENTOR_EXP_BONUS"));
+                                    float baseExp     = exp;
+                                    float mentorBonus = settings::get<float>("map.SYNC_MENTOR_EXP_BONUS");
+                                    exp *= (1.0f + mentorBonus);
                                     PMember->m_pendingMentorSparks = (uint32)(exp * settings::get<float>("map.SYNC_MENTOR_SPARKS_PCT"));
+                                    // Accumulate only the bonus portion toward milestone tracking
+                                    int32 accumulated = PMember->getCharVar("sync_buddy_bonus_exp");
+                                    PMember->setCharVar("sync_buddy_bonus_exp", accumulated + (int32)(exp - baseExp));
                                 }
                                 else if (isSyncTarget)
                                 {
                                     // Pupil: the low-level player the rest of the party is synced to
-                                    exp *= (1.0f + settings::get<float>("map.SYNC_PUPIL_EXP_BONUS"));
+                                    float baseExp    = exp;
+                                    float pupilBonus = settings::get<float>("map.SYNC_PUPIL_EXP_BONUS");
+                                    exp *= (1.0f + pupilBonus);
+                                    // Accumulate only the bonus portion toward milestone tracking
+                                    int32 accumulated = PMember->getCharVar("sync_buddy_bonus_exp");
+                                    PMember->setCharVar("sync_buddy_bonus_exp", accumulated + (int32)(exp - baseExp));
                                 }
                             }
                         }
