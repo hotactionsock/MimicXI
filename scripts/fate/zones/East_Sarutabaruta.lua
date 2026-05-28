@@ -115,7 +115,7 @@ xi.fate.zones[xi.zone.EAST_SARUTABARUTA] =
         -----------------------------------
         {
             id          = "ES_YAGUDO_02",
-            name        = "Yagudo Scripture",
+            name        = "Holy Fowl",
             level       = 10,
             duration    = 480,
             chainOnly   = true,
@@ -202,7 +202,7 @@ xi.fate.zones[xi.zone.EAST_SARUTABARUTA] =
         -----------------------------------
         {
             id          = "ES_BEAST_01",
-            name        = "Crawler Colony",
+            name        = "Silk Road Shutdown",
             level       = 6,
             duration    = 600,
             chainOnly   = false,
@@ -291,7 +291,7 @@ xi.fate.zones[xi.zone.EAST_SARUTABARUTA] =
         -----------------------------------
         {
             id          = "ES_BEAST_02",
-            name        = "Mandragora Uprising",
+            name        = "Uprooted",
             level       = 7,
             duration    = 600,
             chainOnly   = false,

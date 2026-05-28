@@ -113,7 +113,7 @@ xi.fate.zones[xi.zone.NORTH_GUSTABERG] =
         -----------------------------------
         {
             id          = "NG_GOBLIN_02",
-            name        = "Goblin Muggers",
+            name        = "Highway Robbery",
             level       = 9,
             duration    = 480,
             chainOnly   = true,
@@ -379,7 +379,7 @@ xi.fate.zones[xi.zone.NORTH_GUSTABERG] =
         -----------------------------------
         {
             id          = "NG_BEAST_01",
-            name        = "Hornet Swarm",
+            name        = "Hornet Havoc",
             level       = 6,
             duration    = 600,
             chainOnly   = false,
@@ -467,7 +467,7 @@ xi.fate.zones[xi.zone.NORTH_GUSTABERG] =
         -----------------------------------
         {
             id          = "NG_BEAST_02",
-            name        = "Night Stalkers",
+            name        = "Dingbat Dusk",
             level       = 5,
             duration    = 600,
             chainOnly   = false,

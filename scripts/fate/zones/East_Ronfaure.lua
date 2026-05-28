@@ -288,7 +288,7 @@ xi.fate.zones[xi.zone.EAST_RONFAURE] =
         -----------------------------------
         {
             id          = "ER_BEAST_02",
-            name        = "Bat Colony",
+            name        = "Going Batty",
             level       = 5,
             duration    = 600,
             chainOnly   = false,
@@ -464,7 +464,7 @@ xi.fate.zones[xi.zone.EAST_RONFAURE] =
         -----------------------------------
         {
             id          = "ER_BEAST_03",
-            name        = "Scarab Infestation",
+            name        = "Scarab Scramble",
             level       = 6,
             duration    = 600,
             chainOnly   = false,

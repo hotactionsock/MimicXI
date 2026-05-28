@@ -202,7 +202,7 @@ xi.fate.zones[xi.zone.WEST_RONFAURE] =
         -----------------------------------
         {
             id          = "WR_BEAST_01",
-            name        = "Bat Swarm",
+            name        = "Batty Business",
             level       = 5,
             duration    = 600,
             chainOnly   = false,
@@ -290,7 +290,7 @@ xi.fate.zones[xi.zone.WEST_RONFAURE] =
         -----------------------------------
         {
             id          = "WR_BEAST_02",
-            name        = "Rabbit Stampede",
+            name        = "Hare-Raising Havoc",
             level       = 4,
             duration    = 600,
             chainOnly   = false,
@@ -467,7 +467,7 @@ xi.fate.zones[xi.zone.WEST_RONFAURE] =
         -----------------------------------
         {
             id          = "WR_BEAST_03",
-            name        = "Worm Emergence",
+            name        = "Can of Worms",
             level       = 5,
             duration    = 600,
             chainOnly   = false,

@@ -113,7 +113,7 @@ xi.fate.zones[xi.zone.WEST_SARUTABARUTA] =
         -----------------------------------
         {
             id          = "WS_YAGUDO_02",
-            name        = "Yagudo War Council",
+            name        = "Fowl Play",
             level       = 10,
             duration    = 480,
             chainOnly   = true,
@@ -200,7 +200,7 @@ xi.fate.zones[xi.zone.WEST_SARUTABARUTA] =
         -----------------------------------
         {
             id          = "WS_BEAST_01",
-            name        = "Mandragora Rampage",
+            name        = "Root of All Evil",
             level       = 7,
             duration    = 600,
             chainOnly   = false,
@@ -289,7 +289,7 @@ xi.fate.zones[xi.zone.WEST_SARUTABARUTA] =
         -----------------------------------
         {
             id          = "WS_BEAST_02",
-            name        = "Bee Hive Assault",
+            name        = "Hive Minded",
             level       = 6,
             duration    = 600,
             chainOnly   = false,
@@ -377,7 +377,7 @@ xi.fate.zones[xi.zone.WEST_SARUTABARUTA] =
         -----------------------------------
         {
             id          = "WS_BEAST_03",
-            name        = "Rarab Infestation",
+            name        = "Rarab Roundup",
             level       = 5,
             duration    = 600,
             chainOnly   = false,
