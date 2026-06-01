@@ -223,6 +223,9 @@ xi.player.onGameIn = function(player, firstLogin, zoning)
         player:addMod(xi.mod.TREASURE_HUNTER, thLevel)
     end
 
+    -- Master Stars: awarded when all jobs (WAR–RUN) reach level 75
+    xi.player.applyMasterStars(player)
+
     -- god mode
     if player:getCharVar('GodMode') == 1 then
         player:addStatusEffect(xi.effect.MAX_HP_BOOST, { power = 1000, origin = player })
@@ -279,7 +282,22 @@ end
 xi.player.onPlayerDeath = function(player)
 end
 
+xi.player.applyMasterStars = function(player)
+    if player:getMod(xi.mod.SUPERIOR_LEVEL) > 0 then
+        return
+    end
+
+    for i = xi.job.WAR, xi.job.RUN do
+        if player:getJobLevel(i) < 75 then
+            return
+        end
+    end
+
+    player:addMod(xi.mod.SUPERIOR_LEVEL, 5)
+end
+
 xi.player.onPlayerLevelUp = function(player)
+    xi.player.applyMasterStars(player)
 end
 
 xi.player.onPlayerLevelDown = function(player)
