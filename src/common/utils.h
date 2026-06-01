@@ -68,7 +68,7 @@ auto as(const U& object) -> const T*
     return reinterpret_cast<const T*>(&object);
 }
 
-constexpr size_t PacketNameLength = 16; // 15 + null terminator
+constexpr size_t PacketNameLength = 20; // 19 + null terminator
 
 constexpr size_t DecodeStringLength    = 21; // used for size of decoded strings of signature/linkshells
 constexpr size_t SignatureStringLength = 16; // encoded signature string size // 15 characters + null terminator
