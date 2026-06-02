@@ -1085,89 +1085,152 @@ SMITE SCALE  SMITE mod: 256-scale (value 10/12/15/20)
   Stats: AGI+3 / Ranged Accuracy+5 / Snapshot+3%
 
 ================================================================================
-  SECTION 4: PENDING ITEMS  (IDs 29820–29839)
-  Stats not yet approved — do NOT insert to SQL until sign-off
+  SECTION 4: PENDING ITEMS  (IDs 29820–29839, 29909–29910)
+  Stats approved — wire to SQL when NM encounters are scripted
 ================================================================================
 
+--------------------------------------------------------------------------------
+  WEAPONS
+--------------------------------------------------------------------------------
+
 29820 | Soulreaver Blade      | Lv40 | PENDING NM Drop | RARE+EX
-  Weapon — Sword | Jobs: RDM/BLU (NM lv40, Party diff)
-  Stats: PENDING — enspell-focused sword
+  Weapon — Sword, Slashing | Slot: MAIN/SUB | Jobs: RDM/BLU/NIN
+  DMG: 38  Delay: 240
+  Stats: INT+4 / STR+2 / Magic Accuracy+5 / Blue Magic Skill+4
+  Note: Blue Magic Skill is UNCONFIRMED mod ID — resolve locally
 
 29821 | Dawnbringer Staff     | Lv55 | PENDING NM Drop | RARE+EX
-  Weapon — Staff | Jobs: WHM (NM lv55, Party diff)
-  Stats: PENDING — Cure Potency healing staff
+  Weapon — Staff, Blunt | Slot: MAIN | Jobs: WHM/RDM/SCH
+  DMG: 58  Delay: 366
+  Stats: MND+5 / HP+20 / Healing Magic Skill+7 / Cure Potency+6%
 
 29822 | Bonebreaker           | Lv60 | PENDING NM Drop | RARE+EX
-  Weapon — H2H | Jobs: MNK (NM lv60, Party diff)
-  Stats: PENDING — H2H with Smite
+  Weapon — Hand-to-Hand, Blunt | Slot: MAIN/SUB | Jobs: MNK
+  DMG: 26  Delay: 96
+  Stats: STR+5 / Accuracy+8 / Subtle Blow+5 / Counter+3%
 
 29823 | Occultist's Rod       | Lv50 | PENDING NM Drop | RARE+EX
-  Weapon — Staff | Jobs: BLM (NM lv50, Party diff)
-  Stats: PENDING — magic burst staff
+  Weapon — Staff, Blunt | Slot: MAIN | Jobs: BLM/RDM/SCH
+  DMG: 55  Delay: 366
+  Stats: INT+5 / MP+25 / Elemental Magic Skill+6 / Magic Burst Bonus+5%
+
+--------------------------------------------------------------------------------
+  ARMOUR — HEAD
+--------------------------------------------------------------------------------
 
 29824 | Phantom's Coif        | Lv50 | PENDING NM Drop | RARE+EX
-  Armour — HEAD | Jobs: NIN (NM lv50, Party diff)
-  Stats: PENDING — Ninja Tool Save head
+  Armour — HEAD | Jobs: NIN/SAM | DEF: 28
+  Stats: DEX+4 / Ninjutsu Skill+5 / Ninja Tool Expertise+5% / Evasion+4
 
 29825 | Hexweave Tiara        | Lv60 | PENDING NM Drop | RARE+EX
-  Armour — HEAD | Jobs: BLM (NM lv60, Party diff)
-  Stats: PENDING — Occult Acumen head
+  Armour — HEAD | Jobs: BLM/RDM/SCH | DEF: 30
+  Stats: INT+5 / Magic Accuracy+5 / Elemental Magic Skill+5 / Occult Acumen+8
+
+29909 | Puppet Mask           | Lv50 | PENDING NM Drop | RARE+EX
+  Armour — HEAD | Jobs: MNK/PUP | DEF: 24
+  Stats: STR+2 / DEX+2 / Subtle Blow+3 / Automaton: ATK+10 / Automaton: ACC+8
+
+--------------------------------------------------------------------------------
+  ARMOUR — BODY
+--------------------------------------------------------------------------------
 
 29826 | Souleater's Cuirass   | Lv55 | PENDING NM Drop | RARE+EX
-  Armour — BODY | Jobs: DRK (NM lv55, Party diff)
-  Stats: PENDING — Souleater Effect body
+  Armour — BODY | Jobs: DRK/WAR | DEF: 42
+  Stats: STR+4 / INT+3 / HP+30 / Souleater Effect+8
 
 29827 | Wraithguard Cuirass   | Lv60 | PENDING NM Drop | RARE+EX
-  Armour — BODY | Jobs: PLD/RUN (NM lv60, Party diff)
-  Stats: PENDING — magic mitigation body
+  Armour — BODY | Jobs: PLD/RUN | DEF: 44
+  Stats: VIT+4 / HP+35 / Enmity+4 / Magic Damage Taken-5%
+  Note: MAG_DMG_TAKEN is UNCONFIRMED mod ID — resolve locally
+
+29910 | Gearwright's Haubergeon | Lv60 | PENDING NM Drop | RARE+EX
+  Armour — BODY | Jobs: MNK/PUP | DEF: 42
+  Stats: STR+3 / Accuracy+5 / Subtle Blow+3 / Automaton: ATK+14 / Automaton: ACC+10 / Automaton: HP+100
+  Note: PET_HP is UNCONFIRMED mod ID — resolve locally
+
+--------------------------------------------------------------------------------
+  ARMOUR — HANDS
+--------------------------------------------------------------------------------
 
 29828 | Hexbinder Cuffs       | Lv45 | PENDING NM Drop | RARE+EX
-  Armour — HANDS | Jobs: mage (NM lv45, Party diff)
-  Stats: PENDING — spell interrupt resistance hands
+  Armour — HANDS | Jobs: WHM/BLM/RDM/SCH/GEO/SMN | DEF: 22
+  Stats: INT+3 / MND+3 / Magic Accuracy+4 / Spell Interruption Rate Down+15%
+  Note: SPELL_INTERRUPT_RATE_DOWN is UNCONFIRMED mod ID — resolve locally
 
 29829 | Stormwarden Gages     | Lv55 | PENDING NM Drop | RARE+EX
-  Armour — HANDS | Jobs: RNG (NM lv55, Party diff)
-  Stats: PENDING — Snapshot / Barrage hands
+  Armour — HANDS | Jobs: RNG/COR | DEF: 24
+  Stats: AGI+4 / Ranged Accuracy+5 / Snapshot+4% / Barrage Accuracy+5
+
+--------------------------------------------------------------------------------
+  ARMOUR — LEGS
+--------------------------------------------------------------------------------
 
 29830 | Warden's Tassets      | Lv40 | PENDING NM Drop | RARE+EX
-  Armour — LEGS | Jobs: WAR/PLD (NM lv40, Duo/Trio diff)
-  Stats: PENDING — shield block tank legs
+  Armour — LEGS | Jobs: WAR/PLD/RUN | DEF: 28
+  Stats: VIT+4 / HP+25 / Enmity+3 / Shield Block Rate+5%
 
 29831 | Resonance Hakama      | Lv55 | PENDING NM Drop | RARE+EX
-  Armour — LEGS | Jobs: SAM (NM lv55, Party diff)
-  Stats: PENDING — Store TP / Skillchain Damage legs
+  Armour — LEGS | Jobs: SAM/NIN | DEF: 32
+  Stats: STR+3 / DEX+3 / Store TP+4 / Skillchain Damage+4%
+
+--------------------------------------------------------------------------------
+  ARMOUR — FEET
+--------------------------------------------------------------------------------
 
 29832 | Counterfall Greaves   | Lv45 | PENDING NM Drop | RARE+EX
-  Armour — FEET | Jobs: MNK (NM lv45, Duo/Trio diff)
-  Stats: PENDING — Counter / Kick Attack Rate feet
+  Armour — FEET | Jobs: MNK/PUP | DEF: 18
+  Stats: STR+2 / Accuracy+4 / Counter+3% / Automaton: ATK+8 / Automaton: ACC+6
 
 29833 | Darksole Boots        | Lv60 | PENDING NM Drop | RARE+EX
-  Armour — FEET | Jobs: DRK/SAM (NM lv60, Party diff)
-  Stats: PENDING — Regain feet
+  Armour — FEET | Jobs: DRK/SAM | DEF: 22
+  Stats: STR+3 / Store TP+4 / Accuracy+5 / Regain+1
+  Note: REGAIN is UNCONFIRMED mod ID — resolve locally
+
+--------------------------------------------------------------------------------
+  ACCESSORIES — NECK
+--------------------------------------------------------------------------------
 
 29834 | Trueshot Gorget       | Lv55 | PENDING NM Drop | RARE+EX
-  Armour — NECK | Jobs: RNG (NM lv55, Party diff)
-  Stats: PENDING — Barrage Accuracy neck
+  Armour — NECK | Jobs: RNG/COR | DEF: 0
+  Stats: AGI+4 / Ranged Accuracy+5 / Barrage Accuracy+8
+
+--------------------------------------------------------------------------------
+  ACCESSORIES — RING
+--------------------------------------------------------------------------------
 
 29835 | Arbiter's Band        | Lv35 | PENDING NM Drop | RARE+EX
-  Armour — RING | Jobs: RDM (NM lv35, Duo/Trio diff)
-  Stats: PENDING — enfeebling magic ring
+  Armour — RING | Jobs: ALL | DEF: 0
+  Stats: INT+3 / Magic Accuracy+5 / Blue Magic Skill+5
+  Note: BLU_SKILL is UNCONFIRMED mod ID — resolve locally
+
+--------------------------------------------------------------------------------
+  ACCESSORIES — EAR
+--------------------------------------------------------------------------------
 
 29836 | Bloodfeast Earring    | Lv45 | PENDING NM Drop | RARE+EX
-  Armour — EAR | Jobs: DRK (NM lv45, Duo/Trio diff)
-  Stats: PENDING — Drain / Aspir Potency earring
+  Armour — EAR | Jobs: DRK/BLM | DEF: 0
+  Stats: INT+3 / Dark Magic Skill+4 / Enhances Drain/Aspir Potency+8
+
+--------------------------------------------------------------------------------
+  ACCESSORIES — WAIST
+--------------------------------------------------------------------------------
 
 29837 | Bladedancer's Sash    | Lv50 | PENDING NM Drop | RARE+EX
-  Armour — WAIST | Jobs: SAM/NIN (NM lv50, Party diff)
-  Stats: PENDING — Store TP waist
+  Armour — WAIST | Jobs: SAM/NIN/DRG | DEF: 0
+  Stats: DEX+3 / Store TP+5 / Accuracy+4
 
 29838 | Vortex Cord           | Lv55 | PENDING NM Drop | RARE+EX
-  Armour — WAIST | Jobs: RNG (NM lv55, Party diff)
-  Stats: PENDING — Rapid Shot waist
+  Armour — WAIST | Jobs: RNG/COR | DEF: 0
+  Stats: AGI+3 / Ranged Accuracy+4 / Rapid Shot+4%
+
+--------------------------------------------------------------------------------
+  ACCESSORIES — BACK
+--------------------------------------------------------------------------------
 
 29839 | Tempest Mantle        | Lv65 | PENDING NM Drop | RARE+EX
-  Armour — BACK | Jobs: BRD (NM lv65, Party/Endgame diff)
-  Stats: PENDING — Song Duration Bonus back
+  Armour — BACK | Jobs: BRD | DEF: 8
+  Stats: CHR+4 / MP+20 / Singing Skill+6 / Song Duration Bonus+15%
+  Note: SINGING_SKILL is UNCONFIRMED mod ID — resolve locally
 
 ================================================================================
   UNCONFIRMED MOD IDs — resolve against mods_by_id.txt before SQL insert
@@ -1189,16 +1252,28 @@ SMITE SCALE  SMITE mod: 256-scale (value 10/12/15/20)
     Used on: 29708 Pilgrim's Coat (+5) / 29738 Cloistered Surcoat (+6)
 
   MAG_DMG_TAKEN — Magic Damage Taken% (negative value = reduction)
-    Used on: 29841 Covenant Plate (-8%)  — verify value scale too
+    Used on: 29827 Wraithguard Cuirass (-5%) / 29841 Covenant Plate (-8%)
 
   REFRESH_MOD   — Passive MP regeneration (Refresh ticks)
     Used on: 29843 Saintwood Staff (+1 tick)
 
   SINGING_SKILL — Singing Skill
-    Used on: 29848 Requiem Torque (+8)
+    Used on: 29839 Tempest Mantle (+6) / 29848 Requiem Torque (+8)
 
   SHIELD_SKILL  — Shield Skill
     Used on: 29744 Ironwill Gauntlets (+6)
+
+  BLU_SKILL     — Blue Magic Skill
+    Used on: 29820 Soulreaver Blade (+4) / 29835 Arbiter's Band (+5)
+
+  SPELL_INTERRUPT_RATE_DOWN — Spell Interruption Rate Down %
+    Used on: 29828 Hexbinder Cuffs (+15%)
+
+  REGAIN        — Passive TP regeneration per tick
+    Used on: 29833 Darksole Boots (+1)
+
+  PET_HP        — Pet/Automaton Maximum HP bonus
+    Used on: 29910 Gearwright's Haubergeon (+100, displayed as "Automaton: HP+100")
 
   FIRE_ELE_ACC (mod 40) — Fire Elemental Accuracy — appears in B4 CSV as ID 40
     Used on: 29741 Ember Mitts (+4) / 29872 Emberthorn Spear (+4)

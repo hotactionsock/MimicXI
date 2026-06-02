@@ -1357,137 +1357,134 @@ local customItems = {
 -- end Section 3
 
 -- ============================================================
--- SECTION 4: PENDING ITEMS  (IDs 29820–29839)
--- Stats TBD — awaiting design approval before implementation.
--- Included here for reference; do NOT insert to SQL until approved.
+-- SECTION 4: PENDING ITEMS  (IDs 29820–29839, 29909–29910)
+-- Stats approved — wire to SQL when NM encounters are scripted.
 -- ============================================================
 
--- WEAPONS (pending)
+-- WEAPONS
 {id=29820, name="soulreaver_blade", displayName="Soulreaver Blade",
  type=5, flags=0x0C00, source="PENDING NM Drop",
- slot=3, jobs=0, level=40, model=0,
- dmg=0, delay=240, dmgType=2, weaponSkill=2,
- notes="Enspell-focused sword — RDM/BLU. NM lv40 C-diff. Stats PENDING.",
- mods={}},
+ slot=3, jobs=36880, level=40, model=0,
+ dmg=38, delay=240, dmgType=2, weaponSkill=2,
+ mods={{12,4,"INT+4"},{8,2,"STR+2"},{30,5,"MACC+5"},{"BLU_SKILL",4,"Blue Magic Skill+4"}}},
 
 {id=29821, name="dawnbringer_staff", displayName="Dawnbringer Staff",
  type=5, flags=0x0C00, source="PENDING NM Drop",
- slot=1, jobs=0, level=55, model=0,
- dmg=0, delay=366, dmgType=4, weaponSkill=11,
- notes="WHM healing staff with Cure Potency. NM lv55 C-diff. Stats PENDING.",
- mods={}},
+ slot=1, jobs=524308, level=55, model=0,
+ dmg=58, delay=366, dmgType=4, weaponSkill=11,
+ mods={{13,5,"MND+5"},{2,20,"HP+20"},{112,7,"Healing Magic Skill+7"},{374,6,"Cure Potency+6%"}}},
 
 {id=29822, name="bonebreaker", displayName="Bonebreaker",
  type=5, flags=0x0C00, source="PENDING NM Drop",
- slot=3, jobs=0, level=60, model=0,
- dmg=0, delay=96, dmgType=4, weaponSkill=0,
- notes="MNK H2H weapon with Smite. NM lv60 C-diff. Stats PENDING.",
- mods={}},
+ slot=3, jobs=2, level=60, model=0,
+ dmg=26, delay=96, dmgType=4, weaponSkill=0,
+ mods={{8,5,"STR+5"},{25,8,"ACC+8"},{289,5,"Subtle Blow+5"},{291,3,"Counter+3%"}}},
 
 {id=29823, name="occultists_rod", displayName="Occultist's Rod",
  type=5, flags=0x0C00, source="PENDING NM Drop",
- slot=1, jobs=0, level=50, model=0,
- dmg=0, delay=366, dmgType=4, weaponSkill=11,
- notes="BLM magic burst staff. NM lv50 C-diff. Stats PENDING.",
- mods={}},
+ slot=1, jobs=524312, level=50, model=0,
+ dmg=55, delay=366, dmgType=4, weaponSkill=11,
+ mods={{12,5,"INT+5"},{5,25,"MP+25"},{115,6,"Elemental Magic Skill+6"},{487,5,"Magic Burst Bonus+5%"}}},
 
--- ARMOUR (pending)
+-- ARMOUR — HEAD
 {id=29824, name="phantoms_coif", displayName="Phantom's Coif",
  type=4, flags=0x0C00, source="PENDING NM Drop",
- slot=16, jobs=0, level=50, model=0, def=0,
- notes="NIN tool-save head. NM lv50 C-diff. Stats PENDING.",
- mods={}},
+ slot=16, jobs=6144, level=50, model=0, def=28,
+ mods={{9,4,"DEX+4"},{118,5,"Ninjutsu Skill+5"},{308,5,"Ninja Tool Expertise+5%"},{68,4,"Evasion+4"}}},
 
 {id=29825, name="hexweave_tiara", displayName="Hexweave Tiara",
  type=4, flags=0x0C00, source="PENDING NM Drop",
- slot=16, jobs=0, level=60, model=0, def=0,
- notes="BLM Occult Acumen head. NM lv60 C-diff. Stats PENDING.",
- mods={}},
+ slot=16, jobs=524312, level=60, model=0, def=30,
+ mods={{12,5,"INT+5"},{30,5,"MACC+5"},{115,5,"Elemental Magic Skill+5"},{902,8,"Occult Acumen+8"}}},
 
+{id=29909, name="puppet_mask", displayName="Puppet Mask",
+ type=4, flags=0x0C00, source="PENDING NM Drop",
+ slot=16, jobs=131074, level=50, model=0, def=24,
+ mods={{8,2,"STR+2"},{9,2,"DEX+2"},{289,3,"Subtle Blow+3"},{990,10,"Automaton: ATK+10"},{991,8,"Automaton: ACC+8"}}},
+
+-- ARMOUR — BODY
 {id=29826, name="souleaters_cuirass", displayName="Souleater's Cuirass",
  type=4, flags=0x0C00, source="PENDING NM Drop",
- slot=32, jobs=0, level=55, model=0, def=0,
- notes="DRK Souleater body. NM lv55 C-diff. Stats PENDING.",
- mods={}},
+ slot=32, jobs=129, level=55, model=0, def=42,
+ mods={{8,4,"STR+4"},{12,3,"INT+3"},{2,30,"HP+30"},{96,8,"Souleater Effect+8"}}},
 
 {id=29827, name="wraithguard_cuirass", displayName="Wraithguard Cuirass",
  type=4, flags=0x0C00, source="PENDING NM Drop",
- slot=32, jobs=0, level=60, model=0, def=0,
- notes="PLD/RUN magic mitigation body. NM lv60 C-diff. Stats PENDING.",
- mods={}},
+ slot=32, jobs=2097216, level=60, model=0, def=44,
+ mods={{10,4,"VIT+4"},{2,35,"HP+35"},{27,4,"Enmity+4"},{"MAG_DMG_TAKEN",-5,"Magic Damage Taken-5%"}}},
 
+{id=29910, name="gearwrights_haubergeon", displayName="Gearwright's Haubergeon",
+ type=4, flags=0x0C00, source="PENDING NM Drop",
+ slot=32, jobs=131074, level=60, model=0, def=42,
+ mods={{8,3,"STR+3"},{25,5,"ACC+5"},{289,3,"Subtle Blow+3"},{990,14,"Automaton: ATK+14"},{991,10,"Automaton: ACC+10"},{"PET_HP",100,"Automaton: HP+100"}}},
+
+-- ARMOUR — HANDS
 {id=29828, name="hexbinder_cuffs", displayName="Hexbinder Cuffs",
  type=4, flags=0x0C00, source="PENDING NM Drop",
- slot=64, jobs=0, level=45, model=0, def=0,
- notes="Spell interrupt resist hands. NM lv45 C-diff. Stats PENDING.",
- mods={}},
+ slot=64, jobs=1589276, level=45, model=0, def=22,
+ mods={{12,3,"INT+3"},{13,3,"MND+3"},{30,4,"MACC+4"},{"SPELL_INTERRUPT_RATE_DOWN",15,"Spell Interruption Rate Down+15%"}}},
 
 {id=29829, name="stormwarden_gages", displayName="Stormwarden Gages",
  type=4, flags=0x0C00, source="PENDING NM Drop",
- slot=64, jobs=0, level=55, model=0, def=0,
- notes="RNG Snapshot/Barrage hands. NM lv55 C-diff. Stats PENDING.",
- mods={}},
+ slot=64, jobs=66560, level=55, model=0, def=24,
+ mods={{11,4,"AGI+4"},{26,5,"RACC+5"},{365,4,"Snapshot+4%"},{420,5,"Barrage Accuracy+5"}}},
 
+-- ARMOUR — LEGS
 {id=29830, name="wardens_tassets", displayName="Warden's Tassets",
  type=4, flags=0x0C00, source="PENDING NM Drop",
- slot=128, jobs=0, level=40, model=0, def=0,
- notes="Shield block tank legs. NM lv40 B-diff. Stats PENDING.",
- mods={}},
+ slot=128, jobs=2097217, level=40, model=0, def=28,
+ mods={{10,4,"VIT+4"},{2,25,"HP+25"},{27,3,"Enmity+3"},{518,5,"Shield Block Rate+5%"}}},
 
 {id=29831, name="resonance_hakama", displayName="Resonance Hakama",
  type=4, flags=0x0C00, source="PENDING NM Drop",
- slot=128, jobs=0, level=55, model=0, def=0,
- notes="SAM Store TP/Skillchain legs. NM lv55 C-diff. Stats PENDING.",
- mods={}},
+ slot=128, jobs=6144, level=55, model=0, def=32,
+ mods={{8,3,"STR+3"},{9,3,"DEX+3"},{73,4,"Store TP+4"},{175,4,"Skillchain Damage+4%"}}},
 
+-- ARMOUR — FEET
 {id=29832, name="counterfall_greaves", displayName="Counterfall Greaves",
  type=4, flags=0x0C00, source="PENDING NM Drop",
- slot=256, jobs=0, level=45, model=0, def=0,
- notes="MNK Counter/Kick feet. NM lv45 B-diff. Stats PENDING.",
- mods={}},
+ slot=256, jobs=131074, level=45, model=0, def=18,
+ mods={{8,2,"STR+2"},{25,4,"ACC+4"},{291,3,"Counter+3%"},{990,8,"Automaton: ATK+8"},{991,6,"Automaton: ACC+6"}}},
 
 {id=29833, name="darksole_boots", displayName="Darksole Boots",
  type=4, flags=0x0C00, source="PENDING NM Drop",
- slot=256, jobs=0, level=60, model=0, def=0,
- notes="Regain feet for DRK/SAM. NM lv60 C-diff. Stats PENDING.",
- mods={}},
+ slot=256, jobs=2176, level=60, model=0, def=22,
+ mods={{8,3,"STR+3"},{73,4,"Store TP+4"},{25,5,"ACC+5"},{"REGAIN",1,"Regain+1"}}},
 
--- ACCESSORIES (pending)
+-- ACCESSORIES — NECK
 {id=29834, name="trueshot_gorget", displayName="Trueshot Gorget",
  type=4, flags=0x0C00, source="PENDING NM Drop",
- slot=512, jobs=0, level=55, model=0, def=0,
- notes="RNG Barrage accuracy neck. NM lv55 C-diff. Stats PENDING.",
- mods={}},
+ slot=512, jobs=66560, level=55, model=0, def=0,
+ mods={{11,4,"AGI+4"},{26,5,"RACC+5"},{420,8,"Barrage Accuracy+8"}}},
 
+-- ACCESSORIES — RING
 {id=29835, name="arbiters_band", displayName="Arbiter's Band",
  type=4, flags=0x0C00, source="PENDING NM Drop",
- slot=24576, jobs=0, level=35, model=0, def=0,
- notes="RDM enfeeble ring. NM lv35 B-diff. Stats PENDING.",
- mods={}},
+ slot=24576, jobs=4194303, level=35, model=0, def=0,
+ mods={{12,3,"INT+3"},{30,5,"MACC+5"},{"BLU_SKILL",5,"Blue Magic Skill+5"}}},
 
+-- ACCESSORIES — EAR
 {id=29836, name="bloodfeast_earring", displayName="Bloodfeast Earring",
  type=4, flags=0x0C00, source="PENDING NM Drop",
- slot=6144, jobs=0, level=45, model=0, def=0,
- notes="DRK Drain/Aspir earring. NM lv45 B-diff. Stats PENDING.",
- mods={}},
+ slot=6144, jobs=136, level=45, model=0, def=0,
+ mods={{12,3,"INT+3"},{116,4,"Dark Magic Skill+4"},{315,8,"Enhances Drain/Aspir Potency+8"}}},
 
+-- ACCESSORIES — WAIST
 {id=29837, name="bladedancers_sash", displayName="Bladedancer's Sash",
  type=4, flags=0x0C00, source="PENDING NM Drop",
- slot=1024, jobs=0, level=50, model=0, def=0,
- notes="SAM/NIN Store TP waist. NM lv50 C-diff. Stats PENDING.",
- mods={}},
+ slot=1024, jobs=14336, level=50, model=0, def=0,
+ mods={{9,3,"DEX+3"},{73,5,"Store TP+5"},{25,4,"ACC+4"}}},
 
 {id=29838, name="vortex_cord", displayName="Vortex Cord",
  type=4, flags=0x0C00, source="PENDING NM Drop",
- slot=1024, jobs=0, level=55, model=0, def=0,
- notes="RNG Rapid Shot waist. NM lv55 C-diff. Stats PENDING.",
- mods={}},
+ slot=1024, jobs=66560, level=55, model=0, def=0,
+ mods={{11,3,"AGI+3"},{26,4,"RACC+4"},{359,4,"Rapid Shot+4%"}}},
 
+-- ACCESSORIES — BACK
 {id=29839, name="tempest_mantle", displayName="Tempest Mantle",
  type=4, flags=0x0C00, source="PENDING NM Drop",
- slot=32768, jobs=0, level=65, model=503, def=0,
- notes="BRD Song Duration back. NM lv65 C-D diff. Stats PENDING.",
- mods={}},
+ slot=32768, jobs=512, level=65, model=503, def=8,
+ mods={{14,4,"CHR+4"},{5,20,"MP+20"},{"SINGING_SKILL",6,"Singing Skill+6"},{454,15,"Song Duration Bonus+15%"}}},
 
 -- end Section 4
 
@@ -1508,15 +1505,19 @@ return customItems
     29849 Shadowstrike Ring   → Already includes (491, 2) in base design
 
   UNCONFIRMED MOD IDs — resolve before generating SQL:
-    "FASTCAST"        on 29706 / 29742 / 29797
-    "MOVE_SPEED"      on 29715 / 29753 / 29805
-    "PHALANX_BONUS"   on 29709
-    "WIND_ELE_ACC"    on 29711
-    "DIVINE_SKILL"    on 29708 / 29738
-    "MAG_DMG_TAKEN"   on 29841  (value = -8, negative modifier)
-    "REFRESH_MOD"     on 29843
-    "SINGING_SKILL"   on 29848
-    "SHIELD_SKILL"    on 29744
+    "FASTCAST"                   on 29706 / 29742 / 29797
+    "MOVE_SPEED"                 on 29715 / 29753 / 29805
+    "PHALANX_BONUS"              on 29709
+    "WIND_ELE_ACC"               on 29711
+    "DIVINE_SKILL"               on 29708 / 29738
+    "MAG_DMG_TAKEN"              on 29827 (value = -5) / 29841 (value = -8)
+    "REFRESH_MOD"                on 29843
+    "SINGING_SKILL"              on 29839 (value = 6) / 29848 (value = 8)
+    "SHIELD_SKILL"               on 29744
+    "BLU_SKILL"                  on 29820 (value = 4) / 29835 (value = 5)
+    "SPELL_INTERRUPT_RATE_DOWN"  on 29828 (value = 15)
+    "REGAIN"                     on 29833 (value = 1)
+    "PET_HP"                     on 29910 (value = 100, "Automaton: HP+100")
 
   FIRE_ELE_ACC (mod 40)  — used in B4 CSV for 29872 and implied for 29741.
   Verify mod 40 is correct against mods_by_id.txt.
