@@ -90,7 +90,7 @@ REVISION NOTES (Batch 1 head)
 ID,InternalName,DisplayName,LevelReq,PowerTier,Source,ModelID,Jobs,DEF,PrimaryStats,SecondaryStats,FlavorText
 29708,pilgrims_coat,Pilgrim's Coat,20,1,Regular Drop,408,"WHM/RDM/SCH/GEO/PLD",25,MND+3 / MP+25,Divine Magic Skill+5,"A plain white coat bearing faded sigils of a forgotten faith. Worn by wandering healers across many regions."
 29709,ember_plate,Ember Plate,40,3,Custom NM Drop,519,"WAR/PLD/DRG/RUN",46,HP+45 / VIT+5,Phalanx+3,"Battle-worn plate still faintly warm to the touch as though embers smoulder within the steel. Stolen from a fire cultist warlord."
-29710,shadowweave_tunic,Shadowweave Tunic,62,4,Custom NM Drop,672,"THF/NIN/DNC/COR",40,DEX+6 / AGI+5,Haste+3 / Triple Attack+1%,"A tunic woven from threads that absorb ambient light. The wearer moves with unnerving silence. Proof of a master assassin."
+29710,shadowweave_tunic,Shadowweave Tunic,62,4,Custom NM Drop,672,"THF/NIN/DNC/COR",40,DEX+6 / AGI+5,Haste+3% / Triple Attack+1% / CHR+2,"A tunic woven from threads that absorb ambient light. The wearer moves with unnerving silence. Proof of a master assassin."
 
 REVISION NOTES (Batch 1 body)
   29710: Haste reduced from +4 to +3 (still Tier 4 body - kept Triple Attack+1%)
@@ -245,7 +245,7 @@ ID,InternalName,DisplayName,LevelReq,PowerTier,Source,ModelID,Jobs,DEF,PrimarySt
 29745,herdsmans_trousers,Herdsman's Trousers,12,1,Regular Drop,422,"BST/WHM/RDM/BRD",15,HP+12 / MND+2,-,"Practical cotton trousers with reinforced knees. Originally made for herders who spend long seasons in the field."
 29746,pathfinder_slops,Pathfinder Slops,28,2,Regular Drop,452,"RNG/COR/BST/DNC/THF",24,AGI+3,Evasion+6,"Loose-fitting slops with strapped cargo pockets on each thigh. Light enough to move fast, sturdy enough for rough terrain."
 29747,ironweave_cuisses,Ironweave Cuisses,45,2,Regular Drop,536,"WAR/PLD/DRG/DRK/SAM/RUN",38,STR+3 / VIT+3,HP+20,"Cuisses of woven iron rings backed with thick felt. Standard melee armour for anyone past their first rank."
-29748,shadowstep_hakama,Shadowstep Hakama,60,3,Custom NM Drop,669,"NIN/SAM/DNC",34,DEX+4 / AGI+4,Subtle Blow+4,"Wide-legged hakama tailored for fast pivoting and low stances. Said to have belonged to a dancer who killed like a soldier."
+29748,shadowstep_hakama,Shadowstep Hakama,60,3,Custom NM Drop,669,"NIN/SAM/DNC",34,DEX+4 / AGI+4,Subtle Blow+4 / CHR+3 / Waltz Potency+3%,"Wide-legged hakama tailored for fast pivoting and low stances. Said to have belonged to a dancer who killed like a soldier."
 29749,warlords_cuisses,Warlord's Cuisses,70,4,Custom NM Drop,757,"WAR/DRK/SAM",48,STR+5 / Attack+12,Double Attack+1%,"Cuisses stripped from a fallen warlord. The steel still bears the notches of an exceptional career."
 
 --- FEET (5) ---
@@ -458,7 +458,7 @@ ID,InternalName,DisplayName,LevelReq,PowerTier,Source,ModelID,Jobs,DEF,PrimarySt
 29792,mudcloth_gi,Mudcloth Gi,25,1,Regular Drop,445,"MNK/PUP/BST",26,HP+20 / VIT+2,Subtle Blow+2,"A training gi dyed in muddy earth tones with panels reinforced against repeated impact. Hard-wearing and comfortable."
 29793,verdant_robe,Verdant Robe,38,2,Regular Drop,515,"SMN/WHM/SCH/GEO/RDM",30,MND+4 / MP+25,Elemental Magic Skill+4,"A robe the colour of deep forest. Its fabric holds a faint charge that supplements the wearer's magical reserves."
 29794,rangers_surcoat,Ranger's Surcoat,52,2,Regular Drop,587,"RNG/COR/BST",38,AGI+4 / Ranged Accuracy+5,Ranged Attack+5,"A surcoat cut for freedom of movement, with hardened leather panels across the chest. Smells persistently of pine resin."
-29795,tempered_coat,Tempered Coat,65,2,Regular Drop,733,"WAR/MNK/THF/DRK/SAM/NIN/DNC",48,STR+4 / DEX+3,Accuracy+8,"A coat of close-fitted tempered steel strips over a padded base. Favoured by career soldiers who value flexibility over bulk."
+29795,tempered_coat,Tempered Coat,65,2,Regular Drop,733,"WAR/MNK/THF/DRK/SAM/NIN/DNC",48,STR+4 / DEX+3,Accuracy+8 / Waltz Potency+3%,"A coat of close-fitted tempered steel strips over a padded base. Favoured by career soldiers who value flexibility over bulk."
 
 --- HANDS (4) ---
 
@@ -474,7 +474,7 @@ ID,InternalName,DisplayName,LevelReq,PowerTier,Source,ModelID,Jobs,DEF,PrimarySt
 29800,wanderers_kecks,Wanderer's Kecks,22,2,Regular Drop,442,"WHM/BLM/RDM/SMN/SCH/GEO/BRD",20,MP+18 / MND+2,INT+2,"Loose travelling kecks with deep pockets. Mages wear them for the mobility; scholars wear them because they have too many scrolls."
 29801,boneweave_kecks,Boneweave Kecks,52,2,Regular Drop,577,"WAR/DRK/MNK/SAM/RUN/DRG",36,STR+3 / VIT+3,Attack+7,"Kecks of interlocked bone plates over padded linen. Built for fighters who expect to be hit as often as they hit."
 29802,dawnspun_slops,Dawnspun Slops,65,2,Regular Drop,729,"WHM/BLM/RDM/SMN/SCH/GEO",34,INT+5 / MND+4,MP+25,"Slops woven at dawn from thread treated with early-morning dew. An affectation that somehow results in genuinely superior channelling."
-29803,muddled_breeches,Muddled Breeches,32,2,Regular Drop,488,"THF/NIN/DNC/BST/COR/RNG",27,DEX+3 / AGI+3,Evasion+5,"Wide-legged breeches in a mottled pattern that is either camouflage or a laundry accident. Either way they do the job."
+29803,muddled_breeches,Muddled Breeches,32,2,Regular Drop,488,"THF/NIN/DNC/BST/COR/RNG",27,DEX+3 / AGI+3,Evasion+5 / CHR+2,"Wide-legged breeches in a mottled pattern that is either camouflage or a laundry accident. Either way they do the job."
 
 --- FEET (3) ---
 
@@ -568,7 +568,7 @@ ID,InternalName,DisplayName,LevelReq,PowerTier,Source,ModelID,Jobs,DEF,PrimarySt
 ID,InternalName,DisplayName,Slot,LevelReq,PowerTier,Source,ModelID,Jobs,DEF,PrimaryStats,SecondaryStats,FlavorText
 29847,fateweaver_mantle,Fateweaver Mantle,BACK,70,4,Custom NM Drop,503,"SMN/BST",10,MND+3 / Blood Pact Rage Damage+10%,Blood Pact Delay-10 / Avatar Perpetuation Cost-2,"A mantle stitched in patterns too complex to follow. Every avatar that has worn it grew stronger, then older, then was gone."
 29848,requiem_torque,Requiem Torque,NECK,72,4,Custom NM Drop,0,All Jobs,0,CHR+6 / Singing Skill+8,Song Duration Bonus+15%,"A torque of pale iron inscribed with musical notation that does not correspond to any known piece. Those who wear it hear an additional voice in every song."
-29849,shadowstrike_ring,Shadowstrike Ring,RING,70,4,Custom NM Drop,0,All Jobs,0,DEX+5 / AGI+4,Sneak Attack DEX Bonus+5% / Triple Attack+1%,"A ring inset with shadow-glass. The face of the last person who saw the previous owner wearing it is reportedly still visible in the stone."
+29849,shadowstrike_ring,Shadowstrike Ring,RING,70,4,Custom NM Drop,0,All Jobs,0,DEX+5 / AGI+4,Sneak Attack DEX Bonus+5% / Triple Attack+1% / Waltz Potency+2%,"A ring inset with shadow-glass. The face of the last person who saw the previous owner wearing it is reportedly still visible in the stone."
 
 ==============================================================
   NM MASTER REFERENCE — ALL BATCHES
