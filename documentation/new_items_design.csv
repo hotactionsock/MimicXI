@@ -661,3 +661,437 @@ NMItemID,ItemName,NMInternalName,NMDisplayName,Zone,MobFamily,Difficulty,ApproxN
 29837,Bladedancers Sash,[PENDING],[PENDING],TBD,Humanoid (SAM/NIN subtype),C,50,[Pending zone assignment],[Pending mechanics],"SAM/NIN Store TP waist — NM drop (lv50)."
 29838,Vortex Cord,[PENDING],[PENDING],TBD,Humanoid or Beast,C,55,[Pending zone assignment],[Pending mechanics],"RNG Rapid Shot waist — NM drop (lv55)."
 29839,Tempest Mantle,[PENDING],[PENDING],TBD,Humanoid or Ghost (BRD subtype),C-D,65,[Pending zone assignment],[Pending mechanics],"BRD Song Duration back — NM drop (lv65)."
+==============================================================
+  BATCH 4 - WEAPON PASS (IDs 29851-29908)
+  58 Weapons across all 14 weapon types, lv14-72
+  Casket drops (Tier 1-2) and Boss FATE drops (Tier 3-4)
+  Boss FATE = rare open-world boss encounter, tradeable drops
+  DNC daggers include CHR for Waltz Potency identity
+==============================================================
+
+SuggestedItemID,InternalName,DisplayName,ItemType,EquipSlot,SlotBitmask,LevelReq,PowerTier,Source,ModelID,Jobs(Text),JobsBitmask
+29851,copperleaf_blade,Copperleaf Blade,Weapon,MAIN+SUB,3,14,1,Casket,401,"WAR/MNK/THF/PLD/DRK/RDM/NIN/BLU/COR",102643
+29852,ashbane_foil,Ashbane Foil,Weapon,MAIN+SUB,3,28,2,Casket,433,"RDM/NIN/BLU",36880
+29853,verdant_saber,Verdant Saber,Weapon,MAIN+SUB,3,48,2,Casket,546,"WAR/PLD/RDM/NIN/BLU",36945
+29854,stormreavers_edge,Stormreaver's Edge,Weapon,MAIN+SUB,3,58,3,Boss FATE,569,"WAR/RDM/PLD/NIN/BLU/COR",102481
+29855,ironblood_gladius,Ironblood Gladius,Weapon,MAIN+SUB,3,18,3,Boss FATE,429,"WAR/MNK/THF/PLD/DRK/RDM/NIN/BLU/COR",102643
+29856,whitemantle_saber,Whitemantle Saber,Weapon,MAIN+SUB,3,32,3,Boss FATE,434,"PLD/WHM/RDM/SCH",524372
+29857,ironcleft_claymore,Ironcleft Claymore,Weapon,MAIN,1,22,1,Casket,471,"WAR/PLD/DRK/RUN",2097345
+29858,soulcleave,Soulcleave,Weapon,MAIN,1,55,3,Boss FATE,530,"WAR/DRK",129
+29859,wrathcleft,Wrathcleft,Weapon,MAIN,1,20,3,Boss FATE,447,"WAR/PLD/DRK/RUN",2097345
+29860,thornbite_hatchet,Thornbite Hatchet,Weapon,MAIN+SUB,3,16,1,Casket,414,"WAR/DRK/BST/DRG",8577
+29861,redrock_chopper,Redrock Chopper,Weapon,MAIN+SUB,3,38,2,Casket,454,"WAR/DRK/BST/DRG",8577
+29862,ravagers_axe,Ravager's Axe,Weapon,MAIN+SUB,3,62,3,Boss FATE,563,"WAR/DRK/BST",385
+29863,bonecleave_hatchet,Bonecleave Hatchet,Weapon,MAIN+SUB,3,22,3,Boss FATE,437,"WAR/DRK/BST/DRG",8577
+29864,colossus_axe,Colossus Axe,Weapon,MAIN,1,45,2,Casket,534,"WAR/DRK",129
+29865,volcanic_tabar,Volcanic Tabar,Weapon,MAIN,1,62,3,Boss FATE,564,"WAR/DRK",129
+29866,colossbreaker,Colossbreaker,Weapon,MAIN,1,28,3,Boss FATE,472,"WAR/DRK",129
+29867,rustworn_scythe,Rustworn Scythe,Weapon,MAIN,1,18,1,Casket,461,"DRK",128
+29868,bloodmire_scythe,Bloodmire Scythe,Weapon,MAIN,1,50,2,Casket,544,"DRK",128
+29869,gravereap,Gravereap,Weapon,MAIN,1,72,4,Boss FATE,565,"DRK",128
+29870,soulcrop,Soulcrop,Weapon,MAIN,1,22,3,Boss FATE,462,"DRK",128
+29871,splithorn_lance,Splithorn Lance,Weapon,MAIN,1,20,1,Casket,483,"DRG/WAR",8193
+29872,emberthorn_spear,Emberthorn Spear,Weapon,MAIN,1,40,2,Casket,545,"DRG/WAR",8193
+29873,dragonthorn_bident,Dragonthorn Bident,Weapon,MAIN,1,60,3,Boss FATE,566,"DRG",8192
+29874,fangbore_lance,Fangbore Lance,Weapon,MAIN,1,24,3,Boss FATE,484,"DRG/WAR",8193
+29875,foxfire_katana,Foxfire Katana,Weapon,MAIN+SUB,3,24,1,Casket,463,"NIN/SAM",6144
+29876,bloodpetal_blade,Bloodpetal Blade,Weapon,MAIN+SUB,3,42,2,Casket,521,"NIN/SAM",6144
+29877,veilstrike,Veilstrike,Weapon,MAIN+SUB,3,65,3,Boss FATE,567,"NIN",4096
+29878,ghostflicker,Ghostflicker,Weapon,MAIN+SUB,3,18,3,Boss FATE,441,"NIN/SAM",6144
+29879,emberpetal_blade,Emberpetal Blade,Weapon,MAIN+SUB,3,36,3,Boss FATE,489,"NIN/SAM",6144
+29880,dawnreach_tachi,Dawnreach Tachi,Weapon,MAIN,1,55,2,Casket,494,"SAM",2048
+29881,nightfalls_reach,Nightfall's Reach,Weapon,MAIN,1,68,3,Boss FATE,568,"SAM",2048
+29882,duskfang_tachi,Duskfang Tachi,Weapon,MAIN,1,30,3,Boss FATE,475,"SAM",2048
+29883,pilgrims_mace,Pilgrim's Mace,Weapon,MAIN+SUB,3,14,1,Casket,409,"WHM/PLD/RDM/SCH/GEO/BLU",1605716
+29884,spellbinders_cudgel,Spellbinder's Cudgel,Weapon,MAIN+SUB,3,45,2,Casket,541,"WHM/RDM/SCH/GEO/BLU",1605652
+29885,sanctum_mace,Sanctum Mace,Weapon,MAIN+SUB,3,65,3,Boss FATE,570,"WHM/PLD/SCH",524356
+29886,brightvow_mace,Brightvow Mace,Weapon,MAIN+SUB,3,18,3,Boss FATE,411,"WHM/PLD/RDM/SCH/GEO/BLU",1605716
+29887,apprentices_rod,Apprentice's Rod,Weapon,MAIN,1,16,1,Casket,495,"WHM/BLM/RDM/SMN/SCH/GEO",1589276
+29888,embervein_staff,Embervein Staff,Weapon,MAIN,1,35,2,Casket,525,"BLM/RDM/SCH",524312
+29889,voidchannel_staff,Voidchannel Staff,Weapon,MAIN,1,65,3,Boss FATE,571,"BLM/SCH",524296
+29890,voidmere_rod,Voidmere Rod,Weapon,MAIN,1,24,3,Boss FATE,496,"WHM/BLM/RDM/SMN/SCH/GEO",1589276
+29891,thornroot_stave,Thornroot Stave,Weapon,MAIN,1,38,3,Boss FATE,528,"WHM/BLM/RDM/SMN/SCH/GEO",1589276
+29892,splinter_knife,Splinter Knife,Weapon,MAIN+SUB,3,14,1,Casket,438,"THF/NIN/RDM/COR/DNC/BRD",332336
+29893,venom_fang,Venom Fang,Weapon,MAIN+SUB,3,32,2,Casket,469,"THF/NIN/DNC/COR",331808
+29894,shadowsnap_blade,Shadowsnap Blade,Weapon,MAIN+SUB,3,58,3,Boss FATE,572,"THF/NIN/DNC",266272
+29895,whispercut,Whispercut,Weapon,MAIN+SUB,3,16,3,Boss FATE,439,"THF/NIN/RDM/COR/DNC/BRD",332336
+29896,blackscale_knife,Blackscale Knife,Weapon,MAIN+SUB,3,36,3,Boss FATE,485,"THF/NIN/DNC/COR",331808
+29897,ironhide_knuckles,Ironhide Knuckles,Weapon,MAIN+SUB,3,18,1,Casket,464,"MNK/PUP",131074
+29898,temple_fists,Temple Fists,Weapon,MAIN+SUB,3,40,2,Casket,520,"MNK/PUP",131074
+29899,wrath_caestus,Wrath Caestus,Weapon,MAIN+SUB,3,68,4,Boss FATE,573,"MNK",2
+29900,hammerfall_fists,Hammerfall Fists,Weapon,MAIN+SUB,3,24,3,Boss FATE,479,"MNK/PUP",131074
+29901,thornwood_shortbow,Thornwood Shortbow,Weapon,RANGED,4,18,1,Casket,443,"RNG/COR",66560
+29902,ironstring_longbow,Ironstring Longbow,Weapon,RANGED,4,50,2,Casket,492,"RNG/COR",66560
+29903,stormstring_warbow,Stormstring Warbow,Weapon,RANGED,4,70,3,Boss FATE,574,"RNG",1024
+29904,thornpull_bow,Thornpull Bow,Weapon,RANGED,4,20,3,Boss FATE,446,"RNG/COR",66560
+29905,flintlock_pistol,Flintlock Pistol,Weapon,RANGED,4,22,1,Casket,465,"RNG/COR",66560
+29906,bronzelock_rifle,Bronzelock Rifle,Weapon,RANGED,4,48,2,Casket,540,"RNG/COR",66560
+29907,ironhail_cannon,Ironhail Cannon,Weapon,RANGED,4,72,4,Boss FATE,575,"RNG/COR",66560
+29908,ashbarrel_pistol,Ashbarrel Pistol,Weapon,RANGED,4,22,3,Boss FATE,466,"RNG/COR",66560
+
+==============================================================
+  BATCH 4 - WEAPON DETAILS
+  Format: ID,Name,Lv,Tier,Source,ModelID,Jobs,DMG,Delay,DmgType,Skill,PrimaryStats,SecondaryStats,FlavorText
+  DmgType: Slashing=2 Piercing=3 Blunt=4 Ranged=5
+  WeaponSkill: H2H=0 Dagger=1 Sword=2 GSword=3 Axe=4 GAxe=5 Scythe=6 Polearm=7 Katana=8 GKatana=9 Club=10 Staff=11 Archery=12 Marksman=13
+==============================================================
+
+--- SWORDS ---
+
+ID,InternalName,DisplayName,LevelReq,PowerTier,Source,ModelID,Jobs,DMG,Delay,DmgType,WeaponSkill,PrimaryStats,SecondaryStats,FlavorText
+29851,copperleaf_blade,Copperleaf Blade,14,1,Casket,401,"WAR/MNK/THF/PLD/DRK/RDM/NIN/BLU/COR",15,240,2,2,STR+1 / ACC+3,-,"A plain blade with a leaf-pressed crossguard. Sold at every outpost. Dependable until something better turns up."
+29852,ashbane_foil,Ashbane Foil,28,2,Casket,433,"RDM/NIN/BLU",26,240,2,2,MND+2 / MACC+4,Enfeeble Skill+4,"A slender duelling foil whose balance has been adjusted for spellcasting. The grip is wrapped in ash-threaded cord."
+29853,verdant_saber,Verdant Saber,48,2,Casket,546,"WAR/PLD/RDM/NIN/BLU",40,240,2,2,STR+3 / ACC+6 / VIT+2,-,"A broad sabre with a slightly green tint to the steel. Miners kept pulling it out of the same vein for years."
+29854,stormreavers_edge,Stormreaver's Edge,58,3,Boss FATE,569,"WAR/RDM/PLD/NIN/BLU/COR",50,240,2,2,STR+4 / DEX+3 / ACC+8,Thunder Add Effect,"A blade that crackles faintly between strikes. The thunder effect is not decorative."
+29855,ironblood_gladius,Ironblood Gladius,18,3,Boss FATE,429,"WAR/MNK/THF/PLD/DRK/RDM/NIN/BLU/COR",20,240,2,2,DEX+3 / ACC+7,Double Attack+1%,"A heavy gladius with a darkened fuller. At lv18 the double attack proc is not subtle. It just hits again."
+29856,whitemantle_saber,Whitemantle Saber,32,3,Boss FATE,434,"PLD/WHM/RDM/SCH",30,240,2,2,MND+4 / ACC+6 / Enmity+3,Cure Potency+4%,"A ceremonial saber that turned out to be genuinely effective. Cure Potency on a sword is unusual. So is the person who earns this."
+
+--- GREAT SWORDS ---
+
+29857,ironcleft_claymore,Ironcleft Claymore,22,1,Casket,471,"WAR/PLD/DRK/RUN",42,396,2,3,STR+2 / ATT+5,-,"A two-handed claymore with a rough iron edge. Heavy for the level. Gets the job done by weight alone."
+29858,soulcleave,Soulcleave,55,3,Boss FATE,530,"WAR/DRK",74,396,2,3,STR+5 / ATT+12 / Double Attack+1%,Souleater Effect+8%,"A great sword that returns something when it takes. DRK with Souleater active hit meaningfully harder with this in hand."
+29859,wrathcleft,Wrathcleft,20,3,Boss FATE,447,"WAR/PLD/DRK/RUN",36,396,2,3,STR+3 / ATT+8,Smite+10,"A two-hander that feels disproportionately punishing for lv20. Smite adds percent attack when wielding 2H. Players notice."
+
+--- AXES ---
+
+29860,thornbite_hatchet,Thornbite Hatchet,16,1,Casket,414,"WAR/DRK/BST/DRG",20,288,2,4,STR+1 / ATT+4,-,"A short-handled hatchet with a thorn-pattern stamp on the blade. Good early axe. Nothing fancy."
+29861,redrock_chopper,Redrock Chopper,38,2,Casket,454,"WAR/DRK/BST/DRG",40,288,2,4,STR+3 / ACC+5,-,"A wide-bitted axe ground from red-tinged ore. Holds an edge well. Popular with BST who need reliable kit."
+29862,ravagers_axe,Ravager's Axe,62,3,Boss FATE,563,"WAR/DRK/BST",68,288,2,4,STR+5 / ATT+14,Zanshin+8%,"A heavy one-handed axe with a forward-weighted head. Zanshin gives follow-up swings on misses. At lv62 that matters."
+29863,bonecleave_hatchet,Bonecleave Hatchet,22,3,Boss FATE,437,"WAR/DRK/BST/DRG",27,288,2,4,STR+3 / ATT+7,Zanshin+5%,"An axe whose edge is notched in a way that suggests it hit something much harder than expected and kept going."
+
+--- GREAT AXES ---
+
+29864,colossus_axe,Colossus Axe,45,2,Casket,534,"WAR/DRK",65,444,2,5,STR+4 / ATT+10,-,"A broad-bladed greataxe with a wrapped grip. Reliable and appropriately heavy for the level. No tricks."
+29865,volcanic_tabar,Volcanic Tabar,62,3,Boss FATE,564,"WAR/DRK",84,444,2,5,STR+5 / ATT+16 / Smite+15,Fire Add Effect,"A tabar whose head still radiates heat. The fire add effect is consistent. The Smite bonus rewards 2H commitment."
+29866,colossbreaker,Colossbreaker,28,3,Boss FATE,472,"WAR/DRK",48,444,2,5,STR+4 / ATT+10,Smite+12,"A massive greataxe that a lv28 character has no business wielding efficiently. They do anyway."
+
+--- SCYTHES ---
+
+29867,rustworn_scythe,Rustworn Scythe,18,1,Casket,461,"DRK",24,480,2,6,STR+2,Dark Magic Skill+3,"A salvaged scythe with a pitted blade. DRK starting out will use this until something better appears. It takes a while."
+29868,bloodmire_scythe,Bloodmire Scythe,50,2,Casket,544,"DRK",68,480,2,6,STR+4 / INT+2,Dark Magic Skill+5,"A long-hafted scythe whose blade is stained in a way that does not come off. DRK find it aesthetically appropriate."
+29869,gravereap,Gravereap,72,4,Boss FATE,565,"DRK",92,480,2,6,STR+6 / INT+4 / Double Attack+1%,Drain & Aspir Potency+12%,"The last scythe. Drain and Aspir hitting 12% harder while this is equipped changes DRK sustain meaningfully."
+29870,soulcrop,Soulcrop,22,3,Boss FATE,462,"DRK",32,480,2,6,STR+3 / INT+2 / Dark Magic Skill+5,Souleater Effect+5%,"A crude scythe that introduces DRK to Souleater Enhancement at lv22. First look at the mechanic. They remember it."
+
+--- POLEARMS ---
+
+29871,splithorn_lance,Splithorn Lance,20,1,Casket,483,"DRG/WAR",30,396,3,7,STR+2 / VIT+1,-,"A polearm tipped with two diverging points. Split design was supposed to trap enemy weapons. Mostly it just stabs."
+29872,emberthorn_spear,Emberthorn Spear,40,2,Casket,545,"DRG/WAR",55,396,3,7,STR+3 / VIT+3,Fire Elemental Accuracy+4,"A spear with ember-treated tips that perform better against fire-resistant enemies. Practical in specific zones."
+29873,dragonthorn_bident,Dragonthorn Bident,60,3,Boss FATE,566,"DRG",78,396,3,7,STR+5 / VIT+4 / Wyvern Breath+5,Jump ATT Bonus+15,"A DRG-exclusive bident. Jump ATT Bonus+15 directly boosts Jump and High Jump damage. Wyvern Breath enhancement is secondary."
+29874,fangbore_lance,Fangbore Lance,24,3,Boss FATE,484,"DRG/WAR",40,396,3,7,STR+3 / VIT+2,Jump ATT Bonus+10,"A lance with a pronounced bore-tip. At lv24 Jump ATT Bonus+10 is the first time DRG feels like DRG."
+
+--- KATANAS ---
+
+29875,foxfire_katana,Foxfire Katana,24,1,Casket,463,"NIN/SAM",22,245,2,8,DEX+2,Store TP+2,"A slim katana with a faint amber tint. Store TP+2 at lv24. It adds up."
+29876,bloodpetal_blade,Bloodpetal Blade,42,2,Casket,521,"NIN/SAM",36,245,2,8,DEX+3 / ACC+5,Store TP+3,"A katana with petal engravings along the flat. Good mid-level option for NIN or SAM."
+29877,veilstrike,Veilstrike,65,3,Boss FATE,567,"NIN",60,245,2,8,DEX+5 / ACC+8 / Dual Wield+1,Ninja Tool Save+4%,"A NIN-exclusive katana. Tool Save+4% compounds per weapon if dual-wielded. DW+1 reduces off-hand penalty."
+29878,ghostflicker,Ghostflicker,18,3,Boss FATE,441,"NIN/SAM",18,245,2,8,DEX+3,Store TP+4,"A pale katana that moves faster than it looks. Store TP+4 at lv18 is well ahead of anything in a casket."
+29879,emberpetal_blade,Emberpetal Blade,36,3,Boss FATE,489,"NIN/SAM",32,245,2,8,DEX+4 / ACC+6 / Store TP+4,Ninjutsu Skill+4,"A katana with fire-petal engravings. NIN-slanted due to the Ninjutsu skill bonus. SAM still benefits from TP and DEX."
+
+--- GREAT KATANAS ---
+
+29880,dawnreach_tachi,Dawnreach Tachi,55,2,Casket,494,"SAM",72,450,2,9,STR+3 / DEX+3,Store TP+4,"A long tachi with an ivory-wrapped grip. Reliable SAM casket option. Store TP+4 builds toward weaponskill chains."
+29881,nightfalls_reach,Nightfall's Reach,68,3,Boss FATE,568,"SAM",88,450,2,9,STR+5 / DEX+4 / Store TP+6,Zanshin+10% / Skillchain Damage+5%,"The SAM weapon. Store TP+6 with Zanshin follow-up and Skillchain Damage stacked. Chains happen faster and hit harder."
+29882,duskfang_tachi,Duskfang Tachi,30,3,Boss FATE,475,"SAM",50,450,2,9,STR+3 / DEX+3 / Store TP+5,Skillchain Damage+4%,"SAM's first meaningful great katana. Store TP+5 at lv30 with Skillchain Damage makes weaponskill chains feel intentional."
+
+--- CLUBS ---
+
+29883,pilgrims_mace,Pilgrim's Mace,14,1,Casket,409,"WHM/PLD/RDM/SCH/GEO/BLU",12,282,4,10,MND+2,Healing Skill+3,"A plain iron mace carried by wandering healers. Healing Skill+3 at lv14 is genuinely useful."
+29884,spellbinders_cudgel,Spellbinder's Cudgel,45,2,Casket,541,"WHM/RDM/SCH/GEO/BLU",44,282,4,10,MND+3 / INT+3,Enfeeble Skill+5,"A weighted cudgel used by enfeebling specialists. Solid Enfeeble Skill bonus makes debuffs land more reliably."
+29885,sanctum_mace,Sanctum Mace,65,3,Boss FATE,570,"WHM/PLD/SCH",62,282,4,10,MND+5 / Healing Skill+8 / Enmity+4,Cure Potency+6%,"A tank healer's mace. Enmity+4 keeps cure threat manageable. Cure Potency+6% meaningfully extends MP efficiency."
+29886,brightvow_mace,Brightvow Mace,18,3,Boss FATE,411,"WHM/PLD/RDM/SCH/GEO/BLU",20,282,4,10,MND+4 / Healing Skill+5,Cure Potency+3%,"The first time a lv18 WHM sees Cure Potency on a weapon. They do not put it away willingly."
+
+--- STAVES ---
+
+29887,apprentices_rod,Apprentice's Rod,16,1,Casket,495,"WHM/BLM/RDM/SMN/SCH/GEO",18,366,4,11,INT+2 / MP+15,-,"A smooth wooden rod handed to new mages. MP+15 at lv16 is the whole point."
+29888,embervein_staff,Embervein Staff,35,2,Casket,525,"BLM/RDM/SCH",36,366,4,11,INT+3,Elemental Skill+5 / Fire Affinity Damage+1,"A staff laced with ore from a volcanic vein. Fire Affinity Damage boosts fire-element spell damage. Elemental Skill applies broadly."
+29889,voidchannel_staff,Voidchannel Staff,65,3,Boss FATE,571,"BLM/SCH",72,366,4,11,INT+6 / Elemental Skill+8,Magic Burst Bonus+8% / Occult Acumen+5,"BLM's priority Boss FATE staff. Magic Burst Bonus+8% is multiplicative on burst damage. Occult Acumen generates TP from nuke hits."
+29890,voidmere_rod,Voidmere Rod,24,3,Boss FATE,496,"WHM/BLM/RDM/SMN/SCH/GEO",26,366,4,11,INT+4 / MP+20,Magic Burst Bonus+5%,"Magic Burst Bonus+5% at lv24 rewards parties that coordinate skillchains early. Uncommon to find this before lv30."
+29891,thornroot_stave,Thornroot Stave,38,3,Boss FATE,528,"WHM/BLM/RDM/SMN/SCH/GEO",40,366,4,11,INT+4 / MND+3 / Elemental Skill+6,Conserve MP+3%,"Broad-purpose mage stave. Conserve MP+3% compounds over a long fight. Healers and nukers both benefit."
+
+--- DAGGERS (DNC receives CHR for Waltz Potency identity) ---
+
+29892,splinter_knife,Splinter Knife,14,1,Casket,438,"THF/NIN/RDM/COR/DNC/BRD",10,210,3,1,DEX+2 / CHR+1,-,"A narrow knife with a splintered grip that someone re-wrapped. DEX and a point of CHR. Starter kit."
+29893,venom_fang,Venom Fang,32,2,Casket,469,"THF/NIN/DNC/COR",24,210,3,1,DEX+3 / AGI+2 / CHR+2,Poison Add Effect,"A blade tapered to deliver toxin efficiently. Poison add effect procs on hit. CHR+2 benefits DNC Waltz."
+29894,shadowsnap_blade,Shadowsnap Blade,58,3,Boss FATE,572,"THF/NIN/DNC",46,210,3,1,DEX+5 / AGI+4 / CHR+3,Sneak Attack DEX Bonus+4% / Critical Hit Rate+2%,"A DNC/THF/NIN FATE dagger. SA DEX Bonus+4% amplifies Sneak Attack damage. CHR+3 meaningfully boosts Waltz potency."
+29895,whispercut,Whispercut,16,3,Boss FATE,439,"THF/NIN/RDM/COR/DNC/BRD",15,210,3,1,DEX+3 / CHR+2,Sneak Attack DEX Bonus+3%,"SA DEX Bonus+3% at lv16. The moment THF gets Sneak Attack this becomes their priority. DNC CHR is a secondary win."
+29896,blackscale_knife,Blackscale Knife,36,3,Boss FATE,485,"THF/NIN/DNC/COR",30,210,3,1,DEX+4 / AGI+3 / CHR+2,Critical Hit Rate+2% / Evasion+5,"A knife with dark scale inlays. Crit+2% and Evasion on the same blade. NIN tanks and THF DPS both want this."
+
+--- HAND-TO-HAND ---
+
+29897,ironhide_knuckles,Ironhide Knuckles,18,1,Casket,464,"MNK/PUP",8,96,4,0,STR+2,Subtle Blow+2,"Basic iron knuckle guards. Subtle Blow+2 reduces TP the target gains. Standard early MNK."
+29898,temple_fists,Temple Fists,40,2,Casket,520,"MNK/PUP",18,96,4,0,STR+3 / ACC+5,Subtle Blow+3,"Well-balanced fighting fists from a temple tradition. Consistent mid-level MNK option."
+29899,wrath_caestus,Wrath Caestus,68,4,Boss FATE,573,"MNK",28,96,4,0,STR+6 / Counter+6% / Kick Attack Rate+6%,Critical Hit Rate+2%,"MNK-exclusive Boss FATE drop. Counter+6% and Kick Rate+6% together transform the attack round. Tier 4 and it shows."
+29900,hammerfall_fists,Hammerfall Fists,24,3,Boss FATE,479,"MNK/PUP",11,96,4,0,STR+3 / Counter+4%,Subtle Blow+3,"Counter+4% at lv24 makes MNK feel like MNK from early on. The first time it procs is memorable."
+
+--- ARCHERY ---
+
+29901,thornwood_shortbow,Thornwood Shortbow,18,1,Casket,443,"RNG/COR",18,504,5,12,AGI+2,Ranged Accuracy+3,"A simple shortbow carved from thornwood. Adequate for the level. Not much else to say."
+29902,ironstring_longbow,Ironstring Longbow,50,2,Casket,492,"RNG/COR",44,504,5,12,AGI+4 / Ranged Accuracy+5,Ranged Attack+6,"An ironstring bow with consistent pull weight. Good mid-tier RNG casket option."
+29903,stormstring_warbow,Stormstring Warbow,70,3,Boss FATE,574,"RNG",62,504,5,12,AGI+5 / Ranged Accuracy+7 / Ranged Attack+10,Rapid Shot+5% / Ranged Critical Damage+4%,"RNG-exclusive Boss FATE bow. Rapid Shot+5% reduces delay on procs. Ranged Crit Damage+4% rewards accuracy-capped builds."
+29904,thornpull_bow,Thornpull Bow,20,3,Boss FATE,446,"RNG/COR",22,504,5,12,AGI+3 / Ranged Accuracy+5,Rapid Shot+3%,"Rapid Shot+3% at lv20. RNG has almost nothing this strong this early. The proc is noticeable."
+
+--- MARKSMANSHIP ---
+
+29905,flintlock_pistol,Flintlock Pistol,22,1,Casket,465,"RNG/COR",26,528,3,13,AGI+2 / Ranged Accuracy+3,-,"A basic flintlock with a copper striker. Starter tier marksmanship. Fires reliably."
+29906,bronzelock_rifle,Bronzelock Rifle,48,2,Casket,540,"RNG/COR",50,528,3,13,AGI+3 / Ranged Accuracy+5 / Ranged Attack+6,Snapshot+3%,"A long bronze-barrelled rifle. Snapshot+3% reduces ranged attack delay. Solid mid-level marksman weapon."
+29907,ironhail_cannon,Ironhail Cannon,72,4,Boss FATE,575,"RNG/COR",76,528,3,13,AGI+5 / Ranged Accuracy+7 / Ranged Attack+12,Snapshot+5% / Barrage Accuracy+8,"Tier 4 Boss FATE. Snapshot+5% and Barrage Accuracy+8 on one weapon. RNG and COR endgame priority."
+29908,ashbarrel_pistol,Ashbarrel Pistol,22,3,Boss FATE,466,"RNG/COR",28,528,3,13,AGI+3 / Ranged Accuracy+5,Snapshot+3%,"An ashwood-barrelled pistol with a reliable lock. Snapshot+3% at lv22 is ahead of any casket firearm at this level."
+
+==============================================================
+  BATCH 4 - MOD WIRING REFERENCE
+  Use this section when generating item_mods.sql INSERT rows.
+  Format per row: (itemId, modId, value)
+  Mod IDs from mods_by_id.txt. Values match stat descriptions above.
+
+  KEY MOD IDs:
+  STR=8  DEX=9  VIT=10  AGI=11  INT=12  MND=13  CHR=14
+  ATT=23  RATT=24  ACC=25  RACC=26  ENMITY=27  MACC=30
+  EVA=68  STORETP=73
+  HTH_SKILL=80  DAGGER_SKILL=81  SWORD_SKILL=82  GSWORD_SKILL=83
+  AXE_SKILL=84  GAXE_SKILL=85  SCYTHE_SKILL=86  POLEARM_SKILL=87
+  KATANA_SKILL=88  GKATANA_SKILL=89  CLUB_SKILL=90  STAFF_SKILL=91
+  ARCHERY_SKILL=104  MARKSMAN_SKILL=105
+  HEALING_SKILL=112  ENFEEBLE_SKILL=114  ELEM_SKILL=115  DARK_SKILL=116
+  NINJUTSU_SKILL=118
+  SOULEATER_EFFECT=96 (value=percent: 5=5% 8=8%)
+  DOUBLE_ATTACK=288 (value=percent: 1=1%)
+  TRIPLE_ATTACK=302 (value=percent: 1=1%)
+  COUNTER=291 (value=percent: 4=4% 6=6%)
+  KICK_ATTACK_RATE=292 (value=percent: 6=6%)
+  CRITHITRATE=165 (value=percent: 2=2%)
+  ZANSHIN=306 (value=percent: 5=5% 8=8% 10=10%)
+  SMITE=898 (value=256-scale: 10=10 12=12 15=15)
+  ENH_DRAIN_ASPIR=315 (value=percent: 12=12%)
+  CURE_POTENCY=374 (value=percent: 3=3% 4=4% 6=6%)
+  MAG_BURST_BONUS=487 (value=percent: 5=5% 8=8%)
+  OCCULT_ACUMEN=902 (value=flat TP per magic hit: 5)
+  CONSERVE_MP=296 (value=percent: 3=3%)
+  SUBTLE_BLOW=289 (value=flat: 2 3)
+  SKILLCHAINDMG=175 (value=percent: 4=4% 5=5%)
+  JUMP_ATT_BONUS=362 (value=percent: 10=10% 15=15%)
+  WYVERN_BREATH=402 (value=flat: 5)
+  DUAL_WIELD=259 (value=percent reduction: 1=1%)
+  NINJA_TOOL=308 (value=percent chance: 4=4%)
+  RAPID_SHOT=359 (value=percent chance: 3=3% 5=5%)
+  SNAPSHOT=365 (value=percent reduction: 3=3% 5=5%)
+  BARRAGE_ACC=420 (value=flat accuracy: 8)
+  RANGED_CRIT_DMG_INCREASE=964 (value=percent: 4=4%)
+  SNEAK_ATK_DEX=830 (value=percent DEX contribution: 3=3% 4=4%)
+  WALTZ_POTENCY=491 (value=percent: 2=2% 3=3%)
+  FIRE_AFFINITY_DMG=347 (value: 2 = +1 wiki level = +5% fire dmg)
+  ADD EFFECTS: see scripts/globals/additional_effects.lua for procType values
+    ITEM_ADDEFFECT_TYPE=431  ITEM_ADDEFFECT_ELEMENT=950
+    ITEM_ADDEFFECT_DMG=500   ITEM_ADDEFFECT_CHANCE=501
+
+==============================================================
+
+ItemID,ItemName,ModID,ModName,Value,Notes
+29851,Copperleaf Blade,8,STR,1,STR+1
+29851,Copperleaf Blade,25,ACC,3,ACC+3
+29852,Ashbane Foil,13,MND,2,MND+2
+29852,Ashbane Foil,30,MACC,4,Magic Accuracy+4
+29852,Ashbane Foil,114,ENFEEBLE_SKILL,4,Enfeeble Skill+4
+29853,Verdant Saber,8,STR,3,STR+3
+29853,Verdant Saber,25,ACC,6,ACC+6
+29853,Verdant Saber,10,VIT,2,VIT+2
+29854,Stormreaver's Edge,8,STR,4,STR+4
+29854,Stormreaver's Edge,9,DEX,3,DEX+3
+29854,Stormreaver's Edge,25,ACC,8,ACC+8
+29854,Stormreaver's Edge,431,ITEM_ADDEFFECT_TYPE,[see additional_effects.lua],Thunder element add effect type
+29854,Stormreaver's Edge,950,ITEM_ADDEFFECT_ELEMENT,4,Thunder element (4)
+29854,Stormreaver's Edge,501,ITEM_ADDEFFECT_CHANCE,15,15% proc chance
+29854,Stormreaver's Edge,500,ITEM_ADDEFFECT_DMG,20,Base add effect damage
+29855,Ironblood Gladius,9,DEX,3,DEX+3
+29855,Ironblood Gladius,25,ACC,7,ACC+7
+29855,Ironblood Gladius,288,DOUBLE_ATTACK,1,Double Attack+1%
+29856,Whitemantle Saber,13,MND,4,MND+4
+29856,Whitemantle Saber,25,ACC,6,ACC+6
+29856,Whitemantle Saber,27,ENMITY,3,Enmity+3
+29856,Whitemantle Saber,374,CURE_POTENCY,4,Cure Potency+4%
+29857,Ironcleft Claymore,8,STR,2,STR+2
+29857,Ironcleft Claymore,23,ATT,5,Attack+5
+29858,Soulcleave,8,STR,5,STR+5
+29858,Soulcleave,23,ATT,12,Attack+12
+29858,Soulcleave,288,DOUBLE_ATTACK,1,Double Attack+1%
+29858,Soulcleave,96,SOULEATER_EFFECT,8,Souleater Effect+8%
+29859,Wrathcleft,8,STR,3,STR+3
+29859,Wrathcleft,23,ATT,8,Attack+8
+29859,Wrathcleft,898,SMITE,10,Smite+10 (256 scale)
+29860,Thornbite Hatchet,8,STR,1,STR+1
+29860,Thornbite Hatchet,23,ATT,4,Attack+4
+29861,Redrock Chopper,8,STR,3,STR+3
+29861,Redrock Chopper,25,ACC,5,ACC+5
+29862,Ravager's Axe,8,STR,5,STR+5
+29862,Ravager's Axe,23,ATT,14,Attack+14
+29862,Ravager's Axe,306,ZANSHIN,8,Zanshin+8%
+29863,Bonecleave Hatchet,8,STR,3,STR+3
+29863,Bonecleave Hatchet,23,ATT,7,Attack+7
+29863,Bonecleave Hatchet,306,ZANSHIN,5,Zanshin+5%
+29864,Colossus Axe,8,STR,4,STR+4
+29864,Colossus Axe,23,ATT,10,Attack+10
+29865,Volcanic Tabar,8,STR,5,STR+5
+29865,Volcanic Tabar,23,ATT,16,Attack+16
+29865,Volcanic Tabar,898,SMITE,15,Smite+15 (256 scale)
+29865,Volcanic Tabar,431,ITEM_ADDEFFECT_TYPE,[see additional_effects.lua],Fire element add effect type
+29865,Volcanic Tabar,950,ITEM_ADDEFFECT_ELEMENT,2,Fire element (2)
+29865,Volcanic Tabar,501,ITEM_ADDEFFECT_CHANCE,20,20% proc chance
+29865,Volcanic Tabar,500,ITEM_ADDEFFECT_DMG,30,Base add effect damage
+29866,Colossbreaker,8,STR,4,STR+4
+29866,Colossbreaker,23,ATT,10,Attack+10
+29866,Colossbreaker,898,SMITE,12,Smite+12 (256 scale)
+29867,Rustworn Scythe,8,STR,2,STR+2
+29867,Rustworn Scythe,116,DARK_SKILL,3,Dark Magic Skill+3
+29868,Bloodmire Scythe,8,STR,4,STR+4
+29868,Bloodmire Scythe,12,INT,2,INT+2
+29868,Bloodmire Scythe,116,DARK_SKILL,5,Dark Magic Skill+5
+29869,Gravereap,8,STR,6,STR+6
+29869,Gravereap,12,INT,4,INT+4
+29869,Gravereap,288,DOUBLE_ATTACK,1,Double Attack+1%
+29869,Gravereap,315,ENH_DRAIN_ASPIR,12,Drain & Aspir Potency+12%
+29870,Soulcrop,8,STR,3,STR+3
+29870,Soulcrop,12,INT,2,INT+2
+29870,Soulcrop,116,DARK_SKILL,5,Dark Magic Skill+5
+29870,Soulcrop,96,SOULEATER_EFFECT,5,Souleater Effect+5%
+29871,Splithorn Lance,8,STR,2,STR+2
+29871,Splithorn Lance,10,VIT,1,VIT+1
+29872,Emberthorn Spear,8,STR,3,STR+3
+29872,Emberthorn Spear,10,VIT,3,VIT+3
+29872,Emberthorn Spear,40,FIREACC,4,Fire Elemental Accuracy+4
+29873,Dragonthorn Bident,8,STR,5,STR+5
+29873,Dragonthorn Bident,10,VIT,4,VIT+4
+29873,Dragonthorn Bident,362,JUMP_ATT_BONUS,15,Jump ATT Bonus+15%
+29873,Dragonthorn Bident,402,WYVERN_BREATH,5,Wyvern Breath+5
+29874,Fangbore Lance,8,STR,3,STR+3
+29874,Fangbore Lance,10,VIT,2,VIT+2
+29874,Fangbore Lance,362,JUMP_ATT_BONUS,10,Jump ATT Bonus+10%
+29875,Foxfire Katana,9,DEX,2,DEX+2
+29875,Foxfire Katana,73,STORETP,2,Store TP+2
+29876,Bloodpetal Blade,9,DEX,3,DEX+3
+29876,Bloodpetal Blade,25,ACC,5,ACC+5
+29876,Bloodpetal Blade,73,STORETP,3,Store TP+3
+29877,Veilstrike,9,DEX,5,DEX+5
+29877,Veilstrike,25,ACC,8,ACC+8
+29877,Veilstrike,259,DUAL_WIELD,1,Dual Wield+1
+29877,Veilstrike,308,NINJA_TOOL,4,Ninja Tool Save+4%
+29878,Ghostflicker,9,DEX,3,DEX+3
+29878,Ghostflicker,73,STORETP,4,Store TP+4
+29879,Emberpetal Blade,9,DEX,4,DEX+4
+29879,Emberpetal Blade,25,ACC,6,ACC+6
+29879,Emberpetal Blade,73,STORETP,4,Store TP+4
+29879,Emberpetal Blade,118,NINJUTSU_SKILL,4,Ninjutsu Skill+4
+29880,Dawnreach Tachi,8,STR,3,STR+3
+29880,Dawnreach Tachi,9,DEX,3,DEX+3
+29880,Dawnreach Tachi,73,STORETP,4,Store TP+4
+29881,Nightfall's Reach,8,STR,5,STR+5
+29881,Nightfall's Reach,9,DEX,4,DEX+4
+29881,Nightfall's Reach,73,STORETP,6,Store TP+6
+29881,Nightfall's Reach,306,ZANSHIN,10,Zanshin+10%
+29881,Nightfall's Reach,175,SKILLCHAINDMG,5,Skillchain Damage+5%
+29882,Duskfang Tachi,8,STR,3,STR+3
+29882,Duskfang Tachi,9,DEX,3,DEX+3
+29882,Duskfang Tachi,73,STORETP,5,Store TP+5
+29882,Duskfang Tachi,175,SKILLCHAINDMG,4,Skillchain Damage+4%
+29883,Pilgrim's Mace,13,MND,2,MND+2
+29883,Pilgrim's Mace,112,HEALING_SKILL,3,Healing Magic Skill+3
+29884,Spellbinder's Cudgel,13,MND,3,MND+3
+29884,Spellbinder's Cudgel,12,INT,3,INT+3
+29884,Spellbinder's Cudgel,114,ENFEEBLE_SKILL,5,Enfeeble Skill+5
+29885,Sanctum Mace,13,MND,5,MND+5
+29885,Sanctum Mace,112,HEALING_SKILL,8,Healing Magic Skill+8
+29885,Sanctum Mace,27,ENMITY,4,Enmity+4
+29885,Sanctum Mace,374,CURE_POTENCY,6,Cure Potency+6%
+29886,Brightvow Mace,13,MND,4,MND+4
+29886,Brightvow Mace,112,HEALING_SKILL,5,Healing Magic Skill+5
+29886,Brightvow Mace,374,CURE_POTENCY,3,Cure Potency+3%
+29887,Apprentice's Rod,12,INT,2,INT+2
+29887,Apprentice's Rod,5,MP,15,MP+15
+29888,Embervein Staff,12,INT,3,INT+3
+29888,Embervein Staff,115,ELEM_SKILL,5,Elemental Magic Skill+5
+29888,Embervein Staff,347,FIRE_AFFINITY_DMG,2,Fire Affinity Damage+1 (value 2 = +1 wiki level per mods_by_id note)
+29889,Voidchannel Staff,12,INT,6,INT+6
+29889,Voidchannel Staff,115,ELEM_SKILL,8,Elemental Magic Skill+8
+29889,Voidchannel Staff,487,MAG_BURST_BONUS,8,Magic Burst Bonus+8%
+29889,Voidchannel Staff,902,OCCULT_ACUMEN,5,Occult Acumen+5 (TP per magic hit)
+29890,Voidmere Rod,12,INT,4,INT+4
+29890,Voidmere Rod,5,MP,20,MP+20
+29890,Voidmere Rod,487,MAG_BURST_BONUS,5,Magic Burst Bonus+5%
+29891,Thornroot Stave,12,INT,4,INT+4
+29891,Thornroot Stave,13,MND,3,MND+3
+29891,Thornroot Stave,115,ELEM_SKILL,6,Elemental Magic Skill+6
+29891,Thornroot Stave,296,CONSERVE_MP,3,Conserve MP+3%
+29892,Splinter Knife,9,DEX,2,DEX+2
+29892,Splinter Knife,14,CHR,1,CHR+1 (DNC Waltz Potency)
+29893,Venom Fang,9,DEX,3,DEX+3
+29893,Venom Fang,11,AGI,2,AGI+2
+29893,Venom Fang,14,CHR,2,CHR+2 (DNC Waltz Potency)
+29893,Venom Fang,431,ITEM_ADDEFFECT_TYPE,[see additional_effects.lua],Poison status add effect
+29893,Venom Fang,951,ITEM_ADDEFFECT_STATUS,[Poison status ID],See status effect IDs
+29893,Venom Fang,501,ITEM_ADDEFFECT_CHANCE,15,15% proc chance
+29893,Venom Fang,952,ITEM_ADDEFFECT_POWER,2,Poison tick damage
+29893,Venom Fang,953,ITEM_ADDEFFECT_DURATION,30,30 second duration
+29894,Shadowsnap Blade,9,DEX,5,DEX+5
+29894,Shadowsnap Blade,11,AGI,4,AGI+4
+29894,Shadowsnap Blade,14,CHR,3,CHR+3 (DNC Waltz Potency)
+29894,Shadowsnap Blade,830,SNEAK_ATK_DEX,4,Sneak Attack DEX Bonus+4%
+29894,Shadowsnap Blade,165,CRITHITRATE,2,Critical Hit Rate+2%
+29895,Whispercut,9,DEX,3,DEX+3
+29895,Whispercut,14,CHR,2,CHR+2 (DNC Waltz Potency)
+29895,Whispercut,830,SNEAK_ATK_DEX,3,Sneak Attack DEX Bonus+3%
+29896,Blackscale Knife,9,DEX,4,DEX+4
+29896,Blackscale Knife,11,AGI,3,AGI+3
+29896,Blackscale Knife,14,CHR,2,CHR+2 (DNC Waltz Potency)
+29896,Blackscale Knife,165,CRITHITRATE,2,Critical Hit Rate+2%
+29896,Blackscale Knife,68,EVA,5,Evasion+5
+29897,Ironhide Knuckles,8,STR,2,STR+2
+29897,Ironhide Knuckles,289,SUBTLE_BLOW,2,Subtle Blow+2
+29898,Temple Fists,8,STR,3,STR+3
+29898,Temple Fists,25,ACC,5,ACC+5
+29898,Temple Fists,289,SUBTLE_BLOW,3,Subtle Blow+3
+29899,Wrath Caestus,8,STR,6,STR+6
+29899,Wrath Caestus,291,COUNTER,6,Counter+6%
+29899,Wrath Caestus,292,KICK_ATTACK_RATE,6,Kick Attack Rate+6%
+29899,Wrath Caestus,165,CRITHITRATE,2,Critical Hit Rate+2%
+29900,Hammerfall Fists,8,STR,3,STR+3
+29900,Hammerfall Fists,291,COUNTER,4,Counter+4%
+29900,Hammerfall Fists,289,SUBTLE_BLOW,3,Subtle Blow+3
+29901,Thornwood Shortbow,11,AGI,2,AGI+2
+29901,Thornwood Shortbow,26,RACC,3,Ranged Accuracy+3
+29902,Ironstring Longbow,11,AGI,4,AGI+4
+29902,Ironstring Longbow,26,RACC,5,Ranged Accuracy+5
+29902,Ironstring Longbow,24,RATT,6,Ranged Attack+6
+29903,Stormstring Warbow,11,AGI,5,AGI+5
+29903,Stormstring Warbow,26,RACC,7,Ranged Accuracy+7
+29903,Stormstring Warbow,24,RATT,10,Ranged Attack+10
+29903,Stormstring Warbow,359,RAPID_SHOT,5,Rapid Shot+5%
+29903,Stormstring Warbow,964,RANGED_CRIT_DMG_INCREASE,4,Ranged Critical Damage+4%
+29904,Thornpull Bow,11,AGI,3,AGI+3
+29904,Thornpull Bow,26,RACC,5,Ranged Accuracy+5
+29904,Thornpull Bow,359,RAPID_SHOT,3,Rapid Shot+3%
+29905,Flintlock Pistol,11,AGI,2,AGI+2
+29905,Flintlock Pistol,26,RACC,3,Ranged Accuracy+3
+29906,Bronzelock Rifle,11,AGI,3,AGI+3
+29906,Bronzelock Rifle,26,RACC,5,Ranged Accuracy+5
+29906,Bronzelock Rifle,24,RATT,6,Ranged Attack+6
+29906,Bronzelock Rifle,365,SNAPSHOT,3,Snapshot+3%
+29907,Ironhail Cannon,11,AGI,5,AGI+5
+29907,Ironhail Cannon,26,RACC,7,Ranged Accuracy+7
+29907,Ironhail Cannon,24,RATT,12,Ranged Attack+12
+29907,Ironhail Cannon,365,SNAPSHOT,5,Snapshot+5%
+29907,Ironhail Cannon,420,BARRAGE_ACC,8,Barrage Accuracy+8
+29908,Ashbarrel Pistol,11,AGI,3,AGI+3
+29908,Ashbarrel Pistol,26,RACC,5,Ranged Accuracy+5
+29908,Ashbarrel Pistol,365,SNAPSHOT,3,Snapshot+3%
+
+==============================================================
+  DNC GEAR EDITS — EXISTING ITEM MOD ADDITIONS
+  Add these rows to item_mods.sql for the listed existing items.
+  These grant DNC CHR for Waltz Potency or direct Waltz Potency.
+==============================================================
+
+ExistingItemID,ItemName,ModID,ModName,Value,Notes
+29710,Shadowweave Tunic,14,CHR,2,CHR+2 added for DNC Waltz Potency
+29748,Shadowstep Hakama,14,CHR,3,CHR+3 added for DNC Waltz Potency
+29748,Shadowstep Hakama,491,WALTZ_POTENCY,3,Waltz Potency+3%
+29795,Tempered Coat,491,WALTZ_POTENCY,3,Waltz Potency+3% for DNC
+29803,Muddled Breeches,14,CHR,2,CHR+2 added for DNC Waltz Potency
+29849,Shadowstrike Ring,491,WALTZ_POTENCY,2,Waltz Potency+2% for DNC
