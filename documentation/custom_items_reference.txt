@@ -1,0 +1,1224 @@
+================================================================================
+  MIMICXI — CUSTOM ITEMS REFERENCE (Plain Text)
+  All 209 custom items, IDs 29700–29908
+  Branch: claude/design-new-items-hecdW  (design reference only)
+================================================================================
+
+FORMAT PER ITEM
+  ID | Display Name | Lv## | Source | Tradeable / RARE+EX
+  Type | Slot | Jobs
+  DMG / Delay (weapons only) | DEF (armour only)
+  Stats: ...
+  [VERIFY: mod name] — flagged where mod ID needs confirming from mods_by_id.txt
+
+FLAGS
+  Tradeable   = flags 0x0000  (regular / casket / Boss FATE drops)
+  RARE+EX     = flags 0x0C00  (custom NM drops — no-trade)
+
+HASTE SCALE  HASTE_GEAR mod: value 100=1%  200=2%  300=3%
+SMITE SCALE  SMITE mod: 256-scale (value 10/12/15/20)
+
+================================================================================
+  SECTION 1: CASKET / REGULAR DROPS  (Tradeable)
+================================================================================
+
+--------------------------------------------------------------------------------
+  BATCH 1 REGULAR WEAPONS (IDs 29700–29701)
+  Note: 29702–29704 are Custom NM drops — see Section 2
+--------------------------------------------------------------------------------
+
+29700 | Tarnished Gladius     | Lv15 | Regular Drop | Tradeable
+  Weapon — Sword, Slashing | Slot: MAIN+SUB | Jobs: WAR/MNK/THF/PLD/DRK/RDM/NIN/BLU/COR
+  DMG: 20  Delay: 240
+  Stats: DEX+2 / Accuracy+5
+
+29701 | Gale Axe              | Lv30 | Regular Drop | Tradeable
+  Weapon — Axe, Slashing | Slot: MAIN+SUB | Jobs: WAR/DRK/BST/DRG
+  DMG: 37  Delay: 288
+  Stats: STR+3 / Attack+8
+
+--------------------------------------------------------------------------------
+  BATCH 2 REGULAR WEAPONS (IDs 29720–29729)
+  Note: 29723/29727/29728 are Custom NM drops — see Section 2
+--------------------------------------------------------------------------------
+
+29720 | Ironwood Club         | Lv18 | Regular Drop | Tradeable
+  Weapon — Club, Blunt | Slot: MAIN+SUB | Jobs: WHM/RDM/PLD/SCH/GEO/BLU
+  DMG: 25  Delay: 282
+  Stats: MND+2 / HP+15
+
+29721 | Vipersting Dagger     | Lv25 | Regular Drop | Tradeable
+  Weapon — Dagger, Piercing | Slot: MAIN+SUB | Jobs: THF/NIN/RDM/COR/DNC/BRD
+  DMG: 28  Delay: 210
+  Stats: DEX+3 / Accuracy+5 / AGI+2
+
+29722 | Dustcleave Greataxe   | Lv35 | Regular Drop | Tradeable
+  Weapon — Great Axe, Slashing | Slot: MAIN | Jobs: WAR/DRK
+  DMG: 60  Delay: 444
+  Stats: STR+4 / Attack+10
+
+29724 | Thornlance            | Lv40 | Regular Drop | Tradeable
+  Weapon — Polearm, Piercing | Slot: MAIN | Jobs: DRG/WAR
+  DMG: 66  Delay: 396
+  Stats: STR+3 / VIT+2
+
+29725 | Ironknuckle Cestus    | Lv30 | Regular Drop | Tradeable
+  Weapon — H2H, Blunt | Slot: MAIN+SUB | Jobs: MNK/PUP
+  DMG: 15  Delay: 96
+  Stats: STR+3 / Subtle Blow+3
+
+29726 | Cobaltedge Sword      | Lv45 | Regular Drop | Tradeable
+  Weapon — Sword, Slashing | Slot: MAIN+SUB | Jobs: WAR/PLD/RDM/NIN/BLU
+  DMG: 40  Delay: 240
+  Stats: STR+3 / DEX+2 / Accuracy+6
+
+29729 | Reedwhisper Bow       | Lv25 | Regular Drop | Tradeable
+  Weapon — Archery, Ranged | Slot: RANGED | Jobs: RNG/COR
+  DMG: 28  Delay: 504
+  Stats: AGI+2 / Ranged Accuracy+4
+
+--------------------------------------------------------------------------------
+  BATCH 3 REGULAR WEAPONS (IDs 29780–29787)
+--------------------------------------------------------------------------------
+
+29780 | Rustbite Greatsword   | Lv22 | Regular Drop | Tradeable
+  Weapon — Great Sword, Slashing | Slot: MAIN | Jobs: WAR/PLD/DRK/RUN
+  DMG: 44  Delay: 396
+  Stats: STR+3 / VIT+2
+
+29781 | Moonblade             | Lv40 | Regular Drop | Tradeable
+  Weapon — Sword, Slashing | Slot: MAIN+SUB | Jobs: WAR/PLD/RDM/NIN/BLU
+  DMG: 38  Delay: 240
+  Stats: MND+3 / Accuracy+5 / Magic Accuracy+4
+
+29782 | Needlefang Knife      | Lv10 | Regular Drop | Tradeable
+  Weapon — Dagger, Piercing | Slot: MAIN+SUB | Jobs: THF/NIN/RDM/COR/DNC/BRD
+  DMG: 12  Delay: 210
+  Stats: DEX+2 / Evasion+3
+
+29783 | Shadewhisper Blade    | Lv35 | Regular Drop | Tradeable
+  Weapon — Katana, Slashing | Slot: MAIN+SUB | Jobs: NIN/SAM
+  DMG: 34  Delay: 245
+  Stats: DEX+3 / Accuracy+5
+
+29784 | Bonereap Scythe       | Lv25 | Regular Drop | Tradeable
+  Weapon — Scythe, Slashing | Slot: MAIN | Jobs: DRK
+  DMG: 35  Delay: 480
+  Stats: STR+2 / INT+2
+
+29785 | Copperlock Crossbow   | Lv35 | Regular Drop | Tradeable
+  Weapon — Marksmanship, Piercing | Slot: RANGED | Jobs: RNG/COR
+  DMG: 34  Delay: 528
+  Stats: AGI+2 / Ranged Accuracy+5
+
+29786 | Elderwood Staff       | Lv60 | Regular Drop | Tradeable
+  Weapon — Staff, Blunt | Slot: MAIN | Jobs: WHM/BLM/RDM/SMN/SCH/GEO
+  DMG: 62  Delay: 366
+  Stats: MND+4 / INT+4 / MP+20
+
+29787 | Ironpaw Knuckles      | Lv60 | Regular Drop | Tradeable
+  Weapon — H2H, Blunt | Slot: MAIN+SUB | Jobs: MNK/PUP
+  DMG: 24  Delay: 96
+  Stats: STR+4 / Accuracy+6
+
+--------------------------------------------------------------------------------
+  BATCH 4 CASKET WEAPONS — SWORDS
+--------------------------------------------------------------------------------
+
+29851 | Copperleaf Blade      | Lv14 | Casket | Tradeable
+  Weapon — Sword, Slashing | Slot: MAIN+SUB | Jobs: WAR/MNK/THF/PLD/DRK/RDM/NIN/BLU/COR
+  DMG: 15  Delay: 240
+  Stats: STR+1 / Accuracy+3
+
+29852 | Ashbane Foil          | Lv28 | Casket | Tradeable
+  Weapon — Sword, Slashing | Slot: MAIN+SUB | Jobs: RDM/NIN/BLU
+  DMG: 26  Delay: 240
+  Stats: MND+2 / Magic Accuracy+4 / Enfeebling Magic Skill+4
+
+29853 | Verdant Saber         | Lv48 | Casket | Tradeable
+  Weapon — Sword, Slashing | Slot: MAIN+SUB | Jobs: WAR/PLD/RDM/NIN/BLU
+  DMG: 40  Delay: 240
+  Stats: STR+3 / Accuracy+6 / VIT+2
+
+--------------------------------------------------------------------------------
+  BATCH 4 CASKET WEAPONS — GREAT SWORDS
+--------------------------------------------------------------------------------
+
+29857 | Ironcleft Claymore    | Lv22 | Casket | Tradeable
+  Weapon — Great Sword, Slashing | Slot: MAIN | Jobs: WAR/PLD/DRK/RUN
+  DMG: 42  Delay: 396
+  Stats: STR+2 / Attack+5
+
+--------------------------------------------------------------------------------
+  BATCH 4 CASKET WEAPONS — AXES
+--------------------------------------------------------------------------------
+
+29860 | Thornbite Hatchet     | Lv16 | Casket | Tradeable
+  Weapon — Axe, Slashing | Slot: MAIN+SUB | Jobs: WAR/DRK/BST/DRG
+  DMG: 20  Delay: 288
+  Stats: STR+1 / Attack+4
+
+29861 | Redrock Chopper       | Lv38 | Casket | Tradeable
+  Weapon — Axe, Slashing | Slot: MAIN+SUB | Jobs: WAR/DRK/BST/DRG
+  DMG: 40  Delay: 288
+  Stats: STR+3 / Accuracy+5
+
+--------------------------------------------------------------------------------
+  BATCH 4 CASKET WEAPONS — GREAT AXES
+--------------------------------------------------------------------------------
+
+29864 | Colossus Axe          | Lv45 | Casket | Tradeable
+  Weapon — Great Axe, Slashing | Slot: MAIN | Jobs: WAR/DRK
+  DMG: 65  Delay: 444
+  Stats: STR+4 / Attack+10
+
+--------------------------------------------------------------------------------
+  BATCH 4 CASKET WEAPONS — SCYTHES
+--------------------------------------------------------------------------------
+
+29867 | Rustworn Scythe       | Lv18 | Casket | Tradeable
+  Weapon — Scythe, Slashing | Slot: MAIN | Jobs: DRK
+  DMG: 24  Delay: 480
+  Stats: STR+2 / Dark Magic Skill+3
+
+29868 | Bloodmire Scythe      | Lv50 | Casket | Tradeable
+  Weapon — Scythe, Slashing | Slot: MAIN | Jobs: DRK
+  DMG: 68  Delay: 480
+  Stats: STR+4 / INT+2 / Dark Magic Skill+5
+
+--------------------------------------------------------------------------------
+  BATCH 4 CASKET WEAPONS — POLEARMS
+--------------------------------------------------------------------------------
+
+29871 | Splithorn Lance       | Lv20 | Casket | Tradeable
+  Weapon — Polearm, Piercing | Slot: MAIN | Jobs: DRG/WAR
+  DMG: 30  Delay: 396
+  Stats: STR+2 / VIT+1
+
+29872 | Emberthorn Spear      | Lv40 | Casket | Tradeable
+  Weapon — Polearm, Piercing | Slot: MAIN | Jobs: DRG/WAR
+  DMG: 55  Delay: 396
+  Stats: STR+3 / VIT+3 / Fire Elemental Accuracy+4  [VERIFY mod ID 40]
+
+--------------------------------------------------------------------------------
+  BATCH 4 CASKET WEAPONS — KATANAS
+--------------------------------------------------------------------------------
+
+29875 | Foxfire Katana        | Lv24 | Casket | Tradeable
+  Weapon — Katana, Slashing | Slot: MAIN+SUB | Jobs: NIN/SAM
+  DMG: 22  Delay: 245
+  Stats: DEX+2 / Store TP+2
+
+29876 | Bloodpetal Blade      | Lv42 | Casket | Tradeable
+  Weapon — Katana, Slashing | Slot: MAIN+SUB | Jobs: NIN/SAM
+  DMG: 36  Delay: 245
+  Stats: DEX+3 / Accuracy+5 / Store TP+3
+
+--------------------------------------------------------------------------------
+  BATCH 4 CASKET WEAPONS — GREAT KATANAS
+--------------------------------------------------------------------------------
+
+29880 | Dawnreach Tachi       | Lv55 | Casket | Tradeable
+  Weapon — Great Katana, Slashing | Slot: MAIN | Jobs: SAM
+  DMG: 72  Delay: 450
+  Stats: STR+3 / DEX+3 / Store TP+4
+
+--------------------------------------------------------------------------------
+  BATCH 4 CASKET WEAPONS — CLUBS
+--------------------------------------------------------------------------------
+
+29883 | Pilgrim's Mace        | Lv14 | Casket | Tradeable
+  Weapon — Club, Blunt | Slot: MAIN+SUB | Jobs: WHM/PLD/RDM/SCH/GEO/BLU
+  DMG: 12  Delay: 282
+  Stats: MND+2 / Healing Magic Skill+3
+
+29884 | Spellbinder's Cudgel  | Lv45 | Casket | Tradeable
+  Weapon — Club, Blunt | Slot: MAIN+SUB | Jobs: WHM/RDM/SCH/GEO/BLU
+  DMG: 44  Delay: 282
+  Stats: MND+3 / INT+3 / Enfeebling Magic Skill+5
+
+--------------------------------------------------------------------------------
+  BATCH 4 CASKET WEAPONS — STAVES
+--------------------------------------------------------------------------------
+
+29887 | Apprentice's Rod      | Lv16 | Casket | Tradeable
+  Weapon — Staff, Blunt | Slot: MAIN | Jobs: WHM/BLM/RDM/SMN/SCH/GEO
+  DMG: 18  Delay: 366
+  Stats: INT+2 / MP+15
+
+29888 | Embervein Staff       | Lv35 | Casket | Tradeable
+  Weapon — Staff, Blunt | Slot: MAIN | Jobs: BLM/RDM/SCH
+  DMG: 36  Delay: 366
+  Stats: INT+3 / Elemental Magic Skill+5 / Fire Affinity Damage+1
+
+--------------------------------------------------------------------------------
+  BATCH 4 CASKET WEAPONS — DAGGERS
+  Note: DNC receives CHR for Waltz Potency identity
+--------------------------------------------------------------------------------
+
+29892 | Splinter Knife        | Lv14 | Casket | Tradeable
+  Weapon — Dagger, Piercing | Slot: MAIN+SUB | Jobs: THF/NIN/RDM/COR/DNC/BRD
+  DMG: 10  Delay: 210
+  Stats: DEX+2 / CHR+1 (DNC Waltz Potency)
+
+29893 | Venom Fang            | Lv32 | Casket | Tradeable
+  Weapon — Dagger, Piercing | Slot: MAIN+SUB | Jobs: THF/NIN/DNC/COR
+  DMG: 24  Delay: 210
+  Stats: DEX+3 / AGI+2 / CHR+2 (DNC Waltz Potency) / Poison Add Effect (15% proc, 30s)
+
+--------------------------------------------------------------------------------
+  BATCH 4 CASKET WEAPONS — H2H
+--------------------------------------------------------------------------------
+
+29897 | Ironhide Knuckles     | Lv18 | Casket | Tradeable
+  Weapon — H2H, Blunt | Slot: MAIN+SUB | Jobs: MNK/PUP
+  DMG: 8   Delay: 96
+  Stats: STR+2 / Subtle Blow+2
+
+29898 | Temple Fists          | Lv40 | Casket | Tradeable
+  Weapon — H2H, Blunt | Slot: MAIN+SUB | Jobs: MNK/PUP
+  DMG: 18  Delay: 96
+  Stats: STR+3 / Accuracy+5 / Subtle Blow+3
+
+--------------------------------------------------------------------------------
+  BATCH 4 CASKET WEAPONS — ARCHERY
+--------------------------------------------------------------------------------
+
+29901 | Thornwood Shortbow    | Lv18 | Casket | Tradeable
+  Weapon — Archery, Ranged | Slot: RANGED | Jobs: RNG/COR
+  DMG: 18  Delay: 504
+  Stats: AGI+2 / Ranged Accuracy+3
+
+29902 | Ironstring Longbow    | Lv50 | Casket | Tradeable
+  Weapon — Archery, Ranged | Slot: RANGED | Jobs: RNG/COR
+  DMG: 44  Delay: 504
+  Stats: AGI+4 / Ranged Accuracy+5 / Ranged Attack+6
+
+--------------------------------------------------------------------------------
+  BATCH 4 CASKET WEAPONS — MARKSMANSHIP
+--------------------------------------------------------------------------------
+
+29905 | Flintlock Pistol      | Lv22 | Casket | Tradeable
+  Weapon — Marksmanship, Piercing | Slot: RANGED | Jobs: RNG/COR
+  DMG: 26  Delay: 528
+  Stats: AGI+2 / Ranged Accuracy+3
+
+29906 | Bronzelock Rifle      | Lv48 | Casket | Tradeable
+  Weapon — Marksmanship, Piercing | Slot: RANGED | Jobs: RNG/COR
+  DMG: 50  Delay: 528
+  Stats: AGI+3 / Ranged Accuracy+5 / Ranged Attack+6 / Snapshot+3%
+
+================================================================================
+  SECTION 1 — REGULAR ARMOUR
+================================================================================
+
+--------------------------------------------------------------------------------
+  BATCH 1 REGULAR ARMOUR (IDs 29705–29719)
+  Note: 29707/29709/29710/29712/29716/29719 are NM drops — see Section 2
+--------------------------------------------------------------------------------
+
+29705 | Brushwood Helm        | Lv10 | Regular Drop | Tradeable
+  Armour — HEAD | DEF: 13 | Jobs: WAR/MNK/PLD/DRK/DRG/SAM/RUN
+  Stats: HP+12 / VIT+2
+
+29706 | Ashen Circlet         | Lv35 | Regular Drop | Tradeable
+  Armour — HEAD | DEF: 20 | Jobs: WHM/BLM/RDM/SMN/SCH/GEO
+  Stats: INT+4 / MND+3 / Fast Cast+3  [VERIFY: FASTCAST mod ID]
+
+29708 | Pilgrim's Coat        | Lv20 | Regular Drop | Tradeable
+  Armour — BODY | DEF: 25 | Jobs: WHM/RDM/SCH/GEO/PLD
+  Stats: MND+3 / MP+25 / Divine Magic Skill+5  [VERIFY: DIVINE_SKILL mod ID]
+
+29711 | Stormcaller Mitts     | Lv25 | Regular Drop | Tradeable
+  Armour — HANDS | DEF: 16 | Jobs: RNG/COR/BRD/BLU
+  Stats: AGI+3 / Ranged Accuracy+5 / Wind Elemental Magic Accuracy+4  [VERIFY: WIND_ELE_ACC mod ID]
+
+29713 | Dustwalker Subligar   | Lv15 | Regular Drop | Tradeable
+  Armour — LEGS | DEF: 17 | Jobs: THF/RNG/NIN/DNC/BST/COR
+  Stats: HP+10 / Evasion+5
+
+29714 | Crestfallen Slacks    | Lv45 | Regular Drop | Tradeable
+  Armour — LEGS | DEF: 31 | Jobs: BLM/WHM/SMN/SCH/RDM/GEO
+  Stats: INT+4 / MND+4 / MP+20 / Conserve MP+3%
+
+29715 | Mudstrider Boots      | Lv20 | Regular Drop | Tradeable
+  Armour — FEET | DEF: 12 | Jobs: THF/NIN/DNC/BST/RNG/COR/BRD
+  Stats: AGI+2 / Evasion+5 / Movement Speed+10%  [VERIFY: MOVE_SPEED mod ID]
+
+29717 | Cinnabar Necklace     | Lv30 | Regular Drop | Tradeable
+  Armour — NECK | DEF: 0 | Jobs: All
+  Stats: HP+20 / STR+3 / VIT+2
+
+29718 | Burnished Sash        | Lv40 | Regular Drop | Tradeable
+  Armour — WAIST | DEF: 0 | Jobs: WHM/BLM/RDM/SMN/SCH/GEO/BLU/PLD
+  Stats: MP+25 / INT+3 / MND+3
+
+--------------------------------------------------------------------------------
+  BATCH 2 REGULAR ARMOUR (IDs 29730–29779)
+  Note: NM-sourced items listed in Section 2
+--------------------------------------------------------------------------------
+
+29730 | Fieldwarden Cap       | Lv12 | Regular Drop | Tradeable
+  Armour — HEAD | DEF: 12 | Jobs: BST/RNG/THF/DNC/COR
+  Stats: AGI+2 / HP+10 / Evasion+3
+
+29731 | Scholar's Mortarboard | Lv28 | Regular Drop | Tradeable
+  Armour — HEAD | DEF: 17 | Jobs: SCH/BLM/WHM/SMN/GEO
+  Stats: INT+4 / MND+3 / MP+20
+
+29732 | Brigand's Bandana     | Lv42 | Regular Drop | Tradeable
+  Armour — HEAD | DEF: 22 | Jobs: THF/NIN/DNC/COR/RNG
+  Stats: DEX+4 / Accuracy+5 / Evasion+4
+
+29735 | Ashgrain Vest         | Lv15 | Regular Drop | Tradeable
+  Armour — BODY | DEF: 20 | Jobs: THF/RNG/NIN/DNC/BST/COR
+  Stats: HP+15 / Evasion+4
+
+29736 | Duskweave Robe        | Lv30 | Regular Drop | Tradeable
+  Armour — BODY | DEF: 28 | Jobs: BLM/SMN/SCH/GEO/RDM
+  Stats: INT+4 / MP+30 / Elemental Magic Skill+5
+
+29737 | Ironguard Hauberk     | Lv48 | Regular Drop | Tradeable
+  Armour — BODY | DEF: 50 | Jobs: WAR/DRK/DRG/SAM
+  Stats: STR+3 / VIT+3 / Accuracy+6
+
+29740 | Tanner's Gloves       | Lv12 | Regular Drop | Tradeable
+  Armour — HANDS | DEF: 10 | Jobs: BST/RNG/THF/DNC/COR/SAM
+  Stats: HP+8 / VIT+1
+
+29741 | Ember Mitts           | Lv32 | Regular Drop | Tradeable
+  Armour — HANDS | DEF: 20 | Jobs: WAR/PLD/DRG/RUN/DRK
+  Stats: STR+3 / VIT+2 / Fire Elemental Accuracy+4  [VERIFY mod ID 40]
+
+29742 | Spellthread Gloves    | Lv48 | Regular Drop | Tradeable
+  Armour — HANDS | DEF: 18 | Jobs: WHM/BLM/RDM/SCH/GEO/SMN
+  Stats: INT+3 / MND+3 / Fast Cast+3  [VERIFY: FASTCAST mod ID]
+
+29745 | Herdsman's Trousers   | Lv12 | Regular Drop | Tradeable
+  Armour — LEGS | DEF: 15 | Jobs: BST/WHM/RDM/BRD
+  Stats: HP+12 / MND+2
+
+29746 | Pathfinder Slops      | Lv28 | Regular Drop | Tradeable
+  Armour — LEGS | DEF: 24 | Jobs: RNG/COR/BST/DNC/THF
+  Stats: AGI+3 / Evasion+6
+
+29747 | Ironweave Cuisses     | Lv45 | Regular Drop | Tradeable
+  Armour — LEGS | DEF: 38 | Jobs: WAR/PLD/DRG/DRK/SAM/RUN
+  Stats: STR+3 / VIT+3 / HP+20
+
+29750 | Wanderer's Sandals    | Lv12 | Regular Drop | Tradeable
+  Armour — FEET | DEF: 8 | Jobs: WHM/BLM/RDM/SMN/SCH/GEO
+  Stats: MP+12 / MND+2
+
+29751 | Grimwatcher Greaves   | Lv30 | Regular Drop | Tradeable
+  Armour — FEET | DEF: 16 | Jobs: WAR/PLD/DRK/DRG/RUN
+  Stats: VIT+3 / HP+15
+
+29752 | Fleetfoot Sollerets   | Lv50 | Regular Drop | Tradeable
+  Armour — FEET | DEF: 22 | Jobs: WAR/SAM/DRG/DRK/RUN
+  Stats: Accuracy+5 / Haste+2%
+
+29755 | Ranger's Gorget       | Lv20 | Regular Drop | Tradeable
+  Armour — NECK | DEF: 0 | Jobs: All
+  Stats: AGI+3 / Ranged Accuracy+5
+
+29756 | Ironhide Choker       | Lv35 | Regular Drop | Tradeable
+  Armour — NECK | DEF: 0 | Jobs: All
+  Stats: HP+25 / VIT+3 / Defence+5  [VERIFY: DEF_BONUS mod ID 31]
+
+29757 | Scholar's Collar      | Lv45 | Regular Drop | Tradeable
+  Armour — NECK | DEF: 0 | Jobs: All
+  Stats: MP+30 / INT+3 / MND+3
+
+29758 | Duelist's Chain       | Lv58 | Regular Drop | Tradeable
+  Armour — NECK | DEF: 0 | Jobs: All
+  Stats: STR+3 / DEX+3 / Accuracy+6
+
+29760 | Cowhide Belt          | Lv12 | Regular Drop | Tradeable
+  Armour — WAIST | DEF: 0 | Jobs: All
+  Stats: HP+10 / STR+2
+
+29761 | Woven Cord            | Lv25 | Regular Drop | Tradeable
+  Armour — WAIST | DEF: 0 | Jobs: All
+  Stats: MP+15 / MND+2
+
+29762 | Mercenary's Sash      | Lv40 | Regular Drop | Tradeable
+  Armour — WAIST | DEF: 0 | Jobs: All
+  Stats: HP+20 / STR+3 / Accuracy+4
+
+29763 | Hexweave Obi          | Lv55 | Regular Drop | Tradeable
+  Armour — WAIST | DEF: 0 | Jobs: BLM/RDM/SCH/GEO/SMN/WHM
+  Stats: MP+30 / INT+4 / Conserve MP+4%
+
+29765 | Copper Loop           | Lv10 | Regular Drop | Tradeable
+  Armour — EAR | DEF: 0 | Jobs: All
+  Stats: HP+8
+
+29766 | Mage's Stud           | Lv25 | Regular Drop | Tradeable
+  Armour — EAR | DEF: 0 | Jobs: All
+  Stats: MP+12 / INT+2
+
+29767 | Warrior's Loop        | Lv35 | Regular Drop | Tradeable
+  Armour — EAR | DEF: 0 | Jobs: All
+  Stats: STR+3 / Accuracy+3
+
+29768 | Keen Earring          | Lv50 | Regular Drop | Tradeable
+  Armour — EAR | DEF: 0 | Jobs: All
+  Stats: Accuracy+5 / Attack+4
+
+29770 | Bronze Ring           | Lv10 | Regular Drop | Tradeable
+  Armour — RING | DEF: 0 | Jobs: All
+  Stats: HP+8 / VIT+1
+
+29771 | Apprentice's Ring     | Lv20 | Regular Drop | Tradeable
+  Armour — RING | DEF: 0 | Jobs: All
+  Stats: MP+10 / MND+2
+
+29772 | Soldier's Ring        | Lv38 | Regular Drop | Tradeable
+  Armour — RING | DEF: 0 | Jobs: All
+  Stats: STR+3 / HP+15
+
+29773 | Sorcerer's Band       | Lv52 | Regular Drop | Tradeable
+  Armour — RING | DEF: 0 | Jobs: All
+  Stats: INT+4 / MP+20
+
+29775 | Roughspun Cloak       | Lv12 | Regular Drop | Tradeable
+  Armour — BACK | DEF: 5 | Jobs: All
+  Stats: HP+10 / MND+1
+
+29776 | Tracker's Mantle      | Lv30 | Regular Drop | Tradeable
+  Armour — BACK | DEF: 6 | Jobs: RNG/BST/THF/COR/DNC
+  Stats: AGI+3 / Ranged Accuracy+4 / Evasion+4
+
+29777 | Ironguard Cape        | Lv45 | Regular Drop | Tradeable
+  Armour — BACK | DEF: 8 | Jobs: WAR/PLD/DRG/DRK/RUN
+  Stats: VIT+3 / HP+20 / Enmity+2
+
+--------------------------------------------------------------------------------
+  BATCH 3 REGULAR ARMOUR (IDs 29788–29819)
+--------------------------------------------------------------------------------
+
+29788 | Riveted Visor         | Lv25 | Regular Drop | Tradeable
+  Armour — HEAD | DEF: 18 | Jobs: WAR/PLD/DRK/DRG/SAM/RUN
+  Stats: STR+2 / VIT+3 / HP+12
+
+29789 | Silkweave Hood        | Lv42 | Regular Drop | Tradeable
+  Armour — HEAD | DEF: 21 | Jobs: BLM/SMN/SCH/GEO/RDM
+  Stats: INT+3 / MP+18 / Elemental Magic Skill+4
+
+29790 | Tracker's Cap         | Lv55 | Regular Drop | Tradeable
+  Armour — HEAD | DEF: 28 | Jobs: RNG/COR/BST/THF/DNC
+  Stats: AGI+4 / Ranged Accuracy+5 / Evasion+4
+
+29791 | Iron Sentinel Helm    | Lv65 | Regular Drop | Tradeable
+  Armour — HEAD | DEF: 38 | Jobs: WAR/PLD/DRK/DRG/SAM/RUN
+  Stats: VIT+4 / HP+30 / Accuracy+6
+
+29792 | Mudcloth Gi           | Lv25 | Regular Drop | Tradeable
+  Armour — BODY | DEF: 26 | Jobs: MNK/PUP/BST
+  Stats: HP+20 / VIT+2 / Subtle Blow+2
+
+29793 | Verdant Robe          | Lv38 | Regular Drop | Tradeable
+  Armour — BODY | DEF: 30 | Jobs: SMN/WHM/SCH/GEO/RDM
+  Stats: MND+4 / MP+25 / Elemental Magic Skill+4
+
+29794 | Ranger's Surcoat      | Lv52 | Regular Drop | Tradeable
+  Armour — BODY | DEF: 38 | Jobs: RNG/COR/BST
+  Stats: AGI+4 / Ranged Accuracy+5 / Ranged Attack+5
+
+29795 | Tempered Coat         | Lv65 | Regular Drop | Tradeable
+  Armour — BODY | DEF: 48 | Jobs: WAR/MNK/THF/DRK/SAM/NIN/DNC
+  Stats: STR+4 / DEX+3 / Accuracy+8 / Waltz Potency+3%  (DNC edit)
+
+29796 | Featherlight Wraps    | Lv18 | Regular Drop | Tradeable
+  Armour — HANDS | DEF: 11 | Jobs: MNK/PUP/BST/DNC
+  Stats: DEX+2 / HP+8 / Subtle Blow+2
+
+29797 | Channeler's Cuffs     | Lv55 | Regular Drop | Tradeable
+  Armour — HANDS | DEF: 20 | Jobs: WHM/BLM/RDM/SMN/SCH/GEO
+  Stats: MND+4 / INT+3 / Fast Cast+3  [VERIFY: FASTCAST mod ID]
+
+29798 | Ironveil Gauntlets    | Lv65 | Regular Drop | Tradeable
+  Armour — HANDS | DEF: 30 | Jobs: WAR/DRK/SAM/DRG/RUN
+  Stats: STR+4 / Attack+10 / Accuracy+5
+
+29799 | Bonehide Knuckle-Guards | Lv38 | Regular Drop | Tradeable
+  Armour — HANDS | DEF: 22 | Jobs: WAR/DRK/MNK/SAM
+  Stats: STR+3 / Accuracy+5
+
+29800 | Wanderer's Kecks      | Lv22 | Regular Drop | Tradeable
+  Armour — LEGS | DEF: 20 | Jobs: WHM/BLM/RDM/SMN/SCH/GEO/BRD
+  Stats: MP+18 / MND+2 / INT+2
+
+29801 | Boneweave Kecks       | Lv52 | Regular Drop | Tradeable
+  Armour — LEGS | DEF: 36 | Jobs: WAR/DRK/MNK/SAM/RUN/DRG
+  Stats: STR+3 / VIT+3 / Attack+7
+
+29802 | Dawnspun Slops        | Lv65 | Regular Drop | Tradeable
+  Armour — LEGS | DEF: 34 | Jobs: WHM/BLM/RDM/SMN/SCH/GEO
+  Stats: INT+5 / MND+4 / MP+25
+
+29803 | Muddled Breeches      | Lv32 | Regular Drop | Tradeable
+  Armour — LEGS | DEF: 27 | Jobs: THF/NIN/DNC/BST/COR/RNG
+  Stats: DEX+3 / AGI+3 / Evasion+5 / CHR+2  (DNC edit)
+
+29804 | Brass-Shod Boots      | Lv18 | Regular Drop | Tradeable
+  Armour — FEET | DEF: 11 | Jobs: WAR/MNK/PLD/DRK/DRG/SAM/RUN
+  Stats: HP+10 / VIT+2
+
+29805 | Plodder's Clogs       | Lv38 | Regular Drop | Tradeable
+  Armour — FEET | DEF: 16 | Jobs: BST/RNG/THF/DNC/COR/BRD
+  Stats: AGI+3 / Movement Speed+8%  [VERIFY: MOVE_SPEED mod ID] / Evasion+4
+
+29806 | Ironveil Sabatons     | Lv65 | Regular Drop | Tradeable
+  Armour — FEET | DEF: 26 | Jobs: WAR/PLD/DRK/DRG/SAM/RUN
+  Stats: STR+3 / Attack+8 / Haste+2%
+
+29807 | Mender's Gorget       | Lv15 | Regular Drop | Tradeable
+  Armour — NECK | DEF: 0 | Jobs: All
+  Stats: MP+12 / MND+2
+
+29808 | Raider's Necklace     | Lv48 | Regular Drop | Tradeable
+  Armour — NECK | DEF: 0 | Jobs: All
+  Stats: STR+3 / DEX+3 / Attack+5
+
+29809 | Arcane Collar         | Lv62 | Regular Drop | Tradeable
+  Armour — NECK | DEF: 0 | Jobs: All
+  Stats: INT+4 / MND+3 / Magic Accuracy+6
+
+29810 | Rough Sash            | Lv15 | Regular Drop | Tradeable
+  Armour — WAIST | DEF: 0 | Jobs: All
+  Stats: HP+12 / STR+2
+
+29811 | Warrior's Tassels     | Lv48 | Regular Drop | Tradeable
+  Armour — WAIST | DEF: 0 | Jobs: WAR/MNK/DRK/SAM/DRG/PLD/RUN
+  Stats: STR+3 / Attack+6 / Accuracy+4
+
+29812 | Spellbinder's Belt    | Lv62 | Regular Drop | Tradeable
+  Armour — WAIST | DEF: 0 | Jobs: WHM/BLM/RDM/SMN/SCH/GEO/BLU
+  Stats: MP+25 / INT+4 / Conserve MP+3%
+
+29813 | Scout's Earring       | Lv18 | Regular Drop | Tradeable
+  Armour — EAR | DEF: 0 | Jobs: All
+  Stats: AGI+2 / Evasion+3
+
+29814 | Savant's Earring      | Lv62 | Regular Drop | Tradeable
+  Armour — EAR | DEF: 0 | Jobs: All
+  Stats: INT+3 / MND+2 / Magic Accuracy+4
+
+29815 | Toughened Ring        | Lv28 | Regular Drop | Tradeable
+  Armour — RING | DEF: 0 | Jobs: All
+  Stats: VIT+3 / HP+12
+
+29816 | Battlemage Band       | Lv62 | Regular Drop | Tradeable
+  Armour — RING | DEF: 0 | Jobs: All
+  Stats: STR+2 / INT+2 / Accuracy+4
+
+29817 | Brigand's Cape        | Lv22 | Regular Drop | Tradeable
+  Armour — BACK | DEF: 5 | Jobs: THF/NIN/DNC/COR/BST/RNG/BRD
+  Stats: AGI+2 / Evasion+5
+
+29818 | Mender's Mantle       | Lv42 | Regular Drop | Tradeable
+  Armour — BACK | DEF: 6 | Jobs: WHM/BLM/RDM/SMN/SCH/GEO/BLU
+  Stats: MND+3 / MP+20
+
+29819 | Soldier's Cloak       | Lv62 | Regular Drop | Tradeable
+  Armour — BACK | DEF: 9 | Jobs: WAR/PLD/DRK/DRG/SAM/MNK/RUN
+  Stats: STR+3 / VIT+3 / HP+20
+
+================================================================================
+  SECTION 2: CUSTOM NM DROPS  (RARE+EX — no-trade)
+================================================================================
+
+--------------------------------------------------------------------------------
+  BATCH 1 NM WEAPONS
+--------------------------------------------------------------------------------
+
+29702 | Thornwood Staff       | Lv45 | NM Drop | RARE+EX
+  NM: Grovekeeper Rootwall — Yuhtunga Jungle, lv47, Solo-friendly
+  Weapon — Staff, Blunt | Slot: MAIN | Jobs: WHM/BLM/RDM/SMN/SCH/GEO
+  DMG: 52  Delay: 366
+  Stats: INT+5 / MND+4 / MP+30 / Magic Accuracy+6
+
+29703 | Rimehunter's Bow      | Lv55 | NM Drop | RARE+EX
+  NM: Glacefang Velthar — Cape Teriggan, lv57, Duo/Trio
+  Weapon — Archery, Ranged | Slot: RANGED | Jobs: RNG/COR
+  DMG: 51  Delay: 504
+  Stats: AGI+5 / Ranged Accuracy+7 / Ranged Attack+8
+
+29704 | Ashveil Katana        | Lv65 | NM Drop | RARE+EX
+  NM: Ashveil Ryouken — Den of Rancor, lv67, Party
+  Weapon — Katana, Slashing | Slot: MAIN+SUB | Jobs: NIN/SAM
+  DMG: 58  Delay: 245
+  Stats: STR+4 / DEX+5 / Store TP+4 / Critical Hit Rate+3%
+
+--------------------------------------------------------------------------------
+  BATCH 1 NM ARMOUR
+--------------------------------------------------------------------------------
+
+29707 | Ironshroud Mask       | Lv60 | NM Drop | RARE+EX
+  NM: Warbound Korvash — Gustav Tunnel, lv62, Duo/Trio+
+  Armour — HEAD | DEF: 35 | Jobs: WAR/DRK/SAM/DRG
+  Stats: STR+5 / Attack+12 / Haste+2%
+
+29709 | Ember Plate           | Lv40 | NM Drop | RARE+EX
+  NM: Pyrecult Drayven — Garlaige Citadel, lv42, Solo-friendly
+  Armour — BODY | DEF: 46 | Jobs: WAR/PLD/DRG/RUN
+  Stats: HP+45 / VIT+5 / Phalanx+3  [VERIFY: PHALANX_BONUS mod ID]
+
+29710 | Shadowweave Tunic     | Lv62 | NM Drop | RARE+EX
+  NM: Ebonveil Tachirak — Temple of Uggalepih, lv65, Party
+  Armour — BODY | DEF: 40 | Jobs: THF/NIN/DNC/COR
+  Stats: DEX+6 / AGI+5 / Haste+3% / Triple Attack+1% / CHR+2  (DNC edit)
+
+29712 | Hammerfist Gauntlets  | Lv50 | NM Drop | RARE+EX
+  NM: Ironmonk Kujazan — Crawlers Nest, lv52, Solo-friendly
+  Armour — HANDS | DEF: 30 | Jobs: MNK/PUP
+  Stats: STR+4 / H2H Skill+5 / Subtle Blow+5
+
+29716 | Gloamstone Sabots     | Lv55 | NM Drop | RARE+EX
+  NM: Blight Serafi Yzen — Sanctuary of Zi'Tah, lv57, Duo/Trio
+  Armour — FEET | DEF: 24 | Jobs: BLM/RDM/SCH/GEO
+  Stats: INT+5 / Enfeebling Magic Skill+8 / Magic Accuracy+8
+
+29719 | Wanderer's Mantle     | Lv50 | NM Drop | RARE+EX
+  NM: Ashwind Yoichi — Batallia Downs, lv52, Solo-friendly
+  Armour — BACK | DEF: 8 | Jobs: All
+  Stats: AGI+4 / Evasion+6 / Ranged Accuracy+6 / Dual Wield+1
+
+--------------------------------------------------------------------------------
+  BATCH 2 NM WEAPONS
+--------------------------------------------------------------------------------
+
+29723 | Wraithreap Scythe     | Lv50 | NM Drop | RARE+EX
+  NM: Soulrend Hagalaz — Gusgen Mines, lv52, Solo-friendly
+  Weapon — Scythe, Slashing | Slot: MAIN | Jobs: DRK
+  DMG: 79  Delay: 480
+  Stats: STR+4 / INT+3 / Dark Magic Skill+5
+
+29727 | Ashlock Musket        | Lv60 | NM Drop | RARE+EX
+  NM: Coldshot Meridia — Cape Teriggan, lv62, Duo/Trio+
+  Weapon — Marksmanship, Piercing | Slot: RANGED | Jobs: RNG/COR
+  DMG: 60  Delay: 528
+  Stats: AGI+4 / Ranged Accuracy+7 / Ranged Attack+8
+
+29728 | Ironbone Greataxe     | Lv65 | NM Drop | RARE+EX
+  NM: Marrowlord Calagor — Eldieme Necropolis, lv67, Party
+  Weapon — Great Axe, Slashing | Slot: MAIN | Jobs: WAR/DRK
+  DMG: 93  Delay: 444
+  Stats: STR+6 / Attack+14 / Critical Hit Rate+2%
+
+--------------------------------------------------------------------------------
+  BATCH 2 NM ARMOUR
+--------------------------------------------------------------------------------
+
+29733 | Templar Crown         | Lv55 | NM Drop | RARE+EX
+  NM: Ironvow Godefret — Bostaunieux Oubliette, lv57, Duo/Trio
+  Armour — HEAD | DEF: 33 | Jobs: WAR/PLD/RUN
+  Stats: VIT+5 / HP+30 / Enmity+3
+
+29734 | Phantom Visor         | Lv68 | NM Drop | RARE+EX
+  NM: Voidface Halkyr — Middle Delkfutt Tower, lv70, Party
+  Armour — HEAD | DEF: 30 | Jobs: BLU/RDM/DNC
+  Stats: DEX+4 / INT+3 / Magic Accuracy+6
+
+29738 | Cloistered Surcoat    | Lv58 | NM Drop | RARE+EX
+  NM: Prior Elosenne — Bostaunieux Oubliette, lv60, Duo/Trio
+  Armour — BODY | DEF: 42 | Jobs: PLD/WHM/RDM/SCH
+  Stats: MND+5 / HP+40 / Enmity+4 / Divine Magic Skill+6  [VERIFY: DIVINE_SKILL mod ID]
+
+29739 | Reaver's Coat         | Lv70 | NM Drop | RARE+EX
+  NM: Blackmantle Sorvath — The Boyahda Tree, lv72, Endgame
+  Armour — BODY | DEF: 52 | Jobs: DRK/SAM/WAR
+  Stats: STR+5 / Attack+14 / Critical Hit Rate+2%
+
+29743 | Duelist's Gages       | Lv60 | NM Drop | RARE+EX
+  NM: Argent Blade Veskan — Sea Serpent Grotto, lv62, Party
+  Armour — HANDS | DEF: 24 | Jobs: RDM/BLU/COR
+  Stats: DEX+4 / INT+4 / Magic Accuracy+7
+
+29744 | Ironwill Gauntlets    | Lv70 | NM Drop | RARE+EX
+  NM: Rampart Vaskorath — Upper Delkfutt Tower, lv72, Endgame
+  Armour — HANDS | DEF: 32 | Jobs: PLD/WAR/RUN
+  Stats: VIT+5 / Enmity+5 / Shield Skill+6  [VERIFY: SHIELD_SKILL mod ID]
+
+29748 | Shadowstep Hakama     | Lv60 | NM Drop | RARE+EX
+  NM: Veilstep Manirak — Den of Rancor, lv62, Party
+  Armour — LEGS | DEF: 34 | Jobs: NIN/SAM/DNC
+  Stats: DEX+4 / AGI+4 / Subtle Blow+4 / CHR+3 / Waltz Potency+3%  (DNC edit)
+
+29749 | Warlord's Cuisses     | Lv70 | NM Drop | RARE+EX
+  NM: Warscourge Orthek — Den of Rancor, lv72, Endgame
+  Armour — LEGS | DEF: 48 | Jobs: WAR/DRK/SAM
+  Stats: STR+5 / Attack+12 / Double Attack+1%
+
+29753 | Thornwalker Boots     | Lv62 | NM Drop | RARE+EX
+  NM: Stalkshroud Rektan — Yhoator Jungle, lv65, Party
+  Armour — FEET | DEF: 20 | Jobs: THF/NIN/DNC/BST
+  Stats: AGI+4 / Evasion+6 / Movement Speed+12%  [VERIFY: MOVE_SPEED mod ID]
+
+29754 | Gravewarden Sabatons  | Lv70 | NM Drop | RARE+EX
+  NM: Gravewatch Ardan — Eldieme Necropolis, lv72, Endgame
+  Armour — FEET | DEF: 28 | Jobs: DRK/WAR/SAM
+  Stats: STR+4 / Attack+10 / Store TP+3
+
+29759 | Warden's Torque       | Lv68 | NM Drop | RARE+EX
+  NM: Ironpost Valdren — Kuftal Tunnel, lv70, Party
+  Armour — NECK | DEF: 0 | Jobs: All
+  Stats: HP+40 / VIT+4 / Enmity+4
+
+29764 | Titan's Girdle        | Lv68 | NM Drop | RARE+EX
+  NM: Iron-Knuckle Borvaag — Feiyin, lv70, Party
+  Armour — WAIST | DEF: 0 | Jobs: WAR/PLD/DRG/DRK/RUN
+  Stats: STR+4 / VIT+4 / HP+35
+
+29769 | Hunter's Earring      | Lv60 | NM Drop | RARE+EX
+  NM: Razorfang Kellath — Sanctuary of Zi'Tah, lv62, Duo/Trio+
+  Armour — EAR | DEF: 0 | Jobs: All
+  Stats: AGI+3 / Ranged Accuracy+5 / Ranged Attack+4
+
+29774 | Champion's Ring       | Lv65 | NM Drop | RARE+EX
+  NM: Bladeghost Arthek — Feiyin, lv67, Party
+  Armour — RING | DEF: 0 | Jobs: All
+  Stats: STR+4 / Accuracy+5 / Attack+6
+
+29778 | Spellward Mantle      | Lv55 | NM Drop | RARE+EX
+  NM: Runeseeker Valdris — Toraimarai Canal, lv57, Duo/Trio
+  Armour — BACK | DEF: 7 | Jobs: WHM/BLM/RDM/SMN/SCH/GEO
+  Stats: INT+4 / MND+4 / MP+25
+
+29779 | Galeshroud Cloak      | Lv68 | NM Drop | RARE+EX
+  NM: The Nameless Blade — Feiyin, lv70, Party/Endgame
+  Armour — BACK | DEF: 9 | Jobs: All
+  Stats: AGI+5 / Evasion+8 / Dual Wield+1
+
+--------------------------------------------------------------------------------
+  TIER 6 NM WEAPONS (IDs 29843–29845)  — Endgame BiS
+--------------------------------------------------------------------------------
+
+29843 | Saintwood Staff       | Lv72 | NM Drop | RARE+EX
+  NM: Luminary Aethos — Ro'Maeve, lv73, Endgame (Lightsday spawn)
+  Weapon — Staff, Blunt | Slot: MAIN | Jobs: WHM/SCH
+  DMG: 69  Delay: 366
+  Stats: MND+6 / Healing Magic Skill+10 / Cure Potency+10% / Refresh+1
+  [VERIFY: REFRESH_MOD mod ID]
+
+29844 | Eclipse Katana        | Lv72 | NM Drop | RARE+EX
+  NM: Duskblade Soraiken — Den of Rancor, lv73, Endgame
+  Weapon — Katana, Slashing | Slot: MAIN+SUB | Jobs: NIN/SAM
+  DMG: 64  Delay: 245
+  Stats: DEX+6 / Store TP+6 / Dual Wield+1 / Critical Hit Rate+3%
+
+29845 | Abyssal Tabar         | Lv70 | NM Drop | RARE+EX
+  NM: Bonelord Galvrak — Valley of Sorrows, lv72, Endgame
+  Weapon — Great Axe, Slashing | Slot: MAIN | Jobs: WAR/DRK
+  DMG: 100  Delay: 444
+  Stats: STR+6 / Accuracy+8 / Attack+18 / Double Attack+1% / Smite+20
+
+--------------------------------------------------------------------------------
+  TIER 6 NM ARMOUR (IDs 29840–29842, 29846–29850)  — Endgame BiS
+--------------------------------------------------------------------------------
+
+29840 | Voidheart Haubergeon  | Lv72 | NM Drop | RARE+EX
+  NM: The Hollow Warden — Ru'Aun Gardens, lv74, Endgame (Sky access)
+  Armour — BODY | DEF: 58 | Jobs: WAR/MNK/THF/DRK/SAM/NIN/DRG
+  Stats: STR+5 / DEX+4 / Accuracy+10 / Attack+14 / Haste+3% / Double Attack+1%
+
+29841 | Covenant Plate        | Lv70 | NM Drop | RARE+EX
+  NM: Ironvault Golem Ru'Savat — Shrine of Ru'Avitau, lv74, Endgame (Sky access)
+  Armour — BODY | DEF: 65 | Jobs: PLD/WAR/RUN
+  Stats: HP+60 / VIT+6 / Enmity+8 / Magic Damage Taken-8% / Shield Block Rate+5%
+  [VERIFY: MAG_DMG_TAKEN mod ID and value scale]
+
+29842 | Starweaver's Robe     | Lv72 | NM Drop | RARE+EX
+  NM: Nullweave Sorcant — Garden of Ru'Hmet, lv75, Endgame (CoP access)
+  Armour — BODY | DEF: 38 | Jobs: BLM/RDM/SMN/SCH/GEO
+  Stats: INT+7 / MND+5 / MP+50 / Haste+2% / Magic Burst Bonus+10%
+
+29846 | Vantage Crown         | Lv70 | NM Drop | RARE+EX
+  NM: Stormwing Halcyren — Ru'Aun Gardens, lv72, Endgame (Sky access)
+  Armour — HEAD | DEF: 32 | Jobs: RNG/COR
+  Stats: AGI+5 / Ranged Accuracy+8 / Snapshot+7% / Ranged Critical Damage+5%
+
+29847 | Fateweaver Mantle     | Lv70 | NM Drop | RARE+EX
+  NM: Fatebound Summoner Arishai — Ro'Maeve, lv73, Endgame
+  Armour — BACK | DEF: 10 | Jobs: SMN/BST
+  Stats: MND+3 / Blood Pact Rage Damage+10% / Blood Pact Delay-10 / Avatar Perpetuation Cost-2
+
+29848 | Requiem Torque        | Lv72 | NM Drop | RARE+EX
+  NM: The Last Songwright — Eldieme Necropolis, lv73, Endgame
+  Armour — NECK | DEF: 0 | Jobs: All
+  Stats: CHR+6 / Singing Skill+8 / Song Duration Bonus+15%
+  [VERIFY: SINGING_SKILL mod ID]
+
+29849 | Shadowstrike Ring     | Lv70 | NM Drop | RARE+EX
+  NM: Gutrender Thiask — Temple of Uggalepih, lv73, Endgame
+  Armour — RING | DEF: 0 | Jobs: All
+  Stats: DEX+5 / AGI+4 / Sneak Attack DEX Bonus+5% / Triple Attack+1% / Waltz Potency+2%
+
+29850 | Feral Warder's Cuirass | Lv70 | NM Drop | RARE+EX
+  NM: Primalhide Varrakh — Sanctuary of Zi'Tah, lv72, Endgame
+  Armour — BODY | DEF: 55 | Jobs: BST
+  Stats: STR+4 / Pet ATK+20 / Pet ACC+15 / Reward HP Potency+15% / Pet TP Bonus+1000
+  [VERIFY: PET_ATK_DEF and PET_ACC_EVA value scales]
+
+================================================================================
+  SECTION 3: BOSS FATE DROPS  (Tradeable — open-world rare encounter)
+================================================================================
+  Note: Boss FATE encounter system not yet implemented.
+  Items are fully designed but need FATE encounter scripting before going live.
+
+--------------------------------------------------------------------------------
+  SWORDS
+--------------------------------------------------------------------------------
+
+29854 | Stormreaver's Edge    | Lv58 | Boss FATE | Tradeable
+  Weapon — Sword, Slashing | Slot: MAIN+SUB | Jobs: WAR/RDM/PLD/NIN/BLU/COR
+  DMG: 50  Delay: 240
+  Stats: STR+4 / DEX+3 / Accuracy+8 / Thunder Add Effect (15% proc)
+
+29855 | Ironblood Gladius     | Lv18 | Boss FATE | Tradeable
+  Weapon — Sword, Slashing | Slot: MAIN+SUB | Jobs: WAR/MNK/THF/PLD/DRK/RDM/NIN/BLU/COR
+  DMG: 20  Delay: 240
+  Stats: DEX+3 / Accuracy+7 / Double Attack+1%
+
+29856 | Whitemantle Saber     | Lv32 | Boss FATE | Tradeable
+  Weapon — Sword, Slashing | Slot: MAIN+SUB | Jobs: PLD/WHM/RDM/SCH
+  DMG: 30  Delay: 240
+  Stats: MND+4 / Accuracy+6 / Enmity+3 / Cure Potency+4%
+
+--------------------------------------------------------------------------------
+  GREAT SWORDS
+--------------------------------------------------------------------------------
+
+29858 | Soulcleave            | Lv55 | Boss FATE | Tradeable
+  Weapon — Great Sword, Slashing | Slot: MAIN | Jobs: WAR/DRK
+  DMG: 74  Delay: 396
+  Stats: STR+5 / Attack+12 / Double Attack+1% / Souleater Effect+8%
+
+29859 | Wrathcleft            | Lv20 | Boss FATE | Tradeable
+  Weapon — Great Sword, Slashing | Slot: MAIN | Jobs: WAR/PLD/DRK/RUN
+  DMG: 36  Delay: 396
+  Stats: STR+3 / Attack+8 / Smite+10
+
+--------------------------------------------------------------------------------
+  AXES
+--------------------------------------------------------------------------------
+
+29862 | Ravager's Axe         | Lv62 | Boss FATE | Tradeable
+  Weapon — Axe, Slashing | Slot: MAIN+SUB | Jobs: WAR/DRK/BST
+  DMG: 68  Delay: 288
+  Stats: STR+5 / Attack+14 / Zanshin+8%
+
+29863 | Bonecleave Hatchet    | Lv22 | Boss FATE | Tradeable
+  Weapon — Axe, Slashing | Slot: MAIN+SUB | Jobs: WAR/DRK/BST/DRG
+  DMG: 27  Delay: 288
+  Stats: STR+3 / Attack+7 / Zanshin+5%
+
+--------------------------------------------------------------------------------
+  GREAT AXES
+--------------------------------------------------------------------------------
+
+29865 | Volcanic Tabar        | Lv62 | Boss FATE | Tradeable
+  Weapon — Great Axe, Slashing | Slot: MAIN | Jobs: WAR/DRK
+  DMG: 84  Delay: 444
+  Stats: STR+5 / Attack+16 / Smite+15 / Fire Add Effect (20% proc)
+
+29866 | Colossbreaker         | Lv28 | Boss FATE | Tradeable
+  Weapon — Great Axe, Slashing | Slot: MAIN | Jobs: WAR/DRK
+  DMG: 48  Delay: 444
+  Stats: STR+4 / Attack+10 / Smite+12
+
+--------------------------------------------------------------------------------
+  SCYTHES
+--------------------------------------------------------------------------------
+
+29869 | Gravereap             | Lv72 | Boss FATE | Tradeable
+  Weapon — Scythe, Slashing | Slot: MAIN | Jobs: DRK
+  DMG: 92  Delay: 480
+  Stats: STR+6 / INT+4 / Double Attack+1% / Drain & Aspir Potency+12%
+
+29870 | Soulcrop              | Lv22 | Boss FATE | Tradeable
+  Weapon — Scythe, Slashing | Slot: MAIN | Jobs: DRK
+  DMG: 32  Delay: 480
+  Stats: STR+3 / INT+2 / Dark Magic Skill+5 / Souleater Effect+5%
+
+--------------------------------------------------------------------------------
+  POLEARMS
+--------------------------------------------------------------------------------
+
+29873 | Dragonthorn Bident    | Lv60 | Boss FATE | Tradeable
+  Weapon — Polearm, Piercing | Slot: MAIN | Jobs: DRG
+  DMG: 78  Delay: 396
+  Stats: STR+5 / VIT+4 / Wyvern Breath+5 / Jump ATT Bonus+15%
+
+29874 | Fangbore Lance        | Lv24 | Boss FATE | Tradeable
+  Weapon — Polearm, Piercing | Slot: MAIN | Jobs: DRG/WAR
+  DMG: 40  Delay: 396
+  Stats: STR+3 / VIT+2 / Jump ATT Bonus+10%
+
+--------------------------------------------------------------------------------
+  KATANAS
+--------------------------------------------------------------------------------
+
+29877 | Veilstrike            | Lv65 | Boss FATE | Tradeable
+  Weapon — Katana, Slashing | Slot: MAIN+SUB | Jobs: NIN
+  DMG: 60  Delay: 245
+  Stats: DEX+5 / Accuracy+8 / Dual Wield+1 / Ninja Tool Save+4%
+
+29878 | Ghostflicker          | Lv18 | Boss FATE | Tradeable
+  Weapon — Katana, Slashing | Slot: MAIN+SUB | Jobs: NIN/SAM
+  DMG: 18  Delay: 245
+  Stats: DEX+3 / Store TP+4
+
+29879 | Emberpetal Blade      | Lv36 | Boss FATE | Tradeable
+  Weapon — Katana, Slashing | Slot: MAIN+SUB | Jobs: NIN/SAM
+  DMG: 32  Delay: 245
+  Stats: DEX+4 / Accuracy+6 / Store TP+4 / Ninjutsu Skill+4
+
+--------------------------------------------------------------------------------
+  GREAT KATANAS
+--------------------------------------------------------------------------------
+
+29881 | Nightfall's Reach     | Lv68 | Boss FATE | Tradeable
+  Weapon — Great Katana, Slashing | Slot: MAIN | Jobs: SAM
+  DMG: 88  Delay: 450
+  Stats: STR+5 / DEX+4 / Store TP+6 / Zanshin+10% / Skillchain Damage+5%
+
+29882 | Duskfang Tachi        | Lv30 | Boss FATE | Tradeable
+  Weapon — Great Katana, Slashing | Slot: MAIN | Jobs: SAM
+  DMG: 50  Delay: 450
+  Stats: STR+3 / DEX+3 / Store TP+5 / Skillchain Damage+4%
+
+--------------------------------------------------------------------------------
+  CLUBS
+--------------------------------------------------------------------------------
+
+29885 | Sanctum Mace          | Lv65 | Boss FATE | Tradeable
+  Weapon — Club, Blunt | Slot: MAIN+SUB | Jobs: WHM/PLD/SCH
+  DMG: 62  Delay: 282
+  Stats: MND+5 / Healing Magic Skill+8 / Enmity+4 / Cure Potency+6%
+
+29886 | Brightvow Mace        | Lv18 | Boss FATE | Tradeable
+  Weapon — Club, Blunt | Slot: MAIN+SUB | Jobs: WHM/PLD/RDM/SCH/GEO/BLU
+  DMG: 20  Delay: 282
+  Stats: MND+4 / Healing Magic Skill+5 / Cure Potency+3%
+
+--------------------------------------------------------------------------------
+  STAVES
+--------------------------------------------------------------------------------
+
+29889 | Voidchannel Staff     | Lv65 | Boss FATE | Tradeable
+  Weapon — Staff, Blunt | Slot: MAIN | Jobs: BLM/SCH
+  DMG: 72  Delay: 366
+  Stats: INT+6 / Elemental Magic Skill+8 / Magic Burst Bonus+8% / Occult Acumen+5
+
+29890 | Voidmere Rod          | Lv24 | Boss FATE | Tradeable
+  Weapon — Staff, Blunt | Slot: MAIN | Jobs: WHM/BLM/RDM/SMN/SCH/GEO
+  DMG: 26  Delay: 366
+  Stats: INT+4 / MP+20 / Magic Burst Bonus+5%
+
+29891 | Thornroot Stave       | Lv38 | Boss FATE | Tradeable
+  Weapon — Staff, Blunt | Slot: MAIN | Jobs: WHM/BLM/RDM/SMN/SCH/GEO
+  DMG: 40  Delay: 366
+  Stats: INT+4 / MND+3 / Elemental Magic Skill+6 / Conserve MP+3%
+
+--------------------------------------------------------------------------------
+  DAGGERS
+--------------------------------------------------------------------------------
+
+29894 | Shadowsnap Blade      | Lv58 | Boss FATE | Tradeable
+  Weapon — Dagger, Piercing | Slot: MAIN+SUB | Jobs: THF/NIN/DNC
+  DMG: 46  Delay: 210
+  Stats: DEX+5 / AGI+4 / CHR+3 / Sneak Attack DEX Bonus+4% / Critical Hit Rate+2%
+
+29895 | Whispercut            | Lv16 | Boss FATE | Tradeable
+  Weapon — Dagger, Piercing | Slot: MAIN+SUB | Jobs: THF/NIN/RDM/COR/DNC/BRD
+  DMG: 15  Delay: 210
+  Stats: DEX+3 / CHR+2 / Sneak Attack DEX Bonus+3%
+
+29896 | Blackscale Knife      | Lv36 | Boss FATE | Tradeable
+  Weapon — Dagger, Piercing | Slot: MAIN+SUB | Jobs: THF/NIN/DNC/COR
+  DMG: 30  Delay: 210
+  Stats: DEX+4 / AGI+3 / CHR+2 / Critical Hit Rate+2% / Evasion+5
+
+--------------------------------------------------------------------------------
+  H2H
+--------------------------------------------------------------------------------
+
+29899 | Wrath Caestus         | Lv68 | Boss FATE | Tradeable
+  Weapon — H2H, Blunt | Slot: MAIN+SUB | Jobs: MNK
+  DMG: 28  Delay: 96
+  Stats: STR+6 / Counter+6% / Kick Attack Rate+6% / Critical Hit Rate+2%
+
+29900 | Hammerfall Fists      | Lv24 | Boss FATE | Tradeable
+  Weapon — H2H, Blunt | Slot: MAIN+SUB | Jobs: MNK/PUP
+  DMG: 11  Delay: 96
+  Stats: STR+3 / Counter+4% / Subtle Blow+3
+
+--------------------------------------------------------------------------------
+  ARCHERY
+--------------------------------------------------------------------------------
+
+29903 | Stormstring Warbow    | Lv70 | Boss FATE | Tradeable
+  Weapon — Archery, Ranged | Slot: RANGED | Jobs: RNG
+  DMG: 62  Delay: 504
+  Stats: AGI+5 / Ranged Accuracy+7 / Ranged Attack+10 / Rapid Shot+5% / Ranged Critical Damage+4%
+
+29904 | Thornpull Bow         | Lv20 | Boss FATE | Tradeable
+  Weapon — Archery, Ranged | Slot: RANGED | Jobs: RNG/COR
+  DMG: 22  Delay: 504
+  Stats: AGI+3 / Ranged Accuracy+5 / Rapid Shot+3%
+
+--------------------------------------------------------------------------------
+  MARKSMANSHIP
+--------------------------------------------------------------------------------
+
+29907 | Ironhail Cannon       | Lv72 | Boss FATE | Tradeable
+  Weapon — Marksmanship, Piercing | Slot: RANGED | Jobs: RNG/COR
+  DMG: 76  Delay: 528
+  Stats: AGI+5 / Ranged Accuracy+7 / Ranged Attack+12 / Snapshot+5% / Barrage Accuracy+8
+
+29908 | Ashbarrel Pistol      | Lv22 | Boss FATE | Tradeable
+  Weapon — Marksmanship, Piercing | Slot: RANGED | Jobs: RNG/COR
+  DMG: 28  Delay: 528
+  Stats: AGI+3 / Ranged Accuracy+5 / Snapshot+3%
+
+================================================================================
+  SECTION 4: PENDING ITEMS  (IDs 29820–29839)
+  Stats not yet approved — do NOT insert to SQL until sign-off
+================================================================================
+
+29820 | Soulreaver Blade      | Lv40 | PENDING NM Drop | RARE+EX
+  Weapon — Sword | Jobs: RDM/BLU (NM lv40, Party diff)
+  Stats: PENDING — enspell-focused sword
+
+29821 | Dawnbringer Staff     | Lv55 | PENDING NM Drop | RARE+EX
+  Weapon — Staff | Jobs: WHM (NM lv55, Party diff)
+  Stats: PENDING — Cure Potency healing staff
+
+29822 | Bonebreaker           | Lv60 | PENDING NM Drop | RARE+EX
+  Weapon — H2H | Jobs: MNK (NM lv60, Party diff)
+  Stats: PENDING — H2H with Smite
+
+29823 | Occultist's Rod       | Lv50 | PENDING NM Drop | RARE+EX
+  Weapon — Staff | Jobs: BLM (NM lv50, Party diff)
+  Stats: PENDING — magic burst staff
+
+29824 | Phantom's Coif        | Lv50 | PENDING NM Drop | RARE+EX
+  Armour — HEAD | Jobs: NIN (NM lv50, Party diff)
+  Stats: PENDING — Ninja Tool Save head
+
+29825 | Hexweave Tiara        | Lv60 | PENDING NM Drop | RARE+EX
+  Armour — HEAD | Jobs: BLM (NM lv60, Party diff)
+  Stats: PENDING — Occult Acumen head
+
+29826 | Souleater's Cuirass   | Lv55 | PENDING NM Drop | RARE+EX
+  Armour — BODY | Jobs: DRK (NM lv55, Party diff)
+  Stats: PENDING — Souleater Effect body
+
+29827 | Wraithguard Cuirass   | Lv60 | PENDING NM Drop | RARE+EX
+  Armour — BODY | Jobs: PLD/RUN (NM lv60, Party diff)
+  Stats: PENDING — magic mitigation body
+
+29828 | Hexbinder Cuffs       | Lv45 | PENDING NM Drop | RARE+EX
+  Armour — HANDS | Jobs: mage (NM lv45, Party diff)
+  Stats: PENDING — spell interrupt resistance hands
+
+29829 | Stormwarden Gages     | Lv55 | PENDING NM Drop | RARE+EX
+  Armour — HANDS | Jobs: RNG (NM lv55, Party diff)
+  Stats: PENDING — Snapshot / Barrage hands
+
+29830 | Warden's Tassets      | Lv40 | PENDING NM Drop | RARE+EX
+  Armour — LEGS | Jobs: WAR/PLD (NM lv40, Duo/Trio diff)
+  Stats: PENDING — shield block tank legs
+
+29831 | Resonance Hakama      | Lv55 | PENDING NM Drop | RARE+EX
+  Armour — LEGS | Jobs: SAM (NM lv55, Party diff)
+  Stats: PENDING — Store TP / Skillchain Damage legs
+
+29832 | Counterfall Greaves   | Lv45 | PENDING NM Drop | RARE+EX
+  Armour — FEET | Jobs: MNK (NM lv45, Duo/Trio diff)
+  Stats: PENDING — Counter / Kick Attack Rate feet
+
+29833 | Darksole Boots        | Lv60 | PENDING NM Drop | RARE+EX
+  Armour — FEET | Jobs: DRK/SAM (NM lv60, Party diff)
+  Stats: PENDING — Regain feet
+
+29834 | Trueshot Gorget       | Lv55 | PENDING NM Drop | RARE+EX
+  Armour — NECK | Jobs: RNG (NM lv55, Party diff)
+  Stats: PENDING — Barrage Accuracy neck
+
+29835 | Arbiter's Band        | Lv35 | PENDING NM Drop | RARE+EX
+  Armour — RING | Jobs: RDM (NM lv35, Duo/Trio diff)
+  Stats: PENDING — enfeebling magic ring
+
+29836 | Bloodfeast Earring    | Lv45 | PENDING NM Drop | RARE+EX
+  Armour — EAR | Jobs: DRK (NM lv45, Duo/Trio diff)
+  Stats: PENDING — Drain / Aspir Potency earring
+
+29837 | Bladedancer's Sash    | Lv50 | PENDING NM Drop | RARE+EX
+  Armour — WAIST | Jobs: SAM/NIN (NM lv50, Party diff)
+  Stats: PENDING — Store TP waist
+
+29838 | Vortex Cord           | Lv55 | PENDING NM Drop | RARE+EX
+  Armour — WAIST | Jobs: RNG (NM lv55, Party diff)
+  Stats: PENDING — Rapid Shot waist
+
+29839 | Tempest Mantle        | Lv65 | PENDING NM Drop | RARE+EX
+  Armour — BACK | Jobs: BRD (NM lv65, Party/Endgame diff)
+  Stats: PENDING — Song Duration Bonus back
+
+================================================================================
+  UNCONFIRMED MOD IDs — resolve against mods_by_id.txt before SQL insert
+================================================================================
+
+  FASTCAST      — Fast Cast bonus
+    Used on: 29706 Ashen Circlet / 29742 Spellthread Gloves / 29797 Channeler's Cuffs
+
+  MOVE_SPEED    — Movement Speed percentage
+    Used on: 29715 Mudstrider Boots (+10%) / 29753 Thornwalker Boots (+12%) / 29805 Plodder's Clogs (+8%)
+
+  PHALANX_BONUS — Phalanx spell damage reduction bonus
+    Used on: 29709 Ember Plate (+3)
+
+  WIND_ELE_ACC  — Wind Elemental Magic Accuracy
+    Used on: 29711 Stormcaller Mitts (+4)
+
+  DIVINE_SKILL  — Divine Magic Skill
+    Used on: 29708 Pilgrim's Coat (+5) / 29738 Cloistered Surcoat (+6)
+
+  MAG_DMG_TAKEN — Magic Damage Taken% (negative value = reduction)
+    Used on: 29841 Covenant Plate (-8%)  — verify value scale too
+
+  REFRESH_MOD   — Passive MP regeneration (Refresh ticks)
+    Used on: 29843 Saintwood Staff (+1 tick)
+
+  SINGING_SKILL — Singing Skill
+    Used on: 29848 Requiem Torque (+8)
+
+  SHIELD_SKILL  — Shield Skill
+    Used on: 29744 Ironwill Gauntlets (+6)
+
+  FIRE_ELE_ACC (mod 40) — Fire Elemental Accuracy — appears in B4 CSV as ID 40
+    Used on: 29741 Ember Mitts (+4) / 29872 Emberthorn Spear (+4)
+    Source is Batch 4 mod wiring CSV — verify 40 is correct
+
+  DEF_BONUS (mod 31) — Defence stat bonus on an accessory
+    Used on: 29756 Ironhide Choker (+5)
+    Confirm mod 31 is the correct DEF bonus ID
+
+================================================================================
+  DNC GEAR EDITS SUMMARY
+  Existing items that need extra item_mods.sql rows for DNC identity
+================================================================================
+
+  29710 | Shadowweave Tunic   — add CHR+2
+  29748 | Shadowstep Hakama   — add CHR+3 / Waltz Potency+3%
+  29795 | Tempered Coat       — add Waltz Potency+3%
+  29803 | Muddled Breeches    — add CHR+2
+  29849 | Shadowstrike Ring   — Waltz Potency+2% already in base design
+
+================================================================================
+  END OF REFERENCE
+================================================================================
