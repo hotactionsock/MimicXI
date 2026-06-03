@@ -588,7 +588,7 @@ xi.mod =
 
     -- Blue Mage
     ENHANCES_BURST_AFFINITY         = 1139, -- Increases WSC bonus on spells cast with Burst Affinity (percent)
-    ENHANCES_CHAIN_AFFINITY         = 1140, -- TODO: Increases WSC bonus on spells cast with Chain Affinity (base damage +)
+    ENHANCES_CHAIN_AFFINITY         = 1140, -- Flat base damage bonus on spells cast with Chain Affinity
     BLUE_MAGIC_RECAST               = 1147, -- Recast time for blue magic spells (percent, usually negative)
 
     -- Geomancer
@@ -1085,7 +1085,7 @@ xi.mod =
     WYVERN_ATTRIBUTE_DA     = 1056, -- Adds an amount of Double Attack to Dragoon each time Wyverns Attributes Increase (percent)
     DRAGOON_BREATH_RECAST   = 1057, -- Restoring/Smithing Breath Recast Reduction (seconds)
     BLUE_JOB_TRAIT_BONUS    = 1058, -- TODO: Increases job traits gained from equipped blue magic (percent)
-    BLUE_MAGIC_EFFECT       = 1059, -- TODO: Bonus to Attribute Value of spell (percent)
+    BLUE_MAGIC_EFFECT       = 1059, -- Bonus to Attribute Value of spell (percent)
     QUICK_DRAW_RECAST       = 1060, -- Quick Draw Charge Reduction (seconds)
     STRATAGEM_RECAST        = 1159, -- Recast reduction in seconds
 

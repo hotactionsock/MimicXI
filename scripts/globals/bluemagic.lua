@@ -270,8 +270,11 @@ xi.spells.blue.usePhysicalSpell = function(caster, target, spell, params)
 
     -- Final D
     local finalD = math.floor(initialD + fStr + wsc)
-    -- TODO: Implement ENHANCES_CHAIN_AFFINITY. Increase base damage of spell, but not limited to spell's damage cap
-    -- ENHANCES_CHAIN_AFFINITY should also not modify skillchain damage
+
+    -- ENHANCES_CHAIN_AFFINITY: flat damage bonus when Chain Affinity is active, applied after the damage cap
+    if caster:getStatusEffect(xi.effect.CHAIN_AFFINITY) then
+        finalD = finalD + caster:getMod(xi.mod.ENHANCES_CHAIN_AFFINITY)
+    end
 
     ----------------------------------------------
     -- Get the possible pDIF range and hit rate --
@@ -394,8 +397,9 @@ xi.spells.blue.useMagicalSpell = function(caster, target, spell, params)
 
     wsc = wsc * wscMultiplier -- Bonus WSC from AF3/BA
 
-    -- INT/MND/CHR dmg bonuses
-    params.diff     = caster:getStat(params.attribute) - target:getStat(params.attribute)
+    -- INT/MND/CHR dmg bonuses (BLUE_MAGIC_EFFECT boosts the caster's attribute value by a percent)
+    local attrValue = math.floor(caster:getStat(params.attribute) * (100 + caster:getMod(xi.mod.BLUE_MAGIC_EFFECT)) / 100)
+    params.diff     = attrValue - target:getStat(params.attribute)
     local statBonus = params.diff * params.tMultiplier
 
     -- Azure Lore
