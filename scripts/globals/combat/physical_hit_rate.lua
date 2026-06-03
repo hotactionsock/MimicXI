@@ -37,7 +37,13 @@ xi.combat.physicalHitRate.checkAnticipated = function(attacker, defender)
         thirdEyeRetentionChance == 0 or
         math.random(1, 10000) > thirdEyeRetentionChance
     then
-        defender:delStatusEffect(xi.effect.THIRD_EYE)
+        -- Consume one guaranteed extra evasion from THIRD_EYE_BONUS gear before removing the effect.
+        local thirdEyeEffect = defender:getStatusEffect(xi.effect.THIRD_EYE)
+        if thirdEyeEffect and thirdEyeEffect:getPower() > 1 then
+            thirdEyeEffect:setPower(thirdEyeEffect:getPower() - 1)
+        else
+            defender:delStatusEffect(xi.effect.THIRD_EYE)
+        end
     end
 
     -- Poised Strike (SAM): Third Eye anticipation with polearm builds stacks (max 5) for next polearm WS.

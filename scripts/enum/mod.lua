@@ -663,7 +663,7 @@ xi.mod =
     CURE_POTENCY                    = 374,
     CURE_POTENCY_II                 = 260, -- % cure potency II | bonus from gear is capped at 30
     CURE_POTENCY_RCVD               = 375,
-    CURE_POTENCY_BONUS              = 1051, -- TODO: Increases amount healed by Cure spells (fixed amount)
+    CURE_POTENCY_BONUS              = 1051, -- Flat bonus added to base cure amount before potency multiplier
     DELAYP                          = 380,
     RANGED_DELAYP                   = 381,
     EXP_BONUS                       = 382,
@@ -822,7 +822,7 @@ xi.mod =
     ENHANCES_CURSNA                 = 310,  -- Raises success rate of Cursna when removing effect (like Doom) that are not 100% chance to remove
     ENHANCES_HOLYWATER              = 495,  -- Used by gear with the "Enhances Holy Water" or "Holy Water+" attribute
     ENHANCES_PROT_SHELL_RCVD        = 977,  -- Enhances Protect and Shell Effects Received (Binary MOD)
-    ENHANCES_PROT_RCVD              = 1050, -- TODO: Enhances Protect Received (Percent)
+    ENHANCES_PROT_RCVD              = 1050, -- Percent bonus to Protect power received by target
 
     RETALIATION                     = 414, -- Increases damage of Retaliation hits
     THIRD_EYE_COUNTER_RATE          = 508, -- Adds counter to 3rd eye anticipates & if using Seigan counter rate is increased by 15%
@@ -1079,9 +1079,9 @@ xi.mod =
 
     -- Job Point Gifts
     SIC_READY_RECAST        = 1052, -- SIC/Ready recast reduction (seconds)
-    TRUE_SHOT_EFFECT        = 1053, -- TODO: True Shot Ranged Damage increase (percent)
-    DEAD_AIM_EFFECT         = 1054, -- TODO: Dead Aim Critical Damage increase (percent)
-    THIRD_EYE_BONUS         = 1055, -- TODO: Bonus Third Eye Evasions (count)
+    TRUE_SHOT_EFFECT        = 1053, -- Ranged damage increase (percent) when attacking from behind
+    DEAD_AIM_EFFECT         = 1054, -- Ranged critical hit damage increase (percent)
+    THIRD_EYE_BONUS         = 1055, -- Bonus Third Eye evasion count (added to effect power on use)
     WYVERN_ATTRIBUTE_DA     = 1056, -- Adds an amount of Double Attack to Dragoon each time Wyverns Attributes Increase (percent)
     DRAGOON_BREATH_RECAST   = 1057, -- Restoring/Smithing Breath Recast Reduction (seconds)
     BLUE_JOB_TRAIT_BONUS    = 1058, -- TODO: Increases job traits gained from equipped blue magic (percent)
@@ -1105,8 +1105,7 @@ xi.mod =
 
     PARRY_HP_RECOVERY = 1135, -- Recover <Mod Value> HP on successful parry.
 
-    -- TODO: These mods are not yet implemented.
-    REWARD_RECAST = 1152, -- TODO: Reduces Reward recast time (seconds)
+    REWARD_RECAST = 1152, -- Reward recast time reduction (seconds)
 
     KNOCKBACK_REDUCTION = 1172, -- Reduces distance knocked back
 

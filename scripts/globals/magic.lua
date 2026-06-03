@@ -59,6 +59,9 @@ function getCureFinal(caster, spell, basecure, minCure, isBlueMagic)
         end
     end
 
+    -- Flat bonus from gear before potency multiplier.
+    basecure = basecure + caster:getMod(xi.mod.CURE_POTENCY_BONUS)
+
     -- Floor and return.
     local final = math.floor(basecure)
     final       = math.floor(final * potency)

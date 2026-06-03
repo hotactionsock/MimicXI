@@ -448,8 +448,7 @@ enum class Mod
     SUBTLE_BLOW         = 289,   // How much TP to reduce.
     COUNTER             = 291,   // Percent chance to counter
     KICK_ATTACK_RATE    = 292,   // Percent chance to kick
-    PERFECT_COUNTER_ATT = 428,   // TODO: Raises weapon damage by 20 when countering while under the Perfect Counter effect. This also affects Weapon Rank (though
-                                 // not if fighting barehanded).
+    PERFECT_COUNTER_ATT = 428,   // Flat weapon damage bonus when countering under the Perfect Counter effect (set by effect scripts)
     COUNTER_DAMAGE       = 1047, // Increases Damage from Counter Attacks (Percent)
     FOOTWORK_ATT_BONUS   = 429,  // Raises the attack bonus of Footwork. (Tantra Gaiters +2 raise 25/256 to 38/256)
     COUNTERSTANCE_EFFECT = 543,  // Counterstance effect in percents
@@ -598,8 +597,8 @@ enum class Mod
     SHADOW_BIND_EXT         = 425,  // Extends the time of shadowbind
     SCAVENGE_EFFECT         = 312,  //
     SHARPSHOT               = 314,  //
-    TRUE_SHOT_EFFECT        = 1053, // TODO: True Shot Ranged Damage increase (percent)
-    DEAD_AIM_EFFECT         = 1054, // TODO: Dead Aim Critical Damage increase (percent)
+    TRUE_SHOT_EFFECT        = 1053, // Ranged damage increase (percent) when attacking from behind
+    DEAD_AIM_EFFECT         = 1054, // Ranged critical hit damage increase (percent)
     BOUNTY_SHOT_TH_BONUS    = 826,  // Boosts base TH level of bounty shot
     RETAIN_CAMOUFLAGE       = 1189, // Enables retaining Camouflage after using a ranged attack
     RETAIN_UNLIMITED_SHOT   = 1190, // Unlimited Shot is retained if the ranged attack misses
@@ -612,7 +611,7 @@ enum class Mod
     ZANSHIN                  = 306,  // Zanshin percent chance
     THIRD_EYE_COUNTER_RATE   = 508,  // Adds counter to 3rd eye anticipates & if using Seigan counter rate is increased by 15%
     THIRD_EYE_RETENTION_RATE = 839,  // Increases retention rate of third eye with Seigan. 50 = 50%
-    THIRD_EYE_BONUS          = 1055, // TODO: Bonus Third Eye Evasion (count)
+    THIRD_EYE_BONUS          = 1055, // Bonus Third Eye evasion count (added to effect power on use)
     SENGIKORI_SC_DMG_DEBUFF  = 1088, // % Increase to closing skillchain damage. Applied to defender.
     SENGIKORI_MB_DMG_DEBUFF  = 1089, // % Increase to magic burst damage. Applied to defender.
     SENGIKORI_BONUS          = 1090, // additive % increase to Sengikori
@@ -890,7 +889,7 @@ enum class Mod
     CURE_POTENCY       = 374,  // % cure potency | bonus from gear is capped at 50
     CURE_POTENCY_II    = 260,  // % cure potency II | bonus from gear is capped at 30
     CURE_POTENCY_RCVD  = 375,  // % potency of received cure | healer's roll, some items have this
-    CURE_POTENCY_BONUS = 1051, // TODO: Increases amount healed by Cure spells (fixed amount)
+    CURE_POTENCY_BONUS = 1051, // Flat bonus added to base cure amount before potency multiplier
     DELAYP             = 380,  // delay addition percent (does not affect tp gain)
     RANGED_DELAYP      = 381,  // ranged delay addition percent (does not affect tp gain)
 
@@ -962,7 +961,7 @@ enum class Mod
     ENHANCES_CURSNA          = 310,  // Used by gear with the "Enhances Cursna" or "Cursna+" attribute
     ENHANCES_HOLYWATER       = 495,  // Used by gear with the "Enhances Holy Water" or "Holy Water+" attribute
     ENHANCES_PROT_SHELL_RCVD = 977,  // Enhances Protect and Shell Effects Received (Binary MOD)
-    ENHANCES_PROT_RCVD       = 1050, // TODO: Enhances Protect Received (Percent)
+    ENHANCES_PROT_RCVD       = 1050, // Percent bonus to Protect power received by target
 
     RETALIATION = 414, // Increases damage of Retaliation hits
 
@@ -1140,8 +1139,7 @@ enum class Mod
 
     PARRY_HP_RECOVERY = 1135, // Recover <Mod Value> HP on successful parry.
 
-    // TODO: These mods are not yet implemented.
-    REWARD_RECAST = 1152, // TODO: Reward recast time reduction (seconds)
+    REWARD_RECAST = 1152, // Reward recast time reduction (seconds)
 
     MOGHANCEMENT_GIL_BONUS_P = 1158, // Kill shot gil bonus (yes, really)
 

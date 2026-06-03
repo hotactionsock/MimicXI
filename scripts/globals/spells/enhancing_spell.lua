@@ -341,6 +341,11 @@ xi.spells.enhancing.calculateEnhancingFinalPower = function(caster, target, spel
             finalPower = finalPower + (tier * 2)
         end
 
+        local protRcvd = target:getMod(xi.mod.ENHANCES_PROT_RCVD)
+        if protRcvd > 0 then
+            finalPower = finalPower + math.floor(finalPower * protRcvd / 100)
+        end
+
         -- Handle "Shield Barrier" Job Trait.
         if
             caster:isPC() and

@@ -117,7 +117,7 @@ xi.job_utils.samurai.useThirdEye = function(player, target, ability)
         -- Returns "no effect" message when Copy Image is active when Third Eye is used.
         ability:setMsg(xi.msg.basic.JA_NO_EFFECT)
     else
-        player:addStatusEffect(xi.effect.THIRD_EYE, { duration = 30, origin = player }) -- Power keeps track of procs
+        player:addStatusEffect(xi.effect.THIRD_EYE, { power = 1 + player:getMod(xi.mod.THIRD_EYE_BONUS), duration = 30, origin = player }) -- Power tracks remaining evasions
     end
 
     return xi.effect.THIRD_EYE

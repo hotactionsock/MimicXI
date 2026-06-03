@@ -3113,8 +3113,9 @@ bool CBattleEntity::OnAttack(CAttackState& state, action_t& action)
                         }
 
                         float DamageRatio     = battleutils::GetDamageRatio(PTarget, this, attack.IsCritical(), attBonus, skilltype, SLOT_MAIN, false);
-                        int16 extraCounterDMG = (int16)(PTarget->getMod(Mod::COUNTER_DAMAGE));
-                        auto  damage          = (int32)((PTarget->GetMainWeaponDmg() + naturalh2hDMG + extraCounterDMG + battleutils::GetFSTR(PTarget, this, SLOT_MAIN)) * mobH2HPenalty * DamageRatio);
+                        int16 extraCounterDMG    = (int16)(PTarget->getMod(Mod::COUNTER_DAMAGE));
+                        int16 perfectCounterBonus = (int16)(PTarget->getMod(Mod::PERFECT_COUNTER_ATT));
+                        auto  damage              = (int32)((PTarget->GetMainWeaponDmg() + naturalh2hDMG + extraCounterDMG + perfectCounterBonus + battleutils::GetFSTR(PTarget, this, SLOT_MAIN)) * mobH2HPenalty * DamageRatio);
 
                         actionResult.spikesParam =
                             battleutils::TakePhysicalDamage(PTarget, this, attack.GetAttackType(), damage, false, SLOT_MAIN, 1, nullptr, true, false, true);

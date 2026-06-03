@@ -839,11 +839,15 @@ xi.combat.physical.calculateRangedPDIF = function(actor, target, weaponType, wsA
         pDif = pDif * 1.25
     end
 
-    -- Step 5: TODO: True Shot.
+    -- Step 5: True Shot — bonus ranged damage when attacking from behind.
+    local trueShotBonus = actor:getMod(xi.mod.TRUE_SHOT_EFFECT)
+    if trueShotBonus > 0 and actor:isBehind(target, 23) then
+        pDif = pDif * (100 + trueShotBonus) / 100
+    end
 
     -- Crit damage bonus is a final modifier
     if isCritical then
-        local critDamageBonus = utils.clamp(actor:getMod(xi.mod.CRIT_DMG_INCREASE) + actor:getMod(xi.mod.RANGED_CRIT_DMG_INCREASE) - target:getMod(xi.mod.CRIT_DEF_BONUS), 0, 100)
+        local critDamageBonus = utils.clamp(actor:getMod(xi.mod.CRIT_DMG_INCREASE) + actor:getMod(xi.mod.RANGED_CRIT_DMG_INCREASE) + actor:getMod(xi.mod.DEAD_AIM_EFFECT) - target:getMod(xi.mod.CRIT_DEF_BONUS), 0, 100)
         pDif = pDif * (100 + critDamageBonus) / 100
     end
 
