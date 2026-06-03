@@ -13,6 +13,7 @@ xi.fate.zones[xi.zone.EAST_SARUTABARUTA] =
     zoneName    = "East_Sarutabaruta",
     spawnChance = 0.35,
     minCooldown = 600,
+    region      = "STARTER_ZULKHEIM",
 
     events =
     {

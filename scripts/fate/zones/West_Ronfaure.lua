@@ -13,6 +13,7 @@ xi.fate.zones[xi.zone.WEST_RONFAURE] =
     zoneName    = "West_Ronfaure",
     spawnChance = 0.35,
     minCooldown = 600,
+    region      = "STARTER_ZULKHEIM",
 
     events =
     {
