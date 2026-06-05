@@ -366,9 +366,9 @@ void CEntityUpdatePacket::updateWith(CBaseEntity* PEntity, ENTITYUPDATE type, ui
                     name = getTransportNPCName(PNpc);
                 }
 
-                // depending on size of name, this can be 0x20, 0x22, or 0x24
-                this->setSize(0x48);
-                std::memcpy(buffer_.data() + 0x34, name.c_str(), std::min<size_t>(name.size(), PacketNameLength));
+                auto packetSize = std::max<size_t>(0x40, (0x34 + name.size() + 3) & ~3);
+                this->setSize(packetSize);
+                std::memcpy(buffer_.data() + 0x34, name.c_str(), name.size());
             }
         }
         break;
@@ -422,16 +422,10 @@ void CEntityUpdatePacket::updateWith(CBaseEntity* PEntity, ENTITYUPDATE type, ui
 
             if (updatemask & UPDATE_NAME)
             {
-                // depending on size of name, this can be 0x20, 0x22, or 0x24
-                this->setSize(0x48);
-                if (PMob->packetName.empty())
-                {
-                    std::memcpy(buffer_.data() + 0x34, PEntity->getName().c_str(), std::min<size_t>(PEntity->getName().size(), PacketNameLength));
-                }
-                else
-                {
-                    std::memcpy(buffer_.data() + 0x34, PMob->packetName.c_str(), std::min<size_t>(PMob->packetName.size(), PacketNameLength));
-                }
+                const auto& name    = PMob->packetName.empty() ? PEntity->getName() : PMob->packetName;
+                auto        packetSize = std::max<size_t>(0x40, (0x34 + name.size() + 3) & ~3);
+                this->setSize(packetSize);
+                std::memcpy(buffer_.data() + 0x34, name.c_str(), name.size());
             }
         }
         break;
@@ -565,11 +559,8 @@ void CEntityUpdatePacket::updateWith(CBaseEntity* PEntity, ENTITYUPDATE type, ui
         updatemask |= UPDATE_NAME;
         ref<uint8>(0x0A) |= updatemask;
 
-        this->setSize(0x48);
-
         auto name       = PEntity->packetName;
         auto nameOffset = 0x34;
-        auto maxLength  = std::min<size_t>(name.size(), PacketNameLength);
 
         // Mobs and NPC's targid's live in the range 0-1023
         if (PEntity->targid < 1024)
@@ -578,13 +569,13 @@ void CEntityUpdatePacket::updateWith(CBaseEntity* PEntity, ENTITYUPDATE type, ui
             nameOffset        = 0x35;
         }
 
-        // Make sure to zero-out the existing name area of the packet
-        auto start = buffer_.data() + nameOffset;
-        auto size  = this->getSize();
-        std::memset(start, 0U, size);
+        auto packetSize = std::max<size_t>(0x40, (nameOffset + name.size() + 3) & ~3);
+        this->setSize(packetSize);
 
-        // Copy in name
-        std::memcpy(start, name.c_str(), maxLength);
+        // Zero and copy name
+        auto start = buffer_.data() + nameOffset;
+        std::memset(start, 0U, name.size() + 1);
+        std::memcpy(start, name.c_str(), name.size());
     }
 
     if (packet->SendFlg.General)
