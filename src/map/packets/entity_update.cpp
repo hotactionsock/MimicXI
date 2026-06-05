@@ -366,7 +366,7 @@ void CEntityUpdatePacket::updateWith(CBaseEntity* PEntity, ENTITYUPDATE type, ui
                     name = getTransportNPCName(PNpc);
                 }
 
-                auto packetSize = std::max<size_t>(0x40, (0x34 + name.size() + 3) & ~3);
+                auto packetSize = std::max<size_t>(0x40, (0x34 + name.size() + 8) & ~3);
                 this->setSize(packetSize);
                 std::memcpy(buffer_.data() + 0x34, name.c_str(), name.size());
             }
@@ -423,7 +423,7 @@ void CEntityUpdatePacket::updateWith(CBaseEntity* PEntity, ENTITYUPDATE type, ui
             if (updatemask & UPDATE_NAME)
             {
                 const auto& name    = PMob->packetName.empty() ? PEntity->getName() : PMob->packetName;
-                auto        packetSize = std::max<size_t>(0x40, (0x34 + name.size() + 3) & ~3);
+                auto        packetSize = std::max<size_t>(0x40, (0x34 + name.size() + 8) & ~3);
                 this->setSize(packetSize);
                 std::memcpy(buffer_.data() + 0x34, name.c_str(), name.size());
             }
@@ -569,7 +569,7 @@ void CEntityUpdatePacket::updateWith(CBaseEntity* PEntity, ENTITYUPDATE type, ui
             nameOffset        = 0x35;
         }
 
-        auto packetSize = std::max<size_t>(0x40, (nameOffset + name.size() + 3) & ~3);
+        auto packetSize = std::max<size_t>(0x40, (nameOffset + name.size() + 8) & ~3);
         this->setSize(packetSize);
 
         // Zero and copy name
