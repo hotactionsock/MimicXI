@@ -428,8 +428,22 @@ xi.fate.spawnMobs = function(zoneID, eventIdx)
     for _, entry in ipairs(mobs) do
         local mob = entry.entity
         if mob and not mob:isSpawned() then
-            mob:setMobMod(xi.mobMod.HP_SCALE,               hpPct * (entry.hpMultiplier or 1))
-            mob:setMobMod(xi.mobMod.BASE_DAMAGE_MULTIPLIER, dmgPct * (entry.dmgMultiplier or 1))
+            -- targetHP/targetDmg express desired stats at 1-player 1-star baseline;
+            -- hpPct/dmgPct (which already fold in star multipliers and player count)
+            -- are applied on top so scaling behaves identically to the multiplier path.
+            local hpScale, dmgScale
+            if entry.targetHP and entry.nativeHP and entry.nativeHP > 0 then
+                hpScale = math.max(1, math.floor(entry.targetHP * hpPct / entry.nativeHP))
+            else
+                hpScale = hpPct * (entry.hpMultiplier or 1)
+            end
+            if entry.targetDmg then
+                dmgScale = math.max(1, math.floor(entry.targetDmg * dmgPct / 100))
+            else
+                dmgScale = dmgPct * (entry.dmgMultiplier or 1)
+            end
+            mob:setMobMod(xi.mobMod.HP_SCALE,               hpScale)
+            mob:setMobMod(xi.mobMod.BASE_DAMAGE_MULTIPLIER, dmgScale)
             mob:setSpawn(entry.spawnPt[1], entry.spawnPt[2], entry.spawnPt[3], entry.spawnPt[4] or 0)
             mob:setDropID(0)
             DisallowRespawn(mob:getID(), false)
@@ -1130,10 +1144,22 @@ local function initFATEEvent(zone, zoneID, idx, eventDef, areaID)
                 mobEntity:setLocalVar("fateEventIdx", idx)
                 mobEntity:setLocalVar("fateZoneID",   zoneID)
                 DisallowRespawn(mobEntity:getID(), true)
+                -- Read native HP before despawn so targetHP can compute the correct HP_SCALE later.
+                local nativeHP = mobEntity:isSpawned() and mobEntity:getMaxHP() or nil
                 if mobEntity:isSpawned() then
                     DespawnMob(mobEntity:getID())
                 end
-                table.insert(xi.fate.mobEntities[zoneID][idx], { entity = mobEntity, spawnPt = spawnPt, isBoss = mobGroup.isBoss or false, noCount = mobGroup.noCount or false, hpMultiplier = mobGroup.hpMultiplier or 1, dmgMultiplier = mobGroup.dmgMultiplier or 1 })
+                table.insert(xi.fate.mobEntities[zoneID][idx], {
+                    entity        = mobEntity,
+                    spawnPt       = spawnPt,
+                    isBoss        = mobGroup.isBoss        or false,
+                    noCount       = mobGroup.noCount       or false,
+                    hpMultiplier  = mobGroup.hpMultiplier  or 1,
+                    dmgMultiplier = mobGroup.dmgMultiplier or 1,
+                    targetHP      = mobGroup.targetHP,
+                    targetDmg     = mobGroup.targetDmg,
+                    nativeHP      = nativeHP,
+                })
             end
         end
     end
