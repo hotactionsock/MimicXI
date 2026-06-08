@@ -34,13 +34,7 @@ xi.fate.zones[xi.zone.NORTH_GUSTABERG] =
 
             objective = { type = "kill", count = 9 },
 
-            area =
-            {
-                x      = -58,
-                y      = 2,
-                z      = 100,
-                radius = 75,
-            },
+            area = { -58, 2, 100, 75 },
 
             entryPos = { -58.000, 2.669, 100.000, 0 }, -- !pos -58.000 2.669 100.000 106
 
@@ -128,13 +122,7 @@ xi.fate.zones[xi.zone.NORTH_GUSTABERG] =
 
             objective = { type = "kill", count = 8 },
 
-            area =
-            {
-                x      = -18,
-                y      = 3,
-                z      = 497,
-                radius = 75,
-            },
+            area = { -18, 3, 497, 75 },
 
             entryPos = { -18.155, 2.959, 497.166, 69 }, -- !pos -18.155 2.959 497.166 106
 
@@ -221,13 +209,7 @@ xi.fate.zones[xi.zone.NORTH_GUSTABERG] =
 
             objective = { type = "kill", count = 5 },
 
-            area =
-            {
-                x      = 12,
-                y      = 3,
-                z      = 581,
-                radius = 81,
-            },
+            area = { 12, 3, 581, 81 },
 
             entryPos = { 12.713, 3.144, 581.524, 101 }, -- !pos 12.713 3.144 581.524 106
 
@@ -337,13 +319,7 @@ xi.fate.zones[xi.zone.NORTH_GUSTABERG] =
                 end
             end,
 
-            area =
-            {
-                x      = 300,
-                y      = -62,
-                z      = 500,
-                radius = 138,
-            },
+            area = { 300, -62, 500, 138 },
 
             entryPos = { 304.789, -59.900, 552.860, 197 }, -- !pos 304.789 -59.900 552.860 106
 
@@ -438,13 +414,7 @@ xi.fate.zones[xi.zone.NORTH_GUSTABERG] =
 
             objective = { type = "kill", count = 9 },
 
-            area =
-            {
-                x      = 0,   -- TODO: !pos survey
-                y      = 0,   -- TODO: !pos survey
-                z      = 0,   -- TODO: !pos survey
-                radius = 65,
-            },
+            area = { 0, 0, 0, 65 },
 
             entryPos = { 0, 0, 0, 0 }, -- TODO: !pos survey 106
 
@@ -533,13 +503,7 @@ xi.fate.zones[xi.zone.NORTH_GUSTABERG] =
 
             objective = { type = "kill", count = 9 },
 
-            area =
-            {
-                x      = 0,   -- TODO: !pos survey
-                y      = 0,   -- TODO: !pos survey
-                z      = 0,   -- TODO: !pos survey
-                radius = 70,
-            },
+            area = { 0, 0, 0, 70 },
 
             entryPos = { 0, 0, 0, 0 }, -- TODO: !pos survey 106
 
@@ -627,13 +591,7 @@ xi.fate.zones[xi.zone.NORTH_GUSTABERG] =
 
             objective = { type = "kill", count = 5 },
 
-            area =
-            {
-                x      = 0,   -- TODO: !pos survey
-                y      = 0,   -- TODO: !pos survey
-                z      = 0,   -- TODO: !pos survey
-                radius = 55,
-            },
+            area = { 0, 0, 0, 55 },
 
             entryPos = { 0, 0, 0, 0 }, -- TODO: !pos survey 106
 
@@ -743,13 +701,7 @@ xi.fate.zones[xi.zone.NORTH_GUSTABERG] =
                 end
             end,
 
-            area =
-            {
-                x      = 0,   -- TODO: !pos survey
-                y      = 0,   -- TODO: !pos survey
-                z      = 0,   -- TODO: !pos survey
-                radius = 80,
-            },
+            area = { 0, 0, 0, 80 },
 
             entryPos = { 0, 0, 0, 0 }, -- TODO: !pos survey 106
 
@@ -866,13 +818,7 @@ xi.fate.zones[xi.zone.NORTH_GUSTABERG] =
                 end
             end,
 
-            area =
-            {
-                x      = 0,   -- TODO: !pos survey
-                y      = 0,   -- TODO: !pos survey
-                z      = 0,   -- TODO: !pos survey
-                radius = 110,
-            },
+            area = { 0, 0, 0, 110 },
 
             entryPos = { 0, 0, 0, 0 }, -- TODO: !pos survey 106
 

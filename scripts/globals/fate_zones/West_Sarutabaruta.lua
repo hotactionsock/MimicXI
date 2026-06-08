@@ -34,13 +34,7 @@ xi.fate.zones[xi.zone.WEST_SARUTABARUTA] =
 
             objective = { type = "kill", count = 10 },
 
-            area =
-            {
-                x      = -110,
-                y      = 5,
-                z      = 210,
-                radius = 65,
-            },
+            area = { -110, 5, 210, 65 },
 
             entryPos = { 131.860, -33.877, 294.434, 252 }, -- !pos 131.860 -33.877 294.434 115
 
@@ -129,13 +123,7 @@ xi.fate.zones[xi.zone.WEST_SARUTABARUTA] =
 
             objective = { type = "kill", count = 8 },
 
-            area =
-            {
-                x      = -106,
-                y      = -16,
-                z      = 329,
-                radius = 65,
-            },
+            area = { -106, -16, 329, 65 },
 
             entryPos = { -106.247, -16.892, 329.420, 248 }, -- !pos -106.247 -16.892 329.420 115
 
@@ -232,13 +220,7 @@ xi.fate.zones[xi.zone.WEST_SARUTABARUTA] =
 
             objective = { type = "kill", count = 5 },
 
-            area =
-            {
-                x      = -170,
-                y      = -4.7,
-                z      = -204,
-                radius = 65,
-            },
+            area = { -170, -4.7, -204, 65 },
 
             entryPos = { -170.174, -4.741, -204.607, 7 }, -- !pos -170.174 -4.741 -204.607 115
 
@@ -345,13 +327,7 @@ xi.fate.zones[xi.zone.WEST_SARUTABARUTA] =
                 end
             end,
 			
-            area =
-            {
-                x      = -234,
-                y      = -31,
-                z      = 553,
-                radius = 70,
-            },
+            area = { -234, -31, 553, 70 },
 
             entryPos = { -239.182, -28.000, 518.713, 71 }, -- !pos -239.182 -28.000 518.713 115
 
@@ -463,13 +439,7 @@ xi.fate.zones[xi.zone.WEST_SARUTABARUTA] =
                 end
             end,
 
-            area =
-            {
-                x      = -177,
-                y      = -18,
-                z      = -112,
-                radius = 70,
-            },
+            area = { -177, -18, -112, 70 },
 
             entryPos = { -168.784, -17.556, -99.939, 225 }, -- !pos -168.784 -17.556 -99.939 115
 

@@ -36,13 +36,7 @@ xi.fate.zones[xi.zone.CAEDARVA_MIRE] =
 
             objective = { type = "kill", count = 9 },
 
-            area =
-            {
-                x      = 0,   -- TODO: !pos survey
-                y      = 0,   -- TODO: !pos survey
-                z      = 0,   -- TODO: !pos survey
-                radius = 75,
-            },
+            area = { 0, 0, 0, 75 },
 
             entryPos = { 0, 0, 0, 0 }, -- TODO: !pos survey 79
 
@@ -156,13 +150,7 @@ xi.fate.zones[xi.zone.CAEDARVA_MIRE] =
                 end
             end,
 
-            area =
-            {
-                x      = 142.4,   -- TODO: !pos survey
-                y      = 0.5,   -- TODO: !pos survey
-                z      = -717.4,   -- TODO: !pos survey
-                radius = 80,
-            },
+            area = { 142.4, 0.5, -717.4, 80 },
 
             entryPos = { 132.698, 0.292, -686.350, 53 }, -- !pos 132.698 0.292 -686.350 79
 

@@ -281,9 +281,9 @@ end
 xi.fate.isInArea = function(player, zoneID, eventIdx)
     local def = xi.fate.getEventDef(zoneID, eventIdx)
     if not def then return false end
-    local dx = player:getXPos() - def.area.x
-    local dz = player:getZPos() - def.area.z
-    return (dx * dx + dz * dz) <= (def.area.radius * def.area.radius)
+    local dx = player:getXPos() - def.area[1]
+    local dz = player:getZPos() - def.area[3]
+    return (dx * dx + dz * dz) <= (def.area[4] * def.area[4])
 end
 
 -----------------------------------
@@ -469,13 +469,13 @@ xi.fate.leashMobs = function(zoneID)
         if not mobs then goto continue end
 
         local area = def.area
-        local r2   = area.radius * area.radius
+        local r2   = area[4] * area[4]
 
         for _, entry in ipairs(mobs) do
             local mob = entry.entity
             if mob and mob:isSpawned() then
-                local dx = mob:getXPos() - area.x
-                local dz = mob:getZPos() - area.z
+                local dx = mob:getXPos() - area[1]
+                local dz = mob:getZPos() - area[3]
                 if (dx * dx + dz * dz) > r2 then
                     local sp = entry.spawnPt
                     DisallowRespawn(mob:getID(), true)
@@ -957,7 +957,7 @@ end
 -----------------------------------
 local function initFATEEvent(zone, zoneID, idx, eventDef, areaID)
     eventDef.triggerAreaID = areaID
-    zone:registerCylindricalTriggerArea(areaID, eventDef.area.x, eventDef.area.z, eventDef.area.radius)
+    zone:registerCylindricalTriggerArea(areaID, eventDef.area[1], eventDef.area[3], eventDef.area[4])
 
     local entryEntity = zone:insertDynamicEntity({
         objtype   = xi.objType.NPC,

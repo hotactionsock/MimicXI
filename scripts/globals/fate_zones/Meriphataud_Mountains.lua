@@ -37,13 +37,7 @@ xi.fate.zones[xi.zone.MERIPHATAUD_MOUNTAINS] =
 
             objective = { type = "kill", count = 9 },
 
-            area =
-            {
-                x      = 0,   -- TODO: !pos survey
-                y      = 0,   -- TODO: !pos survey
-                z      = 0,   -- TODO: !pos survey
-                radius = 75,
-            },
+            area = { 0, 0, 0, 75 },
 
             entryPos = { 0, 0, 0, 0 }, -- TODO: !pos survey 119
 
@@ -132,13 +126,7 @@ xi.fate.zones[xi.zone.MERIPHATAUD_MOUNTAINS] =
 
             objective = { type = "kill", count = 5 },
 
-            area =
-            {
-                x      = 0,   -- TODO: !pos survey
-                y      = 0,   -- TODO: !pos survey
-                z      = 0,   -- TODO: !pos survey
-                radius = 65,
-            },
+            area = { 0, 0, 0, 65 },
 
             entryPos = { 0, 0, 0, 0 }, -- TODO: !pos survey 119
 
@@ -248,13 +236,7 @@ xi.fate.zones[xi.zone.MERIPHATAUD_MOUNTAINS] =
                 end
             end,
 
-            area =
-            {
-                x      = 0,   -- TODO: !pos survey
-                y      = 0,   -- TODO: !pos survey
-                z      = 0,   -- TODO: !pos survey
-                radius = 81,
-            },
+            area = { 0, 0, 0, 81 },
 
             entryPos = { 0, 0, 0, 0 }, -- TODO: !pos survey 119
 
@@ -345,13 +327,7 @@ xi.fate.zones[xi.zone.MERIPHATAUD_MOUNTAINS] =
 
             objective = { type = "kill", count = 10 },
 
-            area =
-            {
-                x      = 0,   -- TODO: !pos survey
-                y      = 0,   -- TODO: !pos survey
-                z      = 0,   -- TODO: !pos survey
-                radius = 75,
-            },
+            area = { 0, 0, 0, 75 },
 
             entryPos = { 0, 0, 0, 0 }, -- TODO: !pos survey 119
 
@@ -442,13 +418,7 @@ xi.fate.zones[xi.zone.MERIPHATAUD_MOUNTAINS] =
 
             objective = { type = "kill", count = 10 },
 
-            area =
-            {
-                x      = 0,   -- TODO: !pos survey
-                y      = 0,   -- TODO: !pos survey
-                z      = 0,   -- TODO: !pos survey
-                radius = 75,
-            },
+            area = { 0, 0, 0, 75 },
 
             entryPos = { 0, 0, 0, 0 }, -- TODO: !pos survey 119
 
@@ -539,13 +509,7 @@ xi.fate.zones[xi.zone.MERIPHATAUD_MOUNTAINS] =
 
             objective = { type = "kill", count = 5 },
 
-            area =
-            {
-                x      = 0,   -- TODO: !pos survey
-                y      = 0,   -- TODO: !pos survey
-                z      = 0,   -- TODO: !pos survey
-                radius = 65,
-            },
+            area = { 0, 0, 0, 65 },
 
             entryPos = { 0, 0, 0, 0 }, -- TODO: !pos survey 119
 
@@ -648,13 +612,7 @@ xi.fate.zones[xi.zone.MERIPHATAUD_MOUNTAINS] =
                 end
             end,
 
-            area =
-            {
-                x      = 0,   -- TODO: !pos survey
-                y      = 0,   -- TODO: !pos survey
-                z      = 0,   -- TODO: !pos survey
-                radius = 81,
-            },
+            area = { 0, 0, 0, 81 },
 
             entryPos = { 0, 0, 0, 0 }, -- TODO: !pos survey 119
 
@@ -771,13 +729,7 @@ xi.fate.zones[xi.zone.MERIPHATAUD_MOUNTAINS] =
                 end
             end,
 
-            area =
-            {
-                x      = 0,   -- TODO: !pos survey
-                y      = 0,   -- TODO: !pos survey
-                z      = 0,   -- TODO: !pos survey
-                radius = 105,
-            },
+            area = { 0, 0, 0, 105 },
 
             entryPos = { 0, 0, 0, 0 }, -- TODO: !pos survey 119
 

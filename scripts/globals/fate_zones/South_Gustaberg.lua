@@ -33,13 +33,7 @@ xi.fate.zones[xi.zone.SOUTH_GUSTABERG] =
 
             objective = { type = "kill", count = 8 },
 
-            area =
-            {
-                x      = -95,
-                y      = 10,
-                z      = -260,
-                radius = 75,
-            },
+            area = { -95, 10, -260, 75 },
 
             entryPos = { -91.489, 11.053, -260.794, 120 }, -- !pos -91.489 11.053 -260.794 107
 
@@ -121,13 +115,7 @@ xi.fate.zones[xi.zone.SOUTH_GUSTABERG] =
 
             objective = { type = "kill", count = 4 },
 
-            area =
-            {
-                x      = -149,
-                y      = 10,
-                z      = -329,
-                radius = 63,
-            },
+            area = { -149, 10, -329, 63 },
 
             entryPos = { -149.675, 10.283, -329.442, 241 }, -- !pos -149.675 10.283 -329.442 107
 
@@ -214,13 +202,7 @@ xi.fate.zones[xi.zone.SOUTH_GUSTABERG] =
 
             objective = { type = "kill", count = 10 },
 
-            area =
-            {
-                x      = -420,
-                y      = 42,
-                z      = -377,
-                radius = 81,
-            },
+            area = { -420, 42, -377, 81 },
 
             entryPos = { -420.117, 42.682, -377.874, 12 }, -- !pos -420.117 42.682 -377.874 107
 
@@ -334,13 +316,7 @@ xi.fate.zones[xi.zone.SOUTH_GUSTABERG] =
                 end
             end,
 
-            area =
-            {
-                x      = 203,
-                y      = -60,
-                z      = -424,
-                radius = 81,
-            },
+            area = { 203, -60, -424, 81 },
 
             entryPos = { 214.892, -59.589, -428.583, 75 }, -- !pos 214.892 -59.589 -428.583 107
 
@@ -432,13 +408,7 @@ xi.fate.zones[xi.zone.SOUTH_GUSTABERG] =
 
             objective = { type = "kill", count = 8 },
 
-            area =
-            {
-                x      = 400,   -- TODO: !pos survey
-                y      = 0,   -- TODO: !pos survey
-                z      = -411,   -- TODO: !pos survey
-                radius = 70,
-            },
+            area = { 400, 0, -411, 70 },
 
             entryPos = { 398.322, -0.053, -384.667, 192 }, -- !pos 398.322 -0.053 -384.667 107
 
@@ -533,13 +503,7 @@ xi.fate.zones[xi.zone.SOUTH_GUSTABERG] =
 
             objective = { type = "kill", count = 8 },
 
-            area =
-            {
-                x      = -11,   -- TODO: !pos survey
-                y      = -1,   -- TODO: !pos survey
-                z      = -493,   -- TODO: !pos survey
-                radius = 70,
-            },
+            area = { -11, -1, -493, 70 },
 
             entryPos = { -11.004, -0.903, -493.384, 173 }, -- !pos -11.004 -0.903 -493.384 107
 
@@ -635,13 +599,7 @@ xi.fate.zones[xi.zone.SOUTH_GUSTABERG] =
 
             objective = { type = "kill", count = 5 },
 
-            area =
-            {
-                x      = 2,   -- TODO: !pos survey
-                y      = 9.8,   -- TODO: !pos survey
-                z      = -345,   -- TODO: !pos survey
-                radius = 60,
-            },
+            area = { 2, 9.8, -345, 60 },
 
             entryPos = { 2.040, 9.897, -345.539, 73 }, -- !pos 2.040 9.897 -345.539 107
 
@@ -757,13 +715,7 @@ xi.fate.zones[xi.zone.SOUTH_GUSTABERG] =
                 end
             end,
 
-            area =
-            {
-                x      = 447,   -- TODO: !pos survey
-                y      = 0,   -- TODO: !pos survey
-                z      = -672,   -- TODO: !pos survey
-                radius = 70,
-            },
+            area = { 447, 0, -672, 70 },
 
             entryPos = { 434.730, -1.039, -650.120, 187 }, -- !pos 434.730 -1.039 -650.120 107
 
@@ -865,13 +817,7 @@ xi.fate.zones[xi.zone.SOUTH_GUSTABERG] =
 				"A hulk of sentient earth has been spotted! It's presence blights the land!",
             },
 
-            area =
-            {
-                x      = 146,   -- TODO: !pos survey
-                y      = -19.7,   -- TODO: !pos survey
-                z      = -521,   -- TODO: !pos survey
-                radius = 100,
-            },
+            area = { 146, -19.7, -521, 100 },
 
             entryPos = { 146.202, -19.727, -521.774, 146 }, -- !pos 146.202 -19.727 -521.774 107
 

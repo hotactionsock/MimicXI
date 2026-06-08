@@ -36,13 +36,7 @@ xi.fate.zones[xi.zone.BATALLIA_DOWNS] =
 
             objective = { type = "kill", count = 10 },
 
-            area =
-            {
-                x      = 0,   -- TODO: !pos survey
-                y      = 0,   -- TODO: !pos survey
-                z      = 0,   -- TODO: !pos survey
-                radius = 80,
-            },
+            area = { 0, 0, 0, 80 },
 
             entryPos = { 0, 0, 0, 0 }, -- TODO: !pos survey 105
 
@@ -157,13 +151,7 @@ xi.fate.zones[xi.zone.BATALLIA_DOWNS] =
                 end
             end,
 
-            area =
-            {
-                x      = 0,   -- TODO: !pos survey
-                y      = 0,   -- TODO: !pos survey
-                z      = 0,   -- TODO: !pos survey
-                radius = 88,
-            },
+            area = { 0, 0, 0, 88 },
 
             entryPos = { 0, 0, 0, 0 }, -- TODO: !pos survey 105
 

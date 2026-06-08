@@ -35,13 +35,7 @@ xi.fate.zones[xi.zone.EAST_RONFAURE] =
 
             objective = { type = "kill", count = 10 },
 
-            area =
-            {
-                x      = 369,
-                y      = -35,
-                z      = -17,
-                radius = 85,
-            },
+            area = { 369, -35, -17, 85 },
 
             entryPos = { 369.660, -35.351, -17.708, 66 }, -- !pos 369.660 -35.351 -17.708 101
 
@@ -132,13 +126,7 @@ xi.fate.zones[xi.zone.EAST_RONFAURE] =
 
             objective = { type = "kill", count = 8 },
 
-            area =
-            {
-                x      = 298,
-                y      = -15,
-                z      = -260,
-                radius = 65,
-            },
+            area = { 298, -15, -260, 65 },
 
             entryPos = { 298.027, -15.519, -260.961, 186 }, -- !pos 298.027 -15.519 -260.961 101
 
@@ -235,13 +223,7 @@ xi.fate.zones[xi.zone.EAST_RONFAURE] =
 
             objective = { type = "kill", count = 5 },
 
-            area =
-            {
-                x      = 511,
-                y      = -53,
-                z      = 226,
-                radius = 55,
-            },
+            area = { 511, -53, 226, 55 },
 
             entryPos = { 511.711, -53.284, 226.029, 75 }, -- !pos 511.711 -53.284 226.029 101
 
@@ -361,13 +343,7 @@ xi.fate.zones[xi.zone.EAST_RONFAURE] =
                 end
             end,
 
-            area =
-            {
-                x      = 631,
-                y      = -9,
-                z      = -513,
-                radius = 70,
-            },
+            area = { 631, -9, -513, 70 },
 
             entryPos = { 631.451, -9.391, -513.307, 189 }, -- !pos 631.451 -9.391 -513.307 101
 
@@ -458,13 +434,7 @@ xi.fate.zones[xi.zone.EAST_RONFAURE] =
 
             objective = { type = "kill", count = 9 },
 
-            area =
-            {
-                x      = 241,   -- TODO: !pos survey
-                y      = -56,   -- TODO: !pos survey
-                z      = 422,   -- TODO: !pos survey
-                radius = 65,
-            },
+            area = { 241, -56, 422, 65 },
 
             entryPos = { 215.388, -58.759, 418.344, 122 }, -- !pos 215.388 -58.759 418.344 101
 
@@ -554,13 +524,7 @@ xi.fate.zones[xi.zone.EAST_RONFAURE] =
 
             objective = { type = "kill", count = 9 },
 
-            area =
-            {
-                x      = 441,   -- TODO: !pos survey
-                y      = -50,   -- TODO: !pos survey
-                z      = 117,   -- TODO: !pos survey
-                radius = 70,
-            },
+            area = { 441, -50, 117, 70 },
 
             entryPos = { 441.344, -50.000, 117.165, 139 }, -- !pos 441.344 -50.000 117.165 101
 
@@ -649,13 +613,7 @@ xi.fate.zones[xi.zone.EAST_RONFAURE] =
 
             objective = { type = "kill", count = 5 },
 
-            area =
-            {
-                x      = 480,   -- TODO: !pos survey
-                y      = -39,   -- TODO: !pos survey
-                z      = 37.5,   -- TODO: !pos survey
-                radius = 55,
-            },
+            area = { 480, -39, 37.5, 55 },
 
             entryPos = { 480.499, -39.916, 37.551, 164 }, -- !pos 480.499 -39.916 37.551 101
 
@@ -767,13 +725,7 @@ xi.fate.zones[xi.zone.EAST_RONFAURE] =
                 end
             end,
 
-            area =
-            {
-                x      = 335,   -- TODO: !pos survey
-                y      = 0,   -- TODO: !pos survey
-                z      = -547,   -- TODO: !pos survey
-                radius = 80,
-            },
+            area = { 335, 0, -547, 80 },
 
             entryPos = { 355.837, 0.338, -526.764, 192 }, -- !pos 355.837 0.338 -526.764 101
 
@@ -893,13 +845,7 @@ xi.fate.zones[xi.zone.EAST_RONFAURE] =
                 end
             end,
 
-            area =
-            {
-                x      = 733,   -- TODO: !pos survey
-                y      = -59,   -- TODO: !pos survey
-                z      = 400,   -- TODO: !pos survey
-                radius = 110,
-            },
+            area = { 733, -59, 400, 110 },
 
             entryPos = {{ 733.415, -59.684, 400.727, 129 }, -- !pos 733.415 -59.684 400.727 101
 

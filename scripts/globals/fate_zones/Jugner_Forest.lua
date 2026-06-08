@@ -36,13 +36,7 @@ xi.fate.zones[xi.zone.JUGNER_FOREST] =
 
             objective = { type = "kill", count = 10 },
 
-            area =
-            {
-                x      = 0,   -- TODO: !pos survey
-                y      = 0,   -- TODO: !pos survey
-                z      = 0,   -- TODO: !pos survey
-                radius = 75,
-            },
+            area = { 0, 0, 0, 75 },
 
             entryPos = { 0, 0, 0, 0 }, -- TODO: !pos survey 104
 
@@ -157,13 +151,7 @@ xi.fate.zones[xi.zone.JUGNER_FOREST] =
                 end
             end,
 
-            area =
-            {
-                x      = 0,   -- TODO: !pos survey
-                y      = 0,   -- TODO: !pos survey
-                z      = 0,   -- TODO: !pos survey
-                radius = 81,
-            },
+            area = { 0, 0, 0, 81 },
 
             entryPos = { 0, 0, 0, 0 }, -- TODO: !pos survey 104
 
