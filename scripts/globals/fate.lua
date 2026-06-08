@@ -906,6 +906,12 @@ local function assignBandsAndRewards(zoneID, eventIdx, eventDef, victory)
                     if band > player:getCharVar(bestKey) then
                         player:setCharVar(bestKey, band)
                     end
+
+                    -- Regional vendor weekly FATE tally.
+                    local region = (xi.fate.zones[zoneID] or {}).region
+                    if region and xi.fate.vendor and xi.fate.vendor.onFateComplete then
+                        xi.fate.vendor.onFateComplete(player, region)
+                    end
                 end
             end
         end
