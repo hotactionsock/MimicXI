@@ -23,13 +23,14 @@ xi.fate.zones[xi.zone.SOUTH_GUSTABERG] =
         -- pushes toward Bastok Outskirts.
         -----------------------------------
         {
-            id          = "SG_GOBLIN_01",
-            name        = "Goblin Assault",
-            level       = 8,
-            duration    = 600,
-            chainOnly   = false,
-            chainOnWin  = "SG_GOBLIN_02",
-            progressVal = 1,
+            id                = "SG_GOBLIN_01",
+            name              = "Goblin Assault",
+            level             = 8,
+            duration          = 600,
+            chainOnly         = false,
+            chainOnWin        = "SG_GOBLIN_02",
+            progressVal       = 1,
+            dynamicDifficulty = true,
 
             objective = { type = "kill", count = 8 },
 
@@ -193,12 +194,13 @@ xi.fate.zones[xi.zone.SOUTH_GUSTABERG] =
         -- Palborough Mines into the zone.
         -----------------------------------
         {
-            id          = "SG_QUADAV_01",
-            name        = "Quadav Incursion",
-            level       = 12,
-            duration    = 720,
-            chainOnly   = false,
-            progressVal = 1,
+            id                = "SG_QUADAV_01",
+            name              = "Quadav Incursion",
+            level             = 12,
+            duration          = 720,
+            chainOnly         = false,
+            progressVal       = 1,
+            dynamicDifficulty = true,
 
             objective = { type = "kill", count = 10 },
 
@@ -785,6 +787,214 @@ xi.fate.zones[xi.zone.SOUTH_GUSTABERG] =
                     silver = { { xi.item.QUADAV_HELM,             50 } },
                     gold   = { { xi.item.QUADAV_HELM,            100 },
                                { xi.item.BONE_CHIP,               50 } },
+                },
+            },
+        },
+
+        -----------------------------------
+        -- Hold the Line
+        -- Defense FATE: three time-gated
+        -- waves of goblins assault a Bastok
+        -- supply post on the southern road.
+        -- A new wave arrives every 90 seconds
+        -- regardless of how many are left alive
+        -- from the previous. Objective: kill
+        -- all 10 goblins before the timer ends.
+        -----------------------------------
+        {
+            id           = "SG_DEFEND_01",
+            name         = "Hold the Line",
+            level        = 10,
+            duration     = 600,
+            chainOnly    = false,
+            progressVal  = 1,
+            waveInterval = 90,  -- seconds between time-gated wave spawns
+
+            objective = { type = "defend", count = 10 },
+
+            area = { -95, 10, -260, 75 },  -- same area as Goblin Assault
+
+            entryPos = { -91.489, 11.053, -260.794, 120 }, -- !pos -91.489 11.053 -260.794 107
+
+            waves =
+            {
+                -----------------------------------
+                -- Wave 1 (T+0): forward scouts
+                -----------------------------------
+                {
+                    announcement = "Hold the Line — Wave 1: Goblin scouts close in on the supply post!",
+                    mobs =
+                    {
+                        {
+                            base        = { 107, 13 },
+                            name        = string.char(0xA6) .. "Goblin Scout",
+                            count       = 3,
+                            spawnPoints =
+                            {
+                                { -88,  10, -268, 143 }, -- !pos -88 10 -268 107
+                                { -108, 10, -268, 143 }, -- !pos -108 10 -268 107
+                                { -95,  10, -288, 143 }, -- !pos -95 10 -288 107
+                            },
+                        },
+                    },
+                },
+                -----------------------------------
+                -- Wave 2 (T+90s): weavers lay traps
+                -----------------------------------
+                {
+                    announcement = "Hold the Line — Wave 2: Goblin weavers approach, spreading traps!",
+                    mobs =
+                    {
+                        {
+                            base        = { 107, 16 },
+                            name        = string.char(0xA6) .. "Goblin Saboteur",
+                            count       = 3,
+                            spawnPoints =
+                            {
+                                { -88,  10, -268, 143 }, -- !pos -88 10 -268 107
+                                { -108, 10, -268, 143 }, -- !pos -108 10 -268 107
+                                { -95,  10, -248, 143 }, -- !pos -95 10 -248 107
+                            },
+                        },
+                    },
+                },
+                -----------------------------------
+                -- Wave 3 (T+180s): main assault
+                -----------------------------------
+                {
+                    announcement = "Hold the Line — Final wave: The main goblin assault arrives!",
+                    mobs =
+                    {
+                        {
+                            base        = { 107, 13 },
+                            name        = string.char(0xA6) .. "Goblin Raider",
+                            count       = 3,
+                            spawnPoints =
+                            {
+                                { -88,  10, -268, 143 }, -- !pos -88 10 -268 107
+                                { -108, 10, -268, 143 }, -- !pos -108 10 -268 107
+                                { -95,  10, -288, 143 }, -- !pos -95 10 -288 107
+                            },
+                        },
+                        {
+                            base        = { 107, 31 },
+                            name        = string.char(0xA6) .. "Goblin Warchief",
+                            count       = 1,
+                            isBoss      = true,
+                            spawnPoints =
+                            {
+                                { -95, 10, -260, 120 }, -- !pos -95 10 -260 107
+                            },
+                        },
+                    },
+                },
+            },
+
+            rewards =
+            {
+                victory =
+                {
+                    gold   = { exp = 1000 },
+                    silver = { exp = 500  },
+                    bronze = { exp = 250  },
+                },
+                fail =
+                {
+                    gold   = { exp = 300 },
+                    silver = { exp = 150 },
+                    bronze = { exp = 75  },
+                },
+            },
+
+            loot =
+            {
+                victory =
+                {
+                    guaranteed = {},
+                    bronze = { { xi.item.BONE_CHIP,            150 } },
+                    silver = { { xi.item.GOBLIN_ARMOR,         150 },
+                               { xi.item.BONE_CHIP,            150 } },
+                    gold   = { { xi.item.GOBLIN_MASK,          150 },
+                               { xi.item.GOBLIN_ARMOR,         150 },
+                               { xi.item.CHUNK_OF_COPPER_ORE,  100 } },
+                },
+                fail =
+                {
+                    guaranteed = {},
+                    bronze = {},
+                    silver = { { xi.item.BONE_CHIP,             50 } },
+                    gold   = { { xi.item.BONE_CHIP,            100 } },
+                },
+            },
+        },
+
+        -----------------------------------
+        -- Reclaim the Spoils
+        -- Collection FATE: goblins dropped
+        -- stolen goods while fleeing after
+        -- the assault. Recover items scattered
+        -- across the area before they double
+        -- back to reclaim them.
+        -----------------------------------
+        {
+            id          = "SG_COLLECT_01",
+            name        = "Reclaim the Spoils",
+            level       = 5,
+            duration    = 300,
+            chainOnly   = false,
+            progressVal = 1,
+
+            objective     = { type = "collect", count = 6 },
+            collectName   = "Stolen Goods",
+
+            area = { -95, 10, -260, 100 },
+
+            entryPos = { -91.489, 11.053, -260.794, 120 }, -- !pos -91.489 11.053 -260.794 107
+
+            collectPoints =
+            {
+                { -88,  10, -268, 143 }, -- !pos -88 10 -268 107   TODO: survey in-game
+                { -108, 10, -268, 143 }, -- !pos -108 10 -268 107
+                { -95,  10, -248, 143 }, -- !pos -95 10 -248 107
+                { -95,  10, -288, 143 }, -- !pos -95 10 -288 107
+                { -75,  10, -260, 143 }, -- !pos (approx)
+                { -115, 10, -260, 143 }, -- !pos (approx)
+            },
+
+            rewards =
+            {
+                victory =
+                {
+                    gold   = { exp = 400 },
+                    silver = { exp = 200 },
+                    bronze = { exp = 100 },
+                },
+                fail =
+                {
+                    gold   = { exp = 100 },
+                    silver = { exp = 50  },
+                    bronze = { exp = 25  },
+                },
+            },
+
+            loot =
+            {
+                victory =
+                {
+                    guaranteed = {},
+                    bronze = { { xi.item.BONE_CHIP,           150 } },
+                    silver = { { xi.item.BONE_CHIP,           150 },
+                               { xi.item.BRONZE_ORE,          100 } },
+                    gold   = { { xi.item.GOBLIN_ARMOR,        100 },
+                               { xi.item.BONE_CHIP,           150 },
+                               { xi.item.BRONZE_ORE,          150 } },
+                },
+                fail =
+                {
+                    guaranteed = {},
+                    bronze = {},
+                    silver = {},
+                    gold   = { { xi.item.BONE_CHIP,            50 } },
                 },
             },
         },

@@ -47,6 +47,9 @@ xi.fate.lastLeashTick = {}
 -- Superboss tombstone data (in-memory, lives as long as the tombstone NPC): [eventID] = data table
 xi.fate.tombstones = {}
 
+-- Collection-point NPC entity references: [zoneID][eventIdx] = { npc, npc, ... }
+xi.fate.collectNPCs = {}
+
 -----------------------------------
 -- Internal constants
 -----------------------------------
@@ -98,6 +101,9 @@ local function sbWaveKey(z,i)        return string.format("[SBOSS][%d][%d]Wave",
 local function sbRageKey(z,i)        return string.format("[SBOSS][%d][%d]Rage",       z, i)    end  -- volatile, rage stack count
 local function sbPersonalCoolKey(id) return string.format("[SBOSS][%s]Personal",      id)      end  -- char var, last loot timestamp
 
+local function momentumKey(z)        return string.format("[FATE][%d]Streak",          z)        end  -- server var, consecutive victories
+local function dynDiffKey(z, i)      return string.format("[FATE][%d][%d]DynDiff",     z, i)     end  -- server var, dynamic difficulty tier
+
 -----------------------------------
 -- Scaling
 -- hpPct / dmgPct passed directly to HP_SCALE and BASE_DAMAGE_MULTIPLIER mob mods.
@@ -108,6 +114,16 @@ local SCALE_CAP = 6  -- clamp participant count so scaling doesn't spiral
 
 xi.fate.getScaleN = function(zoneID, eventIdx)
     return math.max(1, math.min(SCALE_CAP, GetServerVariable(scaleKey(zoneID, eventIdx))))
+end
+
+-- Returns the EXP bonus multiplier (0.0–0.30) from the zone's consecutive-victory streak.
+xi.fate.getMomentumBonus = function(zoneID)
+    local streak = GetServerVariable(momentumKey(zoneID))
+    if     streak >= 8 then return 0.30
+    elseif streak >= 5 then return 0.20
+    elseif streak >= 3 then return 0.10
+    else                     return 0
+    end
 end
 
 -----------------------------------
@@ -425,6 +441,14 @@ xi.fate.spawnMobs = function(zoneID, eventIdx)
         end
     end
 
+    if def.dynamicDifficulty then
+        local tier = GetServerVariable(dynDiffKey(zoneID, eventIdx))
+        if tier > 0 then
+            hpPct  = math.min(hpPct  + tier * 20, 400)
+            dmgPct = math.min(dmgPct + tier * 15, 300)
+        end
+    end
+
     -- Re-randomize shared spawn point assignments each activation so mob placement
     -- varies between runs of the same event.
     if def.sharedSpawnPoints and #def.sharedSpawnPoints > 0 then
@@ -664,6 +688,43 @@ xi.fate.onKill = function(mob, player, zoneID, eventIdx)
 end
 
 -----------------------------------
+-- Collection FATE handler
+-----------------------------------
+xi.fate.onCollect = function(player, npc, zoneID, eventIdx)
+    if not xi.fate.isActive(zoneID, eventIdx) then return end
+    if npc:getLocalVar("fateCollected") == 1 then return end
+
+    local def = xi.fate.getEventDef(zoneID, eventIdx)
+    if not def then return end
+
+    -- Auto-register on first interaction (collect FATEs are open-world).
+    if player:getCharVar(regKey(zoneID, eventIdx)) ~= 1 then
+        xi.fate.register(player, zoneID, eventIdx)
+    end
+
+    npc:setLocalVar("fateCollected", 1)
+    npc:setStatus(xi.status.DISAPPEAR)
+
+    xi.fate.addScore(player, zoneID, eventIdx, "ws", SCORE_KILL)
+
+    local collected = GetVolatileServerVariable(killKey(zoneID, eventIdx)) + 1
+    SetVolatileServerVariable(killKey(zoneID, eventIdx), collected)
+    xi.fate.broadcastEventSync(zoneID, eventIdx)
+
+    local total = def.objective.count
+    local zone  = GetZone(zoneID)
+    if zone then
+        for _, p in pairs(zone:getPlayers()) do
+            p:printToPlayer(string.format("[FATE] %s — %d/%d recovered!", def.name, collected, total), xi.msg.channel.SYSTEM_3)
+        end
+    end
+
+    if collected >= total then
+        xi.fate.resolve(zoneID, eventIdx, true)
+    end
+end
+
+-----------------------------------
 -- Loot chest
 -----------------------------------
 xi.fate.openChest = function(player, npc)
@@ -829,8 +890,9 @@ local function assignBandsAndRewards(zoneID, eventIdx, eventDef, victory)
                     elseif pools.bronze               then exp = pools.bronze.exp or 0
                     end
                     if exp > 0 then
-                        local mults = xi.mimic.bonus.getMultipliers()
-                        player:addExp(math.floor(exp * mults.exp))
+                        local mults    = xi.mimic.bonus.getMultipliers()
+                        local momentum = xi.fate.getMomentumBonus(zoneID)
+                        player:addExp(math.floor(exp * mults.exp * (1 + momentum)))
                     end
                 end
 
@@ -915,6 +977,65 @@ xi.fate.resolve = function(zoneID, eventIdx, victory, silent)
                     if p then npcUtil.giveItem(p, def.participationItem) end
                 end
             end
+        end
+    end
+
+    -- Defense FATE: clear wave tracker on resolution.
+    if def.objective and def.objective.type == "defend" then
+        SetVolatileServerVariable(sbWaveKey(zoneID, eventIdx), 0)
+    end
+
+    -- Collect FATE: hide any uncollected NPCs and reset their state.
+    if def.objective and def.objective.type == "collect" then
+        local cnpcs = xi.fate.collectNPCs[zoneID] and xi.fate.collectNPCs[zoneID][eventIdx]
+        if cnpcs then
+            for _, c in ipairs(cnpcs) do
+                c:setStatus(xi.status.DISAPPEAR)
+                c:setLocalVar("fateCollected", 0)
+            end
+        end
+    end
+
+    -- Zone momentum: consecutive victories stack an EXP bonus; any failure resets the streak.
+    if not def.chainOnly then
+        if victory then
+            local streak = GetServerVariable(momentumKey(zoneID)) + 1
+            SetServerVariable(momentumKey(zoneID), streak)
+            local bonus = xi.fate.getMomentumBonus(zoneID)
+            if streak == 3 or streak == 5 or streak == 8 then
+                local pct = math.floor(bonus * 100)
+                local msg = string.format("[FATE] Zone momentum! %d consecutive victories — +%d%% EXP bonus now active.", streak, pct)
+                for _, p in pairs(zone:getPlayers()) do
+                    p:printToPlayer(msg, xi.msg.channel.SYSTEM_3)
+                end
+            end
+        else
+            if GetServerVariable(momentumKey(zoneID)) > 0 then
+                SetServerVariable(momentumKey(zoneID), 0)
+                for _, p in pairs(zone:getPlayers()) do
+                    p:printToPlayer("[FATE] Zone momentum lost — win streak broken.", xi.msg.channel.SYSTEM_3)
+                end
+            end
+        end
+    end
+
+    -- Dynamic difficulty: fast clears increase the difficulty tier; slow/failed clears reset it.
+    if def.dynamicDifficulty then
+        if victory then
+            local elapsed  = GetSystemTime() - GetServerVariable(startKey(zoneID, eventIdx))
+            local halfDur  = math.floor((def.duration or 600) / 2)
+            if elapsed < halfDur then
+                local tier = GetServerVariable(dynDiffKey(zoneID, eventIdx)) + 1
+                SetServerVariable(dynDiffKey(zoneID, eventIdx), tier)
+                if tier >= 2 then
+                    local msg = string.format("[FATE] The enemy has adapted. Difficulty increases (tier %d).", tier)
+                    for _, p in pairs(zone:getPlayers()) do p:printToPlayer(msg, xi.msg.channel.SYSTEM_3) end
+                end
+            else
+                SetServerVariable(dynDiffKey(zoneID, eventIdx), 0)
+            end
+        else
+            SetServerVariable(dynDiffKey(zoneID, eventIdx), 0)
         end
     end
 
@@ -1092,6 +1213,19 @@ xi.fate.activate = function(zone, eventDef, zoneID, eventIdx)
         end
         -- Kick off wave 1 instead of the normal flat spawn.
         xi.fate.spawnWave(zoneID, eventIdx, 1)
+    elseif eventDef.objective and eventDef.objective.type == "defend" then
+        -- Defense FATEs use time-gated waves; spawn wave 1 now and let tickDefenseFATEs handle the rest.
+        SetVolatileServerVariable(sbWaveKey(zoneID, eventIdx), 1)
+        xi.fate.spawnWave(zoneID, eventIdx, 1)
+    elseif eventDef.objective and eventDef.objective.type == "collect" then
+        -- Reveal all collection-point NPCs.
+        local cnpcs = xi.fate.collectNPCs[zoneID] and xi.fate.collectNPCs[zoneID][eventIdx]
+        if cnpcs then
+            for _, c in ipairs(cnpcs) do
+                c:setLocalVar("fateCollected", 0)
+                c:setStatus(xi.status.NORMAL)
+            end
+        end
     else
         xi.fate.spawnMobs(zoneID, eventIdx)
     end
@@ -1489,10 +1623,36 @@ local function initFATEEvent(zone, zoneID, idx, eventDef, areaID)
         end
     end
 
-    -- Flatten mob groups from waves (superboss) or the regular mobs array.
-    -- Each entry carries a waveIdx (nil for non-superboss events).
+    -- Initialise collection-point NPCs if this is a collect-type event.
+    if eventDef.objective and eventDef.objective.type == "collect" and eventDef.collectPoints then
+        xi.fate.collectNPCs[zoneID]      = xi.fate.collectNPCs[zoneID] or {}
+        xi.fate.collectNPCs[zoneID][idx] = {}
+        for cIdx, pt in ipairs(eventDef.collectPoints) do
+            local cNPC = zone:insertDynamicEntity({
+                objtype   = xi.objType.NPC,
+                name      = eventDef.collectName or "Collection Point",
+                look      = 969,
+                x         = pt[1], y = pt[2], z = pt[3],
+                rotation  = pt[4] or 0,
+                widescan  = 0,
+                onTrigger = function(player, npc)
+                    xi.fate.onCollect(player, npc, npc:getLocalVar("fateZoneID"), npc:getLocalVar("fateEventIdx"))
+                end,
+            })
+            if cNPC then
+                cNPC:setStatus(xi.status.DISAPPEAR)
+                cNPC:setLocalVar("fateZoneID",    zoneID)
+                cNPC:setLocalVar("fateEventIdx",  idx)
+                cNPC:setLocalVar("fateCollectIdx", cIdx)
+                xi.fate.collectNPCs[zoneID][idx][cIdx] = cNPC
+            end
+        end
+    end
+
+    -- Flatten mob groups from waves (wave-based events) or the regular mobs array.
+    -- Each entry carries a waveIdx (nil for flat-spawn events).
     local flatGroups = {}
-    if eventDef.superboss and eventDef.waves then
+    if eventDef.waves then
         for wIdx, wave in ipairs(eventDef.waves) do
             for _, mg in ipairs(wave.mobs or {}) do
                 table.insert(flatGroups, { group = mg, waveIdx = wIdx })
@@ -1770,6 +1930,73 @@ xi.fate.onEntryTrigger = function(player, npc, zoneID, eventIdx)
 end
 
 -----------------------------------
+-- Defense FATE wave timer
+-- Runs every 10s alongside the leash check. Spawns the next wave once enough
+-- time has elapsed since the event started, regardless of whether the previous
+-- wave has been cleared (time-gated, not kill-gated).
+-----------------------------------
+xi.fate.tickDefenseFATEs = function(zone, zoneID, now)
+    local zoneData = xi.fate.zones[zoneID]
+    if not zoneData then return end
+    for eventIdx, def in ipairs(zoneData.events) do
+        if def.objective and def.objective.type == "defend" and def.waves
+            and xi.fate.isActive(zoneID, eventIdx)
+        then
+            local numWaves    = #def.waves
+            local currentWave = GetVolatileServerVariable(sbWaveKey(zoneID, eventIdx))
+            if currentWave < numWaves then
+                local interval = def.waveInterval or 90
+                local elapsed  = now - GetServerVariable(startKey(zoneID, eventIdx))
+                local nextDue  = currentWave * interval
+                if elapsed >= nextDue then
+                    local nextWave = currentWave + 1
+                    SetVolatileServerVariable(sbWaveKey(zoneID, eventIdx), nextWave)
+                    xi.fate.spawnWave(zoneID, eventIdx, nextWave)
+                    for _, p in pairs(zone:getPlayers()) do
+                        p:printToPlayer(string.format("[FATE] %s — Wave %d incoming!", def.name, nextWave), xi.msg.channel.SYSTEM_3)
+                    end
+                end
+            end
+        end
+    end
+end
+
+-----------------------------------
+-- Proximity alert on zone-in
+-- Informs players arriving mid-FATE what is currently underway.
+-----------------------------------
+xi.fate.notifyActiveOnZoneIn = function(player, zoneID)
+    local zoneData = xi.fate.zones[zoneID]
+    if not zoneData then return end
+    for eventIdx, def in ipairs(zoneData.events) do
+        if xi.fate.isActive(zoneID, eventIdx) then
+            local remaining = xi.fate.getRemaining(zoneID, eventIdx)
+            local mins      = math.max(1, math.ceil(remaining / 60))
+            local collected = GetVolatileServerVariable(killKey(zoneID, eventIdx))
+            local target    = def.objective and def.objective.count or 0
+            local objType   = def.objective and def.objective.type  or "kill"
+            local progress
+            if objType == "collect" then
+                progress = string.format("%d/%d recovered", collected, target)
+            elseif objType == "defend" then
+                local wave    = GetVolatileServerVariable(sbWaveKey(zoneID, eventIdx))
+                local numWave = def.waves and #def.waves or 1
+                progress = string.format("wave %d/%d underway", wave, numWave)
+            else
+                progress = string.format("%d/%d defeated", collected, target)
+            end
+            local dynTier = def.dynamicDifficulty and GetServerVariable(dynDiffKey(zoneID, eventIdx)) or 0
+            local tierStr = dynTier > 0 and string.format(" [Difficulty +%d]", dynTier) or ""
+            player:printToPlayer(
+                string.format("[FATE] %s is underway! (%s, %dm remaining%s) — speak to the herald to join.",
+                    def.name, progress, mins, tierStr),
+                xi.msg.channel.SYSTEM_3
+            )
+        end
+    end
+end
+
+-----------------------------------
 -- Scheduler (called from onZoneTick override)
 -- Each non-chain event runs its own independent state machine.
 -----------------------------------
@@ -1781,6 +2008,7 @@ xi.fate.tick = function(zone, zoneID)
     if (xi.fate.lastLeashTick[zoneID] or 0) + 10 <= now then
         xi.fate.lastLeashTick[zoneID] = now
         xi.fate.leashMobs(zoneID)
+        xi.fate.tickDefenseFATEs(zone, zoneID, now)
     end
 
     -- Always run superboss maintenance (enrage, wipe-reset, phases) regardless of scheduler throttle.
