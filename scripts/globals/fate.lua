@@ -385,7 +385,7 @@ end
 xi.fate.notify = function(zone, eventDef, zoneID, eventIdx)
     local n         = xi.fate.getScaleN(zoneID, eventIdx)
     local scaleStr  = n > 1 and string.format(" [%dp scale]", n) or ""
-    local stars   = eventDef.isBoss and (eventDef.bossStars or 1) or 0
+    local stars   = eventDef.superboss and 5 or (eventDef.isBoss and (eventDef.bossStars or 1) or 0)
     local bossStr = stars > 0 and (string.rep(string.char(0x81, 0x9A), stars) .. " ") or ""
     local posStr = eventDef.mapPos and string.format(" at (%s)", eventDef.mapPos) or ""
     local msg = string.format("[FATE] %s%s (Lv%d)%s has begun! Approach the marker%s to participate.", bossStr, eventDef.name, eventDef.level, scaleStr, posStr)
@@ -955,11 +955,21 @@ end
 xi.fate.preannounce = function(zone, eventDef, zoneID, eventIdx)
     SetServerVariable(stateKey(zoneID, eventIdx), STATE_PENDING)
 
-    local warnings = eventDef.bossWarnings or {}
-    local msg1 = warnings[1] or "[FATE] A powerful creature stirs..."
-    for _, player in pairs(zone:getPlayers()) do
-        player:printToPlayer(msg1, xi.msg.channel.SYSTEM_3)
+    local isSuperBoss = eventDef.superboss == true
+
+    local function broadcastMsg(msg)
+        if isSuperBoss then
+            xi.fate.broadcastToFateZones(msg)
+        else
+            for _, player in pairs(zone:getPlayers()) do
+                player:printToPlayer(msg, xi.msg.channel.SYSTEM_3)
+            end
+        end
     end
+
+    local warnings = eventDef.bossWarnings or {}
+    local msg1 = warnings[1] or (isSuperBoss and "[FATE] ★★★★★ An ancient terror awakens. All adventurers — prepare yourselves." or "[FATE] A powerful creature stirs...")
+    broadcastMsg(msg1)
 
     local entry = xi.fate.entryNPCs[zoneID] and xi.fate.entryNPCs[zoneID][eventIdx]
     if not entry then
@@ -975,13 +985,22 @@ xi.fate.preannounce = function(zone, eventDef, zoneID, eventIdx)
         local def = xi.fate.getEventDef(zID, i)
         if not z or not def then return end
 
-        local w    = def.bossWarnings or {}
-        local msg2 = w[2] or "[FATE] The creature draws near..."
-        for _, player in pairs(z:getPlayers()) do
-            player:printToPlayer(msg2, xi.msg.channel.SYSTEM_3)
+        local isSuper2 = def.superboss == true
+        local function broadcastMsg2(msg)
+            if isSuper2 then
+                xi.fate.broadcastToFateZones(msg)
+            else
+                for _, player in pairs(z:getPlayers()) do
+                    player:printToPlayer(msg, xi.msg.channel.SYSTEM_3)
+                end
+            end
         end
 
-        if (def.bossStars or 1) >= 3 then
+        local w    = def.bossWarnings or {}
+        local msg2 = w[2] or (isSuper2 and "[FATE] ★★★★★ The ground trembles. This is your final warning." or "[FATE] The creature draws near...")
+        broadcastMsg2(msg2)
+
+        if (def.bossStars or 1) >= 3 or isSuper2 then
             -- 3-star bosses get an extra 5-minute warning step (15-min total lead).
             e:timer(300000, function(e2)
                 local zID2 = e2:getLocalVar("fateZoneID")
@@ -990,10 +1009,15 @@ xi.fate.preannounce = function(zone, eventDef, zoneID, eventIdx)
                 local z2   = GetZone(zID2)
                 local def2 = xi.fate.getEventDef(zID2, i2)
                 if not z2 or not def2 then return end
-                local w2   = def2.bossWarnings or {}
-                local msg3 = w2[3] or "[FATE] An overwhelming presence descends upon you..."
-                for _, player in pairs(z2:getPlayers()) do
-                    player:printToPlayer(msg3, xi.msg.channel.SYSTEM_3)
+                local w2      = def2.bossWarnings or {}
+                local isSuper3 = def2.superboss == true
+                local msg3    = w2[3] or (isSuper3 and "[FATE] ★★★★★ Its arrival is imminent. Rally now." or "[FATE] An overwhelming presence descends upon you...")
+                if isSuper3 then
+                    xi.fate.broadcastToFateZones(msg3)
+                else
+                    for _, player in pairs(z2:getPlayers()) do
+                        player:printToPlayer(msg3, xi.msg.channel.SYSTEM_3)
+                    end
                 end
                 e2:timer(300000, function(e3)
                     local zID3 = e3:getLocalVar("fateZoneID")
@@ -1811,7 +1835,7 @@ xi.fate.tick = function(zone, zoneID)
     if #passed == 0 then return end
 
     local pick = passed[math.random(#passed)]
-    if pick.def.isBoss then
+    if pick.def.isBoss or pick.def.superboss then
         xi.fate.preannounce(zone, pick.def, zoneID, pick.idx)
     else
         xi.fate.activate(zone, pick.def, zoneID, pick.idx)
