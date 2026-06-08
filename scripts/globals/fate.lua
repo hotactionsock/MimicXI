@@ -409,6 +409,22 @@ xi.fate.spawnMobs = function(zoneID, eventIdx)
         end
     end
 
+    -- Re-randomize shared spawn point assignments each activation so mob placement
+    -- varies between runs of the same event.
+    if def.sharedSpawnPoints and #def.sharedSpawnPoints > 0 then
+        local pool = {}
+        for _, pt in ipairs(def.sharedSpawnPoints) do
+            pool[#pool + 1] = pt
+        end
+        for j = #pool, 2, -1 do
+            local k = math.random(j)
+            pool[j], pool[k] = pool[k], pool[j]
+        end
+        for mobIdx, entry in ipairs(mobs) do
+            entry.spawnPt = pool[((mobIdx - 1) % #pool) + 1]
+        end
+    end
+
     for _, entry in ipairs(mobs) do
         local mob = entry.entity
         if mob and not mob:isSpawned() then
@@ -984,10 +1000,31 @@ local function initFATEEvent(zone, zoneID, idx, eventDef, areaID)
     xi.fate.mobEntities[zoneID]      = xi.fate.mobEntities[zoneID] or {}
     xi.fate.mobEntities[zoneID][idx] = {}
 
+    -- Build a shuffled shared pool for events that declare sharedSpawnPoints so that
+    -- mobs from different groups spread across the full set of points at init time.
+    local sharedPool    = nil
+    local sharedPoolIdx = 0
+    if eventDef.sharedSpawnPoints and #eventDef.sharedSpawnPoints > 0 then
+        sharedPool = {}
+        for _, pt in ipairs(eventDef.sharedSpawnPoints) do
+            sharedPool[#sharedPool + 1] = pt
+        end
+        for j = #sharedPool, 2, -1 do
+            local k = math.random(j)
+            sharedPool[j], sharedPool[k] = sharedPool[k], sharedPool[j]
+        end
+    end
+
     for i, mobGroup in ipairs(eventDef.mobs) do
         local aggroType = mobGroup.aggroType  -- captured per-group before inner loop; nil = keep template default
         for n = 1, mobGroup.count do
-            local spawnPt = mobGroup.spawnPoints[((n - 1) % #mobGroup.spawnPoints) + 1]
+            local spawnPt
+            if sharedPool then
+                sharedPoolIdx = sharedPoolIdx + 1
+                spawnPt = sharedPool[((sharedPoolIdx - 1) % #sharedPool) + 1]
+            else
+                spawnPt = mobGroup.spawnPoints[((n - 1) % #mobGroup.spawnPoints) + 1]
+            end
 
             local mobEntity = zone:insertDynamicEntity({
                 objtype         = xi.objType.MOB,
