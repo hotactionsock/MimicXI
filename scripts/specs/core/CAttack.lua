@@ -13,8 +13,3 @@ end
 ---@return nil
 function CAttack:setCritical(critical)
 end
-
----@nodiscard
----@return xi.physicalAttackType
-function CAttack:getAttackType()
-end

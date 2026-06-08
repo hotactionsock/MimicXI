@@ -14,15 +14,6 @@ end
 
 spellObject.onMobSpawn = function(mob)
     xi.trust.message(mob, xi.trust.messageOffset.SPAWN)
-
-    mob:addGambit(ai.t.SELF,   { ai.c.ALWAYS,     0                  }, { ai.r.JA, ai.s.SPECIFIC, xi.ja.DODGE   })
-    mob:addGambit(ai.t.SELF,   { ai.c.HPP_LT,    50                 }, { ai.r.JA, ai.s.SPECIFIC, xi.ja.CHAKRA  })
-    mob:addGambit(ai.t.SELF,   { ai.c.ALWAYS,     0                 }, { ai.r.JA, ai.s.SPECIFIC, xi.ja.MANTRA  })
-    mob:addGambit(ai.t.SELF,   { ai.c.NOT_STATUS, xi.effect.IMPETUS }, { ai.r.JA, ai.s.SPECIFIC, xi.ja.IMPETUS })
-    mob:addMod(xi.mod.DOUBLE_ATTACK,    xi.trust.modGrowthValMax(mob, 15))
-    mob:addMod(xi.mod.KICK_ATTACK_RATE, xi.trust.modGrowthValMax(mob, 10))
-
-    mob:setTrustTPSkillSettings(ai.tp.ASAP, ai.s.RANDOM)
 end
 
 spellObject.onMobDespawn = function(mob)

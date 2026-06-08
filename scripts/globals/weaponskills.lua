@@ -712,54 +712,6 @@ xi.weaponskills.doPhysicalWeaponskill = function(attacker, target, wsID, wsParam
     attacker:delStatusEffect(xi.effect.SNEAK_ATTACK)
     attacker:delStatusEffectSilent(xi.effect.BUILDING_FLOURISH)
 
-    -- Soul Reservoir (DRK): HP sacrificed during Souleater converts to WS damage bonus.
-    if attacker:hasStatusEffect(xi.effect.SOUL_RESERVOIR) then
-        local reservoirEffect = attacker:getStatusEffect(xi.effect.SOUL_RESERVOIR)
-        local drained = reservoirEffect:getPower()
-        attacker:delStatusEffect(xi.effect.SOUL_RESERVOIR)
-        finaldmg = math.floor(finaldmg * (1 + drained / 3000 * 0.5))
-    end
-
-    -- Poised Strike (SAM): Third Eye anticipations with polearm build stacks, consumed on polearm WS.
-    if attacker:getWeaponSkillType(xi.slot.MAIN) == xi.skill.POLEARM then
-        local stacks = attacker:getLocalVar('POISED_STACKS')
-        if stacks > 0 then
-            attacker:setLocalVar('POISED_STACKS', 0)
-            finaldmg = math.floor(finaldmg * (1 + stacks * 0.1))
-        end
-    end
-
-    -- Drawn Bow (SAM): Ranged WS primer consumed on first melee WS for +20% damage.
-    if attacker:hasStatusEffect(xi.effect.DRAWN_BOW) then
-        attacker:delStatusEffect(xi.effect.DRAWN_BOW)
-        finaldmg = math.floor(finaldmg * 1.2)
-    end
-
-    -- Draconic Resonance (DRG): jump stacks consumed on polearm WS for +20% per stack (up to +60%).
-    if attacker:getWeaponSkillType(xi.slot.MAIN) == xi.skill.POLEARM then
-        local resonanceEffect = attacker:getStatusEffect(xi.effect.DRACONIC_RESONANCE)
-        if resonanceEffect then
-            local stacks = resonanceEffect:getPower()
-            attacker:delStatusEffect(xi.effect.DRACONIC_RESONANCE)
-            finaldmg = math.floor(finaldmg * (1 + stacks * 0.2))
-        end
-    end
-
-    -- Wyvern's Blessing (DRG): Healing Breath creates a WS window scaled to HP restored (cap +50%).
-    local blessingEffect = attacker:getStatusEffect(xi.effect.WYVERN_BLESSING)
-    if blessingEffect then
-        local healed = blessingEffect:getPower()
-        attacker:delStatusEffect(xi.effect.WYVERN_BLESSING)
-        local mult = utils.clamp(1 + healed / (attacker:getMaxHP() * 2), 1, 1.5)
-        finaldmg = math.floor(finaldmg * mult)
-    end
-
-    -- Yonin Aggressive Evasion (NIN): Yonin's decaying power grants a melee WS bonus (+30%→+10%).
-    local yoninEffect = attacker:getStatusEffect(xi.effect.YONIN)
-    if yoninEffect then
-        finaldmg = math.floor(finaldmg * (1 + yoninEffect:getPower() / 100))
-    end
-
     finaldmg            = finaldmg * xi.settings.main.WEAPON_SKILL_POWER -- Add server bonus
     calcParams.finalDmg = finaldmg
     finaldmg            = xi.weaponskills.takeWeaponskillDamage(target, attacker, wsParams, primaryMsg, attack, calcParams, action)
@@ -847,11 +799,6 @@ xi.weaponskills.doRangedWeaponskill = function(attacker, target, wsID, wsParams,
     -- Ammo needs to be removed after xi.weaponskills.takeWeaponskillDamage for delay/tp return uses
     if calcParams.ammoUsed and calcParams.ammoUsed > 0 then
         attacker:removeAmmo(calcParams.ammoUsed)
-    end
-
-    -- Drawn Bow (SAM): Ranged WS while Hasso active primes next melee WS for +20% damage.
-    if attacker:hasStatusEffect(xi.effect.HASSO) and finaldmg > 0 then
-        attacker:addStatusEffect(xi.effect.DRAWN_BOW, { power = 1, duration = 20, origin = attacker })
     end
 
     return finaldmg, calcParams.criticalHit, calcParams.tpHitsLanded, calcParams.extraHitsLanded, calcParams.shadowsAbsorbed

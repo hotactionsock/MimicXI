@@ -81,10 +81,20 @@ zoneObject.onInitialize = function(zone)
 
     xi.treasure.initZone(zone)
     xi.conquest.setRegionalConquestOverseers(zone:getRegionID())
+    xi.fate.onZoneInitialize(zone, zone:getID())
 end
 
 zoneObject.onConquestUpdate = function(zone, updatetype, influence, owner, ranking, isConquestAlliance)
     xi.conquest.onConquestUpdate(zone, updatetype, influence, owner, ranking, isConquestAlliance)
+end
+
+zoneObject.afterZoneIn = function(player)
+    xi.fate.checkSyncOnZoneIn(player)
+    xi.fate.sendAddonDef(player, player:getZoneID())
+end
+
+zoneObject.onZoneTick = function(zone)
+    xi.fate.tick(zone, zone:getID())
 end
 
 zoneObject.onZoneIn = function(player, prevZone)
@@ -257,9 +267,12 @@ zoneObject.onTriggerAreaEnter = function(player, triggerArea)
             handleGreenPortal(player)
         end,
     }
+
+    xi.fate.onAreaEnter(player, triggerArea, player:getZoneID())
 end
 
 zoneObject.onTriggerAreaLeave = function(player, triggerArea)
+    xi.fate.onAreaLeave(player, triggerArea, player:getZoneID())
 end
 
 zoneObject.onEventUpdate = function(player, csid, option, npc)

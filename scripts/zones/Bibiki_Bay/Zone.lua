@@ -7,6 +7,7 @@ local zoneObject = {}
 zoneObject.onInitialize = function(zone)
     zone:registerCuboidTriggerArea(1,  474, -10,  667,  511, 10,  708) -- Manaclipper while docked at Sunset Docks
     zone:registerCuboidTriggerArea(2, -410, -10, -385, -371, 10, -343) -- Manaclipper while docked at Purgonorgo Isle
+    xi.fate.onZoneInitialize(zone, zone:getID())
 end
 
 zoneObject.onZoneIn = function(player, prevZone)
@@ -31,15 +32,26 @@ zoneObject.onConquestUpdate = function(zone, updatetype, influence, owner, ranki
     xi.conquest.onConquestUpdate(zone, updatetype, influence, owner, ranking, isConquestAlliance)
 end
 
+zoneObject.afterZoneIn = function(player)
+    xi.fate.checkSyncOnZoneIn(player)
+    xi.fate.sendAddonDef(player, player:getZoneID())
+end
+
+zoneObject.onZoneTick = function(zone)
+    xi.fate.tick(zone, zone:getID())
+end
+
 zoneObject.onTriggerAreaEnter = function(player, triggerArea)
     local triggerAreaID = triggerArea:getTriggerAreaID()
     if triggerAreaID <= 2 then
         player:setLocalVar('[manaclipper]aboard', triggerAreaID)
     end
+    xi.fate.onAreaEnter(player, triggerArea, player:getZoneID())
 end
 
 zoneObject.onTriggerAreaLeave = function(player, triggerArea)
     player:setLocalVar('[manaclipper]aboard', 0)
+    xi.fate.onAreaLeave(player, triggerArea, player:getZoneID())
 end
 
 zoneObject.onTransportEvent = function(player, prevZoneId, transportId)

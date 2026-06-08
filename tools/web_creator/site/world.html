@@ -1,0 +1,227 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>World — MimicXI</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <script>window.MIMIC_API_BASE = "";</script>
+  <style>
+    .world-shell { padding: 48px 0 80px; }
+    .world-head { margin-bottom: 36px; }
+    .world-head h1 { margin-bottom: 6px; }
+    .world-sub {
+      font-family: var(--mono);
+      font-size: 0.8rem;
+      color: var(--ink-faint);
+      letter-spacing: 0.06em;
+    }
+    .world-sub .count { color: var(--ink); font-weight: 600; }
+
+    .world-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    .world-table th {
+      font-family: var(--mono);
+      font-size: 0.7rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--ink-faint);
+      text-align: left;
+      padding: 0 16px 10px;
+      border-bottom: 1px solid var(--line);
+    }
+    .world-table td {
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--line-soft);
+      vertical-align: middle;
+    }
+    .world-table tr:last-child td { border-bottom: none; }
+    .world-table tr:hover td { background: var(--paper); }
+
+    .player-name {
+      font-family: var(--serif);
+      font-size: 1.05rem;
+      color: var(--crystal-amber);
+      text-decoration: none;
+      font-weight: 500;
+    }
+    .player-name:hover { text-decoration: underline; }
+    .player-job {
+      font-family: var(--mono);
+      font-size: 0.8rem;
+      color: var(--ink);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .job-abbr-sm {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 34px; height: 34px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--bg-2);
+      font-size: 0.68rem;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      color: var(--ink-faint);
+    }
+    .player-level { color: var(--ink-faint); }
+    .player-zone {
+      font-size: 0.88rem;
+      color: var(--ink-soft);
+    }
+
+    .world-empty {
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--ink-faint);
+    }
+    .world-empty p { margin: 0; font-size: 0.95rem; }
+
+    .world-refresh {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 24px;
+      font-family: var(--mono);
+      font-size: 0.72rem;
+      color: var(--ink-faint);
+      letter-spacing: 0.05em;
+    }
+    .refresh-dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--ink-faint);
+    }
+    .refresh-dot.live {
+      background: #5f9e6e;
+      animation: online-pulse 2.4s ease-in-out infinite;
+    }
+  </style>
+</head>
+<body data-screen-label="World">
+
+  <section class="world-shell">
+    <div class="container">
+
+      <div class="world-head">
+        <h1>Who's Online</h1>
+        <p class="world-sub" id="world-sub">Loading…</p>
+      </div>
+
+      <div id="world-content">
+        <div class="spinner"></div>
+      </div>
+
+      <div class="world-refresh" id="world-refresh" style="display:none">
+        <span class="refresh-dot live" id="refresh-dot"></span>
+        <span id="refresh-label">Live · refreshes every 30s</span>
+      </div>
+
+    </div>
+  </section>
+
+  <script src="shell.js"></script>
+  <script src="tweaks.js"></script>
+  <script>
+    (function () {
+      function escapeHtml(s) {
+        return String(s).replace(/[&<>"']/g, c => ({
+          "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+        }[c]));
+      }
+
+      function render(d) {
+        const mode = d.mode || "online";
+        const n    = mode === "online" ? (d.count || 0) : 0;
+        const sub  = document.getElementById("world-sub");
+        const wrap = document.getElementById("world-content");
+        const ref  = document.getElementById("world-refresh");
+        const dot  = document.getElementById("refresh-dot");
+
+        if (sub) {
+          if (mode === "maintenance") {
+            sub.innerHTML = `<span style="color:var(--crystal-amber)">Server is under maintenance</span>`;
+          } else if (mode === "offline") {
+            sub.innerHTML = `<span style="color:#c75c5c">Server is currently offline</span>`;
+          } else {
+            sub.innerHTML = n === 0
+              ? "No adventurers currently online"
+              : `<span class="count">${n}</span> adventurer${n === 1 ? "" : "s"} online`;
+          }
+        }
+        if (ref) ref.style.display = mode === "online" ? "flex" : "none";
+        if (dot) dot.classList.toggle("live", n > 0);
+
+        if (mode !== "online") {
+          if (wrap) wrap.innerHTML = `<div class="world-empty"><p>${mode === "maintenance" ? "The server is undergoing maintenance. Check back soon!" : "The server is currently offline."}</p></div>`;
+          return;
+        }
+
+        if (!wrap) return;
+
+        if (n === 0) {
+          wrap.innerHTML = `
+            <div class="world-empty">
+              <p>No adventurers are currently online.</p>
+            </div>`;
+          return;
+        }
+
+        const rows = d.players.map(p => `
+          <tr>
+            <td>
+              <a class="player-name" href="character.html?id=${p.charid}">${escapeHtml(p.name)}</a>
+            </td>
+            <td>
+              <div class="player-job">
+                <span class="job-abbr-sm">${escapeHtml(p.job)}</span>
+                <span class="player-level">Lv ${p.level}</span>
+              </div>
+            </td>
+            <td><span class="player-zone">${escapeHtml(p.zone)}</span></td>
+          </tr>`).join("");
+
+        wrap.innerHTML = `
+          <table class="world-table">
+            <thead>
+              <tr>
+                <th>Adventurer</th>
+                <th>Job</th>
+                <th>Area</th>
+              </tr>
+            </thead>
+            <tbody>${rows}</tbody>
+          </table>`;
+      }
+
+      // shell.js calls window._onlineData(d) whenever it polls.
+      // Register before the first poll fires so world.html always gets fresh data.
+      let firstLoad = true;
+      window._onlineData = function (d) {
+        render(d);
+        firstLoad = false;
+      };
+
+      // Fetch directly on load in case shell.js already polled before we registered.
+      (async () => {
+        const base = (window.MIMIC_API_BASE || "").replace(/\/$/, "");
+        try {
+          const r = await fetch(base + "/api/server-status", { headers: { Accept: "application/json" } });
+          if (r.ok) render(await r.json());
+        } catch (e) {
+          const wrap = document.getElementById("world-content");
+          if (wrap) wrap.innerHTML = `<p style="color:var(--ink-faint)">Could not reach server.</p>`;
+        }
+      })();
+    })();
+  </script>
+</body>
+</html>

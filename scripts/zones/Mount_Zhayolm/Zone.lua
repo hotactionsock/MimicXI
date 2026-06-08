@@ -11,6 +11,7 @@ zoneObject.onInitialize = function(zone)
 
     xi.helm.initZone(zone, xi.helmType.MINING)
     xi.darkRider.addHoofprints(zone)
+    xi.fate.onZoneInitialize(zone, zone:getID())
 end
 
 zoneObject.onZoneIn = function(player, prevZone)
@@ -32,9 +33,20 @@ end
 zoneObject.afterZoneIn = function(player)
     player:entityVisualPacket('1pb1')
     player:entityVisualPacket('2pb1')
+    xi.fate.checkSyncOnZoneIn(player)
+    xi.fate.sendAddonDef(player, player:getZoneID())
+end
+
+zoneObject.onZoneTick = function(zone)
+    xi.fate.tick(zone, zone:getID())
 end
 
 zoneObject.onTriggerAreaEnter = function(player, triggerArea)
+    xi.fate.onAreaEnter(player, triggerArea, player:getZoneID())
+end
+
+zoneObject.onTriggerAreaLeave = function(player, triggerArea)
+    xi.fate.onAreaLeave(player, triggerArea, player:getZoneID())
 end
 
 zoneObject.onGameDay = function()

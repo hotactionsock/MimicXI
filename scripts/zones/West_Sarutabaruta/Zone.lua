@@ -9,6 +9,12 @@ zoneObject.onInitialize = function(zone)
 
     xi.helm.initZone(zone, xi.helmType.HARVESTING)
     xi.voidwalker.zoneOnInit(zone)
+    xi.fate.onZoneInitialize(zone, zone:getID())
+end
+
+zoneObject.afterZoneIn = function(player)
+    xi.fate.checkSyncOnZoneIn(player)
+    xi.fate.sendAddonDef(player, player:getZoneID())
 end
 
 zoneObject.onZoneIn = function(player, prevZone)
@@ -41,7 +47,16 @@ zoneObject.onConquestUpdate = function(zone, updatetype, influence, owner, ranki
     xi.conquest.onConquestUpdate(zone, updatetype, influence, owner, ranking, isConquestAlliance)
 end
 
+zoneObject.onZoneTick = function(zone)
+    xi.fate.tick(zone, zone:getID())
+end
+
 zoneObject.onTriggerAreaEnter = function(player, triggerArea)
+    xi.fate.onAreaEnter(player, triggerArea, player:getZoneID())
+end
+
+zoneObject.onTriggerAreaLeave = function(player, triggerArea)
+    xi.fate.onAreaLeave(player, triggerArea, player:getZoneID())
 end
 
 zoneObject.onEventUpdate = function(player, csid, option, npc)

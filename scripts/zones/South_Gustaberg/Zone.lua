@@ -7,6 +7,7 @@ local zoneObject = {}
 zoneObject.onInitialize = function(zone)
     -- A Chocobo Riding Game finish line
     zone:registerCylindricalTriggerArea(1, 580.074, -307.355, 5)
+    xi.fate.onZoneInitialize(zone, zone:getID())
 end
 
 zoneObject.onZoneIn = function(player, prevZone)
@@ -25,10 +26,16 @@ end
 
 zoneObject.afterZoneIn = function(player)
     xi.chocoboGame.handleMessage(player)
+    xi.fate.checkSyncOnZoneIn(player)
+    xi.fate.sendAddonDef(player, player:getZoneID())
 end
 
 zoneObject.onConquestUpdate = function(zone, updatetype, influence, owner, ranking, isConquestAlliance)
     xi.conquest.onConquestUpdate(zone, updatetype, influence, owner, ranking, isConquestAlliance)
+end
+
+zoneObject.onZoneTick = function(zone)
+    xi.fate.tick(zone, zone:getID())
 end
 
 zoneObject.onTriggerAreaEnter = function(player, triggerArea)
@@ -37,6 +44,12 @@ zoneObject.onTriggerAreaEnter = function(player, triggerArea)
     if triggerAreaID == 1 and player:hasStatusEffect(xi.effect.MOUNTED) then
         xi.chocoboGame.onTriggerAreaEnter(player)
     end
+
+    xi.fate.onAreaEnter(player, triggerArea, player:getZoneID())
+end
+
+zoneObject.onTriggerAreaLeave = function(player, triggerArea)
+    xi.fate.onAreaLeave(player, triggerArea, player:getZoneID())
 end
 
 zoneObject.onEventUpdate = function(player, csid, option, npc)

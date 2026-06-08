@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Changes — MimicXI</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    .change-block {
+      display: grid;
+      grid-template-columns: 220px 1fr;
+      gap: 48px;
+      padding: 48px 0;
+      border-top: 1px solid var(--line-soft);
+    }
+    .change-block:first-of-type { border-top: none; }
+    .change-block .label-col {
+      font-family: var(--mono);
+      font-size: 0.72rem;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--crystal-amber-deep);
+      padding-top: 8px;
+    }
+    .change-block h2 { margin-bottom: 14px; }
+    .patch-note {
+      background: var(--paper);
+      border: 1px solid var(--line);
+      border-left: 3px solid var(--crystal-blue-deep);
+      border-radius: var(--radius-lg);
+      padding: 22px 26px;
+      margin-bottom: 14px;
+    }
+    .patch-note .pn-job {
+      font-family: var(--mono);
+      font-size: 0.7rem;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--crystal-blue-deep);
+      margin-bottom: 6px;
+    }
+    .patch-note h4 { margin-bottom: 6px; }
+    .patch-note p { margin-bottom: 0; font-size: 0.95rem; }
+    .patch-note.lilac { border-left-color: var(--crystal-lilac); }
+    .patch-note.lilac .pn-job { color: #7d5d8e; }
+    .patch-note.amber { border-left-color: var(--crystal-amber-deep); }
+    .patch-note.amber .pn-job { color: var(--crystal-amber-deep); }
+    @media (max-width: 720px) {
+      .change-block { grid-template-columns: 1fr; gap: 16px; padding: 32px 0; }
+    }
+  </style>
+</head>
+<body data-screen-label="Changes">
+
+  <section class="page-hero">
+    <div class="container">
+      <span class="eyebrow">What's changed</span>
+      <h1>Familiar bones,<br><em style="color: var(--crystal-blue-deep);">new everything else.</em></h1>
+      <p class="lede">A quick tour of the systems we've reworked. None of this is final — alpha means everything is on the table.</p>
+    </div>
+  </section>
+
+  <section>
+    <div class="container">
+
+      <div class="change-block">
+        <div class="label-col">01 · Combat</div>
+        <div>
+          <h2>Damage types matter again</h2>
+          <p>Slashing, piercing, blunt and hand-to-hand resistances are now meaningful and visible in encounter design. The same goes for elements — every spell school has a place because every enemy has something to exploit.</p>
+          <p>Wikis will be wrong. Bring the right weapon, the right element, the right strategy — and groups with different jobs will solve the same fight in different ways.</p>
+        </div>
+      </div>
+
+      <div class="change-block">
+        <div class="label-col">02 · Itemisation</div>
+        <div>
+          <h2>An ARPG-lite gear loop</h2>
+          <p>Thousands of existing items have had their stats redistributed, and brand new pieces have been added to fill out the levelling path. Treasure Caskets dropped from kills are the main source of new gear, with rare <strong>Glowing Chests</strong> for the truly lucky.</p>
+          <p>Random augments mean you'll always have something new to try on — but the iconic pieces (Haubergeon, Scorpion Harness, abjurations) remain untouched and worth chasing.</p>
+        </div>
+      </div>
+
+      <div class="change-block">
+        <div class="label-col">03 · Treasure Hunter</div>
+        <div>
+          <h2>No more THF tax</h2>
+          <p>Treasure Hunter is no longer tied to a single job. Drop-rate bonuses are now <strong>Key Items</strong> earned through story and content progression — they reward longevity and spread naturally across the playerbase.</p>
+          <p>Thief gets a new identity in return: Mug now lowers enemy defence, Gilfinder is buffed, and a new <em>Casket Hunter</em> trait increases casket drops and quality.</p>
+        </div>
+      </div>
+
+      <div class="change-block">
+        <div class="label-col">04 · Job balance</div>
+        <div>
+          <h2>Every job has a seat</h2>
+          <p>Every base job is being tuned around the new combat. Some jobs lose their old "must-bring" identity (sorry, THF), but gain new ones — Warrior leans into damage-type vulnerability stacking, Monk's Footwork has rhythm, Thief's Feint cracks open enemy defences for the whole party.</p>
+          <p style="margin: 0;"><a href="jobs.html">See the per-job breakdown →</a></p>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- VITAL STATS -->
+  <section style="background: var(--bg-2); border-top: 1px solid var(--line-soft); border-bottom: 1px solid var(--line-soft);">
+    <div class="container">
+      <div class="section-head">
+        <span class="eyebrow">Vital statistics</span>
+        <h2>Rates &amp; conveniences</h2>
+      </div>
+      <div class="stat-row">
+        <div class="stat"><div class="num">1.0<span class="unit">×</span></div><div class="label">Experience</div></div>
+        <div class="stat"><div class="num">1.5<span class="unit">×</span></div><div class="label">Crafting skill</div></div>
+        <div class="stat"><div class="num">3</div><div class="label">Trusts max</div></div>
+        <div class="stat"><div class="num">75</div><div class="label">Level cap</div></div>
+      </div>
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 24px; margin-top: 32px;">
+        <div><h4>No JP Midnight</h4><p>Mission progression respects your timezone.</p></div>
+        <div><h4>Home Points &amp; Survival Guides</h4><p>Active across the world for sensible travel.</p></div>
+        <div><h4>Records of Eminence</h4><p>Plus Field &amp; Grounds Tomes — small-group friendly.</p></div>
+        <div><h4>Custom RoVs</h4><p>Unique achievements with rewards worth chasing.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PATCH NOTES PREVIEW -->
+  <section>
+    <div class="container">
+      <div class="section-head">
+        <span class="eyebrow">Patch notes preview</span>
+        <h2>A taste of the balance work</h2>
+        <p>Real entries from the current alpha balance pass — to give you a feel for how granular the rework gets.</p>
+      </div>
+
+      <div class="patch-note">
+        <div class="pn-job">Warrior · Aggressor</div>
+        <h4>Stacks a damage-type vulnerability on hit</h4>
+        <p>Each successful melee hit while Aggressor is active applies +5% damage taken of the Warrior's equipped weapon type, stacking up to 3 times for +15%. Stacks reset on target switch.</p>
+      </div>
+
+      <div class="patch-note">
+        <div class="pn-job">Warrior · Tomahawk</div>
+        <h4>Reworked into a flat 20% physical opener</h4>
+        <p>Previously did nothing on neutral-resistance enemies. Now applies a flat 20% vulnerability for the equipped physical damage type, duration scaled by merits.</p>
+      </div>
+
+      <div class="patch-note lilac">
+        <div class="pn-job">Monk · Footwork</div>
+        <h4>Every third kick crits</h4>
+        <p>Footwork now has a rhythm: every third successful kick lands as a guaranteed critical, then the counter resets.</p>
+      </div>
+
+      <div class="patch-note lilac">
+        <div class="pn-job">Monk · Focus</div>
+        <h4>Crits dismantle enemy DEF</h4>
+        <p>Critical hits during Focus now stack −20 DEF on the target, up to 3 stacks. Cleared on target switch or expiry.</p>
+      </div>
+
+      <div class="patch-note amber">
+        <div class="pn-job">Thief · Feint</div>
+        <h4>A party-wide physical opener</h4>
+        <p>EVA down reduced from 150 → 75. Now also applies a 5% physical vulnerability across all four physical types for 60s. Stacks with Warrior's Tomahawk.</p>
+      </div>
+
+      <div class="patch-note amber">
+        <div class="pn-job">Thief · Sneak Attack &amp; Trick Attack</div>
+        <h4>Pickpocket: every strike takes something</h4>
+        <p>Sneak Attack drains 10 DEX for 30s. Trick Attack drains 10 AGI for 30s. Reduces target evasion and accuracy.</p>
+      </div>
+
+      <p style="margin-top: 28px; color: var(--ink-faint); font-size: 0.9rem;">Full notes ship with the alpha client and are updated regularly in our Discord.</p>
+    </div>
+  </section>
+
+  <script src="shell.js"></script>
+  <script src="tweaks.js"></script>
+</body>
+</html>

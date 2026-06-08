@@ -221,9 +221,6 @@ xi.spells.enfeebling.useEnfeeblingSong = function(caster, target, spell)
         local dispelledEffect = target:dispelStatusEffect()
         if dispelledEffect == xi.effect.NONE then
             spell:setMsg(xi.msg.basic.MAGIC_NO_EFFECT)
-        else
-            -- Strategic Clarity: next Threnody/Elegy/Lullaby recast is reset.
-            caster:addStatusEffect(xi.effect.STRATEGIC_CLARITY, { power = 1, duration = 15, origin = caster })
         end
 
         return dispelledEffect
@@ -255,19 +252,6 @@ xi.spells.enfeebling.useEnfeeblingSong = function(caster, target, spell)
                 spell:setMsg(xi.msg.basic.MAGIC_ENFEEB_IS)
             else
                 spell:setMsg(xi.msg.basic.MAGIC_ENFEEB)
-            end
-        end
-
-        -- Lullaby: flag this target so Groggy is applied when the sleep expires.
-        if spellEffect == xi.effect.SLEEP_I then
-            target:setLocalVar('LULLABY_GROGGY', 1)
-        end
-
-        -- Strategic Clarity: consume on first Threnody, Elegy, or Lullaby landed, reset its recast.
-        if caster:hasStatusEffect(xi.effect.STRATEGIC_CLARITY) then
-            if spellEffect == xi.effect.THRENODY or spellEffect == xi.effect.ELEGY or spellEffect == xi.effect.SLEEP_I then
-                caster:delStatusEffect(xi.effect.STRATEGIC_CLARITY)
-                caster:resetRecast(xi.recast.MAGIC, spellId)
             end
         end
     else

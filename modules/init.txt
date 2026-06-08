@@ -45,3 +45,4 @@ custom/lua/casket_augment_tiers.lua
 custom/lua/casket_mimic.lua
 custom/LQS/lib/LQS.lua
 custom/LQS/questpack
+custom/LQS/commands/

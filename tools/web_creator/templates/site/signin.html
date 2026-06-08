@@ -1,0 +1,236 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Sign in — MimicXI</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="account.css">
+  <!--
+    Point this at your local Flask backend. Leave empty for same-origin
+    (i.e. when the static site is served BY the Flask app).
+  -->
+  <script>window.MIMIC_API_BASE = "";</script>
+</head>
+<body data-screen-label="Sign in">
+
+  <section class="auth-shell">
+    <div class="auth-card">
+
+      <svg class="crystal-mark" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <path d="M12 2 L20 9 L12 22 L4 9 Z" fill="#7fb6d9" stroke="#4d8fb8" stroke-width="0.8" stroke-linejoin="round"/>
+        <path d="M12 2 L8 9 L12 22 L16 9 Z" fill="#a3cce4" opacity="0.9"/>
+        <path d="M4 9 L20 9" stroke="#4d8fb8" stroke-width="0.6"/>
+      </svg>
+
+      <h1 id="auth-title">Welcome back</h1>
+      <p class="sub" id="auth-sub">Sign in to manage your characters</p>
+
+      <div class="auth-tabs" role="tablist">
+        <button type="button" data-tab="signin" class="active" role="tab">Sign in</button>
+        <button type="button" data-tab="register" role="tab">Register</button>
+      </div>
+
+      <div id="alert-slot"></div>
+
+      <!-- Sign in -->
+      <form id="form-signin" autocomplete="on">
+        <div class="field">
+          <label for="su">Account name</label>
+          <input id="su" name="username" type="text" autocomplete="username" required>
+        </div>
+        <div class="field">
+          <label for="sp">Password</label>
+          <input id="sp" name="password" type="password" autocomplete="current-password" required>
+        </div>
+        <button type="submit" class="btn btn-primary btn-full">Sign in →</button>
+        <p class="hint" style="margin-top: 16px; text-align: center; color: var(--ink-faint); font-size: 0.85rem;">
+          Use the same account name &amp; password you'll use to log in to the game client.
+        </p>
+      </form>
+
+      <!-- Register -->
+      <form id="form-register" autocomplete="on" hidden>
+        <div class="field">
+          <label for="ru">Account name</label>
+          <input id="ru" name="username" type="text" autocomplete="username" required minlength="3" maxlength="15">
+          <div class="hint">3–15 characters. Letters and numbers only.</div>
+        </div>
+        <div class="field">
+          <label for="re">Email <span style="text-transform:none; letter-spacing:0; color:var(--ink-faint);">(optional, for recovery)</span></label>
+          <input id="re" name="email" type="email" autocomplete="email">
+        </div>
+        <div class="field">
+          <label for="rp">Password</label>
+          <input id="rp" name="password" type="password" autocomplete="new-password" required minlength="8">
+          <div class="hint">At least 8 characters.</div>
+        </div>
+        <div class="field">
+          <label for="rp2">Confirm password</label>
+          <input id="rp2" name="password2" type="password" autocomplete="new-password" required>
+        </div>
+        <button type="submit" class="btn btn-primary btn-full">Create account →</button>
+        <p class="hint" style="margin-top: 16px; text-align: center; color: var(--ink-faint); font-size: 0.85rem;">
+          By creating an account you agree to follow the <a href="rules.html">server rules</a>.
+        </p>
+      </form>
+
+    </div>
+  </section>
+
+  <script src="shell.js"></script>
+  <script src="tweaks.js"></script>
+  <script src="auth.js"></script>
+  <script>
+    (function () {
+      const tabs = document.querySelectorAll(".auth-tabs button");
+      const formSignin = document.getElementById("form-signin");
+      const formRegister = document.getElementById("form-register");
+      const title = document.getElementById("auth-title");
+      const sub = document.getElementById("auth-sub");
+      const alertSlot = document.getElementById("alert-slot");
+
+      // Tab switching
+      tabs.forEach(t => t.addEventListener("click", () => {
+        tabs.forEach(x => x.classList.toggle("active", x === t));
+        const isRegister = t.dataset.tab === "register";
+        formSignin.hidden = isRegister;
+        formRegister.hidden = !isRegister;
+        title.textContent = isRegister ? "Create your account" : "Welcome back";
+        sub.textContent = isRegister ? "One account, all your characters" : "Sign in to manage your characters";
+        alertSlot.innerHTML = "";
+      }));
+
+      function showAlert(kind, msg) {
+        alertSlot.innerHTML = `<div class="alert ${kind}">${msg}</div>`;
+      }
+
+      function nextPath() {
+        const p = new URLSearchParams(location.search).get("next");
+        return p && /^[a-z0-9_-]+\.html$/i.test(p) ? p : "account.html";
+      }
+
+      // Sign in
+      formSignin.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const btn = formSignin.querySelector("button[type=submit]");
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner"></span>Signing in…';
+        alertSlot.innerHTML = "";
+
+        const username = document.getElementById("su").value.trim();
+        const password = document.getElementById("sp").value;
+
+        const base = MimicAuth.API_BASE || location.origin;
+
+        // Guard: opening this page from file:// will never work — fetch has
+        // no origin, cookies can't be set. Diagnose loudly.
+        if (location.protocol === "file:") {
+          showAlert("error",
+            "This page is open via <code>file://</code>, which can't talk to Flask. " +
+            "Serve the site through Flask (see <code>INTEGRATION.md</code>) and open it at " +
+            "<code>http://127.0.0.1:5000/site/signin.html</code>.");
+          btn.disabled = false; btn.innerHTML = "Sign in →"; return;
+        }
+
+        // Step 1: POST credentials. If fetch throws, Flask isn't reachable.
+        let loginRes;
+        try {
+          loginRes = await MimicAuth.apiForm("/login", { username, password });
+        } catch (err) {
+          showAlert("error",
+            "Couldn't reach the server at <code>" + escapeHtml(base) + "</code>. " +
+            "Is Flask running on port 3308's host? Check <code>web_creator/app.py</code> is up, " +
+            "and that <code>window.MIMIC_API_BASE</code> in this page points at it.");
+          btn.disabled = false; btn.innerHTML = "Sign in →"; return;
+        }
+
+        // If we got a 404 the URL is wrong (probably /login isn't there)
+        if (loginRes.status === 404) {
+          showAlert("error",
+            "Got <strong>404</strong> from <code>" + escapeHtml(base) + "/login</code>. " +
+            "Either Flask isn't routing /login, or MIMIC_API_BASE is pointing somewhere else.");
+          btn.disabled = false; btn.innerHTML = "Sign in →"; return;
+        }
+
+        // Step 2: confirm the session cookie stuck by hitting /api/characters
+        let check;
+        try { check = await MimicAuth.api("/api/characters"); }
+        catch (err) {
+          showAlert("error", "Lost connection to Flask after login. Try again.");
+          btn.disabled = false; btn.innerHTML = "Sign in →"; return;
+        }
+
+        if (check.ok) {
+          MimicAuth.setSession(username);
+          location.href = nextPath();
+          return;
+        }
+
+        // Login POST succeeded as HTTP, but session didn't carry. Two cases:
+        //   (a) credentials wrong — Flask /login re-rendered, no session set
+        //   (b) cross-origin / SameSite — cookie was dropped by the browser
+        if (location.origin !== new URL(base, location.origin).origin) {
+          showAlert("error",
+            "Login looked OK, but the session cookie didn't stick — usually a " +
+            "cross-origin issue. Either serve the site through Flask (see " +
+            "<code>INTEGRATION.md</code> Option A) or enable CORS with credentials " +
+            "and set <code>SESSION_COOKIE_SAMESITE='None'</code> in <code>app.py</code> " +
+            "(Option B). If the credentials are also wrong this would mask it.");
+        } else {
+          showAlert("error", "Invalid account name or password.");
+        }
+        btn.disabled = false; btn.innerHTML = "Sign in →";
+      });
+
+      function escapeHtml(s) {
+        return String(s).replace(/[&<>"']/g, c => ({
+          "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+        }[c]));
+      }
+
+      // Register
+      formRegister.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const btn = formRegister.querySelector("button[type=submit]");
+        const username = document.getElementById("ru").value.trim();
+        const email = document.getElementById("re").value.trim();
+        const password = document.getElementById("rp").value;
+        const password2 = document.getElementById("rp2").value;
+        alertSlot.innerHTML = "";
+
+        if (!/^[A-Za-z0-9]{3,15}$/.test(username)) {
+          showAlert("error", "Account name must be 3–15 letters or numbers."); return;
+        }
+        if (password.length < 8) { showAlert("error", "Password must be at least 8 characters."); return; }
+        if (password !== password2) { showAlert("error", "Passwords do not match."); return; }
+
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner"></span>Creating…';
+
+        const r = await MimicAuth.api("/api/register", {
+          method: "POST",
+          body: { username, email, password },
+        });
+
+        if (r.ok) {
+          MimicAuth.setSession(username);
+          showAlert("success", "Account created. Redirecting…");
+          setTimeout(() => location.href = "account.html", 700);
+        } else if (r.status === 404) {
+          showAlert("info", "Registration isn't enabled on this server yet. See the integration guide in the project files for the Flask snippet to add a /api/register endpoint.");
+          btn.disabled = false;
+          btn.innerHTML = "Create account →";
+        } else {
+          showAlert("error", (r.data && r.data.error) || "Could not create account.");
+          btn.disabled = false;
+          btn.innerHTML = "Create account →";
+        }
+      });
+    })();
+  </script>
+</body>
+</html>

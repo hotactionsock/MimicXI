@@ -12,6 +12,7 @@ zoneObject.onInitialize = function(zone)
 
     GetNPCByID(ID.npc.QM2 + math.random(0, 5)):setLocalVar('Quest[2][70]Option', 1) -- Determine which QM is active today for THF AF2
     xi.voidwalker.zoneOnInit(zone)
+    xi.fate.onZoneInitialize(zone, zone:getID())
 end
 
 zoneObject.onZoneIn = function(player, prevZone)
@@ -30,10 +31,16 @@ end
 
 zoneObject.afterZoneIn = function(player)
     xi.chocoboGame.handleMessage(player)
+    xi.fate.checkSyncOnZoneIn(player)
+    xi.fate.sendAddonDef(player, player:getZoneID())
 end
 
 zoneObject.onConquestUpdate = function(zone, updatetype, influence, owner, ranking, isConquestAlliance)
     xi.conquest.onConquestUpdate(zone, updatetype, influence, owner, ranking, isConquestAlliance)
+end
+
+zoneObject.onZoneTick = function(zone)
+    xi.fate.tick(zone, zone:getID())
 end
 
 zoneObject.onTriggerAreaEnter = function(player, triggerArea)
@@ -42,6 +49,12 @@ zoneObject.onTriggerAreaEnter = function(player, triggerArea)
     if triggerAreaID == 1 and player:hasStatusEffect(xi.effect.MOUNTED) then
         xi.chocoboGame.onTriggerAreaEnter(player)
     end
+
+    xi.fate.onAreaEnter(player, triggerArea, player:getZoneID())
+end
+
+zoneObject.onTriggerAreaLeave = function(player, triggerArea)
+    xi.fate.onAreaLeave(player, triggerArea, player:getZoneID())
 end
 
 zoneObject.onGameDay = function()

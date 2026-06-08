@@ -5,10 +5,15 @@
 local zoneObject = {}
 
 zoneObject.onInitialize = function(zone)
+    xi.fate.onZoneInitialize(zone, zone:getID())
 end
 
 zoneObject.onConquestUpdate = function(zone, updatetype, influence, owner, ranking, isConquestAlliance)
     xi.conquest.onConquestUpdate(zone, updatetype, influence, owner, ranking, isConquestAlliance)
+end
+
+zoneObject.onZoneTick = function(zone)
+    xi.fate.tick(zone, zone:getID())
 end
 
 zoneObject.onZoneIn = function(player, prevZone)
@@ -26,6 +31,11 @@ zoneObject.onZoneIn = function(player, prevZone)
 end
 
 zoneObject.onTriggerAreaEnter = function(player, triggerArea)
+    xi.fate.onAreaEnter(player, triggerArea, player:getZoneID())
+end
+
+zoneObject.onTriggerAreaLeave = function(player, triggerArea)
+    xi.fate.onAreaLeave(player, triggerArea, player:getZoneID())
 end
 
 zoneObject.onEventUpdate = function(player, csid, option, npc)
@@ -36,6 +46,8 @@ end
 
 zoneObject.afterZoneIn = function(player)
     player:entityVisualPacket('on00', player) -- Fog effect on zone in
+    xi.fate.checkSyncOnZoneIn(player)
+    xi.fate.sendAddonDef(player, player:getZoneID())
 end
 
 return zoneObject

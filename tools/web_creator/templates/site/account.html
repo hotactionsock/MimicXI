@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Account — MimicXI</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="account.css">
+  <script>window.MIMIC_API_BASE = "";</script>
+</head>
+<body data-screen-label="Account">
+
+  <section>
+    <div class="container">
+
+      <div class="account-head">
+        <div>
+          <span class="eyebrow">Adventurer's record</span>
+          <h1 style="margin-top: 8px;">Your characters</h1>
+          <p class="who" id="who"></p>
+        </div>
+        <div class="actions">
+          <a href="create-character.html" class="btn btn-primary">+ Create character</a>
+          <button type="button" id="btn-logout" class="btn btn-ghost">Sign out</button>
+        </div>
+      </div>
+
+      <div id="content">
+        <!-- skeleton while loading -->
+        <div class="char-grid" id="skeleton">
+          <div class="char-card" style="opacity: .5;">
+            <div class="char-crystal"><div class="initial">…</div></div>
+            <div class="char-info"><h3>Loading…</h3></div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <script src="shell.js"></script>
+  <script src="tweaks.js"></script>
+  <script src="auth.js"></script>
+  <script>
+    (function () {
+      const RACES = {
+        1: "Hume (M)", 2: "Hume (F)",
+        3: "Elvaan (M)", 4: "Elvaan (F)",
+        5: "Tarutaru (M)", 6: "Tarutaru (F)",
+        7: "Mithra", 8: "Galka",
+      };
+      const NATIONS = { 0: "San d'Oria", 1: "Bastok", 2: "Windurst" };
+      // Crystal hue per race, for the avatar.
+      const RACE_HUE = {
+        1: "#7fb6d9", 2: "#7fb6d9",   // Hume — sapphire
+        3: "#c9a8d6", 4: "#c9a8d6",   // Elvaan — amethyst
+        5: "#e8c785", 6: "#e8c785",   // Tarutaru — citrine
+        7: "#d9a8b3", 8: "#8fb59e",   // Mithra rose, Galka emerald
+      };
+
+      function faceLabel(v) {
+        if (v <= 15) return `Face ${Math.floor(v/2)+1}${v%2===0?'A':'B'}`;
+        if (v <= 23) return `Face ${v-15}C`;
+        return `Face ${v}`;
+      }
+
+      function crystalSVG(color) {
+        // small faceted crystal in given color
+        const dark = color;
+        const light = color + "55";
+        return `
+          <svg viewBox="0 0 52 52" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <path d="M26 4 L46 20 L26 50 L6 20 Z" fill="${light}" stroke="${dark}" stroke-width="1.2" stroke-linejoin="round"/>
+            <path d="M26 4 L16 20 L26 50 L36 20 Z" fill="${color}" opacity="0.7"/>
+            <path d="M6 20 L46 20" stroke="${dark}" stroke-width="0.7"/>
+          </svg>`;
+      }
+
+      function renderEmpty() {
+        document.getElementById("content").innerHTML = `
+          <div class="empty-state">
+            <svg class="icon" viewBox="0 0 48 48" fill="none">
+              <path d="M24 4 L42 18 L24 44 L6 18 Z" fill="#cfe3f0" stroke="#4d8fb8" stroke-width="1.5" stroke-linejoin="round"/>
+              <path d="M24 4 L16 18 L24 44 L32 18 Z" fill="#7fb6d9" opacity="0.7"/>
+              <path d="M6 18 L42 18" stroke="#4d8fb8"/>
+            </svg>
+            <h2>No characters yet</h2>
+            <p>Start your journey by creating your first character. You can have several on one account.</p>
+            <a href="create-character.html" class="btn btn-primary">Create your first character</a>
+          </div>`;
+      }
+
+      function renderCards(chars) {
+        if (!chars.length) return renderEmpty();
+        const html = chars.map(c => {
+          const hue = RACE_HUE[c.race] || "#7fb6d9";
+          return `
+            <div class="char-card">
+              <div class="char-crystal">
+                ${crystalSVG(hue)}
+                <span class="initial">${c.name[0] || "?"}</span>
+              </div>
+              <div class="char-info">
+                <h3>${escapeHtml(c.name)}</h3>
+                <dl class="char-details">
+                  <dt>Race</dt><dd>${RACES[c.race] || ("Race " + c.race)}</dd>
+                  <dt>Face</dt><dd>${faceLabel(c.face)}</dd>
+                  <dt>Nation</dt><dd>${NATIONS[c.nation] || ("Nation " + c.nation)}</dd>
+                  <dt>ID</dt><dd class="cid">#${c.charid}</dd>
+                </dl>
+              </div>
+            </div>`;
+        }).join("");
+        document.getElementById("content").innerHTML = `<div class="char-grid">${html}</div>`;
+      }
+
+      function escapeHtml(s) {
+        return String(s).replace(/[&<>"']/g, ch => ({
+          "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+        }[ch]));
+      }
+
+      // Boot
+      (async () => {
+        document.getElementById("btn-logout").addEventListener("click", () => MimicAuth.logout());
+
+        const r = await MimicAuth.requireAuth();
+        if (!r) return; // redirected
+
+        const user = MimicAuth.getSession() || "—";
+        document.getElementById("who").innerHTML = "Signed in as <strong>" + escapeHtml(user) + "</strong>";
+
+        renderCards(r.data || []);
+      })();
+    })();
+  </script>
+</body>
+</html>

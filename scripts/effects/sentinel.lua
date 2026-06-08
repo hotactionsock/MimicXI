@@ -15,22 +15,6 @@ effectObject.onEffectGain = function(target, effect)
     target:addMod(xi.mod.UDMGRANGE, -effect:getPower())
     target:addMod(xi.mod.ENMITY, enmityBonus)
     target:addMod(xi.mod.ENMITY_LOSS_REDUCTION, effect:getSubPower())
-
-    -- Holy Retribution: count physical hits absorbed; on expiry convert to a divine damage burst (PLD main only).
-    -- Hit counter stored in effect tier (subPower is already used for enmity-loss-reduction).
-    if target:getMainJob() == xi.job.PLD then
-        effect:setTier(0)
-        target:addListener('TAKE_DAMAGE', 'SENTINEL_RETRIBUTION', function(actorArg, damage, attacker, attackType, damageType)
-            if damage <= 0 then return end
-            if attackType ~= xi.attackType.PHYSICAL then return end
-            local effectArg = actorArg:getStatusEffect(xi.effect.SENTINEL)
-            if not effectArg then return end
-            local stacks = effectArg:getTier()
-            if stacks < 10 then
-                effectArg:setTier(stacks + 1)
-            end
-        end)
-    end
 end
 
 effectObject.onEffectTick = function(target, effect)
@@ -64,14 +48,6 @@ effectObject.onEffectLose = function(target, effect)
     target:delMod(xi.mod.UDMGRANGE, -effect:getPower())
     target:delMod(xi.mod.ENMITY, enmityBonus)
     target:delMod(xi.mod.ENMITY_LOSS_REDUCTION, effect:getSubPower())
-
-    if target:getMainJob() == xi.job.PLD then
-        target:removeListener('SENTINEL_RETRIBUTION')
-        local stacks = effect:getTier()
-        if stacks > 0 then
-            target:addStatusEffect(xi.effect.HOLY_RETRIBUTION, { power = stacks, duration = 60, origin = target })
-        end
-    end
 end
 
 return effectObject

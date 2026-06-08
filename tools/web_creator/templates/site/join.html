@@ -1,0 +1,173 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Join — MimicXI</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    .step {
+      display: grid;
+      grid-template-columns: 60px 1fr;
+      gap: 22px;
+      padding: 24px 0;
+      border-top: 1px solid var(--line-soft);
+    }
+    .step:first-of-type { border-top: none; }
+    .step .n {
+      font-family: var(--serif);
+      font-size: 2rem;
+      color: var(--crystal-blue-deep);
+      line-height: 1;
+    }
+    .step h3 { margin-bottom: 6px; }
+    .step p { margin-bottom: 6px; }
+    code.box {
+      display: inline-block;
+      background: var(--paper);
+      border: 1px solid var(--line);
+      padding: 4px 10px;
+      border-radius: var(--radius);
+      font-family: var(--mono);
+      font-size: 0.88rem;
+      color: var(--ink);
+    }
+    .roadmap {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 1px;
+      background: var(--line);
+      border: 1px solid var(--line);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+    }
+    .phase {
+      background: var(--paper);
+      padding: 22px 22px 24px;
+    }
+    .phase.active { background: rgba(232, 199, 133, 0.08); }
+    .phase .stage {
+      font-family: var(--mono);
+      font-size: 0.7rem;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--ink-faint);
+      margin-bottom: 8px;
+    }
+    .phase.active .stage { color: var(--crystal-amber-deep); }
+    .phase h4 { margin-bottom: 8px; }
+    .phase p { font-size: 0.9rem; margin: 0; }
+  </style>
+</head>
+<body data-screen-label="Join">
+
+  <section class="page-hero">
+    <div class="container">
+      <span class="alpha-badge" style="margin-bottom: 18px;"><span class="dot"></span>Alpha · Open invite</span>
+      <h1 style="margin-top: 8px;">Step into <em style="color: var(--crystal-blue-deep);">the alpha.</em></h1>
+      <p class="lede">No application, no whitelist. Drop into Discord, follow the install steps, and we'll see you in Vana'diel.</p>
+    </div>
+  </section>
+
+  <section>
+    <div class="container" style="display: grid; grid-template-columns: 1.1fr 1fr; gap: 56px; align-items: start;">
+      <div>
+        <h2 style="margin-bottom: 24px;">How to get in</h2>
+
+        <div class="step">
+          <div class="n">1</div>
+          <div>
+            <h3>Join the Discord</h3>
+            <p>Patch notes, install help, group-finding, and direct line to the dev team all live there.</p>
+            <a href="#" class="btn btn-primary" style="margin-top: 10px;">Join Discord →</a>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="n">2</div>
+          <div>
+            <h3>Have a working FFXI install</h3>
+            <p>You'll need a legitimate, fully-updated retail Final Fantasy XI install on your machine before connecting.</p>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="n">3</div>
+          <div>
+            <h3>Grab the launcher</h3>
+            <p>The current alpha uses a custom launcher available in the <code class="box">#install</code> channel of our Discord. Pinned messages have the latest build.</p>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="n">4</div>
+          <div>
+            <h3>Make a character &amp; say hi</h3>
+            <p>Servers register on launch — no extra account creation needed. Drop a "hello" in <code class="box">#general</code>; the existing players are good about pointing newcomers at the early game.</p>
+          </div>
+        </div>
+      </div>
+
+      <aside style="position: sticky; top: 120px;">
+        <div class="card">
+          <span class="eyebrow" style="display: block; margin-bottom: 10px;">At a glance</span>
+          <h3 style="margin-bottom: 16px;">What to expect</h3>
+          <ul class="clean">
+            <li><strong style="color:var(--ink);">Cap:</strong> Level 75 (Wings of the Goddess era)</li>
+            <li><strong style="color:var(--ink);">Trusts:</strong> Up to 3</li>
+            <li><strong style="color:var(--ink);">XP:</strong> 1.0× · <strong style="color:var(--ink);">Craft:</strong> 1.5×</li>
+            <li><strong style="color:var(--ink);">Conveniences:</strong> Survival Guides, Home Points, no JP Midnight</li>
+            <li><strong style="color:var(--ink);">Population:</strong> Small, friendly, alpha</li>
+            <li><strong style="color:var(--ink);">Cost:</strong> Free. Non-commercial.</li>
+          </ul>
+        </div>
+
+        <div class="card" style="margin-top: 16px; background: rgba(232,199,133,0.10); border-color: var(--crystal-amber);">
+          <h4 style="color: var(--crystal-amber-deep); margin-bottom: 6px;">⚠ Heads up — this is alpha</h4>
+          <p style="margin: 0; font-size: 0.92rem;">Patches arrive often. Abilities may behave differently between sessions. Save your weird bugs and bring them to <code class="box">#bug-reports</code>.</p>
+        </div>
+      </aside>
+    </div>
+  </section>
+
+  <!-- ROADMAP -->
+  <section style="background: var(--bg-2); border-top: 1px solid var(--line-soft); border-bottom: 1px solid var(--line-soft);">
+    <div class="container">
+      <div class="section-head">
+        <span class="eyebrow">Roadmap</span>
+        <h2>Where we are right now</h2>
+        <p>Approximate phases — alpha is a living thing.</p>
+      </div>
+
+      <div class="roadmap">
+        <div class="phase active">
+          <div class="stage">● Now · Alpha</div>
+          <h4>Combat &amp; gear rebuild</h4>
+          <p>Damage types, base-job balance, casket loop, ARPG-lite augments. Daily-to-weekly patching.</p>
+        </div>
+        <div class="phase">
+          <div class="stage">○ Next</div>
+          <h4>Expansion job pass</h4>
+          <p>ToAU+ jobs leave LSB defaults. Dancer, Corsair and GEO/RUN first.</p>
+        </div>
+        <div class="phase">
+          <div class="stage">○ Later</div>
+          <h4>Tiered endgame</h4>
+          <p>NQ/HQ encounter splits, weekly currency raid vendors, custom RoVs, gear gating.</p>
+        </div>
+        <div class="phase">
+          <div class="stage">○ Beta</div>
+          <h4>Open beta &amp; story</h4>
+          <p>Custom MimicXI mission line, broader announcement, polished onboarding.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <script src="shell.js"></script>
+  <script src="tweaks.js"></script>
+</body>
+</html>

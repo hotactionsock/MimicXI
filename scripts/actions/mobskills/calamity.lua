@@ -1,12 +1,14 @@
 -----------------------------------
 -- Calamity
--- Family: Humanoid Axe Weaponskill
--- Description: Damage varies with TP.
+-- Family: Humanoird Axe Weaponskill
+-- Description: Delivers a single-hit attack.
 -----------------------------------
 ---@type TMobSkill
 local mobskillObject = {}
 
 mobskillObject.onMobSkillCheck = function(target, mob, skill)
+    mob:messageBasic(xi.msg.basic.READIES_WS, 0, 685 + 256)
+
     return 0
 end
 
@@ -15,9 +17,7 @@ mobskillObject.onMobWeaponSkill = function(mob, target, skill, action)
 
     params.baseDamage     = mob:getWeaponDmg()
     params.numHits        = 1
-    params.fTP            = { 1.0, 1.5, 4.0 }
-    -- params.str_wSC     = 0.32 -- TODO: Capture if mobskill weaponskills have wSC.
-    -- params.vit_wSC     = 0.32 -- TODO: Capture if mobskill weaponskills have wSC.
+    params.fTP            = { 3.0, 3.0, 3.0 } -- TODO: Capture fTPs
     params.attackType     = xi.attackType.PHYSICAL
     params.damageType     = xi.damageType.SLASHING
     params.shadowBehavior = xi.mobskills.shadowBehavior.NUMSHADOWS_1

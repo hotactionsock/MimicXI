@@ -1,12 +1,13 @@
 -----------------------------------
--- Spinning Scythe
+--  Spinning Scythe
 -- Family: Humanoid Scythe Weaponskill
--- Description: Delivers an area attack. TODO: Radius varies with TP.
+--  Description: Delivers an area of effect attack. Attack radius varies with TP.
 -----------------------------------
 ---@type TMobSkill
 local mobskillObject = {}
 
 mobskillObject.onMobSkillCheck = function(target, mob, skill)
+    mob:messageBasic(xi.msg.basic.READIES_WS, 0, 688 + 256)
     return 0
 end
 
@@ -15,11 +16,10 @@ mobskillObject.onMobWeaponSkill = function(mob, target, skill, action)
 
     params.baseDamage     = mob:getWeaponDmg()
     params.numHits        = 1
-    params.fTP            = { 1.0, 1.0, 1.0 }
-    -- params.str_wSC     = 0.3 -- TODO: Capture if mobskill weaponskills have wSC.
+    params.fTP            = { 2.0, 2.0, 2.0 } -- TODO: Capture fTPs
     params.attackType     = xi.attackType.PHYSICAL
     params.damageType     = xi.damageType.SLASHING
-    params.shadowBehavior = xi.mobskills.shadowBehavior.NUMSHADOWS_1
+    params.shadowBehavior = xi.mobskills.shadowBehavior.NUMSHADOWS_3 -- TODO: Capture shadowBehavior
 
     local info = xi.mobskills.mobPhysicalMove(mob, target, skill, action, params)
 

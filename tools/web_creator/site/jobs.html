@@ -1,0 +1,292 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Jobs — MimicXI</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    .job-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 18px;
+    }
+    .job-card {
+      background: var(--paper);
+      border: 1px solid var(--line);
+      border-radius: var(--radius-lg);
+      padding: 22px 24px;
+    }
+    .job-card .name {
+      font-family: var(--serif);
+      font-size: 1.4rem;
+      color: var(--ink);
+      margin-bottom: 4px;
+    }
+    .job-card .tag {
+      font-family: var(--mono);
+      font-size: 0.7rem;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--crystal-amber-deep);
+      margin-bottom: 14px;
+    }
+    .job-card .change-list { list-style: none; padding: 0; margin: 0; }
+    .job-card .change-list li {
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+      padding: 6px 0;
+      font-size: 0.92rem;
+      color: var(--ink-soft);
+    }
+    .glyph {
+      flex: 0 0 16px;
+      font-family: var(--mono);
+      font-weight: 600;
+      font-size: 0.85rem;
+      line-height: 1.6;
+    }
+    .glyph.up { color: #4d8fb8; }
+    .glyph.dn { color: #b8625b; }
+    .glyph.mid { color: var(--crystal-amber-deep); }
+    .pri-tag {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-family: var(--mono);
+      font-size: 0.65rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      background: rgba(127,182,217,0.14);
+      color: var(--crystal-blue-deep);
+      margin-left: 6px;
+    }
+    .pri-5 { background: rgba(184, 98, 91, 0.12); color: #a35248; }
+    .pri-4 { background: rgba(232, 199, 133, 0.18); color: var(--crystal-amber-deep); }
+  </style>
+</head>
+<body data-screen-label="Jobs">
+
+  <section class="page-hero">
+    <div class="container">
+      <span class="eyebrow">Job balance</span>
+      <h1>Every job, <em style="color: var(--crystal-blue-deep);">a place at the table.</em></h1>
+      <p class="lede">A high-level look at where each job is headed. Subject to change as we tune. Legend: <strong style="color:#4d8fb8">▲</strong> buff · <strong style="color:#c79a4a">◆</strong> rework · <strong style="color:#b8625b">▼</strong> nerf.</p>
+    </div>
+  </section>
+
+  <section>
+    <div class="container">
+      <h3 style="margin-bottom: 20px;">Base jobs</h3>
+      <div class="job-grid">
+
+        <div class="job-card">
+          <div class="name">Warrior</div>
+          <div class="tag">Master of arms · Physical DPS</div>
+          <ul class="change-list">
+            <li><span class="glyph up">▲</span><span>Type-weakness damage stacking</span></li>
+            <li><span class="glyph dn">▼</span><span>Fewer elemental weaponskills</span></li>
+          </ul>
+        </div>
+
+        <div class="job-card">
+          <div class="name">Monk</div>
+          <div class="tag">Versatile DPS · Subtle Blow</div>
+          <ul class="change-list">
+            <li><span class="glyph up">▲</span><span>Subtle Blow buffs, party-wide Focus</span></li>
+            <li><span class="glyph mid">◆</span><span>H2H base delay slightly reduced</span></li>
+          </ul>
+        </div>
+
+        <div class="job-card">
+          <div class="name">Thief</div>
+          <div class="tag">Melee support · Burst DPS</div>
+          <ul class="change-list">
+            <li><span class="glyph up">▲</span><span>Innate Dual Wield, WS buffs</span></li>
+            <li><span class="glyph mid">◆</span><span>Mug reworked, Steal expanded</span></li>
+            <li><span class="glyph dn">▼</span><span>Treasure Hunter removed</span></li>
+          </ul>
+        </div>
+
+        <div class="job-card">
+          <div class="name">White Mage</div>
+          <div class="tag">De-facto healer</div>
+          <ul class="change-list">
+            <li><span class="glyph mid">◆</span><span>Emphasis on debuff removal &amp; uptime</span></li>
+          </ul>
+        </div>
+
+        <div class="job-card">
+          <div class="name">Black Mage</div>
+          <div class="tag">Elemental destruction</div>
+          <ul class="change-list">
+            <li><span class="glyph up">▲</span><span>Sustained damage higher</span></li>
+            <li><span class="glyph mid">◆</span><span>Mana costs reworked, element choice matters</span></li>
+            <li><span class="glyph dn">▼</span><span>Burst damage lowered</span></li>
+          </ul>
+        </div>
+
+        <div class="job-card">
+          <div class="name">Red Mage</div>
+          <div class="tag">Magical support · Fencer</div>
+          <ul class="change-list">
+            <li><span class="glyph up">▲</span><span>En-spell &amp; sustained elemental buffs</span></li>
+            <li><span class="glyph mid">◆</span><span>Mana costs reworked</span></li>
+            <li><span class="glyph dn">▼</span><span>Burst damage lowered</span></li>
+          </ul>
+        </div>
+
+        <div class="job-card">
+          <div class="name">Paladin</div>
+          <div class="tag">All-round defender</div>
+          <ul class="change-list">
+            <li><span class="glyph up">▲</span><span>Overall defence slightly increased</span></li>
+            <li><span class="glyph mid">◆</span><span>Damage / defence trade-off pronounced</span></li>
+            <li><span class="glyph dn">▼</span><span>Damage slightly lowered</span></li>
+          </ul>
+        </div>
+
+        <div class="job-card">
+          <div class="name">Dark Knight</div>
+          <div class="tag">High-risk DPS</div>
+          <ul class="change-list">
+            <li><span class="glyph up">▲</span><span>Sustained DPS buffs</span></li>
+            <li><span class="glyph mid">◆</span><span>Damage-for-HP trade-off</span></li>
+            <li><span class="glyph dn">▼</span><span>WS power reduced</span></li>
+          </ul>
+        </div>
+
+        <div class="job-card">
+          <div class="name">Beastmaster</div>
+          <div class="tag">Pet-side support</div>
+          <ul class="change-list">
+            <li><span class="glyph up">▲</span><span>Personal DPS &amp; pet buffs</span></li>
+            <li><span class="glyph mid">◆</span><span>Pets shifted to party support role</span></li>
+          </ul>
+        </div>
+
+        <div class="job-card">
+          <div class="name">Ranger</div>
+          <div class="tag">Versatile marksman</div>
+          <ul class="change-list">
+            <li><span class="glyph up">▲</span><span>Melee buffs, piercing-weak damage up</span></li>
+            <li><span class="glyph dn">▼</span><span>Slight overall ranged nerf</span></li>
+          </ul>
+        </div>
+
+        <div class="job-card">
+          <div class="name">Dragoon</div>
+          <div class="tag">Wyvern partner DPS</div>
+          <ul class="change-list">
+            <li><span class="glyph up">▲</span><span>Wyvern &amp; damage profile buffs</span></li>
+            <li><span class="glyph mid">◆</span><span>Encouraged to keep the wyvern alive</span></li>
+          </ul>
+        </div>
+
+        <div class="job-card">
+          <div class="name">Summoner</div>
+          <div class="tag">Burst &amp; support</div>
+          <ul class="change-list">
+            <li><span class="glyph mid">◆</span><span>Tuned around new elemental resistances</span></li>
+          </ul>
+        </div>
+
+        <div class="job-card">
+          <div class="name">Samurai</div>
+          <div class="tag">TP machine</div>
+          <ul class="change-list">
+            <li><span class="glyph up">▲</span><span>TP generation support</span></li>
+            <li><span class="glyph mid">◆</span><span>Slight durability adjustments</span></li>
+          </ul>
+        </div>
+
+        <div class="job-card">
+          <div class="name">Ninja</div>
+          <div class="tag">Melee support · Ninjutsu</div>
+          <ul class="change-list">
+            <li><span class="glyph up">▲</span><span>DPS profile lifted, ninjutsu reworked</span></li>
+            <li><span class="glyph mid">◆</span><span>Ichi/Yoji clearer DPS / tank split</span></li>
+          </ul>
+        </div>
+
+        <div class="job-card">
+          <div class="name">Bard</div>
+          <div class="tag">Strong support</div>
+          <ul class="change-list">
+            <li><span class="glyph mid">◆</span><span>Threnody adapted to new resistances</span></li>
+          </ul>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <section style="background: var(--bg-2); border-top: 1px solid var(--line-soft); border-bottom: 1px solid var(--line-soft);">
+    <div class="container">
+      <div class="section-head">
+        <span class="eyebrow">Coming next</span>
+        <h2>ToAU+ jobs &amp; rework priority</h2>
+        <p>Expansion jobs start from their LSB base while we settle the base 15. Order of attention:</p>
+      </div>
+      <div class="job-grid">
+
+        <div class="job-card">
+          <div class="name">Dancer<span class="pri-tag">Priority 1</span></div>
+          <div class="tag">TP gen · Skillchains · Crit%</div>
+          <ul class="change-list">
+            <li><span class="glyph mid">◆</span><span>Main-job buffs to give DNC its own edge</span></li>
+          </ul>
+        </div>
+
+        <div class="job-card">
+          <div class="name">Corsair<span class="pri-tag">Priority 2</span></div>
+          <div class="tag">Ranged support · Gambling</div>
+          <ul class="change-list">
+            <li><span class="glyph up">▲</span><span>Dice buffs, focus on guns</span></li>
+          </ul>
+        </div>
+
+        <div class="job-card">
+          <div class="name">Geomancer / Rune Fencer<span class="pri-tag">Priority 3</span></div>
+          <div class="tag">Niche specialists</div>
+          <ul class="change-list">
+            <li><span class="glyph up">▲</span><span>GEO &amp; RUN both worth overtuning at 75</span></li>
+          </ul>
+        </div>
+
+        <div class="job-card">
+          <div class="name">Puppetmaster<span class="pri-tag pri-4">Priority 4</span></div>
+          <div class="tag">Solo specialist</div>
+          <ul class="change-list">
+            <li><span class="glyph mid">◆</span><span>Mammet survivability tuning</span></li>
+          </ul>
+        </div>
+
+        <div class="job-card">
+          <div class="name">Scholar<span class="pri-tag pri-4">Priority 4</span></div>
+          <div class="tag">Elemental exploit · Burst</div>
+          <ul class="change-list">
+            <li><span class="glyph mid">◆</span><span>Deep look at how systems interact at 75</span></li>
+          </ul>
+        </div>
+
+        <div class="job-card">
+          <div class="name">Blue Mage<span class="pri-tag pri-5">Priority 5</span></div>
+          <div class="tag">Burst DPS · Spell learning</div>
+          <ul class="change-list">
+            <li><span class="glyph mid">◆</span><span>Careful balancing — kept in burst role</span></li>
+          </ul>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <script src="shell.js"></script>
+  <script src="tweaks.js"></script>
+</body>
+</html>

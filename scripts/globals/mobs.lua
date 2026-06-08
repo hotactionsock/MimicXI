@@ -1,19 +1,12 @@
 -----------------------------------
--- Global mob hooks (spawn, death)
+-- Global version of onMobDeath
 -----------------------------------
 require('scripts/globals/magic')
 require('scripts/globals/missions')
 require('scripts/globals/quests')
-require('scripts/globals/mob_family_resistances')
 -----------------------------------
 xi = xi or {}
 xi.mob = xi.mob or {}
-
--- xi.mob.onMobSpawn is called from C++ (luautils::OnMobSpawn) before each
--- mob's per-mob onMobSpawn script, so per-mob scripts can still override.
-xi.mob.onMobSpawn = function(mob)
-    xi.mob.resistances.apply(mob)
-end
 
 -- onMobDeathEx is called from the core
 xi.mob.onMobDeathEx = function(mob, player, isKiller, isWeaponSkillKill)

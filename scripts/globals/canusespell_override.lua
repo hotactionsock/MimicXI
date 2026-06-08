@@ -15,7 +15,13 @@ local jobPointSpellGiftMap =
 
     [xi.job.BLM] =
     {
-        -- T6 elemental spells now unlock at level 80 via jobs binary; no job point gate needed.
+        [xi.magic.spell.FIRE_VI]     = 100,
+        [xi.magic.spell.BLIZZARD_VI] = 100,
+        [xi.magic.spell.AERO_VI]     = 100,
+        [xi.magic.spell.STONE_VI]    = 100,
+        [xi.magic.spell.THUNDER_VI]  = 100,
+        [xi.magic.spell.WATER_VI]    = 100,
+
         [xi.magic.spell.ASPIR_III]   = 550,
 
         [xi.magic.spell.DEATH]       = 1200,
@@ -23,7 +29,13 @@ local jobPointSpellGiftMap =
 
     [xi.job.RDM] =
     {
-        -- T5 elemental spells now unlock at level 75 via jobs binary; no job point gate needed.
+        [xi.magic.spell.FIRE_V]       = 100,
+        [xi.magic.spell.BLIZZARD_V]   = 100,
+        [xi.magic.spell.AERO_V]       = 100,
+        [xi.magic.spell.STONE_V]      = 100,
+        [xi.magic.spell.THUNDER_V]    = 100,
+        [xi.magic.spell.WATER_V]      = 100,
+
         [xi.magic.spell.ADDLE_II]     = 550,
         [xi.magic.spell.DISTRACT_III] = 550,
         [xi.magic.spell.FRAZZLE_III]  = 550,

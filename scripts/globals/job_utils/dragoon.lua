@@ -68,26 +68,6 @@ local function performWSJump(player, target, action, params, abilityID)
 
         -- TODO: process additional effects such as Delphinius, Pteroslaver Mail +2/3, Hebo's Spear, enspells, other weapon built-in add effects
 
-        -- Breach (DRG): Angon setup primes the next jump for +35% bonus damage.
-        if player:hasStatusEffect(xi.effect.BREACH) then
-            player:delStatusEffect(xi.effect.BREACH)
-            damage = math.floor(damage * 1.35)
-        end
-
-        -- Draconic Resonance (DRG): each damaging jump builds stacks (Spirit/Soul = 2, others = 1).
-        local stacksToAdd = (abilityID == xi.jobAbility.SPIRIT_JUMP or abilityID == xi.jobAbility.SOUL_JUMP) and 2 or 1
-        local currentStacks = 0
-        local resonanceEffect = player:getStatusEffect(xi.effect.DRACONIC_RESONANCE)
-        if resonanceEffect then
-            currentStacks = resonanceEffect:getPower()
-        end
-        local newStacks = math.min(currentStacks + stacksToAdd, 3)
-        player:delStatusEffect(xi.effect.DRACONIC_RESONANCE)
-        player:addStatusEffect(xi.effect.DRACONIC_RESONANCE, { power = newStacks, duration = 10, origin = player })
-        if xi.settings.map.MIMIC_COMBAT_NOTIFICATIONS then
-            player:printToPlayer(string.format('Draconic Resonance: %d/3', newStacks), xi.msg.channel.SYSTEM_3, '')
-        end
-
         action:recordDamage(target, xi.attackType.PHYSICAL, damage, criticalHit)
         action:messageID(target:getID(), xi.msg.basic.USES_JA_TAKE_DAMAGE)
     else
@@ -526,14 +506,10 @@ end
 
 -- https://www.bg-wiki.com/ffxi/Angon
 xi.job_utils.dragoon.useAngon = function(player, target, ability)
-    local duration = 15 + player:getMerit(xi.merit.ANGON) -- This will return 30 sec at one investment because merit power is 15.
+    local duration   = 15 + player:getMerit(xi.merit.ANGON) -- This will return 30 sec at one investment because merit power is 15.
 
     if not target:addStatusEffect(xi.effect.DEFENSE_DOWN, { power = 20, duration = duration, origin = player }) then
         ability:setMsg(xi.msg.basic.MAGIC_NO_EFFECT)
-    else
-        -- Breach: successful Angon primes the next jump for +35% bonus damage.
-        player:delStatusEffect(xi.effect.BREACH)
-        player:addStatusEffect(xi.effect.BREACH, { power = 1, duration = duration, origin = player })
     end
 
     target:updateClaim(player)
@@ -688,12 +664,6 @@ xi.job_utils.dragoon.useHealingBreath = function(wyvern, target, skill, action)
     local totalHPRestored = target:addHP(curePower)
 
     skill:setMsg(xi.msg.basic.JA_RECOVERS_HP_2)
-
-    -- Wyvern's Blessing: Healing Breath on the master grants a WS damage window scaled to HP restored.
-    if target:getID() == master:getID() and totalHPRestored > 0 then
-        master:delStatusEffect(xi.effect.WYVERN_BLESSING)
-        master:addStatusEffect(xi.effect.WYVERN_BLESSING, { power = totalHPRestored, duration = 15, origin = master })
-    end
 
     -- also cure the Wyvern if Spirit Bond is up
     if master:hasStatusEffect(xi.effect.SPIRIT_BOND) then

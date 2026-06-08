@@ -1,7 +1,5 @@
 -----------------------------------
 -- xi.effect.SEIGAN
--- MimicXI: While active, each Zanshin proc stacks ZANSHIN_MOMENTUM
--- (+5% TWOHAND haste per proc, cap 15%, timer refreshes to 10s).
 -----------------------------------
 ---@type TEffect
 local effectObject = {}
@@ -16,32 +14,12 @@ effectObject.onEffectGain = function(target, effect)
     if target:getMainJob() == xi.job.SAM then
         effect:addMod(xi.mod.SEIGAN_COUNTER_BONUS, 1)
     end
-
-    -- Zanshin Momentum: each Zanshin follow-up hit stacks haste while Seigan is active.
-    target:addListener('MELEE_SWING_HIT', 'ZANSHIN_MOMENTUM', function(actorArg, targetArg, attack)
-        if not actorArg:hasStatusEffect(xi.effect.SEIGAN) then return end
-        if attack:getAttackType() ~= xi.physicalAttackType.ZANSHIN then return end
-
-        local current = 0
-        local momEffect = actorArg:getStatusEffect(xi.effect.ZANSHIN_MOMENTUM)
-        if momEffect then
-            current = momEffect:getPower()
-        end
-
-        local newPower = math.min(current + 500, 1500)
-        actorArg:delStatusEffect(xi.effect.ZANSHIN_MOMENTUM)
-        actorArg:addStatusEffect(xi.effect.ZANSHIN_MOMENTUM, { power = newPower, duration = 10, origin = actorArg })
-        if xi.settings.map.MIMIC_COMBAT_NOTIFICATIONS then
-            actorArg:printToPlayer(string.format('Zanshin Momentum: %d%%', newPower / 100), xi.msg.channel.SYSTEM_3, '')
-        end
-    end)
 end
 
 effectObject.onEffectTick = function(target, effect)
 end
 
 effectObject.onEffectLose = function(target, effect)
-    target:removeListener('ZANSHIN_MOMENTUM')
 end
 
 return effectObject

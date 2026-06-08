@@ -21,6 +21,30 @@ require('modules/module_utils')
 
 local m = Module:new('casket_loot_starter_zones')
 
+-- Augment stat IDs from augments.sql (packet IDs, not dat IDs)
+xi          = xi          or {}
+xi.augments = xi.augments or {}
+xi.augments.id = xi.augments.id or
+{
+    HP              =   1,
+    MP              =   9,
+    ACCURACY        =  23,
+    ATTACK          =  25,
+    RANGED_ACCURACY =  27,
+    RANGED_ATTACK   =  29,
+    EVASION         =  31,
+    DEFENSE         =  33,
+    MAG_ACCURACY    =  35,
+    STORE_TP        =  44,
+    STR             = 512,
+    DEX             = 513,
+    VIT             = 514,
+    AGI             = 515,
+    INT             = 516,
+    MND             = 517,
+    CHR             = 518,
+}
+
 -----------------------------------
 -- Augment pool (populated later).
 -- Format per item:

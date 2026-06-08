@@ -10,6 +10,7 @@ local zoneObject = {}
 zoneObject.onInitialize = function(zone)
     xi.conquest.setRegionalConquestOverseers(zone:getRegionID())
     xi.mogTablet.onZoneInitialize(zone)
+    xi.fate.onZoneInitialize(zone, zone:getID())
 
     local qm2 = GetNPCByID(ID.npc.WHM_AF1_QM)
     if qm2 then
@@ -24,6 +25,7 @@ end
 
 zoneObject.onZoneTick = function(zone)
     xi.mogTablet.onZoneTick(zone)
+    xi.fate.tick(zone, zone:getID())
 end
 
 zoneObject.onZoneIn = function(player, prevZone)
@@ -47,6 +49,8 @@ end
 
 zoneObject.afterZoneIn = function(player)
     xi.chocoboGame.handleMessage(player)
+    xi.fate.checkSyncOnZoneIn(player)
+    xi.fate.sendAddonDef(player, player:getZoneID())
 end
 
 zoneObject.onConquestUpdate = function(zone, updatetype, influence, owner, ranking, isConquestAlliance)
@@ -54,6 +58,11 @@ zoneObject.onConquestUpdate = function(zone, updatetype, influence, owner, ranki
 end
 
 zoneObject.onTriggerAreaEnter = function(player, triggerArea)
+    xi.fate.onAreaEnter(player, triggerArea, player:getZoneID())
+end
+
+zoneObject.onTriggerAreaLeave = function(player, triggerArea)
+    xi.fate.onAreaLeave(player, triggerArea, player:getZoneID())
 end
 
 zoneObject.onEventUpdate = function(player, csid, option, npc)

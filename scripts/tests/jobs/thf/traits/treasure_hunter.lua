@@ -27,23 +27,9 @@ describe('Treasure Hunter', function()
 
     before_each(function()
         player = xi.test.world:spawnPlayer({ zone = xi.zone.KUFTAL_TUNNEL, job = xi.job.THF, level = 75 })
-        -- TH is no longer a job trait; it is granted by mission progression.
-        -- Complete ZM17 to grant TH+2 as the baseline for these tests.
-        player:completeMission(xi.mission.log_id.ZILART, xi.mission.id.zilart.AWAKENING)
     end)
 
-    it('equals TH0 for any job with no missions completed', function()
-        local freshPlayer = xi.test.world:spawnPlayer({ zone = xi.zone.KUFTAL_TUNNEL, job = xi.job.WAR, level = 75 })
-        freshPlayer.assert:hasModifier(xi.mod.TREASURE_HUNTER, 0)
-    end)
-
-    it('equals TH1 after completing the Shadow Lord mission', function()
-        local missionPlayer = xi.test.world:spawnPlayer({ zone = xi.zone.KUFTAL_TUNNEL, job = xi.job.WAR, level = 75 })
-        missionPlayer:completeMission(xi.mission.log_id.SANDORIA, xi.mission.id.sandoria.THE_SHADOW_LORD)
-        missionPlayer.assert:hasModifier(xi.mod.TREASURE_HUNTER, 1)
-    end)
-
-    it('equals TH2 for a naked THF75 with ZM17 completed', function()
+    it('equals TH2 for a naked THF75', function()
         player.assert:hasModifier(xi.mod.TREASURE_HUNTER, 2)
     end)
 

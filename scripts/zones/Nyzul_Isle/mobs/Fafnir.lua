@@ -25,7 +25,6 @@ entity.onMobSpawn = function(mob)
     mob:setMod(xi.mod.DOUBLE_ATTACK, 25)
 
     mob:setMobMod(xi.mobMod.ROAM_DISTANCE, 15)
-    mob:setMod(xi.mod.REGAIN, 100) -- TODO: Verify if Nyzul Fafnir has same regain value.
 end
 
 entity.onMobFight = function(mob, target)

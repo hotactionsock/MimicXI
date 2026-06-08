@@ -1,0 +1,263 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Create character — MimicXI</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="account.css">
+  <script>window.MIMIC_API_BASE = "";</script>
+</head>
+<body data-screen-label="Create Character">
+
+  <section class="creator-shell">
+    <div class="container-narrow">
+
+      <div class="creator-head">
+        <span class="eyebrow">New adventurer</span>
+        <h1 style="margin-top:8px;">Create a character</h1>
+        <p style="max-width:540px;">Every choice carves a path. You can have several characters on one account — start anywhere and explore from there.</p>
+      </div>
+
+      <div id="alert-slot"></div>
+
+      <form id="creator">
+
+        <!-- Name -->
+        <div class="form-section">
+          <div class="label">Name</div>
+          <div class="field" style="margin-bottom:0;">
+            <input id="name" type="text" minlength="3" maxlength="15" autocomplete="off" placeholder="3–15 letters" required>
+            <div class="hint">Letters only. The first character will be capitalised in-game.</div>
+          </div>
+        </div>
+
+        <!-- Race -->
+        <div class="form-section">
+          <div class="label">Race</div>
+          <div class="race-grid" id="race-grid"></div>
+        </div>
+
+        <!-- Face -->
+        <div class="form-section">
+          <div class="label">
+            <span>Face</span>
+            <span class="label-hint">C variants are custom — require matching client data</span>
+          </div>
+          <div class="face-grid-wrap">
+            <div class="face-grid" id="face-grid"></div>
+          </div>
+          <p class="face-selected-note">
+            Selected: <strong id="face-selected-label">Face 1A</strong>
+          </p>
+        </div>
+
+        <!-- Size -->
+        <div class="form-section">
+          <div class="label">Size</div>
+          <div class="tile-row" id="size-row"></div>
+        </div>
+
+        <!-- Starting Job -->
+        <div class="form-section">
+          <div class="label">Starting job</div>
+          <select id="job" class="job-select">
+            <option value="1">Warrior (WAR)</option>
+            <option value="2">Monk (MNK)</option>
+            <option value="3">White Mage (WHM)</option>
+            <option value="4">Black Mage (BLM)</option>
+            <option value="5">Red Mage (RDM)</option>
+            <option value="6">Thief (THF)</option>
+          </select>
+        </div>
+
+        <!-- Nation -->
+        <div class="form-section">
+          <div class="label">Starting nation</div>
+          <div class="tile-row" id="nation-row"></div>
+        </div>
+
+        <div class="form-actions">
+          <a href="account.html" class="btn btn-ghost">Cancel</a>
+          <button type="submit" id="submit" class="btn btn-primary">Create character</button>
+        </div>
+
+      </form>
+
+    </div>
+  </section>
+
+  <script src="shell.js"></script>
+  <script src="tweaks.js"></script>
+  <script src="auth.js"></script>
+  <script src="demo.js"></script>
+  <script>
+    (function () {
+      // ── data
+      const RACES = [
+        { id: 1, name: "Hume",     gender: "Male",   initial: "H", hue: "#7fb6d9" },
+        { id: 2, name: "Hume",     gender: "Female", initial: "H", hue: "#7fb6d9" },
+        { id: 3, name: "Elvaan",   gender: "Male",   initial: "E", hue: "#c9a8d6" },
+        { id: 4, name: "Elvaan",   gender: "Female", initial: "E", hue: "#c9a8d6" },
+        { id: 5, name: "Tarutaru", gender: "Male",   initial: "T", hue: "#e8c785" },
+        { id: 6, name: "Tarutaru", gender: "Female", initial: "T", hue: "#e8c785" },
+        { id: 7, name: "Mithra",   gender: "",       initial: "M", hue: "#d9a8b3" },
+        { id: 8, name: "Galka",    gender: "",       initial: "G", hue: "#8fb59e" },
+      ];
+      const SIZES = [{ id: 0, label: "Small" }, { id: 1, label: "Medium" }, { id: 2, label: "Large" }];
+      const NATIONS = [
+        { id: 0, name: "San d'Oria" },
+        { id: 1, name: "Bastok" },
+        { id: 2, name: "Windurst" },
+      ];
+
+      function faceLabel(v) {
+        if (v <= 15) return `Face ${Math.floor(v/2)+1}${v%2===0?'A':'B'}`;
+        if (v <= 23) return `Face ${v-15}C`;
+        return `Face ${v}`;
+      }
+
+      // ── state
+      const state = { race: 1, face: 0, size: 1, nation: 0 };
+
+      // ── crystal SVG used as race-tile avatar
+      function crystalSVG(color) {
+        return `
+          <svg viewBox="0 0 36 36" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <path d="M18 3 L32 14 L18 34 L4 14 Z" fill="${color}55" stroke="${color}" stroke-width="1" stroke-linejoin="round"/>
+            <path d="M18 3 L11 14 L18 34 L25 14 Z" fill="${color}" opacity="0.6"/>
+            <path d="M4 14 L32 14" stroke="${color}" stroke-width="0.7"/>
+          </svg>`;
+      }
+
+      // ── render race grid
+      const rg = document.getElementById("race-grid");
+      rg.innerHTML = RACES.map(r => `
+        <div class="race-tile" data-race="${r.id}">
+          <div class="crystal-init">
+            ${crystalSVG(r.hue)}
+            <span>${r.initial}</span>
+          </div>
+          <span class="rname">${r.name}</span>
+          ${r.gender ? `<span class="rgender">${r.gender}</span>` : `<span class="rgender">&nbsp;</span>`}
+        </div>
+      `).join("");
+      rg.addEventListener("click", e => {
+        const t = e.target.closest(".race-tile"); if (!t) return;
+        state.race = +t.dataset.race; syncRace();
+      });
+      function syncRace() {
+        rg.querySelectorAll(".race-tile").forEach(t => {
+          t.classList.toggle("selected", +t.dataset.race === state.race);
+        });
+      }
+      syncRace();
+
+      // ── render face grid
+      const fg = document.getElementById("face-grid");
+      let html = `
+        <div></div>
+        <div class="col-head">A</div>
+        <div class="col-head">B</div>
+        <div class="col-head custom">C <span class="badge-custom">Custom</span></div>
+      `;
+      for (let n = 1; n <= 8; n++) {
+        const aVal = (n - 1) * 2;
+        const bVal = (n - 1) * 2 + 1;
+        const cVal = n + 15;
+        html += `<div class="row-num">${n}</div>`;
+        html += `<button type="button" class="face-tile" data-face="${aVal}" title="Face ${n}A"><span class="icon">◉</span><span class="vlabel">A</span></button>`;
+        html += `<button type="button" class="face-tile" data-face="${bVal}" title="Face ${n}B"><span class="icon">◉</span><span class="vlabel">B</span></button>`;
+        html += `<button type="button" class="face-tile custom" data-face="${cVal}" title="Face ${n}C"><span class="icon">✦</span><span class="vlabel">C</span></button>`;
+      }
+      fg.innerHTML = html;
+      fg.addEventListener("click", e => {
+        const t = e.target.closest(".face-tile"); if (!t) return;
+        state.face = +t.dataset.face; syncFace();
+      });
+      function syncFace() {
+        fg.querySelectorAll(".face-tile").forEach(t => {
+          t.classList.toggle("selected", +t.dataset.face === state.face);
+        });
+        document.getElementById("face-selected-label").textContent = faceLabel(state.face);
+      }
+      syncFace();
+
+      // ── size row
+      const sr = document.getElementById("size-row");
+      sr.innerHTML = SIZES.map(s => `<button type="button" class="tile-pill" data-size="${s.id}">${s.label}</button>`).join("");
+      sr.addEventListener("click", e => {
+        const t = e.target.closest(".tile-pill"); if (!t) return;
+        state.size = +t.dataset.size; syncSize();
+      });
+      function syncSize() {
+        sr.querySelectorAll(".tile-pill").forEach(t => {
+          t.classList.toggle("selected", +t.dataset.size === state.size);
+        });
+      }
+      syncSize();
+
+      // ── nation row
+      const nr = document.getElementById("nation-row");
+      nr.innerHTML = NATIONS.map(n => `<button type="button" class="tile-pill" data-nation="${n.id}">${n.name}</button>`).join("");
+      nr.addEventListener("click", e => {
+        const t = e.target.closest(".tile-pill"); if (!t) return;
+        state.nation = +t.dataset.nation; syncNation();
+      });
+      function syncNation() {
+        nr.querySelectorAll(".tile-pill").forEach(t => {
+          t.classList.toggle("selected", +t.dataset.nation === state.nation);
+        });
+      }
+      syncNation();
+
+      // ── auth guard
+      MimicAuth.requireAuth();
+
+      // ── submit
+      function showAlert(kind, msg) {
+        document.getElementById("alert-slot").innerHTML = `<div class="alert ${kind}">${msg}</div>`;
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      }
+
+      document.getElementById("creator").addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const name = document.getElementById("name").value.trim();
+        const job = +document.getElementById("job").value;
+
+        if (!/^[A-Za-z]{3,15}$/.test(name)) {
+          showAlert("error", "Name must be 3–15 letters only.");
+          return;
+        }
+
+        const btn = document.getElementById("submit");
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner"></span>Creating…';
+        document.getElementById("alert-slot").innerHTML = "";
+
+        const r = await MimicAuth.api("/api/create", {
+          method: "POST",
+          body: { name, race: state.race, face: state.face, size: state.size, job, nation: state.nation },
+        });
+
+        if (r.status === 401) {
+          location.href = "signin.html?next=create-character.html";
+          return;
+        }
+
+        if (r.ok) {
+          showAlert("success", `Character <strong>${name}</strong> created. Returning to your characters…`);
+          setTimeout(() => location.href = "account.html", 1100);
+        } else {
+          showAlert("error", (r.data && r.data.error) || "Character creation failed.");
+          btn.disabled = false;
+          btn.textContent = "Create character";
+        }
+      });
+    })();
+  </script>
+</body>
+</html>

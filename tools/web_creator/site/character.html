@@ -1,0 +1,206 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Character — MimicXI</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="account.css">
+  <link rel="stylesheet" href="character.css?v=5">
+  <script>window.MIMIC_API_BASE = "";</script>
+</head>
+<body data-screen-label="Character">
+
+  <section class="char-shell">
+    <div class="container">
+
+      <a href="account.html" class="char-back">← Back to characters</a>
+
+      <!-- Loading -->
+      <div id="state-loading" class="state-screen">
+        <div class="spinner"></div>
+        <p>Summoning character record…</p>
+      </div>
+
+      <!-- Error -->
+      <div id="state-error" class="state-screen" style="display:none">
+        <p id="error-text">Character not found.</p>
+        <a href="account.html" class="btn btn-ghost" style="margin-top:18px;">← Back to characters</a>
+      </div>
+
+      <!-- Profile -->
+      <main id="profile" style="display:none">
+
+        <!-- Header -->
+        <header class="char-hero">
+          <div class="char-hero-inner">
+            <div class="char-avatar-xl" id="char-avatar"></div>
+            <div class="char-header-info">
+              <h1 id="char-name">—</h1>
+              <p class="char-sub" id="char-sub"></p>
+              <p class="char-job-line" id="char-job-line"></p>
+              <p class="char-playtime" id="char-playtime"></p>
+            </div>
+          </div>
+        </header>
+
+        <!-- Owner-only private banner -->
+        <div id="private-banner" class="private-banner" style="display:none">
+          <span class="private-banner-label">Private — only you</span>
+          <div class="private-grid">
+            <div class="private-stat">
+              <span class="private-label">Gil</span>
+              <span class="private-value" id="stat-gil">—</span>
+            </div>
+            <div class="private-stat">
+              <span class="private-label">San d'Oria CP</span>
+              <span class="private-value" id="stat-cp-s">—</span>
+            </div>
+            <div class="private-stat">
+              <span class="private-label">Bastok CP</span>
+              <span class="private-value" id="stat-cp-b">—</span>
+            </div>
+            <div class="private-stat">
+              <span class="private-label">Windurst CP</span>
+              <span class="private-value" id="stat-cp-w">—</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tab nav -->
+        <nav class="tab-nav" role="tablist">
+          <button class="tab-btn active" data-tab="overview" role="tab">Overview</button>
+          <button class="tab-btn" data-tab="jobs" role="tab">Jobs</button>
+          <button class="tab-btn" data-tab="fame" role="tab">Fame &amp; Rank</button>
+          <button class="tab-btn" data-tab="currency" role="tab">Currency</button>
+          <button class="tab-btn" data-tab="quests" role="tab">Quests</button>
+          <button class="tab-btn" data-tab="equipment" role="tab">Equipment</button>
+          <button class="tab-btn" data-tab="skills" role="tab">Skills</button>
+          <button class="tab-btn" data-tab="craft" role="tab">Craft</button>
+          <button class="tab-btn" data-tab="history" role="tab">History</button>
+        </nav>
+
+        <!-- Overview -->
+        <section class="tab-panel active" id="tab-overview">
+          <div class="overview-grid">
+            <div class="info-card">
+              <div class="face-portrait-wrap" id="face-portrait-wrap" style="display:none">
+                <img class="face-portrait" id="face-portrait" src="" alt="" loading="lazy">
+              </div>
+              <h3 class="info-card-title">Character</h3>
+              <dl class="detail-list" id="detail-character"></dl>
+            </div>
+            <div class="info-card nation-card" id="nation-card">
+              <div class="nation-hero-row">
+                <img class="nation-flag-lg" id="nation-flag-lg" src="" alt="" loading="lazy">
+                <div class="nation-hero-body">
+                  <span class="nation-eyebrow">Home Nation</span>
+                  <div class="nation-home-name" id="nation-home-name">—</div>
+                  <div class="nation-rank-pill" id="nation-rank-pill">Rank —</div>
+                </div>
+              </div>
+              <div class="nation-others" id="nation-others"></div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Jobs -->
+        <section class="tab-panel" id="tab-jobs">
+          <div class="jobs-list" id="jobs-list"></div>
+        </section>
+
+        <!-- Fame -->
+        <section class="tab-panel" id="tab-fame">
+          <div class="fame-list" id="fame-list"></div>
+        </section>
+
+        <!-- Currency -->
+        <section class="tab-panel" id="tab-currency">
+          <div class="currency-grid" id="currency-grid"></div>
+        </section>
+
+        <!-- Quests -->
+        <section class="tab-panel" id="tab-quests">
+          <div class="quest-toolbar">
+            <div class="quest-search-wrap">
+              <svg class="quest-search-icon" viewBox="0 0 16 16" aria-hidden="true">
+                <circle cx="7" cy="7" r="5" fill="none" stroke="currentColor" stroke-width="1.4"/>
+                <path d="M11 11 L14 14" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+              </svg>
+              <input id="quest-search" class="quest-search" type="search" placeholder="Search quests…" autocomplete="off">
+            </div>
+            <div class="quest-filter" id="quest-filter">
+              <button type="button" class="active" data-status="all">All <span class="qf-count" data-count="all">0</span></button>
+              <button type="button" data-status="not_started">Not started <span class="qf-count" data-count="not_started">0</span></button>
+              <button type="button" data-status="in_progress">In progress <span class="qf-count" data-count="in_progress">0</span></button>
+              <button type="button" data-status="completed">Completed <span class="qf-count" data-count="completed">0</span></button>
+            </div>
+          </div>
+          <p id="quest-loading" class="quest-empty" style="display:none">Loading quests…</p>
+          <div id="dailies-section" class="dailies-section" style="display:none">
+            <h3 class="dailies-heading">Dailies</h3>
+            <div class="quest-list" id="dailies-list"></div>
+          </div>
+          <div class="quest-list" id="quest-list"></div>
+          <p id="quest-empty" class="quest-empty" style="display:none">No quests match those filters.</p>
+        </section>
+
+        <!-- Equipment -->
+        <section class="tab-panel" id="tab-equipment">
+          <div id="equip-loading" class="equip-loading">Loading equipment…</div>
+          <div id="equip-wrap" class="equip-layout" style="display:none">
+            <div class="equip-grid" id="equip-grid"></div>
+            <aside class="equip-sidebar">
+              <div id="equip-detail-empty" class="equip-detail-empty">Select an equipment slot to view its item.</div>
+              <div id="equip-detail" class="equip-detail" style="display:none">
+                <div class="equip-detail-head">
+                  <div class="equip-detail-icon"><img id="equip-detail-img" alt=""></div>
+                  <div>
+                    <h3 class="equip-detail-name" id="equip-detail-name"></h3>
+                    <span class="equip-detail-slot" id="equip-detail-slotname"></span>
+                  </div>
+                </div>
+                <dl class="equip-detail-stats" id="equip-detail-stats"></dl>
+                <div class="equip-detail-desc" id="equip-detail-desc" style="display:none"></div>
+              </div>
+              <div class="stats-summary" id="stats-summary" style="display:none">
+                <h4 class="stats-summary-title">Total stats</h4>
+                <ul class="stats-summary-list" id="stats-summary-list"></ul>
+              </div>
+              <div class="rarity-legend" id="rarity-legend">
+                <h4 class="rarity-legend-title">Rarity</h4>
+                <ul class="rarity-legend-list" id="rarity-legend-list"></ul>
+              </div>
+            </aside>
+          </div>
+        </section>
+
+        <!-- Skills -->
+        <section class="tab-panel" id="tab-skills">
+          <div class="skills-content" id="skills-content"></div>
+        </section>
+
+        <!-- Craft -->
+        <section class="tab-panel" id="tab-craft">
+          <div class="skills-content" id="craft-content"></div>
+        </section>
+
+        <!-- History -->
+        <section class="tab-panel" id="tab-history">
+          <div class="history-grid" id="history-content"></div>
+        </section>
+
+      </main>
+    </div>
+  </section>
+
+  <script src="shell.js"></script>
+  <script src="tweaks.js"></script>
+  <script src="auth.js"></script>
+  <script src="demo.js"></script>
+  <script src="character.js?v=4"></script>
+</body>
+</html>

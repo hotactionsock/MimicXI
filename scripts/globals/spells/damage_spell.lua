@@ -39,53 +39,52 @@ local pTable =
 -- Single target black magic spells:
 --                                       1          2     3     4      5      6    7    8    9     10    11    12    13
 -- Structure:             [spellId] = {  Stat used, mAcc, vNPC, mNPC,  vPC,   I,   M0,  M50, M100, M200, M300, M400, M500 },
--- Flattened tiers: T1=55 PC dmg, T2=160, T3=310, T4=500, T5=800, T6=1100. Element is the only difference.
-    [xi.magic.spell.AERO          ] = { xi.mod.INT,  0,   45,   1,   55,   50, 1.5, 1.0,    0,    0,    0,    0,    0 },
-    [xi.magic.spell.AERO_II       ] = { xi.mod.INT, 10,  145,   1,  160,  155, 2.5, 1.8,  1.0,    0,    0,    0,    0 },
-    [xi.magic.spell.AERO_III      ] = { xi.mod.INT, 20,  300, 1.5,  310,  320, 3.3, 2.7,  1.9,  1.0,    0,    0,    0 },
-    [xi.magic.spell.AERO_IV       ] = { xi.mod.INT, 20,  470,   2,  500,  505, 4.3, 3.7, 2.85, 1.97,  1.0,    0,    0 },
-    [xi.magic.spell.AERO_V        ] = { xi.mod.INT, 25,  760, 2.3,  800,  570, 5.0, 4.4,  3.9, 2.97, 1.97,  1.0,    0 },
-    [xi.magic.spell.AERO_VI       ] = { xi.mod.INT,  0, 1100, 2.5, 1100,  620, 5.6, 5.7,  4.7,  3.7, 2.85, 1.97,  1.0 },
+    [xi.magic.spell.AERO          ] = { xi.mod.INT,    0,   25,    1,   40,  35,  1.6,    1,    0,    0,    0,    0,    0 },
+    [xi.magic.spell.AERO_II       ] = { xi.mod.INT,   10,  113,    1,  140, 133,  2.6,  1.8,    1,    0,    0,    0,    0 },
+    [xi.magic.spell.AERO_III      ] = { xi.mod.INT,   20,  265,  1.5,  260, 295,  3.4,  2.8,  1.9,    1,    0,    0,    0 },
+    [xi.magic.spell.AERO_IV       ] = { xi.mod.INT,   20,  440,    2,  480, 472,  4.4,  3.8,  2.9, 1.98,    1,    0,    0 },
+    [xi.magic.spell.AERO_V        ] = { xi.mod.INT,   25,  738,  2.3,  750, 550,  5.2,  4.5,  3.9, 2.98, 1.98,    1,    0 }, -- I value unknown. Guesstimate used.
+    [xi.magic.spell.AERO_VI       ] = { xi.mod.INT,    0, 1070,  2.5, 1070, 600,    6,  5.8,  4.8,  3.8,  2.9, 1.98,    1 }, -- I value unknown. Guesstimate used.
     [xi.magic.spell.TORNADO       ] = { xi.mod.INT,    0,  552,    2,  700, 577,    2,    2,    2,    2,    2,    2,    2 },
     [xi.magic.spell.TORNADO_II    ] = { xi.mod.INT,   10,  710,    2,  800, 780,    2,    2,    2,    2,    2,    2,    2 },
-    [xi.magic.spell.BLIZZARD      ] = { xi.mod.INT,  0,   45,   1,   55,   50, 1.5, 1.0,    0,    0,    0,    0,    0 },
-    [xi.magic.spell.BLIZZARD_II   ] = { xi.mod.INT, 10,  145,   1,  160,  155, 2.5, 1.8,  1.0,    0,    0,    0,    0 },
-    [xi.magic.spell.BLIZZARD_III  ] = { xi.mod.INT, 20,  300, 1.5,  310,  320, 3.3, 2.7,  1.9,  1.0,    0,    0,    0 },
-    [xi.magic.spell.BLIZZARD_IV   ] = { xi.mod.INT, 20,  470,   2,  500,  505, 4.3, 3.7, 2.85, 1.97,  1.0,    0,    0 },
-    [xi.magic.spell.BLIZZARD_V    ] = { xi.mod.INT, 25,  760, 2.3,  800,  570, 5.0, 4.4,  3.9, 2.97, 1.97,  1.0,    0 },
-    [xi.magic.spell.BLIZZARD_VI   ] = { xi.mod.INT,  0, 1100, 2.5, 1100,  620, 5.6, 5.7,  4.7,  3.7, 2.85, 1.97,  1.0 },
+    [xi.magic.spell.BLIZZARD      ] = { xi.mod.INT,    0,   46,    1,   70,  60,  1.2,    1,    0,    0,    0,    0,    0 },
+    [xi.magic.spell.BLIZZARD_II   ] = { xi.mod.INT,   10,  155,    1,  180, 178,  2.2,  1.6,    1,    0,    0,    0,    0 },
+    [xi.magic.spell.BLIZZARD_III  ] = { xi.mod.INT,   20,  320,  1.5,  320, 345,  2.8,  2.6,  1.8,    1,    0,    0,    0 },
+    [xi.magic.spell.BLIZZARD_IV   ] = { xi.mod.INT,   20,  506,    2,  560, 541,  3.9,  3.6,  2.8, 1.96,    1,    0,    0 },
+    [xi.magic.spell.BLIZZARD_V    ] = { xi.mod.INT,   25,  829,  2.3,  850, 600,  4.4,    4,  3.8, 2.96, 1.96,    1,    0 }, -- I value unknown. Guesstimate used.
+    [xi.magic.spell.BLIZZARD_VI   ] = { xi.mod.INT,    0, 1190,  2.5, 1190, 650,    5,  5.6,  4.6,  3.6,  2.8, 1.96,    1 }, -- I value unknown. Guesstimate used.
     [xi.magic.spell.FREEZE        ] = { xi.mod.INT,    0,  552,    2,  700, 552,    2,    2,    2,    2,    2,    2,    2 },
     [xi.magic.spell.FREEZE_II     ] = { xi.mod.INT,   10,  710,    2,  800, 780,    2,    2,    2,    2,    2,    2,    2 },
-    [xi.magic.spell.FIRE          ] = { xi.mod.INT,  0,   45,   1,   55,   50, 1.5, 1.0,    0,    0,    0,    0,    0 },
-    [xi.magic.spell.FIRE_II       ] = { xi.mod.INT, 10,  145,   1,  160,  155, 2.5, 1.8,  1.0,    0,    0,    0,    0 },
-    [xi.magic.spell.FIRE_III      ] = { xi.mod.INT, 20,  300, 1.5,  310,  320, 3.3, 2.7,  1.9,  1.0,    0,    0,    0 },
-    [xi.magic.spell.FIRE_IV       ] = { xi.mod.INT, 20,  470,   2,  500,  505, 4.3, 3.7, 2.85, 1.97,  1.0,    0,    0 },
-    [xi.magic.spell.FIRE_V        ] = { xi.mod.INT, 25,  760, 2.3,  800,  570, 5.0, 4.4,  3.9, 2.97, 1.97,  1.0,    0 },
-    [xi.magic.spell.FIRE_VI       ] = { xi.mod.INT,  0, 1100, 2.5, 1100,  620, 5.6, 5.7,  4.7,  3.7, 2.85, 1.97,  1.0 },
+    [xi.magic.spell.FIRE          ] = { xi.mod.INT,    0,   35,    1,   55,  46,  1.4,    1,    0,    0,    0,    0,    0 },
+    [xi.magic.spell.FIRE_II       ] = { xi.mod.INT,   10,  133,    1,  160, 155,  2.4,  1.7,    1,    0,    0,    0,    0 },
+    [xi.magic.spell.FIRE_III      ] = { xi.mod.INT,   20,  295,  1.5,  290, 320,  3.1,  2.7, 1.85,    1,    0,    0,    0 },
+    [xi.magic.spell.FIRE_IV       ] = { xi.mod.INT,   20,  472,    2,  520, 506,  4.2,  3.7, 2.85, 1.97,    1,    0,    0 },
+    [xi.magic.spell.FIRE_V        ] = { xi.mod.INT,   25,  785,  2.3,  800, 550,  4.8, 4.24, 3.85, 2.97, 1.97,    1,    0 }, -- I value Unknown. Guesstimate used.
+    [xi.magic.spell.FIRE_VI       ] = { xi.mod.INT,    0, 1130,  2.5, 1130, 600,  5.5,  5.7,  4.7,  3.7, 2.85, 1.97,    1 }, -- I value Unknown. Guesstimate used.
     [xi.magic.spell.FLARE         ] = { xi.mod.INT,    0,  552,    2,  700, 684,    2,    2,    2,    2,    2,    2,    2 },
     [xi.magic.spell.FLARE_II      ] = { xi.mod.INT,   10,  710,    2,  800, 780,    2,    2,    2,    2,    2,    2,    2 },
-    [xi.magic.spell.STONE         ] = { xi.mod.INT,  0,   45,   1,   55,   50, 1.5, 1.0,    0,    0,    0,    0,    0 },
-    [xi.magic.spell.STONE_II      ] = { xi.mod.INT, 10,  145,   1,  160,  155, 2.5, 1.8,  1.0,    0,    0,    0,    0 },
-    [xi.magic.spell.STONE_III     ] = { xi.mod.INT, 20,  300, 1.5,  310,  320, 3.3, 2.7,  1.9,  1.0,    0,    0,    0 },
-    [xi.magic.spell.STONE_IV      ] = { xi.mod.INT, 20,  470,   2,  500,  505, 4.3, 3.7, 2.85, 1.97,  1.0,    0,    0 },
-    [xi.magic.spell.STONE_V       ] = { xi.mod.INT, 25,  760, 2.3,  800,  570, 5.0, 4.4,  3.9, 2.97, 1.97,  1.0,    0 },
-    [xi.magic.spell.STONE_VI      ] = { xi.mod.INT,  0, 1100, 2.5, 1100,  620, 5.6, 5.7,  4.7,  3.7, 2.85, 1.97,  1.0 },
+    [xi.magic.spell.STONE         ] = { xi.mod.INT,    0,   10,    1,   10,  16,    2,    1,    0,    0,    0,    0,    0 },
+    [xi.magic.spell.STONE_II      ] = { xi.mod.INT,   10,   78,    1,  100,  95,    3,    2,    1,    0,    0,    0,    0 },
+    [xi.magic.spell.STONE_III     ] = { xi.mod.INT,   20,  210,  1.5,  200, 236,    4,    3,    2,    1,    0,    0,    0 },
+    [xi.magic.spell.STONE_IV      ] = { xi.mod.INT,   20,  381,    2,  400, 410,    5,    4,    3,    2,    1,    0,    0 },
+    [xi.magic.spell.STONE_V       ] = { xi.mod.INT,   25,  626,  2.3,  650, 500,    6,    5,    4,    3,    2,    1,    0 }, -- I value Unknown. Guesstimate used.
+    [xi.magic.spell.STONE_VI      ] = { xi.mod.INT,    0,  950,  2.5,  950, 550,    7,    6,    5,    4,    3,    2,    1 }, -- I value Unknown. Guesstimate used.
     [xi.magic.spell.QUAKE         ] = { xi.mod.INT,    0,  552,    2,  700, 603,    2,    2,    2,    2,    2,    2,    2 },
     [xi.magic.spell.QUAKE_II      ] = { xi.mod.INT,   10,  710,    2,  800, 780,    2,    2,    2,    2,    2,    2,    2 },
-    [xi.magic.spell.THUNDER       ] = { xi.mod.INT,  0,   45,   1,   55,   50, 1.5, 1.0,    0,    0,    0,    0,    0 },
-    [xi.magic.spell.THUNDER_II    ] = { xi.mod.INT, 10,  145,   1,  160,  155, 2.5, 1.8,  1.0,    0,    0,    0,    0 },
-    [xi.magic.spell.THUNDER_III   ] = { xi.mod.INT, 20,  300, 1.5,  310,  320, 3.3, 2.7,  1.9,  1.0,    0,    0,    0 },
-    [xi.magic.spell.THUNDER_IV    ] = { xi.mod.INT, 20,  470,   2,  500,  505, 4.3, 3.7, 2.85, 1.97,  1.0,    0,    0 },
-    [xi.magic.spell.THUNDER_V     ] = { xi.mod.INT, 25,  760, 2.3,  800,  570, 5.0, 4.4,  3.9, 2.97, 1.97,  1.0,    0 },
-    [xi.magic.spell.THUNDER_VI    ] = { xi.mod.INT,  0, 1100, 2.5, 1100,  620, 5.6, 5.7,  4.7,  3.7, 2.85, 1.97,  1.0 },
+    [xi.magic.spell.THUNDER       ] = { xi.mod.INT,    0,   60,    1,   85,  78,    1,    1,    0,    0,    0,    0,    0 },
+    [xi.magic.spell.THUNDER_II    ] = { xi.mod.INT,   10,  178,    1,  200, 210,    2,  1.5,    1,    0,    0,    0,    0 },
+    [xi.magic.spell.THUNDER_III   ] = { xi.mod.INT,   20,  345,  1.5,  350, 381,  2.5,  2.5, 1.75,    1,    0,    0,    0 },
+    [xi.magic.spell.THUNDER_IV    ] = { xi.mod.INT,   20,  541,    2,  600, 626,  3.6,  3.5, 2.75, 1.95,    1,    0,    0 },
+    [xi.magic.spell.THUNDER_V     ] = { xi.mod.INT,   25,  874,  2.3,  900, 700,    4, 3.74, 3.75, 2.95, 1.95,    1,    0 }, -- I value Unknown. Guesstimate used.
+    [xi.magic.spell.THUNDER_VI    ] = { xi.mod.INT,    0, 1250,  2.5, 1250, 750,  4.5,  5.5,  4.5,  3.5, 2.75, 1.95,    1 }, -- I value Unknown. Guesstimate used.
     [xi.magic.spell.BURST         ] = { xi.mod.INT,    0,  552,    2,  700, 630,    2,    2,    2,    2,    2,    2,    2 },
     [xi.magic.spell.BURST_II      ] = { xi.mod.INT,   10,  710,    2,  800, 780,    2,    2,    2,    2,    2,    2,    2 },
-    [xi.magic.spell.WATER         ] = { xi.mod.INT,  0,   45,   1,   55,   50, 1.5, 1.0,    0,    0,    0,    0,    0 },
-    [xi.magic.spell.WATER_II      ] = { xi.mod.INT, 10,  145,   1,  160,  155, 2.5, 1.8,  1.0,    0,    0,    0,    0 },
-    [xi.magic.spell.WATER_III     ] = { xi.mod.INT, 20,  300, 1.5,  310,  320, 3.3, 2.7,  1.9,  1.0,    0,    0,    0 },
-    [xi.magic.spell.WATER_IV      ] = { xi.mod.INT, 20,  470,   2,  500,  505, 4.3, 3.7, 2.85, 1.97,  1.0,    0,    0 },
-    [xi.magic.spell.WATER_V       ] = { xi.mod.INT, 25,  760, 2.3,  800,  570, 5.0, 4.4,  3.9, 2.97, 1.97,  1.0,    0 },
-    [xi.magic.spell.WATER_VI      ] = { xi.mod.INT,  0, 1100, 2.5, 1100,  620, 5.6, 5.7,  4.7,  3.7, 2.85, 1.97,  1.0 },
+    [xi.magic.spell.WATER         ] = { xi.mod.INT,    0,   16,    1,   25,  25,  1.8,    1,    0,    0,    0,    0,    0 },
+    [xi.magic.spell.WATER_II      ] = { xi.mod.INT,   10,   95,    1,  120, 113,  2.8,  1.9,    1,    0,    0,    0,    0 },
+    [xi.magic.spell.WATER_III     ] = { xi.mod.INT,   20,  236,  1.5,  230, 265,  3.7,  2.9, 1.95,    1,    0,    0,    0 },
+    [xi.magic.spell.WATER_IV      ] = { xi.mod.INT,   20,  410,    2,  440, 440,  4.7,  3.9, 2.95, 1.99,    1,    0,    0 },
+    [xi.magic.spell.WATER_V       ] = { xi.mod.INT,   25,  680,  2.3,  700, 500,  5.6, 4.74, 3.95, 2.99, 1.99,    1,    0 }, -- I value Unknown. Guesstimate used.
+    [xi.magic.spell.WATER_VI      ] = { xi.mod.INT,    0, 1010,  1.5, 1010, 550,  6.5,  5.9,  4.9,  3.9, 2.95, 1.99,    1 }, -- I value Unknown. Guesstimate used.
     [xi.magic.spell.FLOOD         ] = { xi.mod.INT,    0,  552,    2,  700, 657,    2,    2,    2,    2,    2,    2,    2 },
     [xi.magic.spell.FLOOD_II      ] = { xi.mod.INT,   10,  710,    2,  800, 780,    2,    2,    2,    2,    2,    2,    2 },
     [xi.magic.spell.IMPACT        ] = { xi.mod.INT,    0,  932,  2.3,  932, 525,    0,    0,    0,    0,    0,    0,    0 }, -- I value unknown. Guesstimate used.
@@ -724,74 +723,8 @@ xi.spells.damage.calculateDivineEmblemMultiplier = function(caster, skillType)
     return 1 + caster:getSkillLevel(xi.skill.DIVINE_MAGIC) / 100
 end
 
--- Holy Retribution: granted when Sentinel expires after absorbing physical hits. Next Holy/Banish/Flash deals 10-100% bonus damage.
-xi.spells.damage.calculateHolyRetributionMultiplier = function(caster, skillType)
-    if not caster:hasStatusEffect(xi.effect.HOLY_RETRIBUTION) then
-        return 1
-    end
-
-    if skillType ~= xi.skill.DIVINE_MAGIC then
-        return 1
-    end
-
-    local stacks = caster:getStatusEffect(xi.effect.HOLY_RETRIBUTION):getPower()
-    caster:delStatusEffect(xi.effect.HOLY_RETRIBUTION)
-
-    return 1 + (stacks * 0.1)
-end
-
--- Aura of Radiance: granted when Divine Seal is consumed by a cure. Next Holy/Banish deals 150% damage.
-xi.spells.damage.calculateAuraOfRadianceMultiplier = function(caster, skillType)
-    if not caster:hasStatusEffect(xi.effect.AURA_OF_RADIANCE) then
-        return 1
-    end
-
-    if skillType ~= xi.skill.DIVINE_MAGIC then
-        return 1
-    end
-
-    caster:delStatusEffect(xi.effect.AURA_OF_RADIANCE)
-
-    return 1.5
-end
-
--- Arcane Echo: granted when Elemental Seal is consumed. Next spell of the same element deals 150% damage.
--- Must be checked BEFORE calculateEnhancedElementalSealMultiplier so an existing echo is consumed
--- before a new one can be granted on the same cast.
-xi.spells.damage.calculateArcaneEchoMultiplier = function(caster, skillType, spellElement)
-    if not caster:hasStatusEffect(xi.effect.ARCANE_ECHO) then
-        return 1
-    end
-
-    if skillType ~= xi.skill.ELEMENTAL_MAGIC then
-        return 1
-    end
-
-    local echoEffect = caster:getStatusEffect(xi.effect.ARCANE_ECHO)
-    if echoEffect:getPower() ~= spellElement then
-        return 1
-    end
-
-    caster:delStatusEffect(xi.effect.ARCANE_ECHO)
-
-    return 1.5
-end
-
--- BRD Threnody vulnerability stacks (stored in target local vars by threnody.lua).
--- Each stack = +5% bonus damage from the matching element. All stacks consumed on hit.
-xi.spells.damage.calculateThrenodyVulnerabilityMultiplier = function(caster, target, spellElement)
-    if not target then return 1 end
-    if spellElement <= xi.element.NONE then return 1 end
-    local key    = 'THRENODY_STACKS_' .. tostring(spellElement)
-    local stacks = target:getLocalVar(key)
-    if stacks <= 0 then return 1 end
-    target:setLocalVar(key, 0)
-    return 1 + stacks * 0.05
-end
-
 -- Elemental seal applies its own multiplier to spells when Laevateinn is equipped,
 -- or some other source of ENHANCES_ELEMENTAL_SEAL is available to the caster.
--- Also consumes Elemental Seal and grants Arcane Echo for the follow-up spell.
 xi.spells.damage.calculateEnhancedElementalSealMultiplier = function(caster, skillType, spellElement)
     if not caster:hasStatusEffect(xi.effect.ELEMENTAL_SEAL) then
         return 1
@@ -804,9 +737,6 @@ xi.spells.damage.calculateEnhancedElementalSealMultiplier = function(caster, ski
     if spellElement <= xi.element.NONE then
         return 1
     end
-
-    caster:delStatusEffect(xi.effect.ELEMENTAL_SEAL)
-    caster:addStatusEffect(xi.effect.ARCANE_ECHO, { power = spellElement, duration = 30, origin = caster })
 
     return 1 + caster:getMod(xi.mod.ENHANCES_ELEMENTAL_SEAL) / 100
 end
@@ -824,35 +754,6 @@ xi.spells.damage.calculateEbullienceMultiplier = function(caster, spellGroup)
     caster:delStatusEffectSilent(xi.effect.EBULLIENCE)
 
     return 1.2 + caster:getMod(xi.mod.EBULLIENCE_AMOUNT) / 100
-end
-
--- Chainspell Convergence: during Chainspell, elemental spells matching the active enspell's element deal 130% damage.
-xi.spells.damage.calculateChainspellConvergenceMultiplier = function(caster, skillType, spellElement)
-    if not caster:hasStatusEffect(xi.effect.CHAINSPELL) then
-        return 1
-    end
-
-    if skillType ~= xi.skill.ELEMENTAL_MAGIC then
-        return 1
-    end
-
-    if spellElement <= xi.element.NONE then
-        return 1
-    end
-
-    local enspellMod = caster:getMod(xi.mod.ENSPELL)
-    if enspellMod <= 0 then
-        return 1
-    end
-
-    -- Tier 2 enspells store element + 8; normalise to the base element for comparison
-    local enspellElement = (enspellMod > 8) and (enspellMod - 8) or enspellMod
-
-    if enspellElement ~= spellElement then
-        return 1
-    end
-
-    return 1.3
 end
 
 -- CUSTOM function supported in settings.
@@ -930,74 +831,6 @@ xi.spells.damage.calculateNinjutsuMultiplier = function(caster, target, skillTyp
     end
 
     return 1 + caster:getMod(xi.mod.NIN_NUKE_BONUS_INNIN) / 100
-end
-
--- NIN Blade Dance: melee hits from behind while Innin is active build stacks (max 5).
--- Consuming those stacks while casting ninjutsu from behind amplifies the hit by +8% per stack.
-xi.spells.damage.calculateBladeDanceMultiplier = function(caster, target, skillType)
-    if skillType ~= xi.skill.NINJUTSU then
-        return 1
-    end
-
-    if not caster:hasStatusEffect(xi.effect.INNIN) then
-        return 1
-    end
-
-    if not caster:isBehind(target, 23) then
-        return 1
-    end
-
-    local stacks = caster:getLocalVar('BLADE_DANCE_STACKS')
-
-    if stacks <= 0 then
-        return 1
-    end
-
-    caster:setLocalVar('BLADE_DANCE_STACKS', 0)
-
-    return 1 + stacks * 0.08
-end
-
--- NIN Yonin Aggressive Evasion: Yonin's decaying power (30→10) grants a matching ninjutsu bonus.
--- At full power: +30% ninjutsu damage. At minimum: +10%.
-xi.spells.damage.calculateYoninOffensiveMultiplier = function(caster, skillType)
-    if skillType ~= xi.skill.NINJUTSU then
-        return 1
-    end
-
-    local yoninEffect = caster:getStatusEffect(xi.effect.YONIN)
-
-    if not yoninEffect then
-        return 1
-    end
-
-    return 1 + yoninEffect:getPower() / 100
-end
-
--- NIN Elemental Scar: ninjutsu always stamps an elemental scar on the target (35s).
--- If the target already carries a matching scar the hit deals +25% bonus damage.
--- Scar is always overwritten with the current spell's element.
-xi.spells.damage.calculateElementalScarMultiplier = function(caster, target, skillType, spellElement)
-    if skillType ~= xi.skill.NINJUTSU then
-        return 1
-    end
-
-    if spellElement <= xi.element.NONE then
-        return 1
-    end
-
-    local multiplier = 1
-
-    local scarEffect = target:getStatusEffect(xi.effect.ELEMENTAL_SCAR)
-
-    if scarEffect and scarEffect:getPower() == spellElement then
-        multiplier = 1.25
-    end
-
-    target:delStatusEffect(xi.effect.ELEMENTAL_SCAR)
-    target:addStatusEffect(xi.effect.ELEMENTAL_SCAR, { power = spellElement, duration = 35, origin = caster })
-
-    return multiplier
 end
 
 xi.spells.damage.calculateUndeadDivinePenalty = function(target, skillType)
@@ -1301,20 +1134,12 @@ xi.spells.damage.useDamageSpell = function(caster, target, spell)
     local criticalDamageMultiplier  = xi.spells.damage.calculateMagicCriticalMultiplier(caster)
     local divineSealMultiplier      = xi.spells.damage.calculateDivineSealMultiplier(caster, target, skillType)
     local divineEmblemMultiplier    = xi.spells.damage.calculateDivineEmblemMultiplier(caster, skillType)
-    local holyRetributionMultiplier = xi.spells.damage.calculateHolyRetributionMultiplier(caster, skillType)
-    local auraOfRadianceMultiplier  = xi.spells.damage.calculateAuraOfRadianceMultiplier(caster, skillType)
-    local arcaneEchoMultiplier      = xi.spells.damage.calculateArcaneEchoMultiplier(caster, skillType, spellElement)
-    local eleSealMultiplier                = xi.spells.damage.calculateEnhancedElementalSealMultiplier(caster, skillType, spellElement)
-    local ebullienceMultiplier             = xi.spells.damage.calculateEbullienceMultiplier(caster, spellGroup)
-    local chainspellConvergenceMultiplier  = xi.spells.damage.calculateChainspellConvergenceMultiplier(caster, skillType, spellElement)
-    local threnodyVulnMultiplier           = xi.spells.damage.calculateThrenodyVulnerabilityMultiplier(caster, target, spellElement)
+    local eleSealMultiplier         = xi.spells.damage.calculateEnhancedElementalSealMultiplier(caster, skillType, spellElement)
+    local ebullienceMultiplier      = xi.spells.damage.calculateEbullienceMultiplier(caster, spellGroup)
     local skillTypeMultiplier       = xi.spells.damage.calculateSkillTypeMultiplier(skillType)
     local ninSkillBonus             = xi.spells.damage.calculateNinSkillBonus(caster, spellId, skillType)
     local ninFutaeBonus             = xi.spells.damage.calculateNinFutaeBonus(caster, skillType)
     local ninjutsuMultiplier        = xi.spells.damage.calculateNinjutsuMultiplier(caster, target, skillType)
-    local bladeDanceMultiplier      = xi.spells.damage.calculateBladeDanceMultiplier(caster, target, skillType)
-    local yoninOffensiveMultiplier  = xi.spells.damage.calculateYoninOffensiveMultiplier(caster, skillType)
-    local elementalScarMultiplier   = xi.spells.damage.calculateElementalScarMultiplier(caster, target, skillType, spellElement)
     local undeadDivinePenalty       = xi.spells.damage.calculateUndeadDivinePenalty(target, skillType)
     local scarletDeliriumMultiplier = xi.combat.damage.scarletDeliriumMultiplier(caster)
     local helixMeritMultiplier      = xi.spells.damage.calculateHelixMeritMultiplier(caster, spellId)
@@ -1332,22 +1157,14 @@ xi.spells.damage.useDamageSpell = function(caster, target, spell)
     finalDamage = math.floor(finalDamage * magicBonusDiff)
     finalDamage = math.floor(finalDamage * criticalDamageMultiplier)
     finalDamage = math.floor(finalDamage * targetMagicDamageAdjustment)
-    finalDamage = math.floor(finalDamage * holyRetributionMultiplier)
     finalDamage = math.floor(finalDamage * divineSealMultiplier)
     finalDamage = math.floor(finalDamage * divineEmblemMultiplier)
-    finalDamage = math.floor(finalDamage * auraOfRadianceMultiplier)
-    finalDamage = math.floor(finalDamage * arcaneEchoMultiplier)
     finalDamage = math.floor(finalDamage * eleSealMultiplier)
     finalDamage = math.floor(finalDamage * ebullienceMultiplier)
-    finalDamage = math.floor(finalDamage * chainspellConvergenceMultiplier)
-    finalDamage = math.floor(finalDamage * threnodyVulnMultiplier)
     finalDamage = math.floor(finalDamage * skillTypeMultiplier)
     finalDamage = math.floor(finalDamage * ninSkillBonus)
     finalDamage = math.floor(finalDamage * ninFutaeBonus)
     finalDamage = math.floor(finalDamage * ninjutsuMultiplier)
-    finalDamage = math.floor(finalDamage * bladeDanceMultiplier)
-    finalDamage = math.floor(finalDamage * yoninOffensiveMultiplier)
-    finalDamage = math.floor(finalDamage * elementalScarMultiplier)
     finalDamage = math.floor(finalDamage * undeadDivinePenalty)
     finalDamage = math.floor(finalDamage * scarletDeliriumMultiplier)
     finalDamage = math.floor(finalDamage * helixMeritMultiplier)

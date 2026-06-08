@@ -11,6 +11,7 @@ zoneObject.onInitialize = function(zone)
 
     xi.helm.initZone(zone, xi.helmType.LOGGING)
     xi.darkRider.addHoofprints(zone)
+    xi.fate.onZoneInitialize(zone, zone:getID())
 
     -- All of these apply weight and/or haste
     zone:registerCylindricalTriggerArea(1, 457.4, -306.8, 7.5) -- K-8 North
@@ -51,6 +52,12 @@ zoneObject.afterZoneIn = function(player)
     player:entityVisualPacket('2pb1')
     player:entityVisualPacket('1pd1')
     player:entityVisualPacket('2pc1')
+    xi.fate.checkSyncOnZoneIn(player)
+    xi.fate.sendAddonDef(player, player:getZoneID())
+end
+
+zoneObject.onZoneTick = function(zone)
+    xi.fate.tick(zone, zone:getID())
 end
 
 local function triggerZikkoSpawnAttempt(player)
@@ -105,6 +112,12 @@ zoneObject.onTriggerAreaEnter = function(player, triggerArea)
     if triggerAreaID == 9 then
         triggerZikkoSpawnAttempt(player)
     end
+
+    xi.fate.onAreaEnter(player, triggerArea, player:getZoneID())
+end
+
+zoneObject.onTriggerAreaLeave = function(player, triggerArea)
+    xi.fate.onAreaLeave(player, triggerArea, player:getZoneID())
 end
 
 zoneObject.onGameHour = function(zone)

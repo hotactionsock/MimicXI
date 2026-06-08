@@ -1,7 +1,7 @@
 -----------------------------------
 -- Penta Thrust
 -- Family: Humanoid Polearm Weaponskill
--- Description: Delivers a fivefold attack. Accuracy varies with TP.
+-- Description: Delivers a five-hit attack to a single target.
 -----------------------------------
 ---@type TMobSkill
 local mobskillObject = {}
@@ -15,13 +15,14 @@ mobskillObject.onMobWeaponSkill = function(mob, target, skill, action)
 
     params.baseDamage       = mob:getWeaponDmg()
     params.numHits          = 5
-    params.fTP              = { 1.0, 1.0, 1.0 }
-    -- params.str_wSC       = 0.2 -- TODO: Capture if mobskill weaponskills have wSC.
-    -- params.dex_wSC       = 0.2 -- TODO: Capture if mobskill weaponskills have wSC.
+    params.fTP              = { 1.0, 1.0, 1.0 } -- TODO: Capture fTPs
     params.attackType       = xi.attackType.PHYSICAL
     params.damageType       = xi.damageType.PIERCING
     params.shadowBehavior   = xi.mobskills.shadowBehavior.NUMSHADOWS_5
-    params.accuracyModifier = { 0, 30, 60 }
+    -- params.accuracyModifier = { 0, 0, 0 }
+    -- TODO: Accuracy modifier
+    -- Old ACC line: 0.8 + 0.1 * math.floor((tp - 1000) / 1000)
+    -- Assuming this was attempting to modify the hit rate but we now use raw accuracy values rather than directly modifying the hit rate.
 
     local info = xi.mobskills.mobPhysicalMove(mob, target, skill, action, params)
 

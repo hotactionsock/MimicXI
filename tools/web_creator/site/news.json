@@ -1,0 +1,30 @@
+[
+  {
+    "date":  "MAY 29",
+    "tag":   "PATCH",
+    "color": "gold",
+    "title": "Alpha 0.1 - FATEs",
+    "body":  "FATEs now active in South Gustaberg. Deploying to starting zones."
+  },
+  {
+    "date":  "MAY 18",
+    "tag":   "EVENT",
+    "color": "crimson",
+    "title": "Double Casket Weekend",
+    "body":  "Treasure Caskets drop at double rate from Friday reset through Sunday midnight server time. Gold Chests included. Bring friends."
+  },
+  {
+    "date":  "MAY 12",
+    "tag":   "SERVER",
+    "color": "teal",
+    "title": "Login server maintenance complete",
+    "body":  "Brief outage resolved. New character creation re-enabled. Thanks for your patience."
+  },
+  {
+    "date":  "MAY 04",
+    "tag":   "NEWS",
+    "color": "green",
+    "title": "Welcome to MimicXI Alpha",
+    "body":  "We're open. Join the Discord for install help and patch chatter — see you in Vana'diel."
+  }
+]

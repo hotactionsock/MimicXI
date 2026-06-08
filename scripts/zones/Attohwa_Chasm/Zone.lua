@@ -40,6 +40,16 @@ zoneObject.onInitialize = function(zone)
     zone:registerCylindricalTriggerArea(30, -385.349, -173.973, 5)
 
     xi.helm.initZone(zone, xi.helmType.EXCAVATION)
+    xi.fate.onZoneInitialize(zone, zone:getID())
+end
+
+zoneObject.afterZoneIn = function(player)
+    xi.fate.checkSyncOnZoneIn(player)
+    xi.fate.sendAddonDef(player, player:getZoneID())
+end
+
+zoneObject.onZoneTick = function(zone)
+    xi.fate.tick(zone, zone:getID())
 end
 
 zoneObject.onZoneIn = function(player, prevZone)
@@ -76,9 +86,12 @@ zoneObject.onTriggerAreaEnter = function(player, triggerArea)
             end
         end
     end
+
+    xi.fate.onAreaEnter(player, triggerArea, player:getZoneID())
 end
 
 zoneObject.onTriggerAreaLeave = function(player, triggerArea)
+    xi.fate.onAreaLeave(player, triggerArea, player:getZoneID())
 end
 
 zoneObject.onGameHour = function()

@@ -1,7 +1,7 @@
 -----------------------------------
 -- Vorpal Scythe
 -- Family: Humanoid Scythe Weaponskill
--- Description: Deals critical damage. Chance of critical hit varies with TP.
+-- Description: Delivers a single-hit attack
 -----------------------------------
 ---@type TMobSkill
 local mobskillObject = {}
@@ -15,13 +15,12 @@ mobskillObject.onMobWeaponSkill = function(mob, target, skill, action)
 
     params.baseDamage     = mob:getWeaponDmg()
     params.numHits        = 1
-    params.fTP            = { 1.0, 1.0, 1.0 }
-    -- params.str_wSC     = 0.35 -- TODO: Capture if mobskill weaponskills have wSC.
+    params.fTP            = { 1.0, 1.0, 1.0 } -- TODO: Capture fTPs
     params.attackType     = xi.attackType.PHYSICAL
     params.damageType     = xi.damageType.SLASHING
     params.shadowBehavior = xi.mobskills.shadowBehavior.NUMSHADOWS_1
     params.canCrit        = true
-    params.criticalChance = { 0.3, 0.6, 0.9 }
+    params.criticalChance = { 0.10, 0.20, 0.25 } -- TODO: Capture crit rate
 
     local info = xi.mobskills.mobPhysicalMove(mob, target, skill, action, params)
 

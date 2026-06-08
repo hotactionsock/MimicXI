@@ -1,144 +1,162 @@
 -----------------------------------
--- func: !quest
--- desc: List custom quest info
+-- func: quest <logid> <questid> optional <player-name>, logid and quest ids work by numbers or string.format
+-- desc: quest command built with menu control, can add/delete/complete quests, see status,
+-- see vars in the IF format of 'Prog', 'Option', 'Stage', 'Wait', 'Timer', etc.
+-- Can clear vars in the IF format
 -----------------------------------
+local logIdHelpers = require('scripts/globals/log_ids')
+-----------------------------------
+
+---@type TCommand
 local commandObj = {}
 
 commandObj.cmdprops =
 {
-    permission = 0,
-    parameters = 's'
+    permission = 1,
+    parameters = 'sss'
 }
-
------------------------------------
--- Retrieve item names
------------------------------------
-local vowel = set{ "a","e","i","o","u" }
-
-local function getItemName(itemID)
-    local result  = "unknown"
-    local itemObj = GetItemByID(itemID)
-
-    if itemObj == nil then
-        print(fmt("[LQS] Unknown item {}: {}", itemID, itemObj))
-        return result
-    end
-
-    result = string.gsub(itemObj:getName(), "_", " ")
-
-    if vowel[string.sub(result, 1, 1)] then
-        return "An " .. result
-    else
-        return "A " .. result
-    end
-end
 
 local function error(player, msg)
     player:printToPlayer(msg)
-    player:printToPlayer('!quest <name>')
+    player:printToPlayer('!quest <logId> <questId> {player}', xi.msg.channel.NS_LINKSHELL3)
 end
 
-commandObj.onTrigger = function(player, str)
-    if str ~= nil then
-        local questInfo = LQS.registry[string.lower(str)]
-
-        if questInfo == nil then
-            player:fmt("Quest not found.")
-            return
-        end
-
-        local status = player:getCharVar(questInfo.var)
-
-        player:fmt("=== Quest info ===")
-        player:fmt("{} (Author: {})", questInfo.name, questInfo.author)
-
-        if questInfo.reward ~= nil then
-            local str = "Reward: "
-
-            for index, rewardInfo in pairs(questInfo.reward) do
-                if type(rewardInfo) == "number" then
-                    str = str .. getItemName(rewardInfo)
-                else
-                    if rewardInfo.item ~= nil then
-                        if type(rewardInfo.item) == "table" then
-                            str = str .. getItemName(rewardInfo.item[1][1]) .. " x" .. rewardInfo.item[1][2]
-                        else
-                            str = str .. getItemName(rewardInfo.item)
-                        end
-
-                        if rewardInfo.augment ~= nil then
-                            str = str .. " (Augmented)"
-                        end
-
-                    elseif rewardInfo.gil ~= nil then
-                        str = str .. rewardInfo.gil .. " gil"
-                    end
-
-                    if index < #questInfo.reward then
-                        str = str .. ", "
-                    end
-                end
-            end
-
-            player:fmt(str)
-        end
-
-        local stepInfo = fmt("Current step: {}/{}", status, questInfo.finish)
-
-        if status < questInfo.finish then
-            if status <= 1 then
-                stepInfo = fmt("{} ({})", stepInfo, questInfo.hint[1])
-            else
-                stepInfo = fmt("{} ({})", stepInfo, questInfo.hint[status - 1])
-            end
-        else
-            stepInfo = fmt("{} (Completed)", stepInfo)
-        end
-
-        player:fmt("{}", stepInfo)
-
+commandObj.onTrigger = function(player, logId, questId, target)
+    -- validate logId
+    local questLog = logIdHelpers.getQuestLogInfo(logId)
+    if questLog == nil then
+        error(player, 'Invalid logID.')
         return
     end
 
-    local accepted  = {}
-    local available = {}
-    local completed = {}
+    local logName = questLog.full_name
+    logId = questLog.quest_log
 
-    for questName, questInfo in pairs(LQS.registry) do
-        local status = player:getCharVar(questInfo.var)
+    -- validate questId
+    local areaQuestIds = xi.quest.id[xi.quest.area[logId]]
+    if questId ~= nil then
+        questId = tonumber(questId) or areaQuestIds[string.upper(questId)]
+    end
 
-        if status == 1 then
-            table.insert(available, fmt("\129\158 {} ({}/{})", questInfo.name, status, questInfo.finish))
-        elseif status >= questInfo.finish then
-            table.insert(completed, fmt("\129\159 {} ({}/{})", questInfo.name, status, questInfo.finish))
-        else
-            table.insert(accepted,  fmt("\129\158 {} ({}/{})", questInfo.name, status, questInfo.finish))
+    if questId == nil or questId < 0 then
+        error(player, 'Invalid questID.')
+        return
+    end
+
+    -- validate target
+    local targ
+    if target == nil then
+        targ = player:getCursorTarget()
+        if targ == nil or not targ:isPC() then
+            targ = player
+        end
+    else
+        targ = GetPlayerByName(target)
+        if targ == nil then
+            error(player, string.format('Player named %s not found!', target, xi.msg.channel.NS_LINKSHELL3))
+            return
         end
     end
 
-    if #accepted > 0 then
-        player:fmt("=== Quests accepted ===")
+    local status = targ:getQuestStatus(logId, questId)
 
-        for _, row in pairs(accepted) do
-            player:fmt(row)
-        end
-    end
+    local menu =
+    {
+        title = 'Quest Menu',
+        onStart = function(playerArg)
+            local statusName = 'Error'
+            switch (status): caseof
+            {
+                [0] = function(x)
+                    statusName = 'AVAILABLE'
+                end,
 
-    if #available > 0 then
-        player:fmt("=== Quests available ===")
+                [1] = function(x)
+                    statusName = 'ACCEPTED'
+                end,
 
-        for _, row in pairs(available) do
-            player:fmt(row)
-        end
-    end
+                [2] = function(x)
+                    statusName = 'COMPLETED'
+                end,
+            }
+            playerArg:printToPlayer(string.format('Player %s status for %s quest ID %i is: %s', targ:getName(), logName, questId, statusName), xi.msg.channel.NS_LINKSHELL3)
+            playerArg:printToPlayer(string.format('Player %s variables for %s Quest %i are:', targ:getName(), logName, questId), xi.msg.channel.NS_LINKSHELL3)
 
-    if #completed > 0 then
-        player:fmt("=== Quests completed ===")
+            local targetQuest = xi.quest.getVarPrefix(logId, questId)
+            local questVars   = targ:getCharVarsWithPrefix(targetQuest)
+            local count       = 0
 
-        for _, row in pairs(completed) do
-            player:fmt(row)
-        end
-    end
+            for tag, value in pairs(questVars) do
+                playerArg:printToPlayer(string.format('%s = %s', tag, value), xi.msg.channel.NS_LINKSHELL3)
+                count = count + 1
+            end
+
+            if count == 0 then
+                playerArg:printToPlayer('No variables found.', xi.msg.channel.NS_LINKSHELL3)
+            end
+        end,
+
+        options =
+        {
+            {
+                'Add Quest',
+                function(playerArg)
+                    if status == xi.questStatus.QUEST_ACCEPTED then
+                        playerArg:printToPlayer(string.format('Quest %s %i is already Accepted on %s', logName, questId, targ:getName()), xi.msg.channel.NS_LINKSHELL3)
+                        return
+                    elseif status == xi.questStatus.QUEST_COMPLETED then
+                        targ:delQuest(logId, questId)
+                        playerArg:printToPlayer(string.format('Quest was in Completed status'), xi.msg.channel.NS_LINKSHELL3)
+                    end
+
+                    targ:addQuest(logId, questId)
+                    playerArg:printToPlayer(string.format('Added %s quest %i to %s.', logName, questId, targ:getName()), xi.msg.channel.NS_LINKSHELL3)
+                end,
+            },
+            {
+                'Complete Quest',
+                function(playerArg)
+                    if status == xi.questStatus.QUEST_COMPLETED then
+                        playerArg:printToPlayer(string.format('Quest %s %i is already Completed', logName, questId), xi.msg.channel.NS_LINKSHELL3)
+                        return
+                    elseif status == xi.questStatus.QUEST_AVAILABLE then
+                        targ:addQuest(logId, questId)
+                        playerArg:printToPlayer(string.format('Quest was in the Available status'), xi.msg.channel.NS_LINKSHELL3)
+                    end
+
+                    targ:completeQuest(logId, questId)
+                    playerArg:printToPlayer(string.format('Completed %s Quest with ID %u for %s', logName, questId, targ:getName()), xi.msg.channel.NS_LINKSHELL3)
+                end,
+            },
+            {
+                'Delete Quest',
+                function(playerArg)
+                    if status == xi.questStatus.QUEST_AVAILABLE then
+                        playerArg:printToPlayer(string.format('Quest %s %i is already in Available status', logName, questId), xi.msg.channel.NS_LINKSHELL3)
+                        return
+                    end
+
+                    targ:delQuest(logId, questId)
+                    playerArg:printToPlayer(string.format('Deleted %s quest %i from %s.', logName, questId, targ:getName()), xi.msg.channel.NS_LINKSHELL3)
+                end,
+            },
+            {
+                'Clear Vars',
+                function(playerArg)
+                    targ:clearVarsWithPrefix(xi.quest.getVarPrefix(logId, questId))
+                    playerArg:printToPlayer(string.format('Player %s variables for %s Quest %i are cleared', targ:getName(), logName, questId), xi.msg.channel.NS_LINKSHELL3)
+                end,
+            },
+        },
+
+        onCancelled = function(playerArg)
+            playerArg:printToPlayer('Quest Menu Cancelled', xi.msg.channel.NS_LINKSHELL3)
+        end,
+
+        onEnd = function(playerArg)
+        end,
+    }
+    player:customMenu(menu)
 end
 
 return commandObj
