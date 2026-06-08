@@ -103,6 +103,7 @@ local function sbPersonalCoolKey(id) return string.format("[SBOSS][%s]Personal",
 
 local function momentumKey(z)        return string.format("[FATE][%d]Streak",          z)        end  -- server var, consecutive victories
 local function dynDiffKey(z, i)      return string.format("[FATE][%d][%d]DynDiff",     z, i)     end  -- server var, dynamic difficulty tier
+local function collectCountKey(z, i) return string.format("[FATE][%d][%d]CollectN",    z, i)     end  -- char var, personal collection count
 
 -----------------------------------
 -- Scaling
@@ -682,7 +683,9 @@ xi.fate.onKill = function(mob, player, zoneID, eventIdx)
         end
     end
 
-    if kills >= target then
+    -- Collect FATEs run for their full duration regardless of mob kills.
+    local objType = def.objective and def.objective.type or "kill"
+    if kills >= target and objType ~= "collect" then
         xi.fate.resolve(zoneID, eventIdx, true)
     end
 end
@@ -702,26 +705,53 @@ xi.fate.onCollect = function(player, npc, zoneID, eventIdx)
         xi.fate.register(player, zoneID, eventIdx)
     end
 
+    -- Mark this point as taken; it will respawn after 15 seconds.
     npc:setLocalVar("fateCollected", 1)
     npc:setStatus(xi.status.DISAPPEAR)
 
-    xi.fate.addScore(player, zoneID, eventIdx, "ws", SCORE_KILL)
-
-    local collected = GetVolatileServerVariable(killKey(zoneID, eventIdx)) + 1
-    SetVolatileServerVariable(killKey(zoneID, eventIdx), collected)
-    xi.fate.broadcastEventSync(zoneID, eventIdx)
-
-    local total = def.objective.count
-    local zone  = GetZone(zoneID)
-    if zone then
-        for _, p in pairs(zone:getPlayers()) do
-            p:printToPlayer(string.format("[FATE] %s — %d/%d recovered!", def.name, collected, total), xi.msg.channel.SYSTEM_3)
+    -- Give the collection item directly to the player.
+    if def.collectItem then
+        if player:getFreeSlotsCount() > 0 then
+            npcUtil.giveItem(player, def.collectItem)
+        else
+            player:printToPlayer("[FATE] Your inventory is full — collection item lost!", xi.msg.channel.SYSTEM_3)
         end
     end
 
-    if collected >= total then
-        xi.fate.resolve(zoneID, eventIdx, true)
+    -- Track each player's personal collection count (determines their tier at resolution).
+    player:incrementCharVar(collectCountKey(zoneID, eventIdx), 1)
+    local personal = player:getCharVar(collectCountKey(zoneID, eventIdx))
+
+    xi.fate.addScore(player, zoneID, eventIdx, "ws", SCORE_KILL)
+    xi.fate.broadcastEventSync(zoneID, eventIdx)
+
+    -- Show this player their personal progress and current tier standing.
+    local tiers = def.collectTiers or { gold = 10, silver = 5, bronze = 1 }
+    local tier
+    if     personal >= tiers.gold   then tier = "Gold"
+    elseif personal >= tiers.silver then tier = "Silver"
+    elseif personal >= tiers.bronze then tier = "Bronze"
     end
+    if tier then
+        player:printToPlayer(
+            string.format("[FATE] %s recovered — %d collected. Tier: %s!", def.collectName or "Item", personal, tier),
+            xi.msg.channel.SYSTEM_3)
+    else
+        player:printToPlayer(
+            string.format("[FATE] %s recovered — %d collected. Reach %d for Bronze.",
+                def.collectName or "Item", personal, tiers.bronze),
+            xi.msg.channel.SYSTEM_3)
+    end
+
+    -- Respawn this collection point after 15 seconds (if FATE still active).
+    npc:timer(15000, function(n)
+        local zID = n:getLocalVar("fateZoneID")
+        local i   = n:getLocalVar("fateEventIdx")
+        if xi.fate.isActive(zID, i) then
+            n:setLocalVar("fateCollected", 0)
+            n:setStatus(xi.status.NORMAL)
+        end
+    end)
 end
 
 -----------------------------------
@@ -876,8 +906,20 @@ local function assignBandsAndRewards(zoneID, eventIdx, eventDef, victory)
         if PlayerHasValidSession(playerID) then
             local player = GetPlayerByID(playerID)
             if player then
-                local score = player:getCharVar(scoreKey(zoneID, eventIdx))
-                local band  = xi.fate.calcBand(score)
+                local band
+                if eventDef.objective and eventDef.objective.type == "collect" then
+                    -- Collect FATEs: band is determined by each player's personal item count.
+                    local count  = player:getCharVar(collectCountKey(zoneID, eventIdx))
+                    local tiers  = eventDef.collectTiers or { gold = 10, silver = 5, bronze = 1 }
+                    if     count >= tiers.gold   then band = 3
+                    elseif count >= tiers.silver then band = 2
+                    elseif count >= tiers.bronze then band = 1
+                    else                              band = 0
+                    end
+                else
+                    local score = player:getCharVar(scoreKey(zoneID, eventIdx))
+                    band = xi.fate.calcBand(score)
+                end
                 player:setCharVar(bandKey(zoneID, eventIdx), band)
 
                 local tierNames = { "Bronze", "Silver", "Gold" }
@@ -1192,6 +1234,7 @@ xi.fate.activate = function(zone, eventDef, zoneID, eventIdx)
     ClearCharVarFromAll(lootedKey(zoneID, eventIdx))
     ClearCharVarFromAll(lootCountKey(zoneID, eventIdx))
     ClearCharVarFromAll(lootIdxKey(zoneID, eventIdx))
+    ClearCharVarFromAll(collectCountKey(zoneID, eventIdx))
     for s = 1, MAX_LOOT_SLOTS do
         ClearCharVarFromAll(lootSlotKey(zoneID, eventIdx, s))
     end
@@ -1232,6 +1275,10 @@ xi.fate.activate = function(zone, eventDef, zoneID, eventIdx)
                 c:setStatus(xi.status.NORMAL)
             end
         end
+        -- Spawn optional atmosphere/guard mobs if defined alongside the collect points.
+        if eventDef.mobs then
+            xi.fate.spawnMobs(zoneID, eventIdx)
+        end
     else
         xi.fate.spawnMobs(zoneID, eventIdx)
     end
@@ -1244,7 +1291,9 @@ xi.fate.activate = function(zone, eventDef, zoneID, eventIdx)
             local i   = npc:getLocalVar("fateEventIdx")
             local zID = npc:getLocalVar("fateZoneID")
             if xi.fate.isActive(zID, i) then
-                xi.fate.resolve(zID, i, false)
+                local d         = xi.fate.getEventDef(zID, i)
+                local isCollect = d and d.objective and d.objective.type == "collect"
+                xi.fate.resolve(zID, i, isCollect == true)
             end
         end)
     end
@@ -2037,7 +2086,12 @@ xi.fate.tick = function(zone, zoneID)
             if state == STATE_ACTIVE then
                 xi.fate.onHealTickForEvent(zoneID, eventIdx)
                 if xi.fate.getRemaining(zoneID, eventIdx) <= 0 then
-                    xi.fate.resolve(zoneID, eventIdx, false, true)
+                    local isCollect = def.objective and def.objective.type == "collect"
+                    if isCollect then
+                        xi.fate.resolve(zoneID, eventIdx, true,  false)  -- collect: always victory
+                    else
+                        xi.fate.resolve(zoneID, eventIdx, false, true)   -- others: silent fail
+                    end
                 end
             elseif state == STATE_COOLDOWN then
                 if now >= GetServerVariable(cooldownKey(zoneID, eventIdx)) then

@@ -930,11 +930,15 @@ xi.fate.zones[xi.zone.SOUTH_GUSTABERG] =
 
         -----------------------------------
         -- Reclaim the Spoils
-        -- Collection FATE: goblins dropped
-        -- stolen goods while fleeing after
-        -- the assault. Recover items scattered
-        -- across the area before they double
-        -- back to reclaim them.
+        -- Collection FATE: Goblins fled and
+        -- dropped stolen goods across the road.
+        -- Touch glowing piles to recover items
+        -- — each gives 1x directly to your
+        -- inventory. Points respawn every 15s.
+        -- Leftover goblin stragglers guard
+        -- the drops. Runs for the full
+        -- duration; no fail state.
+        -- Gold: 10 items, Silver: 5, Bronze: 1
         -----------------------------------
         {
             id          = "SG_COLLECT_01",
@@ -944,36 +948,68 @@ xi.fate.zones[xi.zone.SOUTH_GUSTABERG] =
             chainOnly   = false,
             progressVal = 1,
 
-            objective     = { type = "collect", count = 6 },
+            objective     = { type = "collect" },
+            collectItem   = xi.item.GOBLIN_ARMOR,   -- item awarded per collection point
             collectName   = "Stolen Goods",
+            collectTiers  = { gold = 10, silver = 5, bronze = 1 },
 
             area = { -95, 10, -260, 100 },
 
             entryPos = { -91.489, 11.053, -260.794, 120 }, -- !pos -91.489 11.053 -260.794 107
 
+            -- 20 collection points scattered across the area.
+            -- All positions are approximate — TODO: survey in-game.
             collectPoints =
             {
-                { -88,  10, -268, 143 }, -- !pos -88 10 -268 107   TODO: survey in-game
-                { -108, 10, -268, 143 }, -- !pos -108 10 -268 107
-                { -95,  10, -248, 143 }, -- !pos -95 10 -248 107
-                { -95,  10, -288, 143 }, -- !pos -95 10 -288 107
-                { -75,  10, -260, 143 }, -- !pos (approx)
-                { -115, 10, -260, 143 }, -- !pos (approx)
+                { -72,  10, -252, 180 },   -- north-east cluster
+                { -80,  10, -250, 200 },
+                { -88,  10, -248, 143 },
+                { -100, 10, -246, 100 },
+                { -110, 10, -250, 60  },
+                { -115, 10, -258, 30  },   -- west edge
+                { -118, 10, -268, 10  },
+                { -112, 10, -278, 340 },
+                { -100, 10, -286, 300 },
+                { -88,  10, -290, 280 },   -- south cluster
+                { -76,  10, -288, 260 },
+                { -68,  10, -278, 240 },
+                { -65,  10, -265, 220 },   -- south-east
+                { -70,  10, -255, 200 },
+                { -80,  10, -260, 160 },   -- centre
+                { -95,  10, -260, 120 },
+                { -105, 10, -260, 80  },
+                { -95,  10, -272, 100 },
+                { -85,  10, -272, 140 },
+                { -95,  10, -248, 90  },   -- north centre
+            },
+
+            -- Goblin stragglers guarding the drops.
+            -- noCount = true so they don't interfere with any kill objective.
+            mobs =
+            {
+                {
+                    base        = { 107, 13 },
+                    name        = string.char(0xA6) .. "Goblin Straggler",
+                    count       = 4,
+                    noCount     = true,
+                    spawnPoints =
+                    {
+                        { -80,  10, -268, 143 },
+                        { -110, 10, -268, 30  },
+                        { -95,  10, -280, 100 },
+                        { -95,  10, -245, 160 },
+                    },
+                },
             },
 
             rewards =
             {
+                -- No fail rewards — this FATE always resolves as victory.
                 victory =
                 {
-                    gold   = { exp = 400 },
-                    silver = { exp = 200 },
+                    gold   = { exp = 600 },
+                    silver = { exp = 300 },
                     bronze = { exp = 100 },
-                },
-                fail =
-                {
-                    gold   = { exp = 100 },
-                    silver = { exp = 50  },
-                    bronze = { exp = 25  },
                 },
             },
 
@@ -984,17 +1020,10 @@ xi.fate.zones[xi.zone.SOUTH_GUSTABERG] =
                     guaranteed = {},
                     bronze = { { xi.item.BONE_CHIP,           150 } },
                     silver = { { xi.item.BONE_CHIP,           150 },
-                               { xi.item.BRONZE_ORE,          100 } },
-                    gold   = { { xi.item.GOBLIN_ARMOR,        100 },
+                               { xi.item.CHUNK_OF_COPPER_ORE, 100 } },
+                    gold   = { { xi.item.GOBLIN_MASK,         100 },
                                { xi.item.BONE_CHIP,           150 },
-                               { xi.item.BRONZE_ORE,          150 } },
-                },
-                fail =
-                {
-                    guaranteed = {},
-                    bronze = {},
-                    silver = {},
-                    gold   = { { xi.item.BONE_CHIP,            50 } },
+                               { xi.item.CHUNK_OF_COPPER_ORE, 150 } },
                 },
             },
         },
