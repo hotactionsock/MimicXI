@@ -491,7 +491,7 @@ xi.effect =
     ASYLUM                   = 492,
     SUBTLE_SORCERY           = 493,
     STYMIE                   = 494,
-    -- NONE                       = 495,
+    MACRO_TEST               = 495,
     INTERVENE                = 496,
     SOUL_ENSLAVEMENT         = 497,
     UNLEASH                  = 498,
@@ -630,6 +630,8 @@ xi.effect =
     HAUNT                    = 631,
     BLACK_SANCTUS            = 632,
     ANIMATED                 = 633,
+    SERPENTS_GUILE           = 634,
+    RESOLVED                 = 635,
 
     -- Effect icons in packet can go from 0-767, so no custom effects should go in that range.
 
@@ -689,6 +691,16 @@ xi.effect =
     ZANSHIN_MOMENTUM         = 816, -- SAM: each Zanshin proc adds +5% TWOHAND haste (stacks to 15%, refreshes 10s timer)
     ELEMENTAL_SCAR           = 817, -- NIN: applied to target after a ninjutsu hit; matching element on next cast deals +25%; expires in 35s
 
+    -- TRUST Aura Effects
+    TRUST_AURA_CHR           = 807, -- CHR Aura, +9.7% Defense Bonus, +5 Magic Defense Bonus and +5 CHR at lv. 99, stacks with player Indi/Geo CHR.
+    TRUST_AURA_HASTE         = 808, -- HASTE Aura, Haste +20%, Accuracy +30, Ranged Accuracy +30 and Magic Accuracy +30 at lvl 99, stacks with player Indi/Geo HASTE.
+    TRUST_AURA_EXP           = 809, -- EXP Aura, +20% dedication effect for Experience Points and Capacity Points, stacks with other forms of dedication.
+    TRUST_AURA_ACC           = 810, -- ACC Aura, Accuracy+24, Ranged accuracy+24, and DEX+5 at lvl 99, stacks with player Indi/Geo PRECISION.
+    TRUST_AURA_REFRESH       = 811, -- REFRESH Aura, 3 MP/tick at lvl 99 stacks with player Indi/Geo REFRESH, also grants an increase to magical skill gain rate.
+    TRUST_AURA_REGEN         = 812, -- REGEN Aura, 6 HP/tick at lvl 99 stacks with player Indi/Geo REGEN. also grants an increase to physical combat skill gain rate.
+    TRUST_AURA_MAGIC_ATTACK  = 813, -- MATT Aura, Magic Attack Boost +19 and +19 Magic Accuracy boost at lvl 99, stacks with player Indi/Geo ACUMEN.
+    -- End of Trust Aura Effects
+
     DRACONIC_RESONANCE       = 818, -- DRG: each damaging jump adds stacks (1 or 2); consumed on polearm WS for +20% per stack (cap 3 stacks/+60%)
     WYVERN_BLESSING          = 819, -- DRG: granted when Healing Breath heals master; next WS deals bonus damage scaled to HP restored (cap +50%)
     BREACH                   = 820, -- DRG: granted when Angon lands; next jump deals +35% bonus damage
@@ -696,4 +708,8 @@ xi.effect =
 
     -- MAX_EFFECTID in src/map/status_effect.h is 822. Next available ID: 822.
     -- Bump MAX_EFFECTID and add a SQL row before adding new effects.
+    -- 789
+    -- 814-817 unused gap (reserved between trust aura and MimicXI custom effects)
+    -- 822-1022
+    -- PLACEHOLDER           = 1023 -- The client dat file seems to have only this many "slots", results of exceeding that are untested.
 }
