@@ -1,0 +1,109 @@
+name: Upstream Sync
+
+on:
+  schedule:
+    - cron: '0 3 1,15 * *'  # 03:00 UTC on the 1st and 15th of each month (~14 days)
+  workflow_dispatch:         # allow manual trigger at any time
+
+concurrency:
+  group: upstream-sync
+  cancel-in-progress: true
+
+jobs:
+  sync:
+    name: Sync base with LandSandBoat/server
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+      pull-requests: write
+
+    steps:
+      - name: Checkout base
+        uses: actions/checkout@v4
+        with:
+          ref: base
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Configure git
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Add upstream remote
+        run: git remote add upstream https://github.com/LandSandBoat/server.git
+
+      - name: Fetch upstream base
+        run: git fetch upstream base
+
+      - name: Check if sync is needed
+        id: check
+        run: |
+          BEHIND=$(git log --oneline base..upstream/base | wc -l | tr -d ' ')
+          echo "behind=$BEHIND" >> "$GITHUB_OUTPUT"
+          echo "Base is $BEHIND commits behind upstream."
+
+      - name: Attempt merge
+        if: steps.check.outputs.behind != '0'
+        id: merge
+        run: |
+          if git merge upstream/base --no-edit; then
+            echo "clean=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "clean=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Push clean merge to base
+        if: steps.check.outputs.behind != '0' && steps.merge.outputs.clean == 'true'
+        run: |
+          BEHIND=${{ steps.check.outputs.behind }}
+          git push origin base
+          echo "### Upstream sync complete" >> "$GITHUB_STEP_SUMMARY"
+          echo "Merged **$BEHIND** upstream commits into \`base\` cleanly." >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Push conflict branch and open PR
+        if: steps.check.outputs.behind != '0' && steps.merge.outputs.clean == 'false'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          BRANCH="upstream-sync/$(date +%Y-%m-%d)"
+          # Resolve by accepting all of ours for the conflicted files so we
+          # can at least get the branch pushed; the PR description lists what
+          # needs manual attention.
+          CONFLICTED=$(git diff --name-only --diff-filter=U)
+          echo "Conflicted files:"
+          echo "$CONFLICTED"
+          git checkout --ours $CONFLICTED
+          git add $CONFLICTED
+          git commit -m "chore: upstream sync $(date +%Y-%m-%d) (conflicts need manual resolution)"
+          git push origin HEAD:"$BRANCH"
+
+          BEHIND=${{ steps.check.outputs.behind }}
+          CONFLICT_LIST=$(echo "$CONFLICTED" | sed 's/^/- /')
+
+          gh pr create \
+            --base base \
+            --head "$BRANCH" \
+            --title "chore: upstream sync $(date +%Y-%m-%d) — manual conflict resolution needed" \
+            --body "$(cat <<EOF
+## Upstream sync — $(date +%Y-%m-%d)
+
+Attempted to merge **$BEHIND** commits from [LandSandBoat/server:base](https://github.com/LandSandBoat/server) but the following files had conflicts and were left as **ours** (MimicXI wins by default):
+
+$CONFLICT_LIST
+
+### Action required
+Review each file above and apply any upstream changes that MimicXI should adopt, then merge this PR.
+
+_Triggered by the \`upstream_sync\` workflow._
+EOF
+)"
+          echo "### Upstream sync: conflicts detected" >> "$GITHUB_STEP_SUMMARY"
+          echo "PR opened for manual resolution. Conflicted files:" >> "$GITHUB_STEP_SUMMARY"
+          echo "$CONFLICTED" | sed 's/^/- /' >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Already up to date
+        if: steps.check.outputs.behind == '0'
+        run: |
+          echo "### Upstream sync: nothing to do" >> "$GITHUB_STEP_SUMMARY"
+          echo "\`base\` is already up to date with upstream." >> "$GITHUB_STEP_SUMMARY"
