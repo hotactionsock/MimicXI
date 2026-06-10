@@ -170,7 +170,7 @@ uint8 CTreasurePool::addItem(uint16 ItemID, CBaseEntity* PEntity, std::vector<st
     uint8             SlotID     = 0;
     uint8             FreeSlotID = -1;
     timer::time_point oldest     = timer::time_point::max();
-    CItem*            PNewItem   = itemutils::GetItemPointer(ItemID);
+    const CItem*      PNewItem   = xi::items::lookup(ItemID);
 
     if (!PNewItem)
     {
@@ -215,7 +215,7 @@ uint8 CTreasurePool::addItem(uint16 ItemID, CBaseEntity* PEntity, std::vector<st
         // find the oldest non-rare and non-ex item
         for (SlotID = 0; SlotID < 10; ++SlotID)
         {
-            CItem* PItem = itemutils::GetItemPointer(m_PoolItems[SlotID].ID);
+            const CItem* PItem = xi::items::lookup(m_PoolItems[SlotID].ID);
             if (PItem != nullptr && !PItem->hasFlag(ItemFlag::Rare | ItemFlag::Exclusive) && m_PoolItems[SlotID].TimeStamp < oldest)
             {
                 FreeSlotID = SlotID;
@@ -227,7 +227,7 @@ uint8 CTreasurePool::addItem(uint16 ItemID, CBaseEntity* PEntity, std::vector<st
             // find the oldest non-ex item
             for (SlotID = 0; SlotID < 10; ++SlotID)
             {
-                CItem* PItem = itemutils::GetItemPointer(m_PoolItems[SlotID].ID);
+                const CItem* PItem = xi::items::lookup(m_PoolItems[SlotID].ID);
                 if (PItem != nullptr && !PItem->hasFlag(ItemFlag::Exclusive) && m_PoolItems[SlotID].TimeStamp < oldest)
                 {
                     FreeSlotID = SlotID;
@@ -331,7 +331,7 @@ void CTreasurePool::lotItem(CCharEntity* PChar, uint8 SlotID, uint16 Lot)
         return;
     }
 
-    CItem* PItem = itemutils::GetItemPointer(m_PoolItems[SlotID].ID);
+    const CItem* PItem = xi::items::lookup(m_PoolItems[SlotID].ID);
     if (PItem == nullptr)
     {
         ShowWarning(fmt::format("Player {} is trying to lot on an item that doesn't exist (PItem was nullptr) (Packet injection?)!", PChar->getName()).c_str());
@@ -567,7 +567,7 @@ void CTreasurePool::checkTreasureItem(timer::time_point tick, uint8 SlotID)
             std::vector<CCharEntity*> candidates;
             for (auto& member : m_Members)
             {
-                if (charutils::HasItem(member, m_PoolItems[SlotID].ID) && itemutils::GetItemPointer(m_PoolItems[SlotID].ID)->hasFlag(ItemFlag::Rare))
+                if (charutils::HasItem(member, m_PoolItems[SlotID].ID) && xi::items::lookup(m_PoolItems[SlotID].ID)->hasFlag(ItemFlag::Rare))
                 {
                     continue;
                 }

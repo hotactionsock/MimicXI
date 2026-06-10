@@ -216,7 +216,9 @@ void PopulateIDLookupsByZone(Maybe<uint16> maybeZoneId = std::nullopt);
 void SendEntityVisualPacket(uint32 npcId, const char* command);
 void InitInteractionGlobal();
 auto GetZone(uint16 zoneId) -> CZone*;
-auto GetItemByID(uint32 itemId) -> CItem*;
+auto GetItemByID(uint32 itemId) -> const CItem*;
+auto GetItemFlagsByID(uint32 itemId) -> ItemFlag;
+auto GetItemLevelRequirementsByID(uint32 itemId) -> uint8;
 auto GetNPCByID(uint32 npcid, const sol::object& instanceObj) -> CBaseEntity*;
 auto GetMobByID(uint32 mobid, const sol::object& instanceObj) -> CBaseEntity*;
 auto GetEntityByID(uint32 mobid, const sol::object& instanceObj, const sol::object& arg3) -> CBaseEntity*;
@@ -233,7 +235,7 @@ void  SendLuaFuncStringToZone(uint16 requestingZoneId, uint16 executorZoneId, co
 void UpdateSanrakusMobs(); // Update sanraku's (ZNM) subject of interest and recommended fauna
 void ZNMPopPriceDecay();   // Price of ZNM pop items decay over time
 
-auto GetReadOnlyItem(uint32 id) -> CItem*; // Returns a read only lookup item object of the specified ID
+auto GetReadOnlyItem(uint32 id) -> const CItem*; // Returns a read only lookup item object of the specified ID
 auto GetAbility(uint16 id) -> CAbility*;
 auto GetSpell(uint16 id) -> CSpell*;
 
@@ -247,6 +249,12 @@ void DrawIn(CLuaBaseEntity* PLuaBaseEntity, const sol::table& table, float offse
 
 uint32 GetSystemTime();
 uint32 JstMidnight();
+
+auto LoadLinkshellConciergeSlots(uint16 zoneId) -> sol::table;
+void SetLinkshellConciergeSlot(uint16 zoneId, uint8 slotIndex, const sol::table& data);
+void DeleteLinkshellConciergeSlot(uint16 zoneId, uint8 slotIndex);
+void DecrementLinkshellConciergeMembersGoal(uint16 zoneId, uint32 linkshellid);
+
 uint32 JstDayOfTheYear();
 uint32 JstDayOfTheMonth();
 uint32 JstDayOfTheWeek();
@@ -323,14 +331,14 @@ void OnEffectGain(CBattleEntity* PEntity, CStatusEffect* StatusEffect);
 void OnEffectTick(CBattleEntity* PEntity, CStatusEffect* StatusEffect);
 void OnEffectLose(CBattleEntity* PEntity, CStatusEffect* StatusEffect);
 
-void OnAttachmentEquip(CBattleEntity* PEntity, CItemPuppet* attachment);
-void OnAttachmentUnequip(CBattleEntity* PEntity, CItemPuppet* attachment);
-void OnManeuverGain(CBattleEntity* PEntity, CItemPuppet* attachment, uint8 maneuvers);
-void OnManeuverLose(CBattleEntity* PEntity, CItemPuppet* attachment, uint8 maneuvers);
-void OnUpdateAttachment(CBattleEntity* PEntity, CItemPuppet* attachment, uint8 maneuvers);
+void OnAttachmentEquip(CBattleEntity* PEntity, const CItemPuppet* attachment);
+void OnAttachmentUnequip(CBattleEntity* PEntity, const CItemPuppet* attachment);
+void OnManeuverGain(CBattleEntity* PEntity, const CItemPuppet* attachment, uint8 maneuvers);
+void OnManeuverLose(CBattleEntity* PEntity, const CItemPuppet* attachment, uint8 maneuvers);
+void OnUpdateAttachment(CBattleEntity* PEntity, const CItemPuppet* attachment, uint8 maneuvers);
 
 int32 OnItemUse(CBaseEntity* PUser, CBaseEntity* PTarget, CItem* PItem, action_t& action);
-auto  OnItemCheck(CBaseEntity* PTarget, CItem* PItem, ITEMCHECK param = ITEMCHECK::NONE, CBaseEntity* PCaster = nullptr) -> std::tuple<int32, int32, int32>;
+auto  OnItemCheck(CBaseEntity* PTarget, CItem* PItem, CBaseEntity* PCaster = nullptr) -> std::tuple<int32, int32, int32>;
 void  OnItemDrop(CBaseEntity* PUser, CItem* PItem, IsRecycleBin recycleBin = IsRecycleBin::No);
 void  OnItemEquip(CBaseEntity* PUser, CItem* PItem);
 void  OnItemUnequip(CBaseEntity* PUser, CItem* PItem);

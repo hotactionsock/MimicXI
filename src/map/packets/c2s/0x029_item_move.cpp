@@ -111,8 +111,7 @@ const auto isValidMovement = [](const CCharEntity* PChar, const CONTAINER_ID fro
 {
     const CItem* PItem = PChar->getStorage(from)->GetItem(itemIndex);
 
-    // Always disallowed to move locked items or Gil.
-    if (!PItem || PItem->isSubType(ITEM_LOCKED) || PItem->getID() == ITEMID::GIL)
+    if (!PItem || PItem->isSubType(ITEM_LOCKED) || PItem->isBusy() || PItem->getID() == ITEMID::GIL)
     {
         return false;
     }
@@ -193,6 +192,7 @@ void GP_CLI_COMMAND_ITEM_MOVE::process(MapSession* PSession, CCharEntity* PChar)
 
             if (!PItem2 || PItem2->getID() != PItem->getID() ||
                 PItem2->isSubType(ITEM_LOCKED) ||
+                PItem2->isBusy() ||
                 PItem2->getReserve() > 0)
             {
                 ShowWarning("GP_CLI_COMMAND_ITEM_MOVE: Trying to unite items with invalid item %i at location %u slot %u",
@@ -225,7 +225,10 @@ void GP_CLI_COMMAND_ITEM_MOVE::process(MapSession* PSession, CCharEntity* PChar)
             return;
         }
 
-        if (uint8 newSlotId = PChar->getStorage(this->Category2)->InsertItem(PItem); newSlotId != ERROR_SLOTID)
+        auto* PSrc      = PChar->getStorage(this->Category1);
+        auto* PDst      = PChar->getStorage(this->Category2);
+        uint8 newSlotId = PSrc->MoveItemTo(this->ItemIndex1, *PDst);
+        if (newSlotId != ERROR_SLOTID)
         {
             const auto rset = db::preparedStmt("UPDATE char_inventory SET location = ?, slot = ? WHERE charid = ? AND location = ? AND slot = ?",
                                                this->Category2,
@@ -235,15 +238,13 @@ void GP_CLI_COMMAND_ITEM_MOVE::process(MapSession* PSession, CCharEntity* PChar)
                                                this->ItemIndex1);
             if (rset && rset->rowsAffected())
             {
-                PChar->getStorage(this->Category1)->InsertItem(nullptr, this->ItemIndex1);
-
-                PChar->pushPacket<GP_SERV_COMMAND_ITEM_ATTR>(nullptr, static_cast<CONTAINER_ID>(this->Category1), this->ItemIndex1, PItem);
-                PChar->pushPacket<GP_SERV_COMMAND_ITEM_ATTR>(PItem, static_cast<CONTAINER_ID>(this->Category2), newSlotId);
+                auto* PInserted = PDst->GetItem(newSlotId);
+                PChar->pushPacket<GP_SERV_COMMAND_ITEM_ATTR>(nullptr, static_cast<CONTAINER_ID>(this->Category1), this->ItemIndex1, PInserted);
+                PChar->pushPacket<GP_SERV_COMMAND_ITEM_ATTR>(PInserted, static_cast<CONTAINER_ID>(this->Category2), newSlotId);
             }
             else
             {
-                PChar->getStorage(this->Category2)->InsertItem(nullptr, newSlotId);
-                PChar->getStorage(this->Category1)->InsertItem(PItem, this->ItemIndex1);
+                PDst->MoveItemTo(newSlotId, *PSrc, this->ItemIndex1);
             }
         }
         else

@@ -283,6 +283,7 @@ void CBattlefield::ApplyLevelRestrictions(CCharEntity* PChar) const
         }
 
         PChar->StatusEffectContainer->DelStatusEffectsByFlag(EFFECTFLAG_DISPELABLE, EffectNotice::Silent);
+        PChar->StatusEffectContainer->DelStatusEffectSilent(EFFECT_RERAISE);
         PChar->StatusEffectContainer->AddStatusEffect(new CStatusEffect(EFFECT_LEVEL_RESTRICTION, EFFECT_LEVEL_RESTRICTION, cap, 0s, 0s));
     }
     else
@@ -706,6 +707,7 @@ bool CBattlefield::RemoveEntity(CBaseEntity* PEntity, uint8 leavecode)
 void CBattlefield::onTick(timer::time_point time)
 {
     TracyZoneScoped;
+
     if (!m_Attacked)
     {
         CheckInProgress();

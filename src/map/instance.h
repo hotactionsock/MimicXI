@@ -92,6 +92,8 @@ public:
     uint16 GetBackgroundMusicDay();
     uint16 GetBackgroundMusicNight();
 
+    auto overlayId() const -> uint32;
+
 private:
     void LoadInstance();
 
@@ -115,6 +117,7 @@ private:
     std::vector<uint32> m_registeredChars;
     std::set<uint32>    m_enteredChars;
     std::set<uint32>    m_exitedChars;
+    uint32              overlayId_{ 0 };
 
     std::unordered_map<std::string, uint64_t> localVars_;
 };

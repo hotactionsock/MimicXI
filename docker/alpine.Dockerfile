@@ -73,7 +73,8 @@ apk --update-cache add \
     python3-dev \
     samurai \
     zeromq-dev \
-    zlib-dev
+    zlib-dev \
+    zstd-dev
 EOF
 
 # Install secondary dependencies as user.
@@ -136,7 +137,6 @@ USER $UNAME
 # https://docs.docker.com/reference/dockerfile/#copy---exclude (docker/dockerfile:1.7-labs)
 COPY --chown=$UNAME:$UGROUP \
     --exclude=.git \
-    --exclude=losmeshes/** \
     --exclude=navmeshes/** \
     --exclude=ximeshes/** \
     --exclude=scripts \

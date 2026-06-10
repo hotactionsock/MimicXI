@@ -31,7 +31,6 @@
 #include "status_effect_container.h"
 #include "trade_container.h"
 #include "treasure_pool.h"
-#include "zone_mesh.h"
 
 #include "ai/ai_container.h"
 #include "ai/controllers/mob_controller.h"
@@ -49,6 +48,7 @@
 
 #include "battlefield.h"
 #include "enums/weather.h"
+#include "items/transactions/synth.h"
 #include "packets/s2c/0x05f_music.h"
 #include "utils/battleutils.h"
 #include "utils/charutils.h"
@@ -57,10 +57,13 @@
 #include "utils/synthutils.h"
 #include "utils/zoneutils.h"
 
+#include <map/ximesh/ximesh.h>
+
 namespace
 {
 
 constexpr auto DYNAMIC_ENTITY_TARGID_RANGE_START      = 0x700;
+constexpr auto DYNAMIC_ENTITY_TARGID_RANGE_MAX        = 0x8FF;
 constexpr auto ENTITY_RENDER_DISTANCE                 = 50.0f;
 constexpr auto ENTITY_VERTICAL_RENDER_DISTANCE        = 20.0f;
 constexpr auto VERTICAL_RENDER_DISTANCE_OFFSET        = 0.5f;
@@ -369,17 +372,35 @@ void CZoneEntities::FindPartyForMob(CBaseEntity* PEntity)
                 continue;
             }
 
-            if (
-                PCurrentMob->PParty && PCurrentMob->allegiance == PMob->allegiance &&
-                ((forceLink && PCurrentMob->ShouldForceLink()) ||
-                 (PCurrentMob->m_Link && PCurrentMob->m_Family == PMob->m_Family) ||
-                 (sublink && sublink == PCurrentMob->getMobMod(MOBMOD_SUBLINK))))
+            if (PCurrentMob->PParty == nullptr || PCurrentMob->allegiance != PMob->allegiance)
             {
-                if (PCurrentMob->PMaster == nullptr || PCurrentMob->PMaster->objtype == TYPE_MOB)
-                {
-                    PCurrentMob->PParty->AddMember(PMob);
-                    return;
-                }
+                continue;
+            }
+
+            // Determine if these mobs should be in the same party.
+            // Check SUPERLINK first in cases that forceLink is enables with SUPERLINK. (Like BCNMs/Dynamis)
+            // If no SUPERLINK then check if forceLink is enabled and the mob should force link.
+            // Otherwise, mobs link by family or sublink as normal.
+            bool  match     = false;
+            int16 superlink = PMob->getMobMod(MOBMOD_SUPERLINK);
+            if (superlink)
+            {
+                match = PCurrentMob->getMobMod(MOBMOD_SUPERLINK) == superlink;
+            }
+            else if (forceLink)
+            {
+                match = PCurrentMob->ShouldForceLink();
+            }
+            else
+            {
+                match = (PCurrentMob->m_Link && PCurrentMob->m_Family == PMob->m_Family) ||
+                        (sublink && sublink == PCurrentMob->getMobMod(MOBMOD_SUBLINK));
+            }
+
+            if (match && (PCurrentMob->PMaster == nullptr || PCurrentMob->PMaster->objtype == TYPE_MOB))
+            {
+                PCurrentMob->PParty->AddMember(PMob);
+                return;
             }
         }
         PMob->PParty = new CParty(PMob);
@@ -542,14 +563,13 @@ void CZoneEntities::DecreaseZoneCounter(CCharEntity* PChar)
     }
 
     // Duplicated from charUtils, it is theoretically possible through d/c magic to hit this block and not sendToZone
-    if (PChar->CraftContainer && PChar->CraftContainer->getItemsCount() > 0)
+    if (PChar->activeTransaction<SynthTransaction>())
     {
         charutils::forceSynthCritFail("DecreaseZoneCounter", PChar);
     }
 
     if (PChar->animation == ANIMATION_SYNTH)
     {
-        PChar->CraftContainer->setQuantity(0, synthutils::SYNTHESIS_FAIL);
         synthutils::sendSynthDone(PChar);
     }
 
@@ -595,10 +615,10 @@ void CZoneEntities::AssignDynamicTargIDandLongID(CBaseEntity* PEntity)
     // Step targid up linearly from 0x700 one by one to 0x8FF unless that ID is already occupied.
     uint16 targid = m_nextDynamicTargID;
 
-    // Wrap around 0x8FF to 0x700
-    if (targid > 0x8FF)
+    // Wrap around DYNAMIC_ENTITY_TARGID_RANGE_MAX (0x8FF) to DYNAMIC_ENTITY_TARGID_RANGE_START (0x700)
+    if (targid > DYNAMIC_ENTITY_TARGID_RANGE_MAX)
     {
-        targid = 0x700;
+        targid = DYNAMIC_ENTITY_TARGID_RANGE_START;
     }
 
     uint16 counter = 0;
@@ -608,10 +628,10 @@ void CZoneEntities::AssignDynamicTargIDandLongID(CBaseEntity* PEntity)
     {
         ++targid;
 
-        // Wrap around 0x8FF to 0x700
-        if (targid > 0x8FF)
+        // Wrap around DYNAMIC_ENTITY_TARGID_RANGE_MAX (0x8FF) to DYNAMIC_ENTITY_TARGID_RANGE_START (0x700)
+        if (targid > DYNAMIC_ENTITY_TARGID_RANGE_MAX)
         {
-            targid = 0x700;
+            targid = DYNAMIC_ENTITY_TARGID_RANGE_START;
         }
 
         if (counter > 0x1FF)
@@ -873,43 +893,47 @@ void CZoneEntities::SpawnNPCs(CCharEntity* PChar)
     //     : spatial partitioning to only check entities within a certain range of the player.
     //     : This would change this loop to look like:
     //     : Compare previous and current spatial partitioning results to determine which entities to add/remove from the spawn list.
-    for (const auto& [_, PCurrentEntity] : m_npcList)
+    const auto syncSpawn = [&](const EntityList_t& list, auto&& shouldBeSpawned)
     {
         auto& spawnList = PChar->SpawnNPCList;
-
-        const auto id              = PCurrentEntity->id;
-        const auto itr             = spawnList.find(id);
-        const auto isInSpawnList   = itr != spawnList.end();
-        const auto isInRange       = isWithinDistance(PChar->loc.p, PCurrentEntity->loc.p, ENTITY_RENDER_DISTANCE);
-        const auto isVisibleStatus = PCurrentEntity->status == STATUS_TYPE::NORMAL || PCurrentEntity->status == STATUS_TYPE::UPDATE;
-
-        const auto tryAddToSpawnList = [&]()
+        for (const auto& [_, PEntity] : list)
         {
-            if (!isInSpawnList)
+            const auto itr        = spawnList.find(PEntity->id);
+            const auto inSpawnSet = itr != spawnList.end();
+            const auto want       = shouldBeSpawned(PEntity);
+
+            if (want && !inSpawnSet)
             {
-                spawnList.insert(itr, SpawnIDList_t::value_type(id, PCurrentEntity));
-                PChar->updateEntityPacket(PCurrentEntity, ENTITY_SPAWN, UPDATE_ALL_MOB);
+                spawnList.insert(itr, SpawnIDList_t::value_type(PEntity->id, PEntity));
+                PChar->updateEntityPacket(PEntity, ENTITY_SPAWN, UPDATE_ALL_MOB);
             }
-        };
-
-        const auto tryRemoveFromSpawnList = [&]()
-        {
-            if (isInSpawnList)
+            else if (!want && inSpawnSet)
             {
                 spawnList.erase(itr);
-                PChar->updateEntityPacket(PCurrentEntity, ENTITY_DESPAWN, UPDATE_NONE);
+                PChar->updateEntityPacket(PEntity, ENTITY_DESPAWN, UPDATE_NONE);
             }
-        };
+        }
+    };
 
-        if (isVisibleStatus && isInRange)
-        {
-            tryAddToSpawnList();
-        }
-        else
-        {
-            tryRemoveFromSpawnList();
-        }
-    }
+    syncSpawn(m_npcList, [&](CBaseEntity* PEntity)
+              {
+                  const auto inRange       = isWithinDistance(PChar->loc.p, PEntity->loc.p, ENTITY_RENDER_DISTANCE);
+                  const auto visibleStatus = PEntity->status == STATUS_TYPE::NORMAL || PEntity->status == STATUS_TYPE::UPDATE;
+                  const auto alwaysRel     = PEntity->objtype == TYPE_NPC && static_cast<CNpcEntity*>(PEntity)->m_alwaysRelevant;
+                  return visibleStatus && (inRange || alwaysRel);
+              });
+
+    // Registered transports are broadcast at zone-in by SpawnTransport and driven by TransportTimer; everything else
+    // in m_TransportList is a static SubKind=4 prop that gets proximity-spawned regardless of status.
+    syncSpawn(m_TransportList, [&](CBaseEntity* PEntity)
+              {
+                  if (static_cast<CNpcEntity*>(PEntity)->m_alwaysRelevant)
+                  {
+                      return false;
+                  }
+
+                  return isWithinDistance(PChar->loc.p, PEntity->loc.p, ENTITY_RENDER_DISTANCE);
+              });
 }
 
 void CZoneEntities::SpawnTRUSTs(CCharEntity* PChar)
@@ -1223,6 +1247,11 @@ void CZoneEntities::SpawnTransport(CCharEntity* PChar)
 
     FOR_EACH_PAIR_CAST_SECOND(CNpcEntity*, PEntity, m_TransportList)
     {
+        if (!PEntity->m_alwaysRelevant)
+        {
+            continue;
+        }
+
         PChar->updateEntityPacket(PEntity, ENTITY_SPAWN, UPDATE_ALL_MOB);
     }
 }
@@ -1319,33 +1348,6 @@ void CZoneEntities::TOTDChange(vanadiel_time::TOTD TOTD)
     TracyZoneScoped;
 
     m_zone->spawnHandler()->onTOTDChange(TOTD);
-
-    SCRIPTTYPE ScriptType = SCRIPT_NONE;
-
-    switch (TOTD)
-    {
-        case vanadiel_time::TOTD::DAWN:
-            ScriptType = SCRIPT_TIME_DAWN;
-            break;
-        case vanadiel_time::TOTD::DAY:
-            ScriptType = SCRIPT_TIME_DAY;
-            break;
-        case vanadiel_time::TOTD::DUSK:
-            ScriptType = SCRIPT_TIME_DUSK;
-            break;
-        case vanadiel_time::TOTD::EVENING:
-            ScriptType = SCRIPT_TIME_EVENING;
-            break;
-        default:
-            break;
-    }
-    if (ScriptType != SCRIPT_NONE)
-    {
-        FOR_EACH_PAIR_CAST_SECOND(CCharEntity*, PChar, m_charList)
-        {
-            charutils::CheckEquipLogic(PChar, ScriptType, TOTD);
-        }
-    }
 }
 
 void CZoneEntities::SavePlayTime()
@@ -1579,19 +1581,13 @@ void CZoneEntities::WideScan(CCharEntity* PChar, uint16 radius)
 {
     TracyZoneScoped;
 
-    const auto  maybeZoneMesh = m_zone->zoneMesh();
-    const auto& charPos       = PChar->loc.p;
-    const auto  charFloor     = maybeZoneMesh ? (*maybeZoneMesh)->getFloorId(charPos.x, charPos.y, charPos.z) : uint8{ 0 };
+    const auto& charPos   = PChar->loc.p;
+    const auto  charFloor = m_zone->xiMesh()->getFloorId(charPos.x, charPos.y, charPos.z);
 
     auto isSameFloor = [&](const CBaseEntity* PEntity) -> bool
     {
-        if (!maybeZoneMesh)
-        {
-            return true;
-        }
-
         const auto& pos = PEntity->loc.p;
-        return (*maybeZoneMesh)->getFloorId(pos.x, pos.y, pos.z) == charFloor;
+        return m_zone->xiMesh()->getFloorId(pos.x, pos.y, pos.z) == charFloor;
     };
 
     PChar->pushPacket<GP_SERV_COMMAND_TRACKING_STATE>(GP_TRACKING_STATE::ListStart);
@@ -1846,6 +1842,7 @@ auto CZoneEntities::ZoneServer(timer::time_point tick) -> Task<void>
 {
     TracyZoneScoped;
     TracyZoneString(m_zone->getName());
+    LogWith({ "zone", { { "name", m_zone->getName() }, { "id", m_zone->GetID() } } });
 
     luautils::OnZoneTick(this->m_zone);
 
@@ -2015,8 +2012,10 @@ auto CZoneEntities::ZoneServer(timer::time_point tick) -> Task<void>
             if (ready)
             {
                 PChar->clearPacketList();
-                charutils::HomePoint(PChar, PChar->isDead());
-                shouldErase = true;
+                if (charutils::HomePoint(PChar, PChar->isDead()))
+                {
+                    shouldErase = true;
+                }
             }
         }
         else if (PChar->loc.destination != 0xFFFF)
@@ -2025,8 +2024,10 @@ auto CZoneEntities::ZoneServer(timer::time_point tick) -> Task<void>
             if (ready)
             {
                 PChar->clearPacketList();
-                charutils::SendToZone(PChar, PChar->loc.destination);
-                shouldErase = true;
+                if (charutils::SendToZone(PChar, PChar->loc.destination))
+                {
+                    shouldErase = true;
+                }
             }
         }
 

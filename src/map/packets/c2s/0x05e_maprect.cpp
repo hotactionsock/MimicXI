@@ -26,7 +26,7 @@
 #include "common/utils.h"
 #include "entities/charentity.h"
 #include "enums/msg_std.h"
-#include "navmesh.h"
+#include "map/navmesh/navmesh.h"
 #include "packets/s2c/0x053_systemmes.h"
 #include "packets/s2c/0x065_wpos2.h"
 #include "utils/charutils.h"
@@ -231,6 +231,12 @@ void GP_CLI_COMMAND_MAPRECT::process(MapSession* PSession, CCharEntity* PChar) c
                     return;
                 }
 
+                if (!isMogHouseEntrance && zoneutils::IsZoneAtPlayerCap(PZoneLine->destinationZoneId, PChar->m_GMlevel > 0))
+                {
+                    denyZone(PChar);
+                    return;
+                }
+
                 if (isMogHouseEntrance)
                 {
                     // TODO: for entering another persons mog house, it must be set here
@@ -247,9 +253,9 @@ void GP_CLI_COMMAND_MAPRECT::process(MapSession* PSession, CCharEntity* PChar) c
                     PChar->loc.p           = PZoneLine->nextSpawnPosition();
 
                     // Snap to navmesh for elevation on uneven zonelines
-                    if (PDestination && PDestination->m_navMesh)
+                    if (PDestination)
                     {
-                        PDestination->m_navMesh->snapToValidPosition(PChar->loc.p);
+                        PDestination->navMesh()->snapToValidPosition(PChar->loc.p);
                     }
 
                     charutils::SavePrevZoneLineID(PChar, PZoneLine->zoneLineId);

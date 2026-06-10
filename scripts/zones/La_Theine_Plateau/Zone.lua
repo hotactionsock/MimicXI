@@ -12,6 +12,12 @@ zoneObject.onInitialize = function(zone)
     xi.chocobo.initZone(zone)
     xi.voidwalker.zoneOnInit(zone)
     xi.fate.onZoneInitialize(zone, zone:getID())
+
+    local rainbow = GetNPCByID(ID.npc.RAINBOW)
+
+    if rainbow then
+        rainbow:setNpcAlwaysRelevant(true)
+    end
 end
 
 zoneObject.onZoneIn = function(player, prevZone)

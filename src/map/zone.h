@@ -29,26 +29,30 @@
 #include <common/types/maybe.h>
 #include <common/vana_time.h>
 
-#include <list>
-#include <map>
-#include <unordered_map>
-
 #include "battlefield_handler.h"
 #include "campaign_handler.h"
+#include "map/navmesh/inavmesh.h"
+#include "map/navmesh/navmesh_config.h"
 #include "map_config.h"
 #include "packets/basic.h"
 #include "spawn_slot.h"
 #include "trigger_area.h"
+
+#include <map/ximesh/iximesh.h>
+
+#include <list>
+#include <map>
+#include <memory>
+#include <unordered_map>
 
 //
 // Forward Declarations
 //
 
 enum class Weather : uint16_t;
+class XiMesh;
 class CNavMesh;
-class CZoneMesh;
 class SpawnHandler;
-class ZoneLos;
 
 enum ZONEID : uint16
 {
@@ -553,6 +557,7 @@ class CBattleEntity;
 class CTrustEntity;
 class CTreasurePool;
 class CZoneEntities;
+class NominateManager;
 
 typedef std::list<std::unique_ptr<ITriggerArea>> triggerAreaList_t;
 
@@ -667,24 +672,25 @@ public:
     CZone(Scheduler& scheduler, MapConfig config, ZONEID ZoneID, REGION_TYPE RegionID, CONTINENT_TYPE ContinentID, uint8 levelRestriction);
     virtual ~CZone();
 
-    CBattlefieldHandler*          m_BattlefieldHandler; // BCNM Instances in this zone
-    CCampaignHandler*             m_CampaignHandler;    // WOTG campaign information for this zone
-    std::unique_ptr<SpawnHandler> m_spawnHandler;       // Handles mob respawns
+    CBattlefieldHandler*             m_BattlefieldHandler; // BCNM Instances in this zone
+    CCampaignHandler*                m_CampaignHandler;    // WOTG campaign information for this zone
+    std::unique_ptr<SpawnHandler>    m_spawnHandler;       // Handles mob respawns
+    std::unique_ptr<NominateManager> nominateManager_;     // Active /nominate proposals in this zone
 
     auto spawnHandler() const -> SpawnHandler*;
-
-    std::unique_ptr<CNavMesh> m_navMesh;
-    std::unique_ptr<ZoneLos>  lineOfSight;
-
-    auto zoneMesh() const -> Maybe<CZoneMesh*>;
+    auto nominateManager() const -> NominateManager*;
 
     std::map<uint32_t, std::unique_ptr<SpawnSlot>> m_spawnSlots; // add unique slots to zone
 
     timer::time_point m_LoadedAt; // The time the zone was loaded
 
-    void LoadNavMesh();
-    void LoadZoneMesh();
-    void LoadZoneLos();
+    auto navMesh() const -> INavMesh*;
+    auto xiMesh() const -> IXiMesh*;
+
+    auto LoadNavMesh() -> Task<void>;
+    void RebuildNavMesh(const NavMeshConfig& config = {});
+
+    void LoadXiMesh();
 
 protected:
     Scheduler& scheduler_;
@@ -703,7 +709,8 @@ protected:
     std::unordered_map<std::string, uint32> localVars_;
 
 private:
-    std::unique_ptr<CZoneMesh> zoneMesh_;
+    std::unique_ptr<INavMesh> navMesh_;
+    std::unique_ptr<IXiMesh>  xiMesh_;
 
     ZONEID         m_zoneID;
     ZONE_TYPE      m_zoneType;
@@ -713,7 +720,6 @@ private:
     std::string    m_zoneName;
     uint16         m_zonePort{};
     uint32         m_zoneIP{};
-    bool           m_useNavMesh;
 
     Weather m_Weather;
     uint32  m_WeatherChangeTime;
