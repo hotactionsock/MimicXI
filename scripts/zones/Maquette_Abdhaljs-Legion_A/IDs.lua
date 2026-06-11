@@ -117,6 +117,86 @@ zones[xi.zone.MAQUETTE_ABDHALJS_LEGION_A] =
             -- Wave 5
             VRAETH              = 17526836,
         },
+        -- -------------------------------------------------------
+        -- Circuit Lv30 mobs (circuits 18310/18311/18312)
+        -- Ordered list — Alpha uses [1..8], Beta [1..12], Gamma all 13
+        -- -------------------------------------------------------
+        C30 =
+        {
+            17526837, -- Goblin Leecher A
+            17526838, -- Goblin Leecher B
+            17526839, -- Goblin Bouncer
+            17526840, -- Orcish Grunt A
+            17526841, -- Orcish Grunt B
+            17526842, -- Orcish Cursemaker
+            17526843, -- Brass Quadav A
+            17526844, -- Copper Quadav     ← Alpha stops here (8)
+            17526845, -- Goblin Leecher C
+            17526846, -- Orcish Grunt C
+            17526847, -- Brass Quadav B
+            17526848, -- Brass Quadav C    ← Beta stops here (12)
+            17526849, -- Circuit Arbiter   ← Gamma uses all 13
+        },
+
+        -- -------------------------------------------------------
+        -- Circuit Lv40 mobs (circuits 18313/18314/18315)
+        -- -------------------------------------------------------
+        C40 =
+        {
+            17526850, -- Gigas Fighter A
+            17526851, -- Gigas Wrestler A
+            17526852, -- Ghoul A
+            17526853, -- Wight A
+            17526854, -- Tonberry Tracker
+            17526855, -- Tonberry Elder
+            17526856, -- Roc
+            17526857, -- Gigas Fighter B   ← Alpha stops here (8)
+            17526858, -- Ghoul B
+            17526859, -- Ghoul C
+            17526860, -- Wight B
+            17526861, -- Gigas Wrestler B  ← Beta stops here (12)
+            17526862, -- Circuit Arbiter   ← Gamma uses all 13
+        },
+
+        -- -------------------------------------------------------
+        -- Circuit Lv50 mobs (circuits 18316/18317/18318)
+        -- -------------------------------------------------------
+        C50 =
+        {
+            17526863, -- Imp A
+            17526864, -- Imp B
+            17526865, -- Shadow Orc A
+            17526866, -- Shadow Orc B
+            17526867, -- Fire Elemental A
+            17526868, -- Ice Elemental A
+            17526869, -- Haunt A
+            17526870, -- Haunt B           ← Alpha stops here (8)
+            17526871, -- Imp C
+            17526872, -- Shadow Orc C
+            17526873, -- Fire Elemental B
+            17526874, -- Ice Elemental B   ← Beta stops here (12)
+            17526875, -- Circuit Arbiter   ← Gamma uses all 13
+        },
+
+        -- -------------------------------------------------------
+        -- Circuit Lv60 mobs (circuits 18319/18320/18321)
+        -- -------------------------------------------------------
+        C60 =
+        {
+            17526876, -- Ahriman A
+            17526877, -- Ahriman B
+            17526878, -- Haunt A
+            17526879, -- Specter
+            17526880, -- Demon Knight A
+            17526881, -- Demon Knight B
+            17526882, -- Demon Warlock
+            17526883, -- Ahriman C         ← Alpha stops here (8)
+            17526884, -- Haunt B
+            17526885, -- Demon Knight C
+            17526886, -- Ahriman D
+            17526887, -- Demon Knight D    ← Beta stops here (12)
+            17526888, -- Circuit Arbiter   ← Gamma uses all 13
+        },
     },
     npc =
     {

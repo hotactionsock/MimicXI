@@ -51,3 +51,8 @@ custom/LQS/commands/
 custom/tier_trials/lua/
 custom/tier_trials/commands/
 custom/tier_trials/sql/
+
+-- The Circuit (toggle by commenting these three lines)
+custom/circuit/lua/
+custom/circuit/commands/
+custom/circuit/sql/
