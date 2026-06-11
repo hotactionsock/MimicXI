@@ -46,3 +46,8 @@ custom/lua/casket_mimic.lua
 custom/LQS/lib/LQS.lua
 custom/LQS/questpack
 custom/LQS/commands/
+
+-- Tier Trials (toggle by commenting these three lines)
+custom/tier_trials/lua/
+custom/tier_trials/commands/
+custom/tier_trials/sql/
