@@ -56,3 +56,7 @@ custom/tier_trials/sql/
 custom/circuit/lua/
 custom/circuit/commands/
 custom/circuit/sql/
+
+-- Proving Arms (toggle by commenting these two lines)
+custom/proving_arms/lua/
+custom/proving_arms/commands/
