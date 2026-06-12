@@ -30,6 +30,15 @@
 -- =============================================================
 
 -- =============================================================
+-- =============================================================
+-- CLEANUP: remove any previous run's data before re-inserting
+-- Safe to run multiple times.
+-- =============================================================
+DELETE FROM `instance_entities`  WHERE instanceid IN (18301, 18302, 18303, 18304);
+DELETE FROM `instance_list`      WHERE instanceid IN (18301, 18302, 18303, 18304);
+DELETE FROM `mob_spawn_points`   WHERE mobid BETWEEN 17526785 AND 17526836;
+DELETE FROM `mob_groups`         WHERE groupid BETWEEN 12000 AND 12051;
+
 -- SECTION 1: mob_groups for zone 183
 -- Group IDs start at 12000 (base game uses up to 11354)
 -- Format: (groupid, poolid, zoneid, name, respawntime, spawntype, dropid, HP, MP, allegiance, content_tag)

@@ -10,6 +10,15 @@
 -- =============================================================
 
 -- =============================================================
+-- =============================================================
+-- CLEANUP: remove any previous run's data before re-inserting
+-- Safe to run multiple times.
+-- =============================================================
+DELETE FROM `instance_entities`  WHERE instanceid IN (18310,18311,18312,18313,18314,18315,18316,18317,18318,18319,18320,18321);
+DELETE FROM `instance_list`      WHERE instanceid IN (18310,18311,18312,18313,18314,18315,18316,18317,18318,18319,18320,18321);
+DELETE FROM `mob_spawn_points`   WHERE mobid BETWEEN 17526837 AND 17526888;
+DELETE FROM `mob_groups`         WHERE groupid BETWEEN 12060 AND 12111;
+
 -- SECTION 1: Leaderboard table
 -- =============================================================
 
