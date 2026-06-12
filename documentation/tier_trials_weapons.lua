@@ -967,6 +967,366 @@ local TierTrialsItems = {
             { 27,             7, "Enmity+7" },
         },
     },
+
+    -- =========================================================================
+    -- KATANA FAMILY  —  NIN
+    -- Defining: Subtle Blow (T2), Ninjutsu Skill (T3), Daken (T4+)
+    -- Skill: Katana (8) | Type: Slashing (2) | Delay: 240
+    -- Jobs bitmask: 4096
+    -- NOTE: DAKEN mod ID unconfirmed
+    -- =========================================================================
+
+    {
+        id          = 29894,
+        name        = "Nascent Katana",
+        displayName = "Nascent Katana",
+        type        = 5,
+        flags       = 0x0C00,
+        source      = "Tier Trials T1",
+        slot        = 1,
+        jobs        = 4096,
+        level       = 28,
+        model       = 0,
+        dmg         = 26,
+        delay       = 240,
+        dmgType     = 2,
+        weaponSkill = 8,
+        mods = {
+            { 11, 2, "AGI+2" },
+        },
+    },
+    {
+        id          = 29895,
+        name        = "Tempered Katana",
+        displayName = "Tempered Katana",
+        type        = 5,
+        flags       = 0x0C00,
+        source      = "Tier Trials T2",
+        slot        = 1,
+        jobs        = 4096,
+        level       = 38,
+        model       = 0,
+        dmg         = 33,
+        delay       = 240,
+        dmgType     = 2,
+        weaponSkill = 8,
+        mods = {
+            { 11,  3, "AGI+3" },
+            { 289, 3, "Subtle Blow+3" },
+        },
+    },
+    {
+        id          = 29896,
+        name        = "Forged Katana",
+        displayName = "Forged Katana",
+        type        = 5,
+        flags       = 0x0C00,
+        source      = "Tier Trials T3",
+        slot        = 1,
+        jobs        = 4096,
+        level       = 48,
+        model       = 0,
+        dmg         = 41,
+        delay       = 240,
+        dmgType     = 2,
+        weaponSkill = 8,
+        mods = {
+            { 11,  4, "AGI+4" },
+            { 289, 5, "Subtle Blow+5" },
+            { 118, 5, "Ninjutsu Skill+5" },
+        },
+    },
+    {
+        id          = 29897,
+        name        = "Resolute Katana",
+        displayName = "Resolute Katana",
+        type        = 5,
+        flags       = 0x0C00,
+        source      = "Tier Trials T4",
+        slot        = 1,
+        jobs        = 4096,
+        level       = 58,
+        model       = 0,
+        dmg         = 50,
+        delay       = 240,
+        dmgType     = 2,
+        weaponSkill = 8,
+        mods = {
+            { 11,      5, "AGI+5" },
+            { 289,     7, "Subtle Blow+7" },
+            { 118,     8, "Ninjutsu Skill+8" },
+            { "DAKEN", 3, "Daken+3%" },
+        },
+    },
+
+    -- =========================================================================
+    -- LV75 CAPSTONE WEAPONS  —  one per family, named under Latin Essences theme
+    -- All: RARE/EX, Lv75
+    -- =========================================================================
+
+    -- Virtus — Greatsword capstone  (WAR/DRK/DRG/RUN)
+    -- "valor, martial excellence"
+    {
+        id          = 29884,
+        name        = "Virtus",
+        displayName = "Virtus",
+        type        = 5,
+        flags       = 0x0C00,
+        source      = "Tier Trials Lv75 capstone",
+        slot        = 1,
+        jobs        = 2105473,
+        level       = 75,
+        model       = 0,
+        dmg         = 118,
+        delay       = 450,
+        dmgType     = 2,
+        weaponSkill = 3,
+        mods = {
+            { 8,  9,  "STR+9" },
+            { 23, 18, "Attack+18" },
+            { 73, 7,  "Store TP+7" },
+            { 83, 5,  "Great Sword Skill+5" },
+        },
+    },
+
+    -- Vox — Blade capstone  (RDM/BRD/COR)
+    -- "voice, resonance"
+    {
+        id          = 29885,
+        name        = "Vox",
+        displayName = "Vox",
+        type        = 5,
+        flags       = 0x0C00,
+        source      = "Tier Trials Lv75 capstone",
+        slot        = 1,
+        jobs        = 66064,
+        level       = 75,
+        model       = 0,
+        dmg         = 78,
+        delay       = 240,
+        dmgType     = 2,
+        weaponSkill = 2,
+        mods = {
+            { 12,         7,  "INT+7" },
+            { 13,         5,  "MND+5" },
+            { "FASTCAST", 12, "Fast Cast+12%" },
+        },
+    },
+
+    -- Umbra — Nodachi capstone  (SAM/NIN)
+    -- "shadow"
+    {
+        id          = 29886,
+        name        = "Umbra",
+        displayName = "Umbra",
+        type        = 5,
+        flags       = 0x0C00,
+        source      = "Tier Trials Lv75 capstone",
+        slot        = 1,
+        jobs        = 6144,
+        level       = 75,
+        model       = 0,
+        dmg         = 115,
+        delay       = 450,
+        dmgType     = 2,
+        weaponSkill = 9,
+        mods = {
+            { 8,   8,  "STR+8" },
+            { 73,  9,  "Store TP+9" },
+            { 306, 10, "Zanshin+10%" },
+        },
+    },
+
+    -- Fuga — Kukri capstone  (THF/NIN/RNG/DNC)
+    -- "flight, swiftness"
+    {
+        id          = 29887,
+        name        = "Fuga",
+        displayName = "Fuga",
+        type        = 5,
+        flags       = 0x0C00,
+        source      = "Tier Trials Lv75 capstone",
+        slot        = 1,
+        jobs        = 267296,
+        level       = 75,
+        model       = 0,
+        dmg         = 52,
+        delay       = 200,
+        dmgType     = 2,
+        weaponSkill = 1,
+        mods = {
+            { 9,   7,  "DEX+7" },
+            { 259, 6,  "Dual Wield+6" },
+            { 491, 10, "Waltz Potency+10%" },
+        },
+    },
+
+    -- Vis — Cesti capstone  (MNK/BST/PUP)
+    -- "raw force"
+    {
+        id          = 29888,
+        name        = "Vis",
+        displayName = "Vis",
+        type        = 5,
+        flags       = 0x0C00,
+        source      = "Tier Trials Lv75 capstone",
+        slot        = 1,
+        jobs        = 131330,
+        level       = 75,
+        model       = 0,
+        dmg         = 33,
+        delay       = 480,
+        dmgType     = 4,
+        weaponSkill = 0,
+        mods = {
+            { 8,   7,  "STR+7" },
+            { 23,  16, "Attack+16" },
+            { 302, 4,  "Triple Attack+4%" },
+            { 291, 6,  "Counter+6%" },
+        },
+    },
+
+    -- Lux — Rod capstone  (WHM/BLM/SMN/SCH)
+    -- "light"
+    {
+        id          = 29889,
+        name        = "Lux",
+        displayName = "Lux",
+        type        = 5,
+        flags       = 0x0C00,
+        source      = "Tier Trials Lv75 capstone",
+        slot        = 1,
+        jobs        = 540684,
+        level       = 75,
+        model       = 0,
+        dmg         = 90,
+        delay       = 480,
+        dmgType     = 4,
+        weaponSkill = 11,
+        mods = {
+            { 12,  7,  "INT+7" },
+            { 13,  7,  "MND+7" },
+            { 5,   80, "MP+80" },
+            { 296, 7,  "Conserve MP+7" },
+        },
+    },
+
+    -- Arcana — Falchion capstone  (BLU)
+    -- "hidden mysteries"
+    {
+        id          = 29890,
+        name        = "Arcana",
+        displayName = "Arcana",
+        type        = 5,
+        flags       = 0x0C00,
+        source      = "Tier Trials Lv75 capstone",
+        slot        = 1,
+        jobs        = 32768,
+        level       = 75,
+        model       = 0,
+        dmg         = 78,
+        delay       = 240,
+        dmgType     = 2,
+        weaponSkill = 2,
+        mods = {
+            { 8,           6,  "STR+6" },
+            { 12,          7,  "INT+7" },
+            { "BLU_SKILL", 10, "Blue Magic Skill+10" },
+        },
+    },
+
+    -- Tellus — Sceptre capstone  (GEO)
+    -- "the earth"
+    {
+        id          = 29891,
+        name        = "Tellus",
+        displayName = "Tellus",
+        type        = 5,
+        flags       = 0x0C00,
+        source      = "Tier Trials Lv75 capstone",
+        slot        = 1,
+        jobs        = 1048576,
+        level       = 75,
+        model       = 0,
+        dmg         = 65,
+        delay       = 280,
+        dmgType     = 4,
+        weaponSkill = 10,
+        mods = {
+            { 12,               7,  "INT+7" },
+            { 13,               7,  "MND+7" },
+            { "GEOMANCY_SKILL", 12, "Geomancy Skill+12" },
+        },
+    },
+
+    -- Lex — Spatha capstone  (PLD/RDM)
+    -- "law, order"
+    {
+        id          = 29892,
+        name        = "Lex",
+        displayName = "Lex",
+        type        = 5,
+        flags       = 0x0C00,
+        source      = "Tier Trials Lv75 capstone",
+        slot        = 1,
+        jobs        = 80,
+        level       = 75,
+        model       = 0,
+        dmg         = 78,
+        delay       = 240,
+        dmgType     = 2,
+        weaponSkill = 2,
+        mods = {
+            { 12,              7, "INT+7" },
+            { 114,             10, "Enfeebling Magic Skill+10" },
+            { "MAG_DEF_BONUS", 7, "Magic Def. Bonus+7" },
+        },
+    },
+
+    -- Tutela — Kite capstone  (PLD)  — shield, type 4 ARMOR, SUB slot
+    -- "protection, guardianship"
+    {
+        id          = 29893,
+        name        = "Tutela",
+        displayName = "Tutela",
+        type        = 4,
+        flags       = 0x0C00,
+        source      = "Tier Trials Lv75 capstone",
+        slot        = 2,
+        jobs        = 64,
+        level       = 75,
+        model       = 0,
+        def         = 20,
+        mods = {
+            { "SHIELD_SKILL", 12, "Shield Skill+12" },
+            { 27,             9,  "Enmity+9" },
+        },
+    },
+
+    -- Caligo — Katana capstone  (NIN)
+    -- "mist, obscurity"
+    {
+        id          = 29898,
+        name        = "Caligo",
+        displayName = "Caligo",
+        type        = 5,
+        flags       = 0x0C00,
+        source      = "Tier Trials Lv75 capstone",
+        slot        = 1,
+        jobs        = 4096,
+        level       = 75,
+        model       = 0,
+        dmg         = 58,
+        delay       = 240,
+        dmgType     = 2,
+        weaponSkill = 8,
+        mods = {
+            { 11,      9,  "AGI+9" },
+            { 289,     10, "Subtle Blow+10" },
+            { 118,     12, "Ninjutsu Skill+12" },
+            { "DAKEN", 5,  "Daken+5%" },
+        },
+    },
 }
 
 -- =============================================================================
@@ -986,17 +1346,30 @@ local TierTrialsItems = {
   29872-75   Sceptre       MAIN  GEO                  Club          INT/MND, Geomancy Skill
   29876-79   Spatha        MAIN  PLD/RDM              Sword         INT, Enfeebling Skill, MagDef
   29880-83   Kite          SUB   PLD                  Shield        DEF, Shield Skill, Enmity
+  29884      Virtus        MAIN  WAR/DRK/DRG/RUN      Great Sword   Lv75 capstone — Greatsword
+  29885      Vox           MAIN  RDM/BRD/COR          Sword         Lv75 capstone — Blade
+  29886      Umbra         MAIN  SAM/NIN              Great Katana  Lv75 capstone — Nodachi
+  29887      Fuga          MAIN  THF/NIN/RNG/DNC      Dagger        Lv75 capstone — Kukri
+  29888      Vis           MAIN  MNK/BST/PUP          H2H           Lv75 capstone — Cesti
+  29889      Lux           MAIN  WHM/BLM/SMN/SCH      Staff         Lv75 capstone — Rod
+  29890      Arcana        MAIN  BLU                  Sword         Lv75 capstone — Falchion
+  29891      Tellus        MAIN  GEO                  Club          Lv75 capstone — Sceptre
+  29892      Lex           MAIN  PLD/RDM              Sword         Lv75 capstone — Spatha
+  29893      Tutela        SUB   PLD                  Shield        Lv75 capstone — Kite
+  29894-97   Katana        MAIN  NIN                  Katana        AGI, Subtle Blow, Ninjutsu, Daken
+  29898      Caligo        MAIN  NIN                  Katana        Lv75 capstone — Katana
 ]]
 
 -- =============================================================================
 -- UNCONFIRMED MOD IDS — resolve before SQL insertion
 -- =============================================================================
 --[[
-  FASTCAST        — Fast Cast %          (Blade family, T1–T4)
-  BLU_SKILL       — Blue Magic Skill     (Falchion family, T1–T4)
-  GEOMANCY_SKILL  — Geomancy Skill       (Sceptre family, T1–T4)
-  SHIELD_SKILL    — Shield Skill         (Kite family, T1–T4)
-  MAG_DEF_BONUS   — Magic Def. Bonus     (Spatha T3–T4)
+  FASTCAST        — Fast Cast %          (Blade T1–T4, Vox)
+  BLU_SKILL       — Blue Magic Skill     (Falchion T1–T4, Arcana)
+  GEOMANCY_SKILL  — Geomancy Skill       (Sceptre T1–T4, Tellus)
+  SHIELD_SKILL    — Shield Skill         (Kite T1–T4, Tutela)
+  MAG_DEF_BONUS   — Magic Def. Bonus     (Spatha T3–T4, Lex)
+  DAKEN           — Daken proc rate %    (Resolute Katana, Caligo)
 ]]
 
 return TierTrialsItems
