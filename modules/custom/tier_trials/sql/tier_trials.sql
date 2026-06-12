@@ -148,7 +148,7 @@ INSERT INTO `mob_spawn_points` VALUES (17526795, 0, 'Goblin_Leecher', 'Goblin Le
 INSERT INTO `mob_spawn_points` VALUES (17526796, 0, 'Orcish_Grunt', 'Orcish Grunt', 12011, 29, 31, 0.000, 0.000, 0.000, 0);
 INSERT INTO `mob_spawn_points` VALUES (17526797, 0, 'Orcish_Grunt', 'Orcish Grunt', 12012, 29, 31, 0.000, 0.000, 0.000, 0);
 -- Wave 5 boss
-INSERT INTO `mob_spawn_points` VALUES (17526798, 0, 'Brakk_the_Lockjaw', , 12013, 32, 32, 0.000, 0.000, 0.000, 0);
+INSERT INTO `mob_spawn_points` VALUES (17526798, 0, 'Brakk_the_Lockjaw', 'Brakk the Lockjaw', 12013, 32, 32, 0.000, 0.000, 0.000, 0);
 
 -- -----------------------------------------------------------
 -- Tier 40 mob entities (IDs 17526799–17526812)
@@ -168,7 +168,7 @@ INSERT INTO `mob_spawn_points` VALUES (17526806, 0, 'Roc', 'Roc', 12021, 39, 41,
 INSERT INTO `mob_spawn_points` VALUES (17526807, 0, 'Gigas_Fighter', 'Gigas Fighter', 12022, 39, 41, 0.000, 0.000, 0.000, 0);
 INSERT INTO `mob_spawn_points` VALUES (17526808, 0, 'Gigas_Wrestler', 'Gigas Wrestler', 12023, 39, 41, 0.000, 0.000, 0.000, 0);
 -- Wave 5 boss + summon
-INSERT INTO `mob_spawn_points` VALUES (17526809, 0, 'Kalabaros_the_Unbroken', , 12024, 43, 43, 0.000, 0.000, 0.000, 0);
+INSERT INTO `mob_spawn_points` VALUES (17526809, 0, 'Kalabaros_the_Unbroken', 'Kalabaros the Unbroken', 12024, 43, 43, 0.000, 0.000, 0.000, 0);
 INSERT INTO `mob_spawn_points` VALUES (17526810, 0, 'Wight_Summon', 'Wight', 12025, 41, 41, 0.000, 0.000, 0.000, 0);
 
 -- -----------------------------------------------------------
@@ -191,7 +191,7 @@ INSERT INTO `mob_spawn_points` VALUES (17526820, 0, 'Haunt', 'Haunt', 12035, 49,
 INSERT INTO `mob_spawn_points` VALUES (17526821, 0, 'Imp', 'Imp', 12036, 49, 51, 0.000, 0.000, 0.000, 0);
 INSERT INTO `mob_spawn_points` VALUES (17526822, 0, 'Imp', 'Imp', 12037, 49, 51, 0.000, 0.000, 0.000, 0);
 -- Wave 5 boss
-INSERT INTO `mob_spawn_points` VALUES (17526823, 0, 'Valdris_the_Hollowed', , 12038, 54, 54, 0.000, 0.000, 0.000, 0);
+INSERT INTO `mob_spawn_points` VALUES (17526823, 0, 'Valdris_the_Hollowed', 'Valdris the Hollowed', 12038, 54, 54, 0.000, 0.000, 0.000, 0);
 
 -- -----------------------------------------------------------
 -- Tier 60 mob entities (IDs 17526824–17526837)
