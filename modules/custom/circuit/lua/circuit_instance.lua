@@ -107,23 +107,23 @@ xi.circuit.instance.build = function(circuitId)
             end
         end
 
+        instance:setLocalVar('elapsed', elapsed)
         xi.instance.updateInstanceTime(instance, elapsed,
             zones[instance:getZone():getID()].text)
     end
 
     instanceObject.onInstanceComplete = function(instance)
+        local elapsed    = instance:getLocalVar('elapsed')
         local startTime  = instance:getLocalVar('startTime')
-        local elapsed    = instance:getLocalVar('elapsed') or startTime
-        local clearTime  = elapsed - startTime
+        local clearTime  = (startTime > 0) and (elapsed - startTime) or elapsed
 
         for _, player in pairs(instance:getChars()) do
             local rank, earned = xi.circuit.recordRun(player, circuitId, clearTime)
             if rank and earned then
-                -- TODO: display rank/points via message once text IDs are assigned
-                player:PrintToPlayer(string.format(
-                    'Circuit clear! Rank: %s | Points earned: %d | Total: %d',
+                player:printToPlayer(string.format(
+                    'Circuit clear! %s | +%d pts | Total: %d',
                     rank, earned, player:getCharVar(xi.circuit.POINT_VAR)
-                ))
+                ), xi.msg.channel.SYSTEM_3)
             end
         end
 
@@ -149,11 +149,10 @@ end
 xi.circuit.onMobDeath = function(mob, instance)
     if not instance then return end
 
-    -- Start timer on first kill
+    -- Start timer on first kill — read elapsed stored by onInstanceTimeUpdate
     if instance:getLocalVar('locked') == 0 then
         instance:setLocalVar('locked', 1)
-        -- startTime is set by the mob script passing current elapsed
-        -- We use a local var set by the instance tick to track elapsed
+        instance:setLocalVar('startTime', instance:getLocalVar('elapsed'))
     end
 
     local alive = instance:getLocalVar('mobsAlive')

@@ -17,18 +17,14 @@ xi.tierTrial.TIERS[50] =
     markVar   = '[TierTrial]FauregandiMarks',
     shardItem = 3759, -- Forged Shard
 
+    -- Tier III (Forged) weapon item IDs per job family
     weapons =
     {
-        greatsword    = 0,
-        handtohand    = 0,
-        staff_healing = 0,
-        staff_magic   = 0,
-        sword         = 0,
-        dagger        = 0,
-        ranged        = 0,
-        sword_shield  = 0,
-        greatkatana   = 0,
-        axe           = 0,
+        blade    = 20019, nodachi  = 20020,
+        kukri    = 20021, cesti    = 20022,
+        rod      = 20023, falchion = 20024,
+        sceptre  = 20025, spatha   = 20026,
+        kite     = 23938, caligo   = 20020,
     },
 
     waves =

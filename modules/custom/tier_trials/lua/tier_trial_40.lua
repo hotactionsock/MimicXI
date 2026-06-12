@@ -17,18 +17,14 @@ xi.tierTrial.TIERS[40] =
     markVar   = '[TierTrial]QufimMarks',
     shardItem = 3758, -- Tempered Shard
 
+    -- Tier II (Tempered) weapon item IDs per job family
     weapons =
     {
-        greatsword    = 0,
-        handtohand    = 0,
-        staff_healing = 0,
-        staff_magic   = 0,
-        sword         = 0,
-        dagger        = 0,
-        ranged        = 0,
-        sword_shield  = 0,
-        greatkatana   = 0,
-        axe           = 0,
+        blade    = 20010, nodachi  = 20011,
+        kukri    = 20012, cesti    = 20013,
+        rod      = 20014, falchion = 20015,
+        sceptre  = 20016, spatha   = 20017,
+        kite     = 23937, caligo   = 20011,
     },
 
     waves =

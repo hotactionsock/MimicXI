@@ -17,20 +17,14 @@ xi.tierTrial.TIERS[30] =
     markVar   = '[TierTrial]ValkurumMarks',
     shardItem = 3757, -- Nascent Shard
 
-    -- Tier I weapon item IDs per job family
-    -- TODO: fill with real item IDs once defined in DB
+    -- Tier I (Nascent) weapon item IDs per job family
     weapons =
     {
-        greatsword    = 0,
-        handtohand    = 0,
-        staff_healing = 0,
-        staff_magic   = 0,
-        sword         = 0,
-        dagger        = 0,
-        ranged        = 0,
-        sword_shield  = 0,
-        greatkatana   = 0,
-        axe           = 0,
+        blade    = 20001, nodachi  = 20002,
+        kukri    = 20003, cesti    = 20004,
+        rod      = 20005, falchion = 20006,
+        sceptre  = 20007, spatha   = 20008,
+        kite     = 23936, caligo   = 20002,
     },
 
     -- Wave definitions — mob IDs match mob_spawn_points entries in tier_trials.sql

@@ -17,18 +17,14 @@ xi.tierTrial.TIERS[60] =
     markVar   = '[TierTrial]PsoxjaMarks',
     shardItem = 3760, -- Resolute Shard
 
+    -- Tier IV (Resolute) weapon item IDs per job family
     weapons =
     {
-        greatsword    = 0,
-        handtohand    = 0,
-        staff_healing = 0,
-        staff_magic   = 0,
-        sword         = 0,
-        dagger        = 0,
-        ranged        = 0,
-        sword_shield  = 0,
-        greatkatana   = 0,
-        axe           = 0,
+        blade    = 20028, nodachi  = 20029,
+        kukri    = 20030, cesti    = 20031,
+        rod      = 20032, falchion = 20033,
+        sceptre  = 20034, spatha   = 20035,
+        kite     = 23939, caligo   = 20029,
     },
 
     waves =

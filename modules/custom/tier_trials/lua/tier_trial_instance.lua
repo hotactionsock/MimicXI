@@ -267,12 +267,13 @@ xi.tierTrial.instance.build = function(tier)
             end
         end
 
+        instance:setLocalVar('elapsed', elapsed)
         xi.instance.updateInstanceTime(instance, elapsed,
             zones[instance:getZone():getID()].text)
     end
 
     instanceObject.onInstanceComplete = function(instance)
-        local elapsed = instance:getLocalVar('startTime')
+        local elapsed = instance:getLocalVar('elapsed')
         xi.tierTrial.grantRewards(instance, elapsed)
         instance:setLocalVar('ejectAt', elapsed + 10000)
     end

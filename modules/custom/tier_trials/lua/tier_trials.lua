@@ -162,12 +162,12 @@ xi.tierTrial.grantRewards = function(instance, elapsed)
             player:addItem(tierDef.shardItem, 1)
         end
 
-        -- Tier I weapon (job-family lookup)
+        -- Weapon drop (family-matched to player's main job)
         local roll = math.random(100)
         if roll <= dropRate then
             local jobFamily  = xi.tierTrial.getJobFamily(player:getMainJob())
-            local weaponItem = tierDef.weapons[jobFamily]
-            if weaponItem then
+            local weaponItem = jobFamily and tierDef.weapons[jobFamily]
+            if weaponItem and weaponItem > 0 then
                 player:addItem(weaponItem, 1)
             end
         end
@@ -183,27 +183,21 @@ end
 xi.tierTrial.getJobFamily = function(job)
     local map =
     {
-        [xi.job.WAR] = 'greatsword',
-        [xi.job.DRK] = 'greatsword',
-        [xi.job.DRG] = 'greatsword',
-        [xi.job.MNK] = 'handtohand',
-        [xi.job.PUP] = 'handtohand',
-        [xi.job.WHM] = 'staff_healing',
-        [xi.job.SCH] = 'staff_healing',
-        [xi.job.BLM] = 'staff_magic',
-        [xi.job.SMN] = 'staff_magic',
-        [xi.job.RDM] = 'sword',
-        [xi.job.BRD] = 'sword',
-        [xi.job.THF] = 'dagger',
-        [xi.job.NIN] = 'dagger',
-        [xi.job.RNG] = 'ranged',
-        [xi.job.COR] = 'ranged',
-        [xi.job.PLD] = 'sword_shield',
-        [xi.job.SAM] = 'greatkatana',
-        [xi.job.BST] = 'axe',
+        [xi.job.WAR] = 'blade',    [xi.job.DRK] = 'blade',
+        [xi.job.DRG] = 'blade',    [xi.job.RDM] = 'blade',
+        [xi.job.BRD] = 'blade',
+        [xi.job.SAM] = 'nodachi',
+        [xi.job.NIN] = 'kukri',    [xi.job.THF] = 'kukri',
+        [xi.job.RNG] = 'kukri',    [xi.job.COR] = 'kukri',
+        [xi.job.DNC] = 'kukri',
+        [xi.job.MNK] = 'cesti',    [xi.job.PUP] = 'cesti',
+        [xi.job.WHM] = 'rod',      [xi.job.BLM] = 'rod',
+        [xi.job.SMN] = 'rod',      [xi.job.SCH] = 'rod',
+        [xi.job.GEO] = 'rod',
+        [xi.job.BLU] = 'falchion',
+        [xi.job.PLD] = 'spatha',
     }
-
-    return map[job] or 'greatsword'
+    return map[job]
 end
 
 return m
