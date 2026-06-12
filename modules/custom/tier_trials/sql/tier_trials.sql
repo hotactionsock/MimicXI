@@ -31,7 +31,7 @@
 
 -- =============================================================
 -- SECTION 1: mob_groups for zone 183
--- All group IDs start at 1 (zone 183 is currently empty)
+-- Group IDs start at 12000 (base game uses up to 11354)
 -- Format: (groupid, poolid, zoneid, name, respawntime, spawntype, dropid, HP, MP, allegiance, content_tag)
 -- respawntime=0 for instance mobs (engine handles respawn)
 -- spawntype=128 for instance-only mobs (not persistent world spawns)
@@ -40,75 +40,75 @@
 
 -- -----------------------------------------------------------
 -- Tier 30: The Valkurm Proving
--- Group IDs 1–14
+-- Group IDs 12000–12013
 -- -----------------------------------------------------------
-INSERT INTO `mob_groups` VALUES (1,  1683, 183, 'Goblin_Leecher',    0, 128, 0, 0, 0, 0, NULL); -- Wave 1, slot A
-INSERT INTO `mob_groups` VALUES (2,  1683, 183, 'Goblin_Leecher',    0, 128, 0, 0, 0, 0, NULL); -- Wave 1, slot B
-INSERT INTO `mob_groups` VALUES (3,  1641, 183, 'Goblin_Bouncer',    0, 128, 0, 0, 0, 0, NULL); -- Wave 1, slot C
-INSERT INTO `mob_groups` VALUES (4,  3017, 183, 'Orcish_Grunt',      0, 128, 0, 0, 0, 0, NULL); -- Wave 2, slot A
-INSERT INTO `mob_groups` VALUES (5,  3017, 183, 'Orcish_Grunt',      0, 128, 0, 0, 0, 0, NULL); -- Wave 2, slot B
-INSERT INTO `mob_groups` VALUES (6,  3004, 183, 'Orcish_Cursemaker', 0, 128, 0, 0, 0, 0, NULL); -- Wave 2, slot C
-INSERT INTO `mob_groups` VALUES (7,  6240, 183, 'Brass_Quadav',      0, 128, 0, 0, 0, 0, NULL); -- Wave 3, slot A
-INSERT INTO `mob_groups` VALUES (8,  6240, 183, 'Brass_Quadav',      0, 128, 0, 0, 0, 0, NULL); -- Wave 3, slot B
-INSERT INTO `mob_groups` VALUES (9,  6241, 183, 'Copper_Quadav',     0, 128, 0, 0, 0, 0, NULL); -- Wave 3, slot C
-INSERT INTO `mob_groups` VALUES (10, 1683, 183, 'Goblin_Leecher',    0, 128, 0, 0, 0, 0, NULL); -- Wave 4, slot A
-INSERT INTO `mob_groups` VALUES (11, 1683, 183, 'Goblin_Leecher',    0, 128, 0, 0, 0, 0, NULL); -- Wave 4, slot B
-INSERT INTO `mob_groups` VALUES (12, 3017, 183, 'Orcish_Grunt',      0, 128, 0, 0, 0, 0, NULL); -- Wave 4, slot C
-INSERT INTO `mob_groups` VALUES (13, 3017, 183, 'Orcish_Grunt',      0, 128, 0, 0, 0, 0, NULL); -- Wave 4, slot D
-INSERT INTO `mob_groups` VALUES (14, 1683, 183, 'Brakk_the_Lockjaw', 0, 128, 0, 0, 0, 0, NULL); -- Wave 5 boss
+INSERT INTO `mob_groups` VALUES (12000,  1683, 183, 'Goblin_Leecher',    0, 128, 0, 0, 0, 0, NULL); -- Wave 1, slot A
+INSERT INTO `mob_groups` VALUES (12001,  1683, 183, 'Goblin_Leecher',    0, 128, 0, 0, 0, 0, NULL); -- Wave 1, slot B
+INSERT INTO `mob_groups` VALUES (12002,  1641, 183, 'Goblin_Bouncer',    0, 128, 0, 0, 0, 0, NULL); -- Wave 1, slot C
+INSERT INTO `mob_groups` VALUES (12003,  3017, 183, 'Orcish_Grunt',      0, 128, 0, 0, 0, 0, NULL); -- Wave 2, slot A
+INSERT INTO `mob_groups` VALUES (12004,  3017, 183, 'Orcish_Grunt',      0, 128, 0, 0, 0, 0, NULL); -- Wave 2, slot B
+INSERT INTO `mob_groups` VALUES (12005,  3004, 183, 'Orcish_Cursemaker', 0, 128, 0, 0, 0, 0, NULL); -- Wave 2, slot C
+INSERT INTO `mob_groups` VALUES (12006,  6240, 183, 'Brass_Quadav',      0, 128, 0, 0, 0, 0, NULL); -- Wave 3, slot A
+INSERT INTO `mob_groups` VALUES (12007,  6240, 183, 'Brass_Quadav',      0, 128, 0, 0, 0, 0, NULL); -- Wave 3, slot B
+INSERT INTO `mob_groups` VALUES (12008,  6241, 183, 'Copper_Quadav',     0, 128, 0, 0, 0, 0, NULL); -- Wave 3, slot C
+INSERT INTO `mob_groups` VALUES (12009, 1683, 183, 'Goblin_Leecher',    0, 128, 0, 0, 0, 0, NULL); -- Wave 4, slot A
+INSERT INTO `mob_groups` VALUES (12010, 1683, 183, 'Goblin_Leecher',    0, 128, 0, 0, 0, 0, NULL); -- Wave 4, slot B
+INSERT INTO `mob_groups` VALUES (12011, 3017, 183, 'Orcish_Grunt',      0, 128, 0, 0, 0, 0, NULL); -- Wave 4, slot C
+INSERT INTO `mob_groups` VALUES (12012, 3017, 183, 'Orcish_Grunt',      0, 128, 0, 0, 0, 0, NULL); -- Wave 4, slot D
+INSERT INTO `mob_groups` VALUES (12013, 1683, 183, 'Brakk_the_Lockjaw', 0, 128, 0, 0, 0, 0, NULL); -- Wave 5 boss
 
 -- -----------------------------------------------------------
 -- Tier 40: The Qufim Crucible
--- Group IDs 15–28
+-- Group IDs 12014–12025
 -- -----------------------------------------------------------
-INSERT INTO `mob_groups` VALUES (15, 1600, 183, 'Gigas_Fighter',     0, 128, 0, 0, 0, 0, NULL); -- Wave 1, slot A
-INSERT INTO `mob_groups` VALUES (16, 1600, 183, 'Gigas_Wrestler',    0, 128, 0, 0, 0, 0, NULL); -- Wave 1, slot B
-INSERT INTO `mob_groups` VALUES (17, 1517, 183, 'Ghoul',             0, 128, 0, 0, 0, 0, NULL); -- Wave 2, slot A
-INSERT INTO `mob_groups` VALUES (18, 1517, 183, 'Ghoul',             0, 128, 0, 0, 0, 0, NULL); -- Wave 2, slot B
-INSERT INTO `mob_groups` VALUES (19, 6570, 183, 'Wight',             0, 128, 0, 0, 0, 0, NULL); -- Wave 2, slot C
-INSERT INTO `mob_groups` VALUES (20, 3972, 183, 'Tonberry_Tracker',  0, 128, 0, 5000, 0, 0, NULL); -- Wave 3, slot A
-INSERT INTO `mob_groups` VALUES (21, 3948, 183, 'Tonberry_Elder',    0, 128, 0, 5000, 0, 0, NULL); -- Wave 3, slot B
-INSERT INTO `mob_groups` VALUES (22, 3376, 183, 'Roc',               0, 128, 0, 0, 0, 0, NULL); -- Wave 4, slot A
-INSERT INTO `mob_groups` VALUES (23, 1600, 183, 'Gigas_Fighter',     0, 128, 0, 0, 0, 0, NULL); -- Wave 4, slot B
-INSERT INTO `mob_groups` VALUES (24, 1600, 183, 'Gigas_Wrestler',    0, 128, 0, 0, 0, 0, NULL); -- Wave 4, slot C
-INSERT INTO `mob_groups` VALUES (25, 1600, 183, 'Kalabaros_the_Unbroken', 0, 128, 0, 0, 0, 0, NULL); -- Wave 5 boss
-INSERT INTO `mob_groups` VALUES (26, 6570, 183, 'Wight_Summon',      0, 128, 0, 0, 0, 0, NULL); -- Wave 5 Kalabaros summon
+INSERT INTO `mob_groups` VALUES (12014, 1600, 183, 'Gigas_Fighter',     0, 128, 0, 0, 0, 0, NULL); -- Wave 1, slot A
+INSERT INTO `mob_groups` VALUES (12015, 1600, 183, 'Gigas_Wrestler',    0, 128, 0, 0, 0, 0, NULL); -- Wave 1, slot B
+INSERT INTO `mob_groups` VALUES (12016, 1517, 183, 'Ghoul',             0, 128, 0, 0, 0, 0, NULL); -- Wave 2, slot A
+INSERT INTO `mob_groups` VALUES (12017, 1517, 183, 'Ghoul',             0, 128, 0, 0, 0, 0, NULL); -- Wave 2, slot B
+INSERT INTO `mob_groups` VALUES (12018, 6570, 183, 'Wight',             0, 128, 0, 0, 0, 0, NULL); -- Wave 2, slot C
+INSERT INTO `mob_groups` VALUES (12019, 3972, 183, 'Tonberry_Tracker',  0, 128, 0, 5000, 0, 0, NULL); -- Wave 3, slot A
+INSERT INTO `mob_groups` VALUES (12020, 3948, 183, 'Tonberry_Elder',    0, 128, 0, 5000, 0, 0, NULL); -- Wave 3, slot B
+INSERT INTO `mob_groups` VALUES (12021, 3376, 183, 'Roc',               0, 128, 0, 0, 0, 0, NULL); -- Wave 4, slot A
+INSERT INTO `mob_groups` VALUES (12022, 1600, 183, 'Gigas_Fighter',     0, 128, 0, 0, 0, 0, NULL); -- Wave 4, slot B
+INSERT INTO `mob_groups` VALUES (12023, 1600, 183, 'Gigas_Wrestler',    0, 128, 0, 0, 0, 0, NULL); -- Wave 4, slot C
+INSERT INTO `mob_groups` VALUES (12024, 1600, 183, 'Kalabaros_the_Unbroken', 0, 128, 0, 0, 0, 0, NULL); -- Wave 5 boss
+INSERT INTO `mob_groups` VALUES (12025, 6570, 183, 'Wight_Summon',      0, 128, 0, 0, 0, 0, NULL); -- Wave 5 Kalabaros summon
 
 -- -----------------------------------------------------------
 -- Tier 50: The Fauregandi Trial
--- Group IDs 27–42
+-- Group IDs 12026–12038
 -- -----------------------------------------------------------
-INSERT INTO `mob_groups` VALUES (27, 2065, 183, 'Imp',               0, 128, 0, 0, 0, 0, NULL); -- Wave 1, slot A
-INSERT INTO `mob_groups` VALUES (28, 2065, 183, 'Imp',               0, 128, 0, 0, 0, 0, NULL); -- Wave 1, slot B
-INSERT INTO `mob_groups` VALUES (29, 2065, 183, 'Imp',               0, 128, 0, 0, 0, 0, NULL); -- Wave 1, slot C
-INSERT INTO `mob_groups` VALUES (30, 3004, 183, 'Shadow_Orc',        0, 128, 0, 0, 0, 0, NULL); -- Wave 2, slot A
-INSERT INTO `mob_groups` VALUES (31, 3004, 183, 'Shadow_Orc',        0, 128, 0, 0, 0, 0, NULL); -- Wave 2, slot B
-INSERT INTO `mob_groups` VALUES (32, 6240, 183, 'Undead_Quadav',     0, 128, 0, 0, 0, 0, NULL); -- Wave 2, slot C
-INSERT INTO `mob_groups` VALUES (33, 1341, 183, 'Fire_Elemental',    0, 132, 0, 0, 0, 0, NULL); -- Wave 3, slot A
-INSERT INTO `mob_groups` VALUES (34, 2043, 183, 'Ice_Elemental',     0, 132, 0, 0, 0, 0, NULL); -- Wave 3, slot B
-INSERT INTO `mob_groups` VALUES (35, 1900, 183, 'Haunt',             0, 128, 0, 0, 0, 0, NULL); -- Wave 4, slot A
-INSERT INTO `mob_groups` VALUES (36, 1900, 183, 'Haunt',             0, 128, 0, 0, 0, 0, NULL); -- Wave 4, slot B
-INSERT INTO `mob_groups` VALUES (37, 2065, 183, 'Imp',               0, 128, 0, 0, 0, 0, NULL); -- Wave 4, slot C
-INSERT INTO `mob_groups` VALUES (38, 2065, 183, 'Imp',               0, 128, 0, 0, 0, 0, NULL); -- Wave 4, slot D
-INSERT INTO `mob_groups` VALUES (39, 2065, 183, 'Valdris_the_Hollowed', 0, 128, 0, 0, 0, 0, NULL); -- Wave 5 boss
+INSERT INTO `mob_groups` VALUES (12026, 2065, 183, 'Imp',               0, 128, 0, 0, 0, 0, NULL); -- Wave 1, slot A
+INSERT INTO `mob_groups` VALUES (12027, 2065, 183, 'Imp',               0, 128, 0, 0, 0, 0, NULL); -- Wave 1, slot B
+INSERT INTO `mob_groups` VALUES (12028, 2065, 183, 'Imp',               0, 128, 0, 0, 0, 0, NULL); -- Wave 1, slot C
+INSERT INTO `mob_groups` VALUES (12029, 3004, 183, 'Shadow_Orc',        0, 128, 0, 0, 0, 0, NULL); -- Wave 2, slot A
+INSERT INTO `mob_groups` VALUES (12030, 3004, 183, 'Shadow_Orc',        0, 128, 0, 0, 0, 0, NULL); -- Wave 2, slot B
+INSERT INTO `mob_groups` VALUES (12031, 6240, 183, 'Undead_Quadav',     0, 128, 0, 0, 0, 0, NULL); -- Wave 2, slot C
+INSERT INTO `mob_groups` VALUES (12032, 1341, 183, 'Fire_Elemental',    0, 132, 0, 0, 0, 0, NULL); -- Wave 3, slot A
+INSERT INTO `mob_groups` VALUES (12033, 2043, 183, 'Ice_Elemental',     0, 132, 0, 0, 0, 0, NULL); -- Wave 3, slot B
+INSERT INTO `mob_groups` VALUES (12034, 1900, 183, 'Haunt',             0, 128, 0, 0, 0, 0, NULL); -- Wave 4, slot A
+INSERT INTO `mob_groups` VALUES (12035, 1900, 183, 'Haunt',             0, 128, 0, 0, 0, 0, NULL); -- Wave 4, slot B
+INSERT INTO `mob_groups` VALUES (12036, 2065, 183, 'Imp',               0, 128, 0, 0, 0, 0, NULL); -- Wave 4, slot C
+INSERT INTO `mob_groups` VALUES (12037, 2065, 183, 'Imp',               0, 128, 0, 0, 0, 0, NULL); -- Wave 4, slot D
+INSERT INTO `mob_groups` VALUES (12038, 2065, 183, 'Valdris_the_Hollowed', 0, 128, 0, 0, 0, 0, NULL); -- Wave 5 boss
 
 -- -----------------------------------------------------------
 -- Tier 60: The Pso'Xja Ordeal
--- Group IDs 40–56
+-- Group IDs 12039–12051
 -- -----------------------------------------------------------
-INSERT INTO `mob_groups` VALUES (40, 65,   183, 'Ahriman',           0, 128, 0, 0, 0, 0, NULL); -- Wave 1, slot A
-INSERT INTO `mob_groups` VALUES (41, 65,   183, 'Ahriman',           0, 128, 0, 0, 0, 0, NULL); -- Wave 1, slot B
-INSERT INTO `mob_groups` VALUES (42, 1900, 183, 'Haunt',             0, 128, 0, 0, 0, 0, NULL); -- Wave 2, slot A
-INSERT INTO `mob_groups` VALUES (43, 1900, 183, 'Haunt',             0, 128, 0, 0, 0, 0, NULL); -- Wave 2, slot B
-INSERT INTO `mob_groups` VALUES (44, 6570, 183, 'Specter',           0, 128, 0, 0, 0, 0, NULL); -- Wave 2, slot C
-INSERT INTO `mob_groups` VALUES (45, 3004, 183, 'Demon_Knight',      0, 128, 0, 0, 0, 0, NULL); -- Wave 3, slot A
-INSERT INTO `mob_groups` VALUES (46, 3004, 183, 'Demon_Knight',      0, 128, 0, 0, 0, 0, NULL); -- Wave 3, slot B
-INSERT INTO `mob_groups` VALUES (47, 2065, 183, 'Demon_Warlock',     0, 128, 0, 0, 0, 0, NULL); -- Wave 3, slot C
-INSERT INTO `mob_groups` VALUES (48, 65,   183, 'Ahriman',           0, 128, 0, 0, 0, 0, NULL); -- Wave 4, slot A
-INSERT INTO `mob_groups` VALUES (49, 65,   183, 'Ahriman',           0, 128, 0, 0, 0, 0, NULL); -- Wave 4, slot B
-INSERT INTO `mob_groups` VALUES (50, 3004, 183, 'Demon_Knight',      0, 128, 0, 0, 0, 0, NULL); -- Wave 4, slot C
-INSERT INTO `mob_groups` VALUES (51, 3004, 183, 'Demon_Knight',      0, 128, 0, 0, 0, 0, NULL); -- Wave 4, slot D
-INSERT INTO `mob_groups` VALUES (52, 65,   183, 'Vraeth_the_Tetrachromic', 0, 128, 0, 0, 0, 0, NULL); -- Wave 5 boss
+INSERT INTO `mob_groups` VALUES (12039, 65,   183, 'Ahriman',           0, 128, 0, 0, 0, 0, NULL); -- Wave 1, slot A
+INSERT INTO `mob_groups` VALUES (12040, 65,   183, 'Ahriman',           0, 128, 0, 0, 0, 0, NULL); -- Wave 1, slot B
+INSERT INTO `mob_groups` VALUES (12041, 1900, 183, 'Haunt',             0, 128, 0, 0, 0, 0, NULL); -- Wave 2, slot A
+INSERT INTO `mob_groups` VALUES (12042, 1900, 183, 'Haunt',             0, 128, 0, 0, 0, 0, NULL); -- Wave 2, slot B
+INSERT INTO `mob_groups` VALUES (12043, 6570, 183, 'Specter',           0, 128, 0, 0, 0, 0, NULL); -- Wave 2, slot C
+INSERT INTO `mob_groups` VALUES (12044, 3004, 183, 'Demon_Knight',      0, 128, 0, 0, 0, 0, NULL); -- Wave 3, slot A
+INSERT INTO `mob_groups` VALUES (12045, 3004, 183, 'Demon_Knight',      0, 128, 0, 0, 0, 0, NULL); -- Wave 3, slot B
+INSERT INTO `mob_groups` VALUES (12046, 2065, 183, 'Demon_Warlock',     0, 128, 0, 0, 0, 0, NULL); -- Wave 3, slot C
+INSERT INTO `mob_groups` VALUES (12047, 65,   183, 'Ahriman',           0, 128, 0, 0, 0, 0, NULL); -- Wave 4, slot A
+INSERT INTO `mob_groups` VALUES (12048, 65,   183, 'Ahriman',           0, 128, 0, 0, 0, 0, NULL); -- Wave 4, slot B
+INSERT INTO `mob_groups` VALUES (12049, 3004, 183, 'Demon_Knight',      0, 128, 0, 0, 0, 0, NULL); -- Wave 4, slot C
+INSERT INTO `mob_groups` VALUES (12050, 3004, 183, 'Demon_Knight',      0, 128, 0, 0, 0, 0, NULL); -- Wave 4, slot D
+INSERT INTO `mob_groups` VALUES (12051, 65,   183, 'Vraeth_the_Tetrachromic', 0, 128, 0, 0, 0, 0, NULL); -- Wave 5 boss
 
 -- =============================================================
 -- SECTION 2: mob_spawn_points for zone 183
@@ -122,89 +122,89 @@ INSERT INTO `mob_groups` VALUES (52, 65,   183, 'Vraeth_the_Tetrachromic', 0, 12
 -- Tier 30 mob entities (IDs 17526785–17526798)
 -- -----------------------------------------------------------
 -- Wave 1
-INSERT INTO `mob_spawn_points` VALUES (17526785, 0, 'Goblin_Leecher',    'Goblin Leecher',    1,  28, 30, 0.000, 0.000, 0.000, 0);
-INSERT INTO `mob_spawn_points` VALUES (17526786, 0, 'Goblin_Leecher',    'Goblin Leecher',    2,  28, 30, 0.000, 0.000, 0.000, 0);
-INSERT INTO `mob_spawn_points` VALUES (17526787, 0, 'Goblin_Bouncer',    'Goblin Bouncer',    3,  29, 31, 0.000, 0.000, 0.000, 0);
+INSERT INTO `mob_spawn_points` VALUES (17526785, 0, 'Goblin_Leecher', 'Goblin Leecher', 12000, 28, 30, 0.000, 0.000, 0.000, 0);
+INSERT INTO `mob_spawn_points` VALUES (17526786, 0, 'Goblin_Leecher', 'Goblin Leecher', 12001, 28, 30, 0.000, 0.000, 0.000, 0);
+INSERT INTO `mob_spawn_points` VALUES (17526787, 0, 'Goblin_Bouncer', 'Goblin Bouncer', 12002, 29, 31, 0.000, 0.000, 0.000, 0);
 -- Wave 2
-INSERT INTO `mob_spawn_points` VALUES (17526788, 0, 'Orcish_Grunt',      'Orcish Grunt',      4,  28, 30, 0.000, 0.000, 0.000, 0);
-INSERT INTO `mob_spawn_points` VALUES (17526789, 0, 'Orcish_Grunt',      'Orcish Grunt',      5,  28, 30, 0.000, 0.000, 0.000, 0);
-INSERT INTO `mob_spawn_points` VALUES (17526790, 0, 'Orcish_Cursemaker', 'Orcish Cursemaker', 6,  29, 31, 0.000, 0.000, 0.000, 0);
+INSERT INTO `mob_spawn_points` VALUES (17526788, 0, 'Orcish_Grunt', 'Orcish Grunt', 12003, 28, 30, 0.000, 0.000, 0.000, 0);
+INSERT INTO `mob_spawn_points` VALUES (17526789, 0, 'Orcish_Grunt', 'Orcish Grunt', 12004, 28, 30, 0.000, 0.000, 0.000, 0);
+INSERT INTO `mob_spawn_points` VALUES (17526790, 0, 'Orcish_Cursemaker', 'Orcish Cursemaker', 12005, 29, 31, 0.000, 0.000, 0.000, 0);
 -- Wave 3
-INSERT INTO `mob_spawn_points` VALUES (17526791, 0, 'Brass_Quadav',      'Brass Quadav',      7,  28, 30, 0.000, 0.000, 0.000, 0);
-INSERT INTO `mob_spawn_points` VALUES (17526792, 0, 'Brass_Quadav',      'Brass Quadav',      8,  28, 30, 0.000, 0.000, 0.000, 0);
-INSERT INTO `mob_spawn_points` VALUES (17526793, 0, 'Copper_Quadav',     'Copper Quadav',     9,  29, 31, 0.000, 0.000, 0.000, 0);
+INSERT INTO `mob_spawn_points` VALUES (17526791, 0, 'Brass_Quadav', 'Brass Quadav', 12006, 28, 30, 0.000, 0.000, 0.000, 0);
+INSERT INTO `mob_spawn_points` VALUES (17526792, 0, 'Brass_Quadav', 'Brass Quadav', 12007, 28, 30, 0.000, 0.000, 0.000, 0);
+INSERT INTO `mob_spawn_points` VALUES (17526793, 0, 'Copper_Quadav', 'Copper Quadav', 12008, 29, 31, 0.000, 0.000, 0.000, 0);
 -- Wave 4
-INSERT INTO `mob_spawn_points` VALUES (17526794, 0, 'Goblin_Leecher',    'Goblin Leecher',    10, 29, 31, 0.000, 0.000, 0.000, 0);
-INSERT INTO `mob_spawn_points` VALUES (17526795, 0, 'Goblin_Leecher',    'Goblin Leecher',    11, 29, 31, 0.000, 0.000, 0.000, 0);
-INSERT INTO `mob_spawn_points` VALUES (17526796, 0, 'Orcish_Grunt',      'Orcish Grunt',      12, 29, 31, 0.000, 0.000, 0.000, 0);
-INSERT INTO `mob_spawn_points` VALUES (17526797, 0, 'Orcish_Grunt',      'Orcish Grunt',      13, 29, 31, 0.000, 0.000, 0.000, 0);
+INSERT INTO `mob_spawn_points` VALUES (17526794, 0, 'Goblin_Leecher', 'Goblin Leecher', 12009, 29, 31, 0.000, 0.000, 0.000, 0);
+INSERT INTO `mob_spawn_points` VALUES (17526795, 0, 'Goblin_Leecher', 'Goblin Leecher', 12010, 29, 31, 0.000, 0.000, 0.000, 0);
+INSERT INTO `mob_spawn_points` VALUES (17526796, 0, 'Orcish_Grunt', 'Orcish Grunt', 12011, 29, 31, 0.000, 0.000, 0.000, 0);
+INSERT INTO `mob_spawn_points` VALUES (17526797, 0, 'Orcish_Grunt', 'Orcish Grunt', 12012, 29, 31, 0.000, 0.000, 0.000, 0);
 -- Wave 5 boss
-INSERT INTO `mob_spawn_points` VALUES (17526798, 0, 'Brakk_the_Lockjaw', 'Brakk the Lockjaw', 14, 32, 32, 0.000, 0.000, 0.000, 0);
+INSERT INTO `mob_spawn_points` VALUES (17526798, 0, 'Brakk_the_Lockjaw', , 12013, 32, 32, 0.000, 0.000, 0.000, 0);
 
 -- -----------------------------------------------------------
 -- Tier 40 mob entities (IDs 17526799–17526812)
 -- -----------------------------------------------------------
 -- Wave 1
-INSERT INTO `mob_spawn_points` VALUES (17526799, 0, 'Gigas_Fighter',     'Gigas Fighter',     15, 38, 40, 0.000, 0.000, 0.000, 0);
-INSERT INTO `mob_spawn_points` VALUES (17526800, 0, 'Gigas_Wrestler',    'Gigas Wrestler',    16, 38, 40, 0.000, 0.000, 0.000, 0);
+INSERT INTO `mob_spawn_points` VALUES (17526799, 0, 'Gigas_Fighter', 'Gigas Fighter', 12014, 38, 40, 0.000, 0.000, 0.000, 0);
+INSERT INTO `mob_spawn_points` VALUES (17526800, 0, 'Gigas_Wrestler', 'Gigas Wrestler', 12015, 38, 40, 0.000, 0.000, 0.000, 0);
 -- Wave 2
-INSERT INTO `mob_spawn_points` VALUES (17526801, 0, 'Ghoul',             'Ghoul',             17, 38, 40, 0.000, 0.000, 0.000, 0);
-INSERT INTO `mob_spawn_points` VALUES (17526802, 0, 'Ghoul',             'Ghoul',             18, 38, 40, 0.000, 0.000, 0.000, 0);
-INSERT INTO `mob_spawn_points` VALUES (17526803, 0, 'Wight',             'Wight',             19, 39, 41, 0.000, 0.000, 0.000, 0);
+INSERT INTO `mob_spawn_points` VALUES (17526801, 0, 'Ghoul', 'Ghoul', 12016, 38, 40, 0.000, 0.000, 0.000, 0);
+INSERT INTO `mob_spawn_points` VALUES (17526802, 0, 'Ghoul', 'Ghoul', 12017, 38, 40, 0.000, 0.000, 0.000, 0);
+INSERT INTO `mob_spawn_points` VALUES (17526803, 0, 'Wight', 'Wight', 12018, 39, 41, 0.000, 0.000, 0.000, 0);
 -- Wave 3
-INSERT INTO `mob_spawn_points` VALUES (17526804, 0, 'Tonberry_Tracker',  'Tonberry Tracker',  20, 38, 40, 0.000, 0.000, 0.000, 0);
-INSERT INTO `mob_spawn_points` VALUES (17526805, 0, 'Tonberry_Elder',    'Tonberry Elder',    21, 39, 41, 0.000, 0.000, 0.000, 0);
+INSERT INTO `mob_spawn_points` VALUES (17526804, 0, 'Tonberry_Tracker', 'Tonberry Tracker', 12019, 38, 40, 0.000, 0.000, 0.000, 0);
+INSERT INTO `mob_spawn_points` VALUES (17526805, 0, 'Tonberry_Elder', 'Tonberry Elder', 12020, 39, 41, 0.000, 0.000, 0.000, 0);
 -- Wave 4
-INSERT INTO `mob_spawn_points` VALUES (17526806, 0, 'Roc',               'Roc',               22, 39, 41, 0.000, 0.000, 0.000, 0);
-INSERT INTO `mob_spawn_points` VALUES (17526807, 0, 'Gigas_Fighter',     'Gigas Fighter',     23, 39, 41, 0.000, 0.000, 0.000, 0);
-INSERT INTO `mob_spawn_points` VALUES (17526808, 0, 'Gigas_Wrestler',    'Gigas Wrestler',    24, 39, 41, 0.000, 0.000, 0.000, 0);
+INSERT INTO `mob_spawn_points` VALUES (17526806, 0, 'Roc', 'Roc', 12021, 39, 41, 0.000, 0.000, 0.000, 0);
+INSERT INTO `mob_spawn_points` VALUES (17526807, 0, 'Gigas_Fighter', 'Gigas Fighter', 12022, 39, 41, 0.000, 0.000, 0.000, 0);
+INSERT INTO `mob_spawn_points` VALUES (17526808, 0, 'Gigas_Wrestler', 'Gigas Wrestler', 12023, 39, 41, 0.000, 0.000, 0.000, 0);
 -- Wave 5 boss + summon
-INSERT INTO `mob_spawn_points` VALUES (17526809, 0, 'Kalabaros_the_Unbroken', 'Kalabaros the Unbroken', 25, 43, 43, 0.000, 0.000, 0.000, 0);
-INSERT INTO `mob_spawn_points` VALUES (17526810, 0, 'Wight_Summon',      'Wight',             26, 41, 41, 0.000, 0.000, 0.000, 0);
+INSERT INTO `mob_spawn_points` VALUES (17526809, 0, 'Kalabaros_the_Unbroken', , 12024, 43, 43, 0.000, 0.000, 0.000, 0);
+INSERT INTO `mob_spawn_points` VALUES (17526810, 0, 'Wight_Summon', 'Wight', 12025, 41, 41, 0.000, 0.000, 0.000, 0);
 
 -- -----------------------------------------------------------
 -- Tier 50 mob entities (IDs 17526811–17526823)
 -- -----------------------------------------------------------
 -- Wave 1
-INSERT INTO `mob_spawn_points` VALUES (17526811, 0, 'Imp',               'Imp',               27, 48, 50, 0.000, 0.000, 0.000, 0);
-INSERT INTO `mob_spawn_points` VALUES (17526812, 0, 'Imp',               'Imp',               28, 48, 50, 0.000, 0.000, 0.000, 0);
-INSERT INTO `mob_spawn_points` VALUES (17526813, 0, 'Imp',               'Imp',               29, 49, 51, 0.000, 0.000, 0.000, 0);
+INSERT INTO `mob_spawn_points` VALUES (17526811, 0, 'Imp', 'Imp', 12026, 48, 50, 0.000, 0.000, 0.000, 0);
+INSERT INTO `mob_spawn_points` VALUES (17526812, 0, 'Imp', 'Imp', 12027, 48, 50, 0.000, 0.000, 0.000, 0);
+INSERT INTO `mob_spawn_points` VALUES (17526813, 0, 'Imp', 'Imp', 12028, 49, 51, 0.000, 0.000, 0.000, 0);
 -- Wave 2
-INSERT INTO `mob_spawn_points` VALUES (17526814, 0, 'Shadow_Orc',        'Shadow Orc',        30, 48, 50, 0.000, 0.000, 0.000, 0);
-INSERT INTO `mob_spawn_points` VALUES (17526815, 0, 'Shadow_Orc',        'Shadow Orc',        31, 48, 50, 0.000, 0.000, 0.000, 0);
-INSERT INTO `mob_spawn_points` VALUES (17526816, 0, 'Undead_Quadav',     'Undead Quadav',     32, 48, 50, 0.000, 0.000, 0.000, 0);
+INSERT INTO `mob_spawn_points` VALUES (17526814, 0, 'Shadow_Orc', 'Shadow Orc', 12029, 48, 50, 0.000, 0.000, 0.000, 0);
+INSERT INTO `mob_spawn_points` VALUES (17526815, 0, 'Shadow_Orc', 'Shadow Orc', 12030, 48, 50, 0.000, 0.000, 0.000, 0);
+INSERT INTO `mob_spawn_points` VALUES (17526816, 0, 'Undead_Quadav', 'Undead Quadav', 12031, 48, 50, 0.000, 0.000, 0.000, 0);
 -- Wave 3
-INSERT INTO `mob_spawn_points` VALUES (17526817, 0, 'Fire_Elemental',    'Fire Elemental',    33, 48, 50, 0.000, 0.000, 0.000, 0);
-INSERT INTO `mob_spawn_points` VALUES (17526818, 0, 'Ice_Elemental',     'Ice Elemental',     34, 48, 50, 0.000, 0.000, 0.000, 0);
+INSERT INTO `mob_spawn_points` VALUES (17526817, 0, 'Fire_Elemental', 'Fire Elemental', 12032, 48, 50, 0.000, 0.000, 0.000, 0);
+INSERT INTO `mob_spawn_points` VALUES (17526818, 0, 'Ice_Elemental', 'Ice Elemental', 12033, 48, 50, 0.000, 0.000, 0.000, 0);
 -- Wave 4
-INSERT INTO `mob_spawn_points` VALUES (17526819, 0, 'Haunt',             'Haunt',             35, 49, 51, 0.000, 0.000, 0.000, 0);
-INSERT INTO `mob_spawn_points` VALUES (17526820, 0, 'Haunt',             'Haunt',             36, 49, 51, 0.000, 0.000, 0.000, 0);
-INSERT INTO `mob_spawn_points` VALUES (17526821, 0, 'Imp',               'Imp',               37, 49, 51, 0.000, 0.000, 0.000, 0);
-INSERT INTO `mob_spawn_points` VALUES (17526822, 0, 'Imp',               'Imp',               38, 49, 51, 0.000, 0.000, 0.000, 0);
+INSERT INTO `mob_spawn_points` VALUES (17526819, 0, 'Haunt', 'Haunt', 12034, 49, 51, 0.000, 0.000, 0.000, 0);
+INSERT INTO `mob_spawn_points` VALUES (17526820, 0, 'Haunt', 'Haunt', 12035, 49, 51, 0.000, 0.000, 0.000, 0);
+INSERT INTO `mob_spawn_points` VALUES (17526821, 0, 'Imp', 'Imp', 12036, 49, 51, 0.000, 0.000, 0.000, 0);
+INSERT INTO `mob_spawn_points` VALUES (17526822, 0, 'Imp', 'Imp', 12037, 49, 51, 0.000, 0.000, 0.000, 0);
 -- Wave 5 boss
-INSERT INTO `mob_spawn_points` VALUES (17526823, 0, 'Valdris_the_Hollowed', 'Valdris the Hollowed', 39, 54, 54, 0.000, 0.000, 0.000, 0);
+INSERT INTO `mob_spawn_points` VALUES (17526823, 0, 'Valdris_the_Hollowed', , 12038, 54, 54, 0.000, 0.000, 0.000, 0);
 
 -- -----------------------------------------------------------
 -- Tier 60 mob entities (IDs 17526824–17526837)
 -- -----------------------------------------------------------
 -- Wave 1
-INSERT INTO `mob_spawn_points` VALUES (17526824, 0, 'Ahriman',           'Ahriman',           40, 58, 60, 0.000, 0.000, 0.000, 0);
-INSERT INTO `mob_spawn_points` VALUES (17526825, 0, 'Ahriman',           'Ahriman',           41, 58, 60, 0.000, 0.000, 0.000, 0);
+INSERT INTO `mob_spawn_points` VALUES (17526824, 0, 'Ahriman', 'Ahriman', 12039, 58, 60, 0.000, 0.000, 0.000, 0);
+INSERT INTO `mob_spawn_points` VALUES (17526825, 0, 'Ahriman', 'Ahriman', 12040, 58, 60, 0.000, 0.000, 0.000, 0);
 -- Wave 2
-INSERT INTO `mob_spawn_points` VALUES (17526826, 0, 'Haunt',             'Haunt',             42, 58, 60, 0.000, 0.000, 0.000, 0);
-INSERT INTO `mob_spawn_points` VALUES (17526827, 0, 'Haunt',             'Haunt',             43, 58, 60, 0.000, 0.000, 0.000, 0);
-INSERT INTO `mob_spawn_points` VALUES (17526828, 0, 'Specter',           'Specter',           44, 59, 61, 0.000, 0.000, 0.000, 0);
+INSERT INTO `mob_spawn_points` VALUES (17526826, 0, 'Haunt', 'Haunt', 12041, 58, 60, 0.000, 0.000, 0.000, 0);
+INSERT INTO `mob_spawn_points` VALUES (17526827, 0, 'Haunt', 'Haunt', 12042, 58, 60, 0.000, 0.000, 0.000, 0);
+INSERT INTO `mob_spawn_points` VALUES (17526828, 0, 'Specter', 'Specter', 12043, 59, 61, 0.000, 0.000, 0.000, 0);
 -- Wave 3
-INSERT INTO `mob_spawn_points` VALUES (17526829, 0, 'Demon_Knight',      'Demon Knight',      45, 58, 60, 0.000, 0.000, 0.000, 0);
-INSERT INTO `mob_spawn_points` VALUES (17526830, 0, 'Demon_Knight',      'Demon Knight',      46, 58, 60, 0.000, 0.000, 0.000, 0);
-INSERT INTO `mob_spawn_points` VALUES (17526831, 0, 'Demon_Warlock',     'Demon Warlock',     47, 59, 61, 0.000, 0.000, 0.000, 0);
+INSERT INTO `mob_spawn_points` VALUES (17526829, 0, 'Demon_Knight', 'Demon Knight', 12044, 58, 60, 0.000, 0.000, 0.000, 0);
+INSERT INTO `mob_spawn_points` VALUES (17526830, 0, 'Demon_Knight', 'Demon Knight', 12045, 58, 60, 0.000, 0.000, 0.000, 0);
+INSERT INTO `mob_spawn_points` VALUES (17526831, 0, 'Demon_Warlock', 'Demon Warlock', 12046, 59, 61, 0.000, 0.000, 0.000, 0);
 -- Wave 4
-INSERT INTO `mob_spawn_points` VALUES (17526832, 0, 'Ahriman',           'Ahriman',           48, 59, 61, 0.000, 0.000, 0.000, 0);
-INSERT INTO `mob_spawn_points` VALUES (17526833, 0, 'Ahriman',           'Ahriman',           49, 59, 61, 0.000, 0.000, 0.000, 0);
-INSERT INTO `mob_spawn_points` VALUES (17526834, 0, 'Demon_Knight',      'Demon Knight',      50, 59, 61, 0.000, 0.000, 0.000, 0);
-INSERT INTO `mob_spawn_points` VALUES (17526835, 0, 'Demon_Knight',      'Demon Knight',      51, 59, 61, 0.000, 0.000, 0.000, 0);
+INSERT INTO `mob_spawn_points` VALUES (17526832, 0, 'Ahriman', 'Ahriman', 12047, 59, 61, 0.000, 0.000, 0.000, 0);
+INSERT INTO `mob_spawn_points` VALUES (17526833, 0, 'Ahriman', 'Ahriman', 12048, 59, 61, 0.000, 0.000, 0.000, 0);
+INSERT INTO `mob_spawn_points` VALUES (17526834, 0, 'Demon_Knight', 'Demon Knight', 12049, 59, 61, 0.000, 0.000, 0.000, 0);
+INSERT INTO `mob_spawn_points` VALUES (17526835, 0, 'Demon_Knight', 'Demon Knight', 12050, 59, 61, 0.000, 0.000, 0.000, 0);
 -- Wave 5 boss
-INSERT INTO `mob_spawn_points` VALUES (17526836, 0, 'Vraeth_the_Tetrachromic', 'Vraeth the Tetrachromic', 52, 64, 64, 0.000, 0.000, 0.000, 0);
+INSERT INTO `mob_spawn_points` VALUES (17526836, 0, 'Vraeth_the_Tetrachromic', 'Vraeth the Tetrachromic', 12051, 64, 64, 0.000, 0.000, 0.000, 0);
 
 -- =============================================================
 -- SECTION 3: instance_list entries
