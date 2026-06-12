@@ -15,7 +15,7 @@ xi.tierTrial.TIERS[60] =
     label      = "The Pso'Xja Ordeal",
 
     markVar   = '[TierTrial]PsoxjaMarks',
-    shardItem = 0, -- TODO: xi.item.PSOXJA_TRIAL_SHARD
+    shardItem = 3760, -- Resolute Shard
 
     weapons =
     {

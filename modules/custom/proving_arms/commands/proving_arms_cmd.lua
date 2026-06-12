@@ -16,11 +16,11 @@ local CMD = {}
 
 local FAMILY_NAMES =
 {
-    greatsword = 'Greatsword', handtohand  = 'Knuckles',
-    staff_heal = 'Rod',        staff_magic = 'Wand',
-    sword      = 'Blade',      dagger      = 'Edge',
-    ranged     = 'Bolt/Shot',  sword_shield = 'Kite',
-    greatkatana = 'Tachi',     axe         = 'Fang',
+    blade    = 'Blade',    nodachi  = 'Nodachi',
+    kukri    = 'Kukri',   cesti    = 'Cesti',
+    rod      = 'Rod',     falchion = 'Falchion',
+    sceptre  = 'Sceptre', spatha   = 'Spatha',
+    kite     = 'Kite',    caligo   = 'Caligo',
 }
 
 CMD['forge'] = function(player, command, args)
@@ -154,10 +154,10 @@ CMD['forge'] = function(player, command, args)
             return id > 0 and player:getItemCount(id) or 'N/A (unset)'
         end
         player:PrintToPlayer('--- Proving Arms Materials ---')
-        player:PrintToPlayer('Valkurm Shard:    ' .. qty(item.VALKURM_SHARD))
-        player:PrintToPlayer('Qufim Shard:      ' .. qty(item.QUFIM_SHARD))
-        player:PrintToPlayer('Fauregandi Shard: ' .. qty(item.FAUREGANDI_SHARD))
-        player:PrintToPlayer("Pso'Xja Shard:    " .. qty(item.PSOXJA_SHARD))
+        player:PrintToPlayer('Nascent Shard:    ' .. qty(item.NASCENT_SHARD))
+        player:PrintToPlayer('Tempered Shard:   ' .. qty(item.TEMPERED_SHARD))
+        player:PrintToPlayer('Forged Shard:     ' .. qty(item.FORGED_SHARD))
+        player:PrintToPlayer('Resolute Shard:   ' .. qty(item.RESOLUTE_SHARD))
         player:PrintToPlayer('Resonance Key:    ' .. qty(item.RESONANCE_KEY))
         player:PrintToPlayer('Awakening Shard:  ' .. qty(item.AWAKENING_SHARD))
         player:PrintToPlayer('Awakening Crystal:' .. qty(item.AWAKENING_CRYSTAL))

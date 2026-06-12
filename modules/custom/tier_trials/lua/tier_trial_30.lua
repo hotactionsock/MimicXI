@@ -15,7 +15,7 @@ xi.tierTrial.TIERS[30] =
     label      = 'The Valkurm Proving',
 
     markVar   = '[TierTrial]ValkurumMarks',
-    shardItem = 0, -- TODO: xi.item.VALKURM_TRIAL_SHARD (add item to DB)
+    shardItem = 3757, -- Nascent Shard
 
     -- Tier I weapon item IDs per job family
     -- TODO: fill with real item IDs once defined in DB

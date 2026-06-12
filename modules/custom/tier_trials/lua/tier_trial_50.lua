@@ -15,7 +15,7 @@ xi.tierTrial.TIERS[50] =
     label      = 'The Fauregandi Trial',
 
     markVar   = '[TierTrial]FauregandiMarks',
-    shardItem = 0, -- TODO: xi.item.FAUREGANDI_TRIAL_SHARD
+    shardItem = 3759, -- Forged Shard
 
     weapons =
     {

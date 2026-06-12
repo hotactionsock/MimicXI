@@ -15,7 +15,7 @@ xi.tierTrial.TIERS[40] =
     label      = 'The Qufim Crucible',
 
     markVar   = '[TierTrial]QufimMarks',
-    shardItem = 0, -- TODO: xi.item.QUFIM_TRIAL_SHARD
+    shardItem = 3758, -- Tempered Shard
 
     weapons =
     {

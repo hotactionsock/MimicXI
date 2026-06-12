@@ -6,17 +6,28 @@
 -- by spending materials earned from Tier Trials and The Circuit.
 -- The Resonance Forge NPC handles all upgrades and augment activation.
 --
--- Augment pools (Tier V+ slot):
---   Valkurm (30):   Accuracy · Evasion · Enmity+/- · Magic Attack Bonus
---   Qufim (40):     Haste · Subtle Blow · Cure Potency · Magic Accuracy
---   Fauregandi (50):Crit Hit Rate · Fast Cast · Store TP · Damage Taken-
---   Pso'Xja (60):   Double Attack · Conserve MP · Magic Burst Bonus · Resist vs. Element
+-- Weapon families and capstones:
+--   blade      (RDM/BRD)      → T1–T4 Blades,    Capstone: Virtus   (20037)
+--   nodachi    (SAM/NIN)      → T1–T4 Nodachi,   Capstone: Vox      (20038)
+--   kukri      (THF/NIN/RNG/COR/DNC) → T1–T4 Kukri, Capstone: Umbra (20039)
+--   cesti      (MNK/PUP)      → T1–T4 Cesti,     Capstone: Fuga     (20040)
+--   rod        (WHM/BLM/SMN/SCH/GEO) → T1–T4 Rods, Capstone: Vis   (20041)
+--   falchion   (BLU)          → T1–T4 Falchions, Capstone: Lux      (20042)
+--   sceptre    (GEO extra)    → T1–T4 Sceptres,  Capstone: Arcana   (20043)  [GEO alt line]
+--   spatha     (PLD/RDM)      → T1–T4 Spathas,   Capstone: Tellus   (20044)
+--   kite       (PLD)          → T1–T4 Kite Shields, Capstone: Lex   (20045)
+--   caligo     (NIN solo)     → shares Nodachi T1–T4, Capstone: Caligo (20046)
+--   (Tutela PLD shield capstone — pending item ID)
+--
+-- Augment pools (Tier V slot):
+--   Nascent (30):    Accuracy · Evasion · Enmity+/- · Magic Attack Bonus
+--   Tempered (40):   Haste · Subtle Blow · Cure Potency · Magic Accuracy
+--   Forged (50):     Crit Hit Rate · Fast Cast · Store TP · Damage Taken-
+--   Resolute (60):   Double Attack · Conserve MP · Magic Burst Bonus · Resist vs. Element
 --
 -- Toggle: comment/uncomment entries in modules/init.txt
 --
 -- Dependencies: tier_trials module (shard items), circuit module (badge item)
---   Both can be toggled independently — forge simply won't show recipes
---   whose materials aren't defined.
 -----------------------------------
 require('modules/module_utils')
 
@@ -27,19 +38,16 @@ xi.provingArms  = xi.provingArms or {}
 
 -----------------------------------
 -- Material item IDs
--- Shards and marks are spent here; weapons are consumed/produced.
--- All weapon item IDs are TODO until item generation is complete.
--- Shard/Badge/Key IDs are also TODO — set to 0 as safe sentinel.
 -----------------------------------
 xi.provingArms.item =
 {
     -- Trial Shards (dropped from Tier Trial wave 5 clears)
-    VALKURM_SHARD    = 0, -- TODO: xi.item.VALKURM_TRIAL_SHARD
-    QUFIM_SHARD      = 0, -- TODO: xi.item.QUFIM_TRIAL_SHARD
-    FAUREGANDI_SHARD = 0, -- TODO: xi.item.FAUREGANDI_TRIAL_SHARD
-    PSOXJA_SHARD     = 0, -- TODO: xi.item.PSOXJA_TRIAL_SHARD
+    NASCENT_SHARD    = 3757,
+    TEMPERED_SHARD   = 3758,
+    FORGED_SHARD     = 3759,
+    RESOLUTE_SHARD   = 3760,
 
-    -- Endgame boss drops (stubbed — wired in boss system iteration)
+    -- Endgame boss drops
     RESONANCE_KEY    = 0, -- TODO: T1 boss drop
     AWAKENING_SHARD  = 0, -- TODO: T2 boss drop
     AWAKENING_CRYSTAL = 0, -- TODO: T3 boss drop
@@ -47,86 +55,123 @@ xi.provingArms.item =
 }
 
 -- Platinum Circuit Badge item ID (awarded by Circuit module)
--- Read from circuit module if loaded, else fallback to 0
 xi.provingArms.BADGE_ITEM_ID = 0 -- TODO: assign item ID
 
 -----------------------------------
--- Job family → weapon family key
+-- Job → weapon family key
+-- NIN can follow nodachi or caligo; default is kukri (rogue line).
+-- The Forge NPC offers NIN players a choice at Tier V.
+-- PLD has two parallel lines: spatha (weapon) and kite (shield).
 -----------------------------------
 xi.provingArms.jobFamily = function(job)
     local map =
     {
-        [xi.job.WAR] = 'greatsword',  [xi.job.DRK] = 'greatsword',
-        [xi.job.DRG] = 'greatsword',
-        [xi.job.MNK] = 'handtohand',  [xi.job.PUP] = 'handtohand',
-        [xi.job.WHM] = 'staff_heal',  [xi.job.SCH] = 'staff_heal',
-        [xi.job.BLM] = 'staff_magic', [xi.job.SMN] = 'staff_magic',
-        [xi.job.RDM] = 'sword',       [xi.job.BRD] = 'sword',
-        [xi.job.THF] = 'dagger',      [xi.job.NIN] = 'dagger',
-        [xi.job.RNG] = 'ranged',      [xi.job.COR] = 'ranged',
-        [xi.job.PLD] = 'sword_shield',
-        [xi.job.SAM] = 'greatkatana',
-        [xi.job.BST] = 'axe',
+        [xi.job.WAR] = 'blade',       -- greatsword-class, shares blade line
+        [xi.job.DRK] = 'blade',
+        [xi.job.DRG] = 'blade',
+        [xi.job.RDM] = 'blade',       -- RDM default; can also do spatha
+        [xi.job.BRD] = 'blade',
+        [xi.job.SAM] = 'nodachi',
+        [xi.job.NIN] = 'kukri',       -- NIN default; Forge offers caligo at T5
+        [xi.job.THF] = 'kukri',
+        [xi.job.RNG] = 'kukri',
+        [xi.job.COR] = 'kukri',
+        [xi.job.DNC] = 'kukri',
+        [xi.job.MNK] = 'cesti',
+        [xi.job.PUP] = 'cesti',
+        [xi.job.WHM] = 'rod',
+        [xi.job.BLM] = 'rod',
+        [xi.job.SMN] = 'rod',
+        [xi.job.SCH] = 'rod',
+        [xi.job.GEO] = 'rod',         -- GEO default; can also do sceptre
+        [xi.job.BLU] = 'falchion',
+        [xi.job.PLD] = 'spatha',      -- PLD default weapon line; kite is parallel
     }
     return map[job]
 end
 
 -----------------------------------
 -- Weapon item IDs per tier and family
--- All 0 until item generation pass is complete.
--- Format: WEAPONS[tier][family] = itemId
+-- Tier I–IV: 20001–20036 (9 families × 4 tiers)
+-- Kite Shields (PLD armor line): 23936–23939
+-- Tier V capstones: 20037–20046
+-- Tutela (PLD shield capstone): pending
 -----------------------------------
 xi.provingArms.WEAPONS =
 {
-    -- Tier I: Nascent weapons (equip Lv28)
+    -- Tier I: Nascent (equip Lv28)
     [1] =
     {
-        greatsword   = 0, handtohand   = 0,
-        staff_heal   = 0, staff_magic  = 0,
-        sword        = 0, dagger       = 0,
-        ranged       = 0, sword_shield = 0,
-        greatkatana  = 0, axe          = 0,
+        blade    = 20001,
+        nodachi  = 20002,
+        kukri    = 20003,
+        cesti    = 20004,
+        rod      = 20005,
+        falchion = 20006,
+        sceptre  = 20007,
+        spatha   = 20008,
+        kite     = 23936,
+        caligo   = 20002, -- shares nodachi blank
     },
-    -- Tier II: Tempered weapons (equip Lv38)
+    -- Tier II: Tempered (equip Lv38)
     [2] =
     {
-        greatsword   = 0, handtohand   = 0,
-        staff_heal   = 0, staff_magic  = 0,
-        sword        = 0, dagger       = 0,
-        ranged       = 0, sword_shield = 0,
-        greatkatana  = 0, axe          = 0,
+        blade    = 20010,
+        nodachi  = 20011,
+        kukri    = 20012,
+        cesti    = 20013,
+        rod      = 20014,
+        falchion = 20015,
+        sceptre  = 20016,
+        spatha   = 20017,
+        kite     = 23937,
+        caligo   = 20011,
     },
-    -- Tier III: Forged weapons (equip Lv48)
+    -- Tier III: Forged (equip Lv48)
     [3] =
     {
-        greatsword   = 0, handtohand   = 0,
-        staff_heal   = 0, staff_magic  = 0,
-        sword        = 0, dagger       = 0,
-        ranged       = 0, sword_shield = 0,
-        greatkatana  = 0, axe          = 0,
+        blade    = 20019,
+        nodachi  = 20020,
+        kukri    = 20021,
+        cesti    = 20022,
+        rod      = 20023,
+        falchion = 20024,
+        sceptre  = 20025,
+        spatha   = 20026,
+        kite     = 23938,
+        caligo   = 20020,
     },
-    -- Tier IV: Resolute weapons (equip Lv58)
+    -- Tier IV: Resolute (equip Lv58)
     [4] =
     {
-        greatsword   = 0, handtohand   = 0,
-        staff_heal   = 0, staff_magic  = 0,
-        sword        = 0, dagger       = 0,
-        ranged       = 0, sword_shield = 0,
-        greatkatana  = 0, axe          = 0,
+        blade    = 20028,
+        nodachi  = 20029,
+        kukri    = 20030,
+        cesti    = 20031,
+        rod      = 20032,
+        falchion = 20033,
+        sceptre  = 20034,
+        spatha   = 20035,
+        kite     = 23939,
+        caligo   = 20029,
     },
-    -- Tier V: Proven weapons (equip Lv73, augment slot locked)
+    -- Tier V: Proven capstones (equip Lv73, augment slot)
     [5] =
     {
-        greatsword   = 0, handtohand   = 0,
-        staff_heal   = 0, staff_magic  = 0,
-        sword        = 0, dagger       = 0,
-        ranged       = 0, sword_shield = 0,
-        greatkatana  = 0, axe          = 0,
+        blade    = 20037, -- Virtus
+        nodachi  = 20038, -- Vox
+        kukri    = 20039, -- Umbra
+        cesti    = 20040, -- Fuga
+        rod      = 20041, -- Vis
+        falchion = 20042, -- Lux
+        sceptre  = 20043, -- Arcana
+        spatha   = 20044, -- Tellus
+        kite     = 20045, -- Lex
+        caligo   = 20046, -- Caligo (NIN-exclusive)
     },
 }
 
 -- Reverse lookup: itemId → { tier, family }
--- Built at load time once weapon IDs are populated
 xi.provingArms.WEAPON_LOOKUP = {}
 
 xi.provingArms.buildLookup = function()
@@ -134,7 +179,10 @@ xi.provingArms.buildLookup = function()
     for tier, families in pairs(xi.provingArms.WEAPONS) do
         for family, itemId in pairs(families) do
             if itemId > 0 then
-                xi.provingArms.WEAPON_LOOKUP[itemId] = { tier = tier, family = family }
+                -- caligo shares IDs with nodachi for T1–T4; skip duplicate registration
+                if not xi.provingArms.WEAPON_LOOKUP[itemId] then
+                    xi.provingArms.WEAPON_LOOKUP[itemId] = { tier = tier, family = family }
+                end
             end
         end
     end
@@ -142,8 +190,6 @@ end
 
 -----------------------------------
 -- Upgrade recipes: Tier I→II, II→III, III→IV, IV→V
--- materials: list of { itemId (resolved at runtime), qty }
--- circuitPoints: Circuit Points to deduct (Tier III→IV only)
 -----------------------------------
 xi.provingArms.getRecipe = function(fromTier)
     local item = xi.provingArms.item
@@ -153,24 +199,24 @@ xi.provingArms.getRecipe = function(fromTier)
         -- Nascent → Tempered
         [1] =
         {
-            materials     = { { id = item.QUFIM_SHARD, qty = 3 } },
-            markVar       = '[TierTrial]QufimMarks',
+            materials     = { { id = item.NASCENT_SHARD, qty = 3 } },
+            markVar       = '[TierTrial]ValkurumMarks',
             markCost      = 1,
             circuitPoints = 0,
         },
         -- Tempered → Forged
         [2] =
         {
-            materials     = { { id = item.FAUREGANDI_SHARD, qty = 3 } },
-            markVar       = '[TierTrial]FauregandiMarks',
+            materials     = { { id = item.TEMPERED_SHARD, qty = 3 } },
+            markVar       = '[TierTrial]QufimMarks',
             markCost      = 1,
             circuitPoints = 0,
         },
         -- Forged → Resolute
         [3] =
         {
-            materials     = { { id = item.PSOXJA_SHARD, qty = 3 } },
-            markVar       = '[TierTrial]PsoxjaMarks',
+            materials     = { { id = item.FORGED_SHARD, qty = 3 } },
+            markVar       = '[TierTrial]FauregandiMarks',
             markCost      = 1,
             circuitPoints = 5,
         },
@@ -179,12 +225,11 @@ xi.provingArms.getRecipe = function(fromTier)
         {
             materials     =
             {
-                { id = item.PSOXJA_SHARD,    qty = 5 },
+                { id = item.RESOLUTE_SHARD,  qty = 5 },
                 { id = item.RESONANCE_KEY,   qty = 1 },
-                -- Badge handled separately via BADGE_ITEM_ID
             },
             requiresBadge = true,
-            markVar       = nil, -- no mark cost at this step
+            markVar       = nil,
             markCost      = 0,
             circuitPoints = 0,
         },
@@ -195,43 +240,40 @@ end
 
 -----------------------------------
 -- Augment pools per origin tier
--- Format: list of { augId, min, max, label }
--- augId references xi.augment constants — fill when augment IDs confirmed
 -----------------------------------
 xi.provingArms.AUGMENT_POOLS =
 {
-    [30] = -- Valkurm
+    [30] = -- Nascent pool
     {
-        { augId = 0, min = 4,  max = 8,  label = 'Accuracy'          }, -- TODO: xi.augment.ACCURACY
-        { augId = 0, min = 4,  max = 8,  label = 'Evasion'           }, -- TODO: xi.augment.EVASION
-        { augId = 0, min = 3,  max = 6,  label = 'Enmity'            }, -- TODO: xi.augment.ENMITY (pos or neg randomly)
+        { augId = 0, min = 4,  max = 8,  label = 'Accuracy'           }, -- TODO: xi.augment.ACCURACY
+        { augId = 0, min = 4,  max = 8,  label = 'Evasion'            }, -- TODO: xi.augment.EVASION
+        { augId = 0, min = 3,  max = 6,  label = 'Enmity'             }, -- TODO: xi.augment.ENMITY
         { augId = 0, min = 4,  max = 8,  label = 'Magic Attack Bonus' }, -- TODO: xi.augment.MAGIC_ATK_BONUS
     },
-    [40] = -- Qufim
+    [40] = -- Tempered pool
     {
-        { augId = 0, min = 2,  max = 4,  label = 'Haste'             }, -- TODO: xi.augment.HASTE (%)
-        { augId = 0, min = 4,  max = 8,  label = 'Subtle Blow'       }, -- TODO: xi.augment.SUBTLE_BLOW
-        { augId = 0, min = 3,  max = 6,  label = 'Cure Potency'      }, -- TODO: xi.augment.CURE_POTENCY (%)
-        { augId = 0, min = 4,  max = 8,  label = 'Magic Accuracy'    }, -- TODO: xi.augment.MAGIC_ACCURACY
+        { augId = 0, min = 2,  max = 4,  label = 'Haste'              }, -- TODO: xi.augment.HASTE (%)
+        { augId = 0, min = 4,  max = 8,  label = 'Subtle Blow'        }, -- TODO: xi.augment.SUBTLE_BLOW
+        { augId = 0, min = 3,  max = 6,  label = 'Cure Potency'       }, -- TODO: xi.augment.CURE_POTENCY (%)
+        { augId = 0, min = 4,  max = 8,  label = 'Magic Accuracy'     }, -- TODO: xi.augment.MAGIC_ACCURACY
     },
-    [50] = -- Fauregandi
+    [50] = -- Forged pool
     {
-        { augId = 0, min = 2,  max = 4,  label = 'Crit Hit Rate'     }, -- TODO: xi.augment.CRIT_HIT_RATE (%)
-        { augId = 0, min = 3,  max = 6,  label = 'Fast Cast'         }, -- TODO: xi.augment.FAST_CAST (%)
-        { augId = 0, min = 4,  max = 8,  label = 'Store TP'          }, -- TODO: xi.augment.STORE_TP
-        { augId = 0, min = 3,  max = 5,  label = 'Damage Taken'      }, -- TODO: xi.augment.DMG_TAKEN (negative %)
+        { augId = 0, min = 2,  max = 4,  label = 'Crit Hit Rate'      }, -- TODO: xi.augment.CRIT_HIT_RATE (%)
+        { augId = 0, min = 3,  max = 6,  label = 'Fast Cast'          }, -- TODO: xi.augment.FAST_CAST (%)
+        { augId = 0, min = 4,  max = 8,  label = 'Store TP'           }, -- TODO: xi.augment.STORE_TP
+        { augId = 0, min = 3,  max = 5,  label = 'Damage Taken'       }, -- TODO: xi.augment.DMG_TAKEN (negative %)
     },
-    [60] = -- Pso'Xja
+    [60] = -- Resolute pool
     {
-        { augId = 0, min = 2,  max = 4,  label = 'Double Attack'     }, -- TODO: xi.augment.DOUBLE_ATTACK (%)
-        { augId = 0, min = 3,  max = 6,  label = 'Conserve MP'       }, -- TODO: xi.augment.CONSERVE_MP
-        { augId = 0, min = 3,  max = 6,  label = 'Magic Burst Bonus' }, -- TODO: xi.augment.MAGIC_BURST_BONUS (%)
+        { augId = 0, min = 2,  max = 4,  label = 'Double Attack'      }, -- TODO: xi.augment.DOUBLE_ATTACK (%)
+        { augId = 0, min = 3,  max = 6,  label = 'Conserve MP'        }, -- TODO: xi.augment.CONSERVE_MP
+        { augId = 0, min = 3,  max = 6,  label = 'Magic Burst Bonus'  }, -- TODO: xi.augment.MAGIC_BURST_BONUS (%)
         { augId = 0, min = 1,  max = 3,  label = 'Resist vs. Element' }, -- TODO: xi.augment.RESIST_ELEMENT (tier)
     },
 }
 
--- Narrower pool for Badge rerolls (excludes top-end picks per tier)
--- Badge can't roll the best augment in each pool — Primal Remnant can
+-- Badge rerolls exclude the best augment in each pool
 xi.provingArms.BADGE_EXCLUDED =
 {
     [30] = 'Magic Attack Bonus',
@@ -245,7 +287,7 @@ xi.provingArms.BADGE_EXCLUDED =
 -- badgeReroll: if true, exclude the top augment from the pool
 -----------------------------------
 xi.provingArms.rollAugments = function(originTier, badgeReroll)
-    local pool     = xi.provingArms.AUGMENT_POOLS[originTier]
+    local pool = xi.provingArms.AUGMENT_POOLS[originTier]
     if not pool then return {} end
 
     local eligible = {}
@@ -257,7 +299,6 @@ xi.provingArms.rollAugments = function(originTier, badgeReroll)
         end
     end
 
-    -- Shuffle eligible pool and pick 3 (or all if fewer than 3)
     local count   = math.min(3, #eligible)
     local results = {}
     local indices = {}
@@ -267,7 +308,6 @@ xi.provingArms.rollAugments = function(originTier, badgeReroll)
         local pick  = math.random(i, #indices)
         indices[i], indices[pick] = indices[pick], indices[i]
         local entry = eligible[indices[i]]
-        -- Roll a value within the augment's range
         local value = math.random(entry.min, entry.max)
         table.insert(results, { augId = entry.augId, value = value, label = entry.label })
     end
@@ -289,7 +329,6 @@ xi.provingArms.checkMaterials = function(player, recipe)
                 table.insert(missing, { id = mat.id, need = mat.qty, have = has })
             end
         else
-            -- Item ID not yet set — always block
             table.insert(missing, { id = 0, need = mat.qty, have = 0, unset = true })
         end
     end
@@ -348,7 +387,7 @@ xi.provingArms.consumeMaterials = function(player, recipe)
 end
 
 -----------------------------------
--- Perform an upgrade: consume from weapon, swap to next tier
+-- Perform an upgrade: consume source weapon, give next tier
 -----------------------------------
 xi.provingArms.doUpgrade = function(player, fromItemId, fromTier, family)
     local toTier   = fromTier + 1
@@ -365,14 +404,11 @@ end
 
 -----------------------------------
 -- Apply a chosen augment to a Proven weapon in-place
--- (Proven → Awakened is not an item swap — augment is applied to same item)
 -----------------------------------
 xi.provingArms.applyAugment = function(player, weaponItemId, augEntry)
     if augEntry.augId == 0 then
-        -- Augment ID not yet configured — stub
         return false, 'Augment ID not yet configured for: ' .. augEntry.label
     end
-    -- player:addAugment(itemId, augId, value) — confirm API signature with engine
     player:addAugment(weaponItemId, augEntry.augId, augEntry.value)
     return true
 end
@@ -382,8 +418,6 @@ end
 -----------------------------------
 require('modules/custom/proving_arms/lua/forge_npc')
 
--- Build weapon reverse lookup (will be empty until item IDs are filled in,
--- but calling it here ensures it runs once at module load)
 xi.provingArms.buildLookup()
 
 return m
