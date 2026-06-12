@@ -5,373 +5,242 @@
 -- Usage from a zone NPC script:
 --
 --   local forge = require('modules/custom/proving_arms/lua/forge_npc')
---   entity.onTrigger    = forge.onTrigger
---   entity.onEventUpdate = forge.onEventUpdate
---   entity.onEventFinish = forge.onEventFinish
---
--- Menu flow:
---   Root menu → "Upgrade Weapon" | "Activate Augment" | "Reroll Augment" | "Leave"
---   Each path confirms materials before consuming anything.
---
--- State is tracked in player local vars prefixed 'RF_':
---   RF_Menu          current menu state
---   RF_WeaponId      item ID of weapon being worked on
---   RF_WeaponTier    tier of that weapon
---   RF_WeaponFamily  family key index (mapped to string at use)
---   RF_AugChoice1/2/3  rolled augment indices (into pool)
---   RF_AugValues1/2/3  rolled augment values
---   RF_IsReroll      1 if this is a reroll, 0 if first activation
---   RF_BadgeReroll   1 if rerolling with Badge (narrower pool)
+--   entity.onTrigger = forge.onTrigger
 -----------------------------------
 
 local forge = {}
 
--- Menu state constants stored in RF_Menu
-local MENU = {
-    ROOT         = 0,
-    UPGRADE      = 1,
-    UPGRADE_CONFIRM = 2,
-    AUGMENT      = 3,
-    AUGMENT_PICK = 4,
-    REROLL       = 5,
-    REROLL_PICK  = 6,
-}
+local TIER_LABEL = { 'Nascent', 'Tempered', 'Forged', 'Resolute', 'Proven' }
 
--- CSIDs — TODO: assign per-zone cutscene IDs
-local CSID =
+local FAMILY_LABEL =
 {
-    ROOT_MENU       = 0,
-    UPGRADE_LIST    = 0,
-    UPGRADE_CONFIRM = 0,
-    NO_ELIGIBLE     = 0,
-    AUGMENT_CHOOSE  = 0,
-    AUGMENT_CONFIRM = 0,
-    REROLL_CONFIRM  = 0,
-    REROLL_CHOOSE   = 0,
-    SUCCESS         = 0,
-    FAIL_MATERIALS  = 0,
+    blade    = 'Blade',    nodachi  = 'Nodachi',
+    kukri    = 'Kukri',   cesti    = 'Cesti',
+    rod      = 'Rod',     falchion = 'Falchion',
+    sceptre  = 'Sceptre', spatha   = 'Spatha',
+    kite     = 'Kite',    caligo   = 'Caligo',
 }
 
+local function msg(player, text)
+    player:printToPlayer(text, xi.msg.channel.SYSTEM_3)
+end
+
 -----------------------------------
--- Scan inventory for any Proving Arms weapon that has an upgrade recipe
--- Returns list of { itemId, tier, family, recipe, canUpgrade }
+-- Augment pick menu
+-- rolls: list of { augId, value, label }
+-- onPick: function(player, roll)
 -----------------------------------
-local function findUpgradeable(player)
-    local results = {}
+local function showAugmentPick(player, rolls, onPick)
+    local options = {}
+    for _, roll in ipairs(rolls) do
+        local r = roll
+        table.insert(options, {
+            string.format('%s +%d', r.label, r.value),
+            function(p) onPick(p, r) end,
+        })
+    end
+    table.insert(options, { 'Cancel', function() end })
+
+    player:timer(100, function(p)
+        p:customMenu({ title = 'Choose Augment', options = options })
+    end)
+end
+
+-----------------------------------
+-- Upgrade path
+-----------------------------------
+local function showUpgradeMenu(player)
     xi.provingArms.buildLookup()
+    local eligible = {}
 
     for itemId, info in pairs(xi.provingArms.WEAPON_LOOKUP) do
         if info.tier < 5 and player:getItemCount(itemId) > 0 then
             local recipe = xi.provingArms.getRecipe(info.tier)
             if recipe then
-                local canUpgrade = xi.provingArms.checkMaterials(player, recipe)
-                table.insert(results, {
-                    itemId     = itemId,
-                    tier       = info.tier,
-                    family     = info.family,
-                    recipe     = recipe,
-                    canUpgrade = canUpgrade,
+                local canDo, _ = xi.provingArms.checkMaterials(player, recipe)
+                table.insert(eligible, {
+                    itemId = itemId, tier = info.tier,
+                    family = info.family, recipe = recipe, canDo = canDo,
                 })
             end
         end
     end
 
-    return results
+    if #eligible == 0 then
+        msg(player, 'No upgradeable weapons found.')
+        return
+    end
+
+    local options = {}
+    for _, entry in ipairs(eligible) do
+        local e = entry
+        local tierName  = TIER_LABEL[e.tier] or ('Tier '..e.tier)
+        local famName   = FAMILY_LABEL[e.family] or e.family
+        local readyMark = e.canDo and '' or ' [!]'
+        table.insert(options, {
+            string.format('%s %s->%s%s', famName, tierName,
+                TIER_LABEL[e.tier+1] or '?', readyMark),
+            function(p)
+                local ok, missing = xi.provingArms.checkMaterials(p, e.recipe)
+                if not ok then
+                    msg(p, 'Missing materials for this upgrade.')
+                    return
+                end
+
+                -- Confirm sub-menu
+                player:timer(100, function(pp)
+                    pp:customMenu({
+                        title = string.format('%s->%s Confirm',
+                            tierName, TIER_LABEL[e.tier+1] or '?'),
+                        options = {
+                            { 'Upgrade', function(ppp)
+                                xi.provingArms.consumeMaterials(ppp, e.recipe)
+                                local success, err = xi.provingArms.doUpgrade(
+                                    ppp, e.itemId, e.tier, e.family)
+                                if success then
+                                    msg(ppp, string.format('%s %s complete.',
+                                        famName, TIER_LABEL[e.tier+1] or ''))
+                                else
+                                    msg(ppp, 'Upgrade failed: ' .. tostring(err))
+                                end
+                            end },
+                            { 'Cancel', function() end },
+                        },
+                    })
+                end)
+            end,
+        })
+    end
+    table.insert(options, { 'Back', function(p) forge.onTrigger(p, nil) end })
+
+    player:timer(100, function(p)
+        p:customMenu({ title = 'Upgrade Weapon', options = options })
+    end)
 end
 
 -----------------------------------
--- Scan inventory for Proven weapons (Tier V) that can have augments activated
+-- Augment activation path (first-time, Proven weapons without augment)
 -----------------------------------
-local function findProvens(player)
-    local results = {}
+local function showAugmentMenu(player)
     xi.provingArms.buildLookup()
+    local eligible = {}
 
     for itemId, info in pairs(xi.provingArms.WEAPON_LOOKUP) do
         if info.tier == 5 and player:getItemCount(itemId) > 0 then
-            -- Check if weapon already has augment active
-            -- player:getAugment(itemId) returns augId or 0 if none
-            local hasAugment = player:getAugment and player:getAugment(itemId, 1) ~= nil
-            table.insert(results, {
-                itemId     = itemId,
-                family     = info.family,
-                hasAugment = hasAugment,
-            })
+            local hasAug = player:getAugment and player:getAugment(itemId, 1) ~= nil
+            if not hasAug then
+                table.insert(eligible, { itemId=itemId, family=info.family })
+            end
         end
     end
 
-    return results
-end
+    if #eligible == 0 then
+        msg(player, 'No Proven weapons available for augment.')
+        return
+    end
 
------------------------------------
--- Store rolled augment options in player local vars
------------------------------------
-local function storeRolledAugments(player, rolls)
-    for i = 1, 3 do
-        local roll = rolls[i]
-        if roll then
-            player:setLocalVar('RF_AugChoice' .. i, roll.augId)
-            player:setLocalVar('RF_AugValue'  .. i, roll.value)
-            -- Label can't be stored in local var — reconstructed from augId at apply time
+    local item       = xi.provingArms.item
+    local hasCrystal = item.AWAKENING_CRYSTAL > 0 and
+                       player:getItemCount(item.AWAKENING_CRYSTAL) >= 1
+    local hasShard   = item.AWAKENING_SHARD > 0 and
+                       player:getItemCount(item.AWAKENING_SHARD) >= 3
+
+    if not hasCrystal and not hasShard then
+        msg(player, 'Need Awakening Crystal x1 or Shard x3.')
+        return
+    end
+
+    local entry  = eligible[1]
+    local rolls  = xi.provingArms.rollAugments(60, false)
+
+    showAugmentPick(player, rolls, function(p, chosen)
+        -- Consume material (Crystal preferred)
+        if item.AWAKENING_CRYSTAL > 0 and p:getItemCount(item.AWAKENING_CRYSTAL) >= 1 then
+            p:removeItem(item.AWAKENING_CRYSTAL, 1)
+        elseif item.AWAKENING_SHARD > 0 then
+            p:removeItem(item.AWAKENING_SHARD, 3)
+        end
+
+        local ok, err = xi.provingArms.applyAugment(p, entry.itemId, chosen)
+        if ok then
+            msg(p, string.format('Augment applied: %s +%d', chosen.label, chosen.value))
         else
-            player:setLocalVar('RF_AugChoice' .. i, 0)
-            player:setLocalVar('RF_AugValue'  .. i, 0)
+            msg(p, 'Augment failed: ' .. tostring(err))
         end
-    end
+    end)
 end
 
 -----------------------------------
--- NPC entry point
+-- Reroll path (Proven weapons that already have an augment)
+-----------------------------------
+local function showRerollMenu(player)
+    xi.provingArms.buildLookup()
+    local eligible = {}
+
+    for itemId, info in pairs(xi.provingArms.WEAPON_LOOKUP) do
+        if info.tier == 5 and player:getItemCount(itemId) > 0 then
+            local hasAug = player:getAugment and player:getAugment(itemId, 1) ~= nil
+            if hasAug then
+                table.insert(eligible, { itemId=itemId, family=info.family })
+            end
+        end
+    end
+
+    if #eligible == 0 then
+        msg(player, 'No augmented Proven weapons found.')
+        return
+    end
+
+    local item       = xi.provingArms.item
+    local hasRemnant = item.PRIMAL_REMNANT > 0 and
+                       player:getItemCount(item.PRIMAL_REMNANT) >= 1
+    local hasBadge   = xi.provingArms.BADGE_ITEM_ID > 0 and
+                       player:getItemCount(xi.provingArms.BADGE_ITEM_ID) >= 1
+
+    if not hasRemnant and not hasBadge then
+        msg(player, 'Need Primal Remnant x1 or Platinum Badge x1.')
+        return
+    end
+
+    local badgeReroll = not hasRemnant
+    local entry       = eligible[1]
+    local rolls       = xi.provingArms.rollAugments(60, badgeReroll)
+
+    if badgeReroll then
+        msg(player, 'Using Badge: premium augments excluded.')
+    end
+
+    showAugmentPick(player, rolls, function(p, chosen)
+        if not badgeReroll and item.PRIMAL_REMNANT > 0 then
+            p:removeItem(item.PRIMAL_REMNANT, 1)
+        elseif xi.provingArms.BADGE_ITEM_ID > 0 then
+            p:removeItem(xi.provingArms.BADGE_ITEM_ID, 1)
+        end
+
+        local ok, err = xi.provingArms.applyAugment(p, entry.itemId, chosen)
+        if ok then
+            msg(p, string.format('Rerolled to: %s +%d', chosen.label, chosen.value))
+        else
+            msg(p, 'Reroll failed: ' .. tostring(err))
+        end
+    end)
+end
+
+-----------------------------------
+-- Root menu
 -----------------------------------
 forge.onTrigger = function(player, npc)
-    player:setLocalVar('RF_Menu', MENU.ROOT)
-    player:startEvent(CSID.ROOT_MENU)
-end
-
------------------------------------
--- Event update handler — drives the menu state machine
--- option meanings depend on current menu state (set by client event)
------------------------------------
-forge.onEventUpdate = function(player, csid, option, npc)
-    local menu = player:getLocalVar('RF_Menu')
-
-    -- Root menu: 0=Upgrade, 1=Augment, 2=Reroll, 3=Leave
-    if menu == MENU.ROOT then
-        if option == 3 then
-            player:release()
-            return false
-        elseif option == 0 then
-            player:setLocalVar('RF_Menu', MENU.UPGRADE)
-        elseif option == 1 then
-            player:setLocalVar('RF_Menu', MENU.AUGMENT)
-        elseif option == 2 then
-            player:setLocalVar('RF_Menu', MENU.REROLL)
-        end
-        return true
-
-    -- Upgrade path: find eligible weapons and present list
-    elseif menu == MENU.UPGRADE then
-        local eligible = findUpgradeable(player)
-        if #eligible == 0 then
-            player:startEvent(CSID.NO_ELIGIBLE)
-            player:setLocalVar('RF_Menu', MENU.ROOT)
-            return true
-        end
-
-        -- Store first eligible weapon (TODO: multi-weapon picker if player has >1)
-        local entry = eligible[1]
-        player:setLocalVar('RF_WeaponId',  entry.itemId)
-        player:setLocalVar('RF_WeaponTier', entry.tier)
-        player:setLocalVar('RF_Menu', MENU.UPGRADE_CONFIRM)
-
-        -- Show confirmation: passes tier info so event can display material list
-        player:updateEvent(entry.tier, entry.canUpgrade and 1 or 0)
-        return true
-
-    -- Upgrade confirmation: option 0 = confirm, 1 = cancel
-    elseif menu == MENU.UPGRADE_CONFIRM then
-        if option == 1 then
-            player:setLocalVar('RF_Menu', MENU.ROOT)
-            return true
-        end
-
-        local weaponId = player:getLocalVar('RF_WeaponId')
-        local tier     = player:getLocalVar('RF_WeaponTier')
-        local info     = xi.provingArms.WEAPON_LOOKUP[weaponId]
-        if not info then
-            player:setLocalVar('RF_Menu', MENU.ROOT)
-            return true
-        end
-
-        local recipe   = xi.provingArms.getRecipe(tier)
-        local ok, _    = xi.provingArms.checkMaterials(player, recipe)
-        if not ok then
-            player:startEvent(CSID.FAIL_MATERIALS)
-            player:setLocalVar('RF_Menu', MENU.ROOT)
-            return true
-        end
-
-        xi.provingArms.consumeMaterials(player, recipe)
-        local success, err = xi.provingArms.doUpgrade(player, weaponId, tier, info.family)
-
-        if success then
-            player:startEvent(CSID.SUCCESS)
-        end
-
-        player:setLocalVar('RF_Menu', MENU.ROOT)
-        return true
-
-    -- Augment activation path
-    elseif menu == MENU.AUGMENT then
-        local provens = findProvens(player)
-        -- Filter to only those without an augment
-        local eligible = {}
-        for _, p in ipairs(provens) do
-            if not p.hasAugment then
-                table.insert(eligible, p)
-            end
-        end
-
-        if #eligible == 0 then
-            player:startEvent(CSID.NO_ELIGIBLE)
-            player:setLocalVar('RF_Menu', MENU.ROOT)
-            return true
-        end
-
-        local entry = eligible[1]
-        player:setLocalVar('RF_WeaponId', entry.itemId)
-        player:setLocalVar('RF_IsReroll', 0)
-
-        -- Determine origin tier from family (look up which tier's WEAPONS table this item is in)
-        local originTier = 30 -- default; derived from weapon ID lookup
-        for tier = 1, 5 do
-            for fam, id in pairs(xi.provingArms.WEAPONS[tier] or {}) do
-                if id == entry.itemId then
-                    -- Map weapon tier to augment origin tier
-                    -- Tier 5 weapons all come from the Tier IV shard path
-                    -- Origin pool determined by the tier's cap: 1→30, 2→40, 3→50, 4→60
-                    -- Proven (tier 5) inherits from its tier IV origin = cap 60... but
-                    -- each weapon family has only one Proven item, so origin = Pso'Xja (60)
-                    -- unless we add origin tracking. For now default to 60.
-                    originTier = 60
-                end
-            end
-        end
-
-        -- Check for activation material (Awakening Shard ×3 or Crystal ×1)
-        local item      = xi.provingArms.item
-        local hasCrystal = item.AWAKENING_CRYSTAL > 0 and
-                           player:getItemCount(item.AWAKENING_CRYSTAL) >= 1
-        local hasShard   = item.AWAKENING_SHARD > 0 and
-                           player:getItemCount(item.AWAKENING_SHARD) >= 3
-
-        if not hasCrystal and not hasShard then
-            player:startEvent(CSID.FAIL_MATERIALS)
-            player:setLocalVar('RF_Menu', MENU.ROOT)
-            return true
-        end
-
-        -- Roll 3 augment options
-        local rolls = xi.provingArms.rollAugments(originTier, false)
-        storeRolledAugments(player, rolls)
-        player:setLocalVar('RF_Menu', MENU.AUGMENT_PICK)
-
-        -- Pass rolled augment labels to event for display
-        -- option encoding: client expects augId*1000 + value for each slot
-        player:updateEvent(
-            rolls[1] and rolls[1].augId * 1000 + rolls[1].value or 0,
-            rolls[2] and rolls[2].augId * 1000 + rolls[2].value or 0,
-            rolls[3] and rolls[3].augId * 1000 + rolls[3].value or 0
-        )
-        return true
-
-    -- Augment pick: option 0/1/2 = which of the 3 to apply
-    elseif menu == MENU.AUGMENT_PICK then
-        local choice   = option + 1  -- 1-indexed
-        local weaponId = player:getLocalVar('RF_WeaponId')
-        local augId    = player:getLocalVar('RF_AugChoice' .. choice)
-        local augVal   = player:getLocalVar('RF_AugValue'  .. choice)
-
-        if augId and augId > 0 then
-            -- Consume activation material (Crystal preferred over Shards)
-            local item = xi.provingArms.item
-            if item.AWAKENING_CRYSTAL > 0 and player:getItemCount(item.AWAKENING_CRYSTAL) >= 1 then
-                player:removeItem(item.AWAKENING_CRYSTAL, 1)
-            elseif item.AWAKENING_SHARD > 0 then
-                player:removeItem(item.AWAKENING_SHARD, 3)
-            end
-
-            xi.provingArms.applyAugment(player, weaponId, { augId = augId, value = augVal })
-            player:startEvent(CSID.SUCCESS)
-        end
-
-        player:setLocalVar('RF_Menu', MENU.ROOT)
-        return true
-
-    -- Reroll path
-    elseif menu == MENU.REROLL then
-        local provens = findProvens(player)
-        local eligible = {}
-        for _, p in ipairs(provens) do
-            if p.hasAugment then
-                table.insert(eligible, p)
-            end
-        end
-
-        if #eligible == 0 then
-            player:startEvent(CSID.NO_ELIGIBLE)
-            player:setLocalVar('RF_Menu', MENU.ROOT)
-            return true
-        end
-
-        -- Determine reroll material available
-        local item         = xi.provingArms.item
-        local hasRemnant   = item.PRIMAL_REMNANT > 0 and
-                             player:getItemCount(item.PRIMAL_REMNANT) >= 1
-        local hasBadge     = xi.provingArms.BADGE_ITEM_ID > 0 and
-                             player:getItemCount(xi.provingArms.BADGE_ITEM_ID) >= 1
-
-        if not hasRemnant and not hasBadge then
-            player:startEvent(CSID.FAIL_MATERIALS)
-            player:setLocalVar('RF_Menu', MENU.ROOT)
-            return true
-        end
-
-        local entry      = eligible[1]
-        local badgeReroll = not hasRemnant  -- Badge = narrower pool
-        player:setLocalVar('RF_WeaponId',   entry.itemId)
-        player:setLocalVar('RF_BadgeReroll', badgeReroll and 1 or 0)
-        player:setLocalVar('RF_IsReroll',   1)
-
-        local rolls = xi.provingArms.rollAugments(60, badgeReroll) -- TODO: track origin tier per weapon
-        storeRolledAugments(player, rolls)
-        player:setLocalVar('RF_Menu', MENU.REROLL_PICK)
-
-        player:updateEvent(
-            rolls[1] and rolls[1].augId * 1000 + rolls[1].value or 0,
-            rolls[2] and rolls[2].augId * 1000 + rolls[2].value or 0,
-            rolls[3] and rolls[3].augId * 1000 + rolls[3].value or 0
-        )
-        return true
-
-    -- Reroll pick: same as augment pick but consumes reroll material
-    elseif menu == MENU.REROLL_PICK then
-        local choice     = option + 1
-        local weaponId   = player:getLocalVar('RF_WeaponId')
-        local augId      = player:getLocalVar('RF_AugChoice' .. choice)
-        local augVal     = player:getLocalVar('RF_AugValue'  .. choice)
-        local badgeReroll = player:getLocalVar('RF_BadgeReroll') == 1
-
-        if augId and augId > 0 then
-            -- Consume reroll material (Remnant preferred)
-            local item = xi.provingArms.item
-            if not badgeReroll and item.PRIMAL_REMNANT > 0 then
-                player:removeItem(item.PRIMAL_REMNANT, 1)
-            elseif xi.provingArms.BADGE_ITEM_ID > 0 then
-                player:removeItem(xi.provingArms.BADGE_ITEM_ID, 1)
-            end
-
-            xi.provingArms.applyAugment(player, weaponId, { augId = augId, value = augVal })
-            player:startEvent(CSID.SUCCESS)
-        end
-
-        player:setLocalVar('RF_Menu', MENU.ROOT)
-        return true
-    end
-
-    return false
-end
-
-forge.onEventFinish = function(player, csid, option, npc)
-    -- Clean up local vars on any exit path
-    player:setLocalVar('RF_Menu',        0)
-    player:setLocalVar('RF_WeaponId',    0)
-    player:setLocalVar('RF_WeaponTier',  0)
-    player:setLocalVar('RF_IsReroll',    0)
-    player:setLocalVar('RF_BadgeReroll', 0)
-    for i = 1, 3 do
-        player:setLocalVar('RF_AugChoice' .. i, 0)
-        player:setLocalVar('RF_AugValue'  .. i, 0)
-    end
+    player:timer(100, function(p)
+        p:customMenu({
+            title = 'Resonance Forge',
+            options = {
+                { 'Upgrade Weapon',   function(pp) showUpgradeMenu(pp)  end },
+                { 'Activate Augment', function(pp) showAugmentMenu(pp)  end },
+                { 'Reroll Augment',   function(pp) showRerollMenu(pp)   end },
+                { 'Leave',            function() end                        },
+            },
+        })
+    end)
 end
 
 return forge
