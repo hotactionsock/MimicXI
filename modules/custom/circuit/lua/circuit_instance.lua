@@ -12,6 +12,7 @@
 --   'ejectAt'     -- elapsed ms when players are ejected post-clear
 -----------------------------------
 
+xi                 = xi or {}
 xi.circuit         = xi.circuit or {}
 xi.circuit.instance = xi.circuit.instance or {}
 

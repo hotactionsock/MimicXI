@@ -127,7 +127,7 @@ local function showAugmentMenu(player)
 
     for itemId, info in pairs(xi.provingArms.WEAPON_LOOKUP) do
         if info.tier == 5 and player:getItemCount(itemId) > 0 then
-            local hasAug = player:getAugment and player:getAugment(itemId, 1) ~= nil
+            local hasAug = player:getAugment(itemId, 1) ~= nil
             if not hasAug then
                 table.insert(eligible, { itemId=itemId, family=info.family })
             end
@@ -179,7 +179,7 @@ local function showRerollMenu(player)
 
     for itemId, info in pairs(xi.provingArms.WEAPON_LOOKUP) do
         if info.tier == 5 and player:getItemCount(itemId) > 0 then
-            local hasAug = player:getAugment and player:getAugment(itemId, 1) ~= nil
+            local hasAug = player:getAugment(itemId, 1) ~= nil
             if hasAug then
                 table.insert(eligible, { itemId=itemId, family=info.family })
             end

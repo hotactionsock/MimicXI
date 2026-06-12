@@ -8,6 +8,9 @@
 -- NOTE: mob IDs and instanceId marked TODO — fill from DB after SQL is run
 -----------------------------------
 
+xi = xi or {}
+xi.tierTrial = xi.tierTrial or {}
+xi.tierTrial.TIERS = xi.tierTrial.TIERS or {}
 xi.tierTrial.TIERS[40] =
 {
     instanceId = 18302,
