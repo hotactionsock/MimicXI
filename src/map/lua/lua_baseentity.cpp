@@ -150,6 +150,10 @@
 #include "packets/s2c/0x063_miscdata_monstrosity.h"
 #include "packets/s2c/0x075_battlefield.h"
 #include "packets/s2c/0x077_entity_vis.h"
+#include "packets/s2c/0x082_guild_buy.h"
+#include "packets/s2c/0x083_guild_buylist.h"
+#include "packets/s2c/0x084_guild_sell.h"
+#include "packets/s2c/0x085_guild_selllist.h"
 #include "packets/s2c/0x086_guild_open.h"
 #include "packets/s2c/0x0aa_magic_data.h"
 #include "packets/s2c/0x0ac_command_data.h"
@@ -954,14 +958,14 @@ void CLuaBaseEntity::injectActionPacket(const uint32 inTargetID, uint16 inCatego
         .actionid   = inActionParam,
         .targets    = {
             {
-                   .actorId = inTargetID,
-                   .results = {
+                .actorId = inTargetID,
+                .results = {
                     {
-                           .resolution = reaction,
-                           .animation  = static_cast<ActionAnimation>(inAnimationID),
-                           .info       = info,
-                           .param      = inParam,
-                           .messageID  = static_cast<MsgBasic>(inMessage),
+                        .resolution = reaction,
+                        .animation  = static_cast<ActionAnimation>(inAnimationID),
+                        .info       = info,
+                        .param      = inParam,
+                        .messageID  = static_cast<MsgBasic>(inMessage),
                     },
                 },
             },
@@ -1140,7 +1144,7 @@ void CLuaBaseEntity::StartEventHelper(int32 EventID, sol::variadic_args va, EVEN
         ShowError("CLuaBaseEntity::StartEventHelper: Could not start event, Character Entity already triggered.");
         return;
     }
-    PChar->StatusEffectContainer->DelStatusEffect(EFFECT_BOOST);
+    PChar->StatusEffectContainer->DelStatusEffect(xi::StatusEffect::Boost);
 
     PChar->queueEvent(ParseEvent(EventID, va, PChar->eventPreparation, eventType));
 }
@@ -1886,14 +1890,14 @@ bool CLuaBaseEntity::canUseAbilities()
 {
     if (auto* PEntity = dynamic_cast<CBattleEntity*>(m_PBaseEntity))
     {
-        return !(PEntity->StatusEffectContainer->HasStatusEffect(EFFECT_SLEEP) ||
-                 PEntity->StatusEffectContainer->HasStatusEffect(EFFECT_IMPAIRMENT) ||
-                 PEntity->StatusEffectContainer->HasStatusEffect(EFFECT_SLEEP_II) ||
-                 PEntity->StatusEffectContainer->HasStatusEffect(EFFECT_STUN) ||
-                 PEntity->StatusEffectContainer->HasStatusEffect(EFFECT_AMNESIA) ||
-                 PEntity->StatusEffectContainer->HasStatusEffect(EFFECT_LULLABY) ||
-                 PEntity->StatusEffectContainer->HasStatusEffect(EFFECT_PETRIFICATION) ||
-                 PEntity->StatusEffectContainer->HasStatusEffect(EFFECT_TERROR) ||
+        return !(PEntity->StatusEffectContainer->HasStatusEffect(xi::StatusEffect::SleepI) ||
+                 PEntity->StatusEffectContainer->HasStatusEffect(xi::StatusEffect::Impairment) ||
+                 PEntity->StatusEffectContainer->HasStatusEffect(xi::StatusEffect::SleepIi) ||
+                 PEntity->StatusEffectContainer->HasStatusEffect(xi::StatusEffect::Stun) ||
+                 PEntity->StatusEffectContainer->HasStatusEffect(xi::StatusEffect::Amnesia) ||
+                 PEntity->StatusEffectContainer->HasStatusEffect(xi::StatusEffect::Lullaby) ||
+                 PEntity->StatusEffectContainer->HasStatusEffect(xi::StatusEffect::Petrification) ||
+                 PEntity->StatusEffectContainer->HasStatusEffect(xi::StatusEffect::Terror) ||
                  !(m_PBaseEntity->PAI->CanChangeState()));
     }
 
@@ -2711,9 +2715,10 @@ void CLuaBaseEntity::sendMenu(uint32 menu)
 
 auto CLuaBaseEntity::sendGuild(const uint16 guildId, uint8 open, uint8 close, uint8 holiday) const -> bool
 {
-    if (m_PBaseEntity->objtype != TYPE_PC)
+    auto* PChar = dynamic_cast<CCharEntity*>(m_PBaseEntity);
+    if (!PChar)
     {
-        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->getName());
+        ShowWarningFmt("Invalid entity type calling function ({}).", m_PBaseEntity->getName());
         return false;
     }
 
@@ -2742,12 +2747,84 @@ auto CLuaBaseEntity::sendGuild(const uint16 guildId, uint8 open, uint8 close, ui
     }
 
     CItemContainer* PGuildShop = guildutils::GetGuildShop(guildId);
-    auto*           PChar      = static_cast<CCharEntity*>(m_PBaseEntity);
 
     PChar->PGuildShop = PGuildShop;
+    PChar->guildShopNpc_.clean();
     PChar->pushPacket<GP_SERV_COMMAND_GUILD_OPEN>(status, open, close, holiday);
 
     return status == GP_SERV_COMMAND_GUILD_OPEN_STAT::Open;
+}
+
+/************************************************************************
+ *  Function: openGuildShop()
+ *  Purpose : Opens a lua guild shop and remembers the NPC the PC opened it with
+ *  Example : if player:openGuildShop(npc, 8, 23) then
+ ************************************************************************/
+
+auto CLuaBaseEntity::openGuildShop(CLuaBaseEntity* PNpc, uint8 open, uint8 close) const -> bool
+{
+    auto* PChar = dynamic_cast<CCharEntity*>(m_PBaseEntity);
+    if (!PChar)
+    {
+        ShowWarningFmt("Invalid entity type calling function ({}).", m_PBaseEntity->getName());
+        return false;
+    }
+
+    if (PNpc == nullptr || PNpc->GetBaseEntity() == nullptr)
+    {
+        ShowWarning("Invalid guild shop NPC passed to openGuildShop().");
+        return false;
+    }
+
+    const uint8 vanadielHour = static_cast<uint8>(vanadiel_time::get_hour(vanadiel_time::now()));
+    const bool  isOpen       = vanadielHour >= open && vanadielHour < close;
+    const auto  status       = isOpen ? GP_SERV_COMMAND_GUILD_OPEN_STAT::Open : GP_SERV_COMMAND_GUILD_OPEN_STAT::Close;
+
+    const auto* PNpcEntity = PNpc->GetBaseEntity();
+
+    PChar->guildShopNpc_.id     = PNpcEntity->id;
+    PChar->guildShopNpc_.targid = PNpcEntity->targid;
+    PChar->PGuildShop           = nullptr;
+    PChar->pushPacket<GP_SERV_COMMAND_GUILD_OPEN>(status, open, close, 0);
+
+    return isOpen;
+}
+
+/************************************************************************
+ *  Function: clearGuildShop()
+ *  Purpose : Clears the PC's open guild shop handle
+ *  Example : player:clearGuildShop()
+ ************************************************************************/
+
+void CLuaBaseEntity::clearGuildShop() const
+{
+    auto* PChar = dynamic_cast<CCharEntity*>(m_PBaseEntity);
+    if (!PChar)
+    {
+        ShowWarningFmt("Invalid entity type calling function ({}).", m_PBaseEntity->getName());
+        return;
+    }
+
+    PChar->guildShopNpc_.clean();
+    PChar->PGuildShop = nullptr;
+}
+
+/************************************************************************
+ *  Function: sendGuildClose()
+ *  Purpose : Sends the guild-open packet with a Close status to the PC
+ *  Example : player:sendGuildClose(8, 23)
+ ************************************************************************/
+
+void CLuaBaseEntity::sendGuildClose(uint8 open, uint8 close) const
+{
+    auto* PChar = dynamic_cast<CCharEntity*>(m_PBaseEntity);
+    if (!PChar)
+    {
+        ShowWarningFmt("Invalid entity type calling function ({}).", m_PBaseEntity->getName());
+        return;
+    }
+
+    PChar->pushPacket<GP_SERV_COMMAND_GUILD_OPEN>(GP_SERV_COMMAND_GUILD_OPEN_STAT::Close, open, close, 0);
 }
 
 /************************************************************************
@@ -10140,9 +10217,9 @@ int32 CLuaBaseEntity::addHP(int32 hpAdd)
     int32 result = PBattle->addHP(hpAdd);
 
     // will always remove sleep effect
-    PBattle->StatusEffectContainer->DelStatusEffect(EFFECT_SLEEP);
-    PBattle->StatusEffectContainer->DelStatusEffect(EFFECT_SLEEP_II);
-    PBattle->StatusEffectContainer->DelStatusEffect(EFFECT_LULLABY);
+    PBattle->StatusEffectContainer->DelStatusEffect(xi::StatusEffect::SleepI);
+    PBattle->StatusEffectContainer->DelStatusEffect(xi::StatusEffect::SleepIi);
+    PBattle->StatusEffectContainer->DelStatusEffect(xi::StatusEffect::Lullaby);
 
     return result;
 }
@@ -10314,8 +10391,8 @@ void CLuaBaseEntity::takeDamage(int32 damage, const sol::object& attacker, const
 
     // Check to see if the target has a nightmare effect active, reset wakeUp accordingly
     // see mobskills/nightmare.lua for full explanation
-    if (PDefender->StatusEffectContainer->GetStatusEffect(EFFECT_SLEEP) &&
-        PDefender->StatusEffectContainer->GetStatusEffect(EFFECT_SLEEP)->GetTier() >= 4) // Tier 4 = Player Avatar Nightmare
+    if (PDefender->StatusEffectContainer->GetStatusEffect(xi::StatusEffect::SleepI) &&
+        PDefender->StatusEffectContainer->GetStatusEffect(xi::StatusEffect::SleepI)->GetTier() >= 4) // Tier 4 = Player Avatar Nightmare
     {
         // Don't break nightmare sleep from any dmg that doesn't break bind (DoT damage)
         if (breakBind == false)
@@ -10326,14 +10403,14 @@ void CLuaBaseEntity::takeDamage(int32 damage, const sol::object& attacker, const
         // Diabolos NM/mob ability
         // "Damage will not wake you up from Nightmare, only Cure and Benediction (Benediction will also remove the Bio effect)."
         if (wakeUp == true &&
-            PDefender->StatusEffectContainer->GetStatusEffect(EFFECT_SLEEP)->GetTier() >= 11) // Tier 11 = Diabolos NM Nightmare
+            PDefender->StatusEffectContainer->GetStatusEffect(xi::StatusEffect::SleepI)->GetTier() >= 11) // Tier 11 = Diabolos NM Nightmare
         {
             wakeUp = false;
         }
     }
 
-    if (PDefender->StatusEffectContainer->GetStatusEffect(EFFECT_PETRIFICATION) &&
-        PDefender->StatusEffectContainer->GetStatusEffect(EFFECT_PETRIFICATION)->GetSubPower() == 1)
+    if (PDefender->StatusEffectContainer->GetStatusEffect(xi::StatusEffect::Petrification) &&
+        PDefender->StatusEffectContainer->GetStatusEffect(xi::StatusEffect::Petrification)->GetSubPower() == 1)
     {
         removePetrify = true;
     }
@@ -10353,7 +10430,7 @@ void CLuaBaseEntity::takeDamage(int32 damage, const sol::object& attacker, const
 
         if (removePetrify)
         {
-            PDefender->StatusEffectContainer->DelStatusEffect(EFFECT_PETRIFICATION);
+            PDefender->StatusEffectContainer->DelStatusEffect(xi::StatusEffect::Petrification);
         }
     }
 
@@ -11666,7 +11743,7 @@ void CLuaBaseEntity::addPartyEffect(sol::variadic_args va)
     }
 
     CStatusEffect* PEffect =
-        new CStatusEffect(static_cast<EFFECT>(args[0]), args[1], args[2], std::chrono::seconds(args[3]), std::chrono::seconds(args[4]), args[5], args[6]);
+        new CStatusEffect(static_cast<xi::StatusEffect>(args[0]), args[1], args[2], std::chrono::seconds(args[3]), std::chrono::seconds(args[4]), args[5], args[6]);
 
     CBattleEntity* PEntity = ((CBattleEntity*)m_PBaseEntity);
 
@@ -11702,7 +11779,7 @@ bool CLuaBaseEntity::hasPartyEffect(uint16 effectid)
             if (member->loc.zone == PChar->loc.zone)
             {
                 // Bail out if someone DOESN'T have the desired effect
-                if (!member->StatusEffectContainer->HasStatusEffect(static_cast<EFFECT>(effectid)))
+                if (!member->StatusEffectContainer->HasStatusEffect(static_cast<xi::StatusEffect>(effectid)))
                 {
                     return false;
                 }
@@ -11733,7 +11810,7 @@ void CLuaBaseEntity::removePartyEffect(uint16 effectid)
     {
         if (member->loc.zone == PChar->loc.zone)
         {
-            member->StatusEffectContainer->DelStatusEffect(static_cast<EFFECT>(effectid));
+            member->StatusEffectContainer->DelStatusEffect(static_cast<xi::StatusEffect>(effectid));
         }
     }
 }
@@ -12371,7 +12448,7 @@ void CLuaBaseEntity::setEnteredBattlefield(const bool entered) const
     }
 
     auto* PChar = static_cast<CCharEntity*>(m_PBaseEntity);
-    if (PChar->StatusEffectContainer->HasStatusEffect(EFFECT_BATTLEFIELD))
+    if (PChar->StatusEffectContainer->HasStatusEffect(xi::StatusEffect::Battlefield))
     {
         CBattlefield::setPlayerEntered(PChar, entered);
     }
@@ -13024,9 +13101,9 @@ void CLuaBaseEntity::wakeUp()
 
     auto* PEntity = static_cast<CBattleEntity*>(m_PBaseEntity);
 
-    PEntity->StatusEffectContainer->DelStatusEffect(EFFECT_SLEEP);
-    PEntity->StatusEffectContainer->DelStatusEffect(EFFECT_SLEEP_II);
-    PEntity->StatusEffectContainer->DelStatusEffect(EFFECT_LULLABY);
+    PEntity->StatusEffectContainer->DelStatusEffect(xi::StatusEffect::SleepI);
+    PEntity->StatusEffectContainer->DelStatusEffect(xi::StatusEffect::SleepIi);
+    PEntity->StatusEffectContainer->DelStatusEffect(xi::StatusEffect::Lullaby);
 }
 
 /************************************************************************
@@ -13863,7 +13940,7 @@ void CLuaBaseEntity::clearEnmityForEntity(CLuaBaseEntity* PEntity)
  *            })
  *  Notes   :
  ************************************************************************/
-auto CLuaBaseEntity::addStatusEffect(const EFFECT effectId, sol::table params) const -> bool
+auto CLuaBaseEntity::addStatusEffect(const xi::StatusEffect effectId, sol::table params) const -> bool
 {
     auto* PBattleEntity = dynamic_cast<CBattleEntity*>(m_PBaseEntity);
     if (!PBattleEntity)
@@ -13898,7 +13975,7 @@ auto CLuaBaseEntity::addStatusEffect(const EFFECT effectId, sol::table params) c
         subPower,
         subIcon,
         tier,
-        flag);
+        static_cast<xi::StatusEffectFlag>(flag));
 
     if (sourceType != EffectSourceType::SOURCE_NONE && sourceTypeParam > 0)
     {
@@ -13907,7 +13984,7 @@ auto CLuaBaseEntity::addStatusEffect(const EFFECT effectId, sol::table params) c
 
     PEffect->SetOriginID(originEntity.getID());
 
-    if (effectId == EFFECT_FOOD)
+    if (effectId == xi::StatusEffect::Food)
     {
         if (const auto durationModifier = PBattleEntity->getMod(Mod::FOOD_DURATION))
         {
@@ -13951,6 +14028,7 @@ auto CLuaBaseEntity::copyStatusEffect(const CLuaStatusEffect* PStatusEffect) con
         remainingDuration,
         POriginal->GetSubID(),
         POriginal->GetSubPower(),
+        POriginal->GetSubIcon(),
         POriginal->GetTier(),
         POriginal->GetEffectFlags(),
         POriginal->GetSourceType(),
@@ -13967,7 +14045,7 @@ auto CLuaBaseEntity::copyStatusEffect(const CLuaStatusEffect* PStatusEffect) con
  *  Notes   : Can specify Power of the Effect as an option or the Source (will use power if both specified)
  ************************************************************************/
 
-auto CLuaBaseEntity::getStatusEffect(uint16 StatusID, const sol::object& SubType, const sol::object& SourceType, const sol::object& SourceTypeParam) -> CStatusEffect*
+auto CLuaBaseEntity::getStatusEffect(xi::StatusEffect StatusID, const sol::object& SubType, const sol::object& SourceType, const sol::object& SourceTypeParam) -> CStatusEffect*
 {
     if (m_PBaseEntity->objtype == TYPE_NPC)
     {
@@ -13988,7 +14066,7 @@ auto CLuaBaseEntity::getStatusEffect(uint16 StatusID, const sol::object& SubType
     }
 
     CStatusEffect* PStatusEffect   = nullptr;
-    auto           effect_StatusID = static_cast<EFFECT>(StatusID);
+    auto           effect_StatusID = StatusID;
 
     if (SubType != sol::lua_nil)
     {
@@ -14016,7 +14094,7 @@ auto CLuaBaseEntity::getStatusEffect(uint16 StatusID, const sol::object& SubType
  *  Notes   :
  ************************************************************************/
 
-auto CLuaBaseEntity::getStatusEffectBySource(uint16 StatusID, EffectSourceType SourceType, uint16 SourceTypeParam) -> CStatusEffect*
+auto CLuaBaseEntity::getStatusEffectBySource(xi::StatusEffect StatusID, EffectSourceType SourceType, uint16 SourceTypeParam) -> CStatusEffect*
 {
     if (m_PBaseEntity->objtype == TYPE_NPC)
     {
@@ -14030,7 +14108,7 @@ auto CLuaBaseEntity::getStatusEffectBySource(uint16 StatusID, EffectSourceType S
         return nullptr;
     }
 
-    return PBattleEntity->StatusEffectContainer->GetStatusEffectBySource(static_cast<EFFECT>(StatusID), SourceType, SourceTypeParam);
+    return PBattleEntity->StatusEffectContainer->GetStatusEffectBySource(StatusID, SourceType, SourceTypeParam);
 }
 
 /************************************************************************
@@ -14091,7 +14169,7 @@ int16 CLuaBaseEntity::getStatusEffectElement(uint16 statusId)
  *  Notes   :
  ************************************************************************/
 
-bool CLuaBaseEntity::canGainStatusEffect(uint16 effect, const sol::object& powerObj)
+auto CLuaBaseEntity::canGainStatusEffect(xi::StatusEffect effect, const sol::object& powerObj) -> bool
 {
     if (m_PBaseEntity->objtype == TYPE_NPC)
     {
@@ -14107,7 +14185,7 @@ bool CLuaBaseEntity::canGainStatusEffect(uint16 effect, const sol::object& power
         return false;
     }
 
-    CStatusEffect statusEffect(static_cast<EFFECT>(effect), 0, power, 0s, 0s);
+    CStatusEffect statusEffect(effect, 0, power, 0s, 0s);
 
     return PBattleEntity->StatusEffectContainer->CanGainStatusEffect(&statusEffect);
 }
@@ -14119,7 +14197,7 @@ bool CLuaBaseEntity::canGainStatusEffect(uint16 effect, const sol::object& power
  *  Notes   : More specific in scope than hasStatusEffectByFlag()
  ************************************************************************/
 
-bool CLuaBaseEntity::hasStatusEffect(uint16 StatusID, const sol::object& SubType)
+auto CLuaBaseEntity::hasStatusEffect(xi::StatusEffect StatusID, const sol::object& SubType) -> bool
 {
     if (m_PBaseEntity->objtype == TYPE_NPC)
     {
@@ -14133,17 +14211,16 @@ bool CLuaBaseEntity::hasStatusEffect(uint16 StatusID, const sol::object& SubType
         return false;
     }
 
-    bool hasEffect       = false;
-    auto effect_StatusID = static_cast<EFFECT>(StatusID);
+    bool hasEffect = false;
 
     if (SubType != sol::lua_nil)
     {
         auto uint16_SubType = SubType.as<uint16>();
-        hasEffect           = PBattleEntity->StatusEffectContainer->HasStatusEffect(effect_StatusID, uint16_SubType);
+        hasEffect           = PBattleEntity->StatusEffectContainer->HasStatusEffect(StatusID, uint16_SubType);
     }
     else
     {
-        hasEffect = PBattleEntity->StatusEffectContainer->HasStatusEffect(effect_StatusID);
+        hasEffect = PBattleEntity->StatusEffectContainer->HasStatusEffect(StatusID);
     }
 
     return hasEffect;
@@ -14170,8 +14247,7 @@ bool CLuaBaseEntity::hasStatusEffectByFlag(uint16 StatusID)
         return 0;
     }
 
-    auto effect_StatusID = static_cast<EFFECT>(StatusID);
-    return PBattleEntity->StatusEffectContainer->HasStatusEffectByFlag(effect_StatusID);
+    return PBattleEntity->StatusEffectContainer->HasStatusEffectByFlag(static_cast<xi::StatusEffectFlag>(StatusID));
 }
 
 /************************************************************************
@@ -14181,7 +14257,7 @@ bool CLuaBaseEntity::hasStatusEffectByFlag(uint16 StatusID)
  *  Notes   :
  ************************************************************************/
 
-uint8 CLuaBaseEntity::countEffect(uint16 StatusID)
+auto CLuaBaseEntity::countEffect(xi::StatusEffect StatusID) -> uint8
 {
     if (m_PBaseEntity->objtype == TYPE_NPC)
     {
@@ -14195,12 +14271,12 @@ uint8 CLuaBaseEntity::countEffect(uint16 StatusID)
         return 0;
     }
 
-    auto effect_StatusID = static_cast<EFFECT>(StatusID);
+    auto effect_StatusID = StatusID;
     return PBattleEntity->StatusEffectContainer->GetEffectsCount(effect_StatusID);
 }
 
 /************************************************************************
- *  Function: countEffectWithFlag(EFFECTFLAG)
+ *  Function: countEffectWithFlag(xi::StatusEffectFlag)
  *  Purpose : Returns the number of Effects an Entity has in their container that matches the provided flag
  *  Example : if target:countEffectWithFlag(xi.effectFlag.DISPELABLE) > 3 then
  *  Notes   :
@@ -14220,7 +14296,7 @@ uint8 CLuaBaseEntity::countEffectWithFlag(uint32 flag)
         return 0;
     }
 
-    auto effectFlag = static_cast<EFFECTFLAG>(flag);
+    auto effectFlag = static_cast<xi::StatusEffectFlag>(flag);
     return PBattleEntity->StatusEffectContainer->GetEffectsCountWithFlag(effectFlag);
 }
 
@@ -14231,7 +14307,7 @@ uint8 CLuaBaseEntity::countEffectWithFlag(uint32 flag)
  *  Notes   : Can specify Power of the Effect as an option or the Source (will use power if both specified)
  ************************************************************************/
 
-bool CLuaBaseEntity::delStatusEffect(uint16 StatusID, const sol::object& SubType, const sol::object& SourceType, const sol::object& SourceTypeParam)
+auto CLuaBaseEntity::delStatusEffect(xi::StatusEffect StatusID, const sol::object& SubType, const sol::object& SourceType, const sol::object& SourceTypeParam) -> bool
 {
     if (m_PBaseEntity->objtype == TYPE_NPC)
     {
@@ -14252,7 +14328,7 @@ bool CLuaBaseEntity::delStatusEffect(uint16 StatusID, const sol::object& SubType
 
     bool result = false;
 
-    auto effect_StatusID = static_cast<EFFECT>(StatusID);
+    auto effect_StatusID = StatusID;
 
     if (SubType != sol::lua_nil)
     {
@@ -14276,7 +14352,7 @@ bool CLuaBaseEntity::delStatusEffect(uint16 StatusID, const sol::object& SubType
 /************************************************************************
  *  Function: delStatusEffectsByFlag()
  *  Purpose : Removes all Status Effects of a specified flag
- *  Example : target:delEffectsByFlag(xi.effectFlag.DEATH)
+ *  Example : target:delStatusEffectsByFlag(xi.effectFlag.DEATH)
  *  Notes   : Used for removal of multiple effects with matching flag
  ************************************************************************/
 
@@ -14296,7 +14372,31 @@ void CLuaBaseEntity::delStatusEffectsByFlag(uint32 flag, const sol::object& sile
 
     auto removalNotice = (silent.is<bool>() && silent.as<bool>()) ? EffectNotice::Silent : EffectNotice::ShowMessage;
 
-    PBattleEntity->StatusEffectContainer->DelStatusEffectsByFlag(static_cast<EFFECTFLAG>(flag), removalNotice);
+    PBattleEntity->StatusEffectContainer->DelStatusEffectsByFlag(static_cast<xi::StatusEffectFlag>(flag), removalNotice);
+}
+
+/************************************************************************
+ *  Function: delStatusEffectsByType()
+ *  Purpose : Removes all Status Effects of a specified type
+ *  Example : target:delStatusEffectsByType(xi.effectType.SPIKES)
+ *  Notes   : Used for removal of multiple effects with matching type
+ ************************************************************************/
+
+void CLuaBaseEntity::delStatusEffectsByType(uint16 type)
+{
+    if (m_PBaseEntity->objtype == TYPE_NPC)
+    {
+        ShowWarning("Invalid Entity (NPC: %s) calling function.", m_PBaseEntity->getName());
+        return;
+    }
+
+    auto* PBattleEntity = dynamic_cast<CBattleEntity*>(m_PBaseEntity);
+    if (!PBattleEntity)
+    {
+        return;
+    }
+
+    PBattleEntity->StatusEffectContainer->DelStatusEffectsByType(type);
 }
 
 /************************************************************************
@@ -14306,7 +14406,7 @@ void CLuaBaseEntity::delStatusEffectsByFlag(uint32 flag, const sol::object& sile
  *  Notes   : Used specifically for Status Effects that are not supposed to show a message once worn
  ************************************************************************/
 
-bool CLuaBaseEntity::delStatusEffectSilent(uint16 StatusID)
+auto CLuaBaseEntity::delStatusEffectSilent(xi::StatusEffect StatusID) -> bool
 {
     if (m_PBaseEntity->objtype == TYPE_NPC)
     {
@@ -14320,7 +14420,7 @@ bool CLuaBaseEntity::delStatusEffectSilent(uint16 StatusID)
         return false;
     }
 
-    auto effect_StatusID = static_cast<EFFECT>(StatusID);
+    auto effect_StatusID = StatusID;
     return PBattleEntity->StatusEffectContainer->DelStatusEffectSilent(effect_StatusID);
 }
 
@@ -14394,9 +14494,9 @@ int32 CLuaBaseEntity::dispelStatusEffect(const sol::object& flagObj)
         return 0;
     }
 
-    uint32 flag = flagObj.is<uint32>() ? flagObj.as<uint32>() : (uint32)EFFECTFLAG_DISPELABLE;
+    uint32 flag = flagObj.is<uint32>() ? flagObj.as<uint32>() : (uint32)xi::StatusEffectFlag::Dispelable;
 
-    return PBattleEntity->StatusEffectContainer->DispelStatusEffect(static_cast<EFFECTFLAG>(flag));
+    return static_cast<int32>(PBattleEntity->StatusEffectContainer->DispelStatusEffect(static_cast<xi::StatusEffectFlag>(flag)));
 }
 
 /************************************************************************
@@ -14420,9 +14520,9 @@ uint8 CLuaBaseEntity::dispelAllStatusEffect(const sol::object& flagObj)
         return 0;
     }
 
-    uint32 flag = flagObj.is<uint32>() ? flagObj.as<uint32>() : (uint32)EFFECTFLAG_DISPELABLE;
+    uint32 flag = flagObj.is<uint32>() ? flagObj.as<uint32>() : (uint32)xi::StatusEffectFlag::Dispelable;
 
-    return PBattleEntity->StatusEffectContainer->DispelAllStatusEffect(static_cast<EFFECTFLAG>(flag));
+    return PBattleEntity->StatusEffectContainer->DispelAllStatusEffect(static_cast<xi::StatusEffectFlag>(flag));
 }
 
 /************************************************************************
@@ -14452,13 +14552,13 @@ uint16 CLuaBaseEntity::stealStatusEffect(CLuaBaseEntity* PTargetEntity, const so
         return 0;
     }
 
-    uint32 flag          = flagObj.is<uint32>() ? flagObj.as<uint32>() : (uint32)EFFECTFLAG_DISPELABLE;
+    uint32 flag          = flagObj.is<uint32>() ? flagObj.as<uint32>() : (uint32)xi::StatusEffectFlag::Dispelable;
     auto   removalNotice = (silentObj.is<bool>() && silentObj.as<bool>()) ? EffectNotice::Silent : EffectNotice::ShowMessage;
 
-    if (CStatusEffect* PStatusEffect = PTargetBattleEntity->StatusEffectContainer->StealStatusEffect(static_cast<EFFECTFLAG>(flag), removalNotice))
+    if (CStatusEffect* PStatusEffect = PTargetBattleEntity->StatusEffectContainer->StealStatusEffect(static_cast<xi::StatusEffectFlag>(flag), removalNotice))
     {
         PBattleEntity->StatusEffectContainer->AddStatusEffect(PStatusEffect);
-        return PStatusEffect->GetStatusID();
+        return static_cast<uint16>(PStatusEffect->GetStatusID());
     }
     else
     {
@@ -14801,15 +14901,15 @@ auto CLuaBaseEntity::addCorsairRoll(sol::variadic_args va) -> bool
     auto sourceTypeParam = va[10].is<uint32>() ? va[10].as<uint32>() : 0;
     auto originID        = va[11].is<uint32>() ? va[11].as<uint32>() : 0;
 
-    CStatusEffect* PEffect = new CStatusEffect(static_cast<EFFECT>(effectID),  // Effect ID
-                                               effectID,                       // Effect Icon (Associated with ID)
-                                               power,                          // Power (Mod power)
-                                               std::chrono::seconds(tick),     // Tick
-                                               std::chrono::seconds(duration), // Duration
-                                               subType,                        // SubType (Mod ID)
-                                               subPower,                       // SubPower (Roll #)
-                                               0,                              // SubIcon (rolls have no sub-icon)
-                                               tier                            // Tier
+    CStatusEffect* PEffect = new CStatusEffect(static_cast<xi::StatusEffect>(effectID), // Effect ID
+                                               effectID,                                // Effect Icon (Associated with ID)
+                                               power,                                   // Power (Mod power)
+                                               std::chrono::seconds(tick),              // Tick
+                                               std::chrono::seconds(duration),          // Duration
+                                               subType,                                 // SubType (Mod ID)
+                                               subPower,                                // SubPower (Roll #)
+                                               0,                                       // SubIcon (rolls have no sub-icon)
+                                               tier                                     // Tier
     );
 
     PEffect->SetSource(sourceType, sourceTypeParam);
@@ -14858,7 +14958,7 @@ bool CLuaBaseEntity::hasBustEffect(uint16 id)
     }
 
     auto* PBattleEntity = static_cast<CBattleEntity*>(m_PBaseEntity);
-    return PBattleEntity->StatusEffectContainer->HasBustEffect(static_cast<EFFECT>(id));
+    return PBattleEntity->StatusEffectContainer->HasBustEffect(static_cast<uint16>(id));
 }
 
 /************************************************************************
@@ -14877,7 +14977,7 @@ uint8 CLuaBaseEntity::numBustEffects()
     }
 
     auto* PBattleEntity = static_cast<CBattleEntity*>(m_PBaseEntity);
-    return PBattleEntity->StatusEffectContainer->GetEffectsCount(EFFECT_BUST);
+    return PBattleEntity->StatusEffectContainer->GetEffectsCount(xi::StatusEffect::Bust);
 }
 
 /************************************************************************
@@ -14906,7 +15006,7 @@ uint16 CLuaBaseEntity::healingWaltz()
  *  Notes   :
  ************************************************************************/
 
-bool CLuaBaseEntity::addBardSong(CLuaBaseEntity* PEntity, uint16 effectID, uint16 power, uint16 tick, uint16 duration, uint16 subType, uint16 subPower, uint16 tier)
+auto CLuaBaseEntity::addBardSong(CLuaBaseEntity* PEntity, xi::StatusEffect effectID, uint16 power, uint16 tick, uint16 duration, uint16 subType, uint16 subPower, uint16 tier) -> bool
 {
     auto* PBattle = dynamic_cast<CBattleEntity*>(m_PBaseEntity);
     if (!PBattle)
@@ -14915,8 +15015,8 @@ bool CLuaBaseEntity::addBardSong(CLuaBaseEntity* PEntity, uint16 effectID, uint1
         return false;
     }
 
-    CStatusEffect* PEffect = new CStatusEffect(static_cast<EFFECT>(effectID),  // Effect ID
-                                               effectID,                       // Effect Icon (Associated with ID)
+    CStatusEffect* PEffect = new CStatusEffect(effectID,                       // Effect ID
+                                               static_cast<uint16>(effectID),  // Effect Icon (Associated with ID)
                                                power,                          // Power
                                                std::chrono::seconds(tick),     // Tick
                                                std::chrono::seconds(duration), // Duration
@@ -17150,8 +17250,8 @@ auto CLuaBaseEntity::getAllRuneEffects() -> sol::table
         return sol::lua_nil;
     }
 
-    std::vector<EFFECT> runeEffectList = PEntity->StatusEffectContainer->GetAllRuneEffects();
-    auto                table          = lua.create_table();
+    std::vector<xi::StatusEffect> runeEffectList = PEntity->StatusEffectContainer->GetAllRuneEffects();
+    auto                          table          = lua.create_table();
     for (const auto& runeEffect : runeEffectList)
     {
         table.add(runeEffect);
@@ -17195,7 +17295,7 @@ uint16 CLuaBaseEntity::getHighestRuneEffect()
         return 0;
     }
 
-    return PEntity->StatusEffectContainer->GetHighestRuneEffect();
+    return static_cast<uint16>(PEntity->StatusEffectContainer->GetHighestRuneEffect());
 }
 
 /************************************************************************
@@ -17214,7 +17314,7 @@ uint16 CLuaBaseEntity::getNewestRuneEffect()
         return 0;
     }
 
-    return PEntity->StatusEffectContainer->GetNewestRuneEffect();
+    return static_cast<uint16>(PEntity->StatusEffectContainer->GetNewestRuneEffect());
 }
 
 /************************************************************************
@@ -19187,12 +19287,12 @@ void CLuaBaseEntity::restoreFromChest(CLuaBaseEntity* PLuaBaseEntity, uint32 res
                 .actiontype = ActionCategory::MobSkillFinish,
                 .targets    = {
                     {
-                           .actorId = PChar->id,
-                           .results = {
+                        .actorId = PChar->id,
+                        .results = {
                             {
-                                   .animation = animationID,
-                                   .param     = messageParam,
-                                   .messageID = messageID,
+                                .animation = animationID,
+                                .param     = messageParam,
+                                .messageID = messageID,
                             },
                         },
                     },
@@ -20257,6 +20357,9 @@ void CLuaBaseEntity::Register()
     SOL_REGISTER("changeMusic", CLuaBaseEntity::changeMusic);
     SOL_REGISTER("sendMenu", CLuaBaseEntity::sendMenu);
     SOL_REGISTER("sendGuild", CLuaBaseEntity::sendGuild);
+    SOL_REGISTER("openGuildShop", CLuaBaseEntity::openGuildShop);
+    SOL_REGISTER("clearGuildShop", CLuaBaseEntity::clearGuildShop);
+    SOL_REGISTER("sendGuildClose", CLuaBaseEntity::sendGuildClose);
     SOL_REGISTER("openSendBox", CLuaBaseEntity::openSendBox);
     SOL_REGISTER("leaveGame", CLuaBaseEntity::leaveGame);
     SOL_REGISTER("sendEmote", CLuaBaseEntity::sendEmote);
@@ -20759,6 +20862,7 @@ void CLuaBaseEntity::Register()
 
     SOL_REGISTER("delStatusEffect", CLuaBaseEntity::delStatusEffect);
     SOL_REGISTER("delStatusEffectsByFlag", CLuaBaseEntity::delStatusEffectsByFlag);
+    SOL_REGISTER("delStatusEffectsByType", CLuaBaseEntity::delStatusEffectsByType);
     SOL_REGISTER("delStatusEffectSilent", CLuaBaseEntity::delStatusEffectSilent);
     SOL_REGISTER("eraseStatusEffect", CLuaBaseEntity::eraseStatusEffect);
     SOL_REGISTER("eraseAllStatusEffect", CLuaBaseEntity::eraseAllStatusEffect);

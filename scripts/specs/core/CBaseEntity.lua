@@ -638,6 +638,24 @@ end
 function CBaseEntity:sendGuild(guildID, open, close, holiday)
 end
 
+---@nodiscard
+---@param npc CBaseEntity
+---@param open integer
+---@param close integer
+---@return boolean
+function CBaseEntity:openGuildShop(npc, open, close)
+end
+
+---@return nil
+function CBaseEntity:clearGuildShop()
+end
+
+---@param open integer
+---@param close integer
+---@return nil
+function CBaseEntity:sendGuildClose(open, close)
+end
+
 ---@return nil
 function CBaseEntity:openSendBox()
 end
@@ -3002,6 +3020,11 @@ end
 ---@param silent boolean?
 ---@return nil
 function CBaseEntity:delStatusEffectsByFlag(flag, silent)
+end
+
+---@param type xi.effectType
+---@return nil
+function CBaseEntity:delStatusEffectsByType(type)
 end
 
 ---@param StatusID integer

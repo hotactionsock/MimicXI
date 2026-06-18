@@ -863,6 +863,8 @@ auto Initialize(Scheduler& scheduler, MapConfig config) -> Task<void>
     lazyLoad.managedZones = std::set(zones.begin(), zones.end());
 
     luautils::InitInteractionGlobal();
+
+    co_return;
 }
 
 auto ProcessLoadQueue(Scheduler& scheduler, MapConfig config) -> Task<void>
@@ -1396,7 +1398,9 @@ void AfterZoneIn(CBaseEntity* PEntity)
         return;
     }
 
-    if (!PChar->PBattlefield || !PChar->PBattlefield->isEntered(PChar))
+    const bool inBattlefield    = PChar->PBattlefield && PChar->PBattlefield->isEntered(PChar);
+    const bool inCappedInstance = PChar->PInstance && PChar->PInstance->GetLevelCap() > 0;
+    if (!inBattlefield && !inCappedInstance)
     {
         GetZone(PChar->getZone())->updateCharLevelRestriction(PChar);
     }

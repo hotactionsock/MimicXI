@@ -98,6 +98,7 @@
 #include "zone_entities.h"
 
 #include <array>
+#include <cctype>
 #include <filesystem>
 #include <numeric>
 #include <ranges>
@@ -1011,15 +1012,15 @@ void OnEntityLoad(CBaseEntity* PEntity)
                 return;
             }
 
-            const auto zoneName = PEntity->loc.zone->getName();
-            const auto name     = PEntity->getName();
+            const auto  zoneName = PEntity->loc.zone->getName();
+            const auto& name     = PEntity->getName();
             CacheLuaObjectFromFile(fmt::format("./scripts/zones/{}/npcs/{}.lua", zoneName, name));
         }
         break;
         case TYPE_MOB:
         {
-            const auto zoneName = PEntity->loc.zone->getName();
-            const auto name     = PEntity->getName();
+            const auto  zoneName = PEntity->loc.zone->getName();
+            const auto& name     = PEntity->getName();
             CacheLuaObjectFromFile(fmt::format("./scripts/zones/{}/mobs/{}.lua", zoneName, name));
         }
         break;
@@ -1108,8 +1109,8 @@ void PopulateIDLookups(uint16 zoneId, const std::string& zoneName)
         const auto rset           = db::preparedStmt("SELECT mobname, mobid FROM mob_spawn_points "
                                                      "WHERE mobid BETWEEN ? AND ? "
                                                      "ORDER BY mobid ASC",
-                                           idMin,
-                                           idMax);
+                                                     idMin,
+                                                     idMax);
         FOR_DB_MULTIPLE_RESULTS(rset)
         {
             const auto name = rset->get<std::string>("mobname");
@@ -1126,8 +1127,8 @@ void PopulateIDLookups(uint16 zoneId, const std::string& zoneName)
         const auto rset           = db::preparedStmt("SELECT name, npcid FROM npc_list "
                                                      "WHERE npcid BETWEEN ? AND ? "
                                                      "ORDER BY npcid ASC",
-                                           idMin,
-                                           idMax);
+                                                     idMin,
+                                                     idMax);
         FOR_DB_MULTIPLE_RESULTS(rset)
         {
             const auto name = rset->get<std::string>("name");
@@ -1705,7 +1706,7 @@ auto LoadLinkshellConciergeSlots(uint16 zoneId) -> sol::table
                                          "FROM linkshell_concierge lc "
                                          "JOIN linkshells ls ON ls.linkshellid = lc.linkshellid "
                                          "WHERE lc.zone_id = ? AND ls.broken = 0",
-                                       zoneId);
+                                         zoneId);
     if (!rset)
     {
         return result;
@@ -4771,10 +4772,8 @@ void AfterInstanceRegister(CBaseEntity* PChar)
 
     TracyZoneScoped;
 
-    auto zone     = PChar->loc.zone->getName();
-    auto instance = PChar->PInstance->GetName();
-
-    auto afterInstanceRegister = lua["xi"]["zones"][zone]["instances"][instance]["afterInstanceRegister"];
+    auto instanceData          = instanceutils::GetInstanceData(PChar->PInstance->GetID());
+    auto afterInstanceRegister = GetCacheEntryFromFilename(instanceData.filename)["afterInstanceRegister"];
     if (!afterInstanceRegister.valid())
     {
         return;
@@ -4882,10 +4881,8 @@ void OnInstanceCreated(CInstance* PInstance)
 {
     TracyZoneScoped;
 
-    auto zone = PInstance->GetZone()->getName();
-    auto name = PInstance->GetName();
-
-    auto onInstanceCreated = lua["xi"]["zones"][zone]["instances"][name]["onInstanceCreated"];
+    auto instanceData      = instanceutils::GetInstanceData(PInstance->GetID());
+    auto onInstanceCreated = GetCacheEntryFromFilename(instanceData.filename)["onInstanceCreated"];
     if (!onInstanceCreated.valid())
     {
         return;
@@ -4921,10 +4918,8 @@ void OnInstanceProgressUpdate(CInstance* PInstance)
 {
     TracyZoneScoped;
 
-    auto zone = PInstance->GetZone()->getName();
-    auto name = PInstance->GetName();
-
-    auto onInstanceProgressUpdate = lua["xi"]["zones"][zone]["instances"][name]["onInstanceProgressUpdate"];
+    auto instanceData             = instanceutils::GetInstanceData(PInstance->GetID());
+    auto onInstanceProgressUpdate = GetCacheEntryFromFilename(instanceData.filename)["onInstanceProgressUpdate"];
     if (!onInstanceProgressUpdate.valid())
     {
         return;
@@ -4943,10 +4938,8 @@ void OnInstanceStageChange(CInstance* PInstance)
 {
     TracyZoneScoped;
 
-    auto zone = PInstance->GetZone()->getName();
-    auto name = PInstance->GetName();
-
-    auto onInstanceStageChange = lua["xi"]["zones"][zone]["instances"][name]["onInstanceStageChange"];
+    auto instanceData          = instanceutils::GetInstanceData(PInstance->GetID());
+    auto onInstanceStageChange = GetCacheEntryFromFilename(instanceData.filename)["onInstanceStageChange"];
     if (!onInstanceStageChange.valid())
     {
         return;
@@ -4964,10 +4957,8 @@ void OnInstanceComplete(CInstance* PInstance)
 {
     TracyZoneScoped;
 
-    auto zone = PInstance->GetZone()->getName();
-    auto name = PInstance->GetName();
-
-    auto onInstanceComplete = lua["xi"]["zones"][zone]["instances"][name]["onInstanceComplete"];
+    auto instanceData       = instanceutils::GetInstanceData(PInstance->GetID());
+    auto onInstanceComplete = GetCacheEntryFromFilename(instanceData.filename)["onInstanceComplete"];
     if (!onInstanceComplete.valid())
     {
         return;
@@ -5184,7 +5175,7 @@ void OnBattlefieldKick(CCharEntity* PChar)
 {
     TracyZoneScoped;
 
-    CStatusEffect* status = PChar->StatusEffectContainer->GetStatusEffect(EFFECT_BATTLEFIELD);
+    CStatusEffect* status = PChar->StatusEffectContainer->GetStatusEffect(xi::StatusEffect::Battlefield);
 
     if (status != nullptr)
     {
@@ -6101,7 +6092,7 @@ auto GetSynergyRecipeByID(uint32 id) -> sol::table
     {
         return sol::lua_nil;
     }
-    const auto result = *maybeResult;
+    const auto& result = *maybeResult;
 
     sol::table table = lua.create_table();
 
@@ -6172,7 +6163,7 @@ auto GetSynergyRecipeByTrade(CLuaTradeContainer luaTradeContainer) -> sol::table
     {
         return sol::lua_nil;
     }
-    const auto result = *maybeResult;
+    const auto& result = *maybeResult;
 
     sol::table table = lua.create_table();
 

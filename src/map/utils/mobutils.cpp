@@ -1366,6 +1366,7 @@ void SetupBattlefieldMob(CMobEntity* PMob)
 
     // do not roam around
     PMob->setMobMod(MOBMOD_ROAM_RESET_FACING, 1);
+    PMob->setMobMod(MOBMOD_ROAM_DISTANCE, 0);
     PMob->m_maxRoamDistance = 0.0f;
     if ((PMob->m_bcnmID != 864) && (PMob->m_bcnmID != 704) && (PMob->m_bcnmID != 706))
     {
@@ -2039,11 +2040,11 @@ void WeaknessTrigger(CBaseEntity* PTarget, WeaknessType level)
         .actiontype = ActionCategory::MobSkillFinish,
         .targets    = {
             {
-                   .actorId = PTarget->id,
-                   .results = {
+                .actorId = PTarget->id,
+                .results = {
                     {
-                           .animation = animationID,
-                           .param     = 2582,
+                        .animation = animationID,
+                        .param     = 2582,
                     },
                 },
             },

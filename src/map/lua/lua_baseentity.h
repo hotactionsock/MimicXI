@@ -180,6 +180,9 @@ public:
     void changeMusic(MusicSlot slotId, uint16 trackId) const;                             // Sets the specified music Track for specified music block.
     void sendMenu(uint32 menu);                                                           // Displays a menu (AH,Raise,Tractor,MH etc)
     auto sendGuild(uint16 guildId, uint8 open, uint8 close, uint8 holiday) const -> bool; // Sends guild shop menu
+    auto openGuildShop(CLuaBaseEntity* PNpc, uint8 open, uint8 close) const -> bool;      // Opens a lua guild shop and remembers the NPC the PC opened it with
+    void clearGuildShop() const;                                                          // Clears the PC's open guild shop handle
+    void sendGuildClose(uint8 open, uint8 close) const;                                   // Sends the guild-open packet with a Close status
     void openSendBox() const;                                                             // Opens send box (to deliver items)
     void leaveGame();
     void sendEmote(const CLuaBaseEntity* target, uint8 emID, uint8 emMode, bool othersOnly) const;
@@ -688,21 +691,22 @@ public:
     void  clearEnmityForEntity(CLuaBaseEntity* PEntity);
 
     // Status Effects
-    auto  addStatusEffect(EFFECT effectId, sol::table params) const -> bool;
+    auto  addStatusEffect(xi::StatusEffect effectId, sol::table params) const -> bool;
     auto  copyStatusEffect(const CLuaStatusEffect* PStatusEffect) const -> bool;
-    auto  getStatusEffect(uint16 StatusID, const sol::object& SubType, const sol::object& SourceType, const sol::object& SourceTypeParam) -> CStatusEffect*;
-    auto  getStatusEffectBySource(uint16 StatusID, EffectSourceType SourceType, uint16 SourceTypeParam) -> CStatusEffect*;
+    auto  getStatusEffect(xi::StatusEffect StatusID, const sol::object& SubType, const sol::object& SourceType, const sol::object& SourceTypeParam) -> CStatusEffect*;
+    auto  getStatusEffectBySource(xi::StatusEffect StatusID, EffectSourceType SourceType, uint16 SourceTypeParam) -> CStatusEffect*;
     auto  getStatusEffects() -> sol::table;
     int16 getStatusEffectElement(uint16 statusId);
-    bool  canGainStatusEffect(uint16 effect, const sol::object& powerObj);
-    bool  hasStatusEffect(uint16 StatusID, const sol::object& SubType);
+    auto  canGainStatusEffect(xi::StatusEffect effect, const sol::object& powerObj) -> bool;
+    auto  hasStatusEffect(xi::StatusEffect StatusID, const sol::object& SubType) -> bool;
     bool  hasStatusEffectByFlag(uint16 StatusID);
-    uint8 countEffect(uint16 StatusID);     // Gets the number of effects of a specific type on the entity
-    uint8 countEffectWithFlag(uint32 flag); // Gets the number of effects with a flag on the entity
+    auto  countEffect(xi::StatusEffect StatusID) -> uint8; // Gets the number of effects of a specific type on the entity
+    uint8 countEffectWithFlag(uint32 flag);                // Gets the number of effects with a flag on the entity
 
-    bool   delStatusEffect(uint16 StatusID, const sol::object& SubType, const sol::object& SourceType, const sol::object& SourceTypeParam);
+    auto   delStatusEffect(xi::StatusEffect StatusID, const sol::object& SubType, const sol::object& SourceType, const sol::object& SourceTypeParam) -> bool;
     void   delStatusEffectsByFlag(uint32 flag, const sol::object& silent);
-    bool   delStatusEffectSilent(uint16 StatusID); // Removes Status Effect, suppresses message
+    void   delStatusEffectsByType(uint16 type);
+    auto   delStatusEffectSilent(xi::StatusEffect StatusID) -> bool; // Removes Status Effect, suppresses message
     uint16 eraseStatusEffect();
     uint8  eraseAllStatusEffect();
     int32  dispelStatusEffect(const sol::object& flagObj);
@@ -729,7 +733,7 @@ public:
     bool   hasBustEffect(uint16 id); // Checks to see if a character has a specified busted corsair roll
     uint8  numBustEffects();         // Gets the number of bust effects on the player
     uint16 healingWaltz();
-    bool   addBardSong(CLuaBaseEntity* PEntity, uint16 effectID, uint16 power, uint16 tick, uint16 duration, uint16 SubType, uint16 subPower, uint16 tier);
+    auto   addBardSong(CLuaBaseEntity* PEntity, xi::StatusEffect effectID, uint16 power, uint16 tick, uint16 duration, uint16 SubType, uint16 subPower, uint16 tier) -> bool;
 
     void charm(const CLuaBaseEntity* target, const sol::object& p0);
     void uncharm();
