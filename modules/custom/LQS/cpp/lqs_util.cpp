@@ -115,7 +115,7 @@ class LqsUtilModule : public CPPModule
                 return false;
             }
 
-            CItem* PItem = itemutils::GetItem(itemID);
+            const CItem* PItem = itemutils::GetItem(static_cast<uint16>(itemID));
 
             if (PItem == nullptr)
             {

@@ -1,7 +1,7 @@
 -----------------------------------
 -- Module: Circuit Timekeeper — Qufim Island (Lv40)
 -- NPC: Circuit_Timekeeper_Qufim
--- Mithra female scholar look (model 2471)
+-- Tarutaru male scholar look (model 2457)
 -----------------------------------
 require('modules/module_utils')
 require('scripts/zones/Qufim_Island/Zone')
@@ -16,7 +16,7 @@ m:addOverride('xi.zones.Qufim_Island.Zone.onInitialize', function(zone)
     zone:insertDynamicEntity({
         objtype   = xi.objType.NPC,
         name      = 'Circuit_Timekeeper_Qufim',
-        look      = 2471,
+        look      = 2457,
         x         = -274.371,
         y         = -20.000,
         z         = 312.753,

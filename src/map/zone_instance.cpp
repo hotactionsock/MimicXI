@@ -143,6 +143,31 @@ void CZoneInstance::TransportDepart(uint16 boundary, uint16 prevZoneId, uint16 t
     }
 }
 
+void CZoneInstance::updateCharLevelRestriction(CCharEntity* PChar)
+{
+    TracyZoneScoped;
+
+    // Instance level caps live on CInstance, not CZone. m_levelRestriction is always 0
+    // for instance zones, so the base-class implementation would remove the effect every
+    // time zoneutils::AfterZoneIn fires (~4 s after zone-in). Detect the instance cap and
+    // preserve / reapply it instead.
+    if (PChar->PInstance && PChar->PInstance->GetLevelCap() > 0)
+    {
+        auto cap     = PChar->PInstance->GetLevelCap();
+        auto* effect = PChar->StatusEffectContainer->GetStatusEffect(EFFECT_LEVEL_RESTRICTION);
+        if (effect && effect->GetPower() == cap)
+        {
+            return; // already correct, nothing to do
+        }
+        PChar->StatusEffectContainer->DelStatusEffectSilent(EFFECT_LEVEL_RESTRICTION);
+        PChar->StatusEffectContainer->AddStatusEffect(
+            new CStatusEffect(EFFECT_LEVEL_RESTRICTION, EFFECT_LEVEL_RESTRICTION, cap, 0s, 0s));
+        return;
+    }
+
+    CZone::updateCharLevelRestriction(PChar);
+}
+
 void CZoneInstance::DecreaseZoneCounter(CCharEntity* PChar)
 {
     TracyZoneScoped;
@@ -151,7 +176,7 @@ void CZoneInstance::DecreaseZoneCounter(CCharEntity* PChar)
     {
         // Block voluntary zone-out for alive players while the fight is locked.
         // shuttingDown == 2 means the player is transitioning to another zone (not logging out or disconnecting).
-        if (PInstance->IsLocked() && PChar->isAlive() && PChar->PSession->shuttingDown == 2)
+        if (PInstance->IsLocked() && PChar->isAlive() && PChar->PSession && PChar->PSession->shuttingDown == 2)
         {
             PChar->PSession->shuttingDown = 0;
             PChar->pushPacket<GP_SERV_COMMAND_SYSTEMMES>(0, 0, MsgStd::CouldNotEnter);
@@ -375,19 +400,14 @@ void CZoneInstance::UpdateEntityPacket(CBaseEntity* PEntity, ENTITYUPDATE type, 
 {
     TracyZoneScoped;
 
-    if (PEntity)
+    if (!PEntity)
     {
-        if (PEntity->PInstance)
-        {
-            PEntity->PInstance->UpdateEntityPacket(PEntity, type, updatemask, alwaysInclude);
-        }
+        return;
     }
-    else
+
+    if (PEntity->PInstance)
     {
-        for (const auto& PInstance : m_InstanceList)
-        {
-            PInstance->UpdateEntityPacket(PEntity, type, updatemask, alwaysInclude);
-        }
+        PEntity->PInstance->UpdateEntityPacket(PEntity, type, updatemask, alwaysInclude);
     }
 }
 
@@ -405,30 +425,44 @@ auto CZoneInstance::ZoneServer(timer::time_point tick) -> Task<void>
 {
     TracyZoneScoped;
 
-    std::vector<CInstance*> instancesToRemove;
+    // Snapshot raw pointers before iterating. The co_await inside the loop
+    // yields to the scheduler, which may run CheckInstance and push a new
+    // unique_ptr onto m_InstanceList. If the vector reallocates, any reference
+    // or iterator held across the yield becomes dangling. Raw pointers into the
+    // CInstance objects themselves remain valid because emplace_back only moves
+    // the unique_ptrs, not the objects they own.
+    std::vector<CInstance*> snapshot;
+    snapshot.reserve(m_InstanceList.size());
     for (const auto& PInstance : m_InstanceList)
+    {
+        snapshot.push_back(PInstance.get());
+    }
+
+    std::vector<CInstance*> instancesToRemove;
+    for (auto* PInstance : snapshot)
     {
         co_await PInstance->ZoneServer(tick);
         PInstance->CheckTime(tick);
 
         if ((PInstance->Failed() || PInstance->Completed()) && PInstance->CharListEmpty())
         {
-            instancesToRemove.push_back(PInstance.get());
+            instancesToRemove.push_back(PInstance);
         }
     }
 
     for (const auto& PInstance : instancesToRemove)
     {
-        ShowDebug("[CZoneInstance] ZoneServer cleaned up Instance %s", PInstance->GetName());
-
-        m_InstanceList.erase(
-            std::find_if(
-                m_InstanceList.begin(),
-                m_InstanceList.end(),
-                [&PInstance](const auto& el)
-                {
-                    return el.get() == PInstance;
-                }));
+        auto itr = std::find_if(
+            m_InstanceList.begin(),
+            m_InstanceList.end(),
+            [&PInstance](const auto& el)
+            {
+                return el.get() == PInstance;
+            });
+        if (itr != m_InstanceList.end())
+        {
+            m_InstanceList.erase(itr);
+        }
     }
 }
 

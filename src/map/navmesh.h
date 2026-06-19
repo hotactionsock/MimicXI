@@ -51,6 +51,9 @@ public:
 
     auto findPath(const position_t& start, const position_t& end) -> std::vector<pathpoint_t>;
     auto findRandomPosition(const position_t& start, float maxRadius) -> std::pair<int16, position_t>;
+    auto findAnyRandomPosition() -> std::pair<int16, position_t>;
+    bool save(const std::string& path) const;
+    bool installNavMesh(dtNavMesh* newNavMesh);
 
     // Returns true if the point is in water (not implemented)
     bool inWater(const position_t& point);

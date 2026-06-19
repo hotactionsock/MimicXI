@@ -68,7 +68,10 @@ xi.circuit.instance.build = function(circuitId)
     end
 
     instanceObject.onInstanceCreatedCallback = function(player, instance)
-        xi.instance.onInstanceCreatedCallback(player, instance)
+        for _, member in pairs(player:getParty()) do
+            member:setInstance(instance)
+            member:setPos(0, 0, 0, 0, instance:getZone():getID())
+        end
     end
 
     instanceObject.afterInstanceRegister = function(player)
@@ -161,3 +164,5 @@ xi.circuit.onMobDeath = function(mob, instance)
         instance:setLocalVar('mobsAlive', alive - 1)
     end
 end
+
+return {}

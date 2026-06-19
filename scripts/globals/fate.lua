@@ -1,4 +1,4 @@
------------------------------------
+﻿-----------------------------------
 -- FATE System Engine
 -- Global namespace: xi.fate
 -- State is keyed by (zoneID, eventIdx) to support multiple concurrent FATEs per zone.
@@ -19,7 +19,7 @@ xi.fate.settings =
     DEFAULT_COOLDOWN = 600,   -- default seconds between FATEs in a zone
 }
 
--- Zone event definitions — populated by fate_zones/ files
+-- Zone event definitions - populated by fate_zones/ files
 xi.fate.zones = {}
 
 -- In-memory participant registry: [zoneID][eventIdx] = { [playerID] = true }
@@ -44,6 +44,15 @@ xi.fate.lastTick = {}
 -- Leash rate limiter: [zoneID] = last leash check unix timestamp
 xi.fate.lastLeashTick = {}
 
+-- Superboss tombstone data (in-memory, lives as long as the tombstone NPC): [eventID] = data table
+xi.fate.tombstones = {}
+
+-- Collection-point NPC entity references: [zoneID][eventIdx] = { npc, npc, ... }
+xi.fate.collectNPCs = {}
+
+-- Defense target NPC entity references: [zoneID][eventIdx] = { npc, npc, npc }
+xi.fate.defenseTargetNPCs = {}
+
 -----------------------------------
 -- Internal constants
 -----------------------------------
@@ -65,7 +74,7 @@ local GOLD_THRESHOLD   = 100
 local FATE_AREA_ID_BASE = 100
 
 -----------------------------------
--- Server / char variable key helpers — all keyed by (zoneID, eventIdx)
+-- Server / char variable key helpers - all keyed by (zoneID, eventIdx)
 -----------------------------------
 local function stateKey(zoneID, eventIdx)    return string.format("[FATE][%d][%d]State",       zoneID, eventIdx) end
 local function startKey(zoneID, eventIdx)    return string.format("[FATE][%d][%d]StartTime",   zoneID, eventIdx) end
@@ -85,6 +94,21 @@ local function lootIdxKey(zoneID, eventIdx)        return string.format("[FATE][
 local function lootSlotKey(zoneID, eventIdx, slot) return string.format("[FATE][%d][%d]Loot%d",   zoneID, eventIdx, slot) end
 
 -----------------------------------
+-- Superboss server-variable keys
+-----------------------------------
+local function sbGlobalCoolKey(id)   return string.format("[SBOSS][%s]LastKill",      id)       end  -- server var
+local function sbPrereqKey(id)       return string.format("[FATE][%s]LastComplete",   id)       end  -- server var, also set for regular FATE bosses
+local function sbEnrageStartKey(z,i) return string.format("[SBOSS][%d][%d]EnrStart",  z, i)    end  -- server var, 0 = not started
+local function sbEnragedKey(z,i)     return string.format("[SBOSS][%d][%d]Enraged",   z, i)    end  -- server var
+local function sbWaveKey(z,i)        return string.format("[SBOSS][%d][%d]Wave",       z, i)    end  -- volatile, current wave index
+local function sbRageKey(z,i)        return string.format("[SBOSS][%d][%d]Rage",       z, i)    end  -- volatile, rage stack count
+local function sbPersonalCoolKey(id) return string.format("[SBOSS][%s]Personal",      id)      end  -- char var, last loot timestamp
+
+local function momentumKey(z)        return string.format("[FATE][%d]Streak",          z)        end  -- server var, consecutive victories
+local function dynDiffKey(z, i)      return string.format("[FATE][%d][%d]DynDiff",     z, i)     end  -- server var, dynamic difficulty tier
+local function collectCountKey(z, i) return string.format("[FATE][%d][%d]CollectN",    z, i)     end  -- char var, personal collection count
+
+-----------------------------------
 -- Scaling
 -- hpPct / dmgPct passed directly to HP_SCALE and BASE_DAMAGE_MULTIPLIER mob mods.
 -- HP_SCALE: (value/100) * base maxHP.  100=1x, 150=1.5x, 200=2x.
@@ -94,6 +118,16 @@ local SCALE_CAP = 6  -- clamp participant count so scaling doesn't spiral
 
 xi.fate.getScaleN = function(zoneID, eventIdx)
     return math.max(1, math.min(SCALE_CAP, GetServerVariable(scaleKey(zoneID, eventIdx))))
+end
+
+-- Returns the EXP bonus multiplier (0.0–0.30) from the zone's consecutive-victory streak.
+xi.fate.getMomentumBonus = function(zoneID)
+    local streak = GetServerVariable(momentumKey(zoneID))
+    if     streak >= 8 then return 0.30
+    elseif streak >= 5 then return 0.20
+    elseif streak >= 3 then return 0.10
+    else                     return 0
+    end
 end
 
 -----------------------------------
@@ -173,6 +207,30 @@ xi.fate.onAbility = function(player, ability, zoneID, eventIdx)  xi.fate.addScor
 xi.fate.onWS      = function(player, wsID, zoneID, eventIdx)     xi.fate.addScore(player, zoneID, eventIdx, "ws",      SCORE_WS)      end
 xi.fate.onMelee   = function(target, zoneID, eventIdx)           end
 
+-- Calls a named function from a FATE mob's zone script, if one exists.
+-- Dynamic entities are named "DE_<prefix><base>" so we strip the DE_ prefix
+-- and any leading non-ASCII byte to derive the canonical script name, then
+-- look it up in xi.zones[zoneName].mobs[scriptName].
+xi.fate.callMobScript = function(mob, zoneID, funcName, ...)
+    local zoneDef = xi.fate.zones[zoneID]
+    if not zoneDef then return end
+    local mobName = mob:getName()
+    if mobName:sub(1, 3) ~= "DE_" then return end
+    mobName = mobName:sub(4)
+    if #mobName > 0 and string.byte(mobName, 1) > 127 then
+        mobName = mobName:sub(2)
+    end
+    mobName = mobName:gsub(" ", "_")
+    local scriptFunc = xi.zones and
+                       xi.zones[zoneDef.zoneName] and
+                       xi.zones[zoneDef.zoneName].mobs and
+                       xi.zones[zoneDef.zoneName].mobs[mobName] and
+                       xi.zones[zoneDef.zoneName].mobs[mobName][funcName]
+    if scriptFunc then
+        scriptFunc(...)
+    end
+end
+
 xi.fate.calcBand = function(score)
     if score >= GOLD_THRESHOLD   then return 3 end
     if score >= SILVER_THRESHOLD then return 2 end
@@ -217,6 +275,8 @@ end
 -- Level sync
 -----------------------------------
 xi.fate.applySync = function(player, zoneID, eventIdx)
+    local def = xi.fate.getEventDef(zoneID, eventIdx)
+    if def and def.noSync then return end  -- superboss: open to all levels, no restriction
     local level = xi.fate.getLevel(zoneID, eventIdx)
     -- Use >= so players signing up exactly at the cap are also restricted.
     -- If they were already at level N the restriction has no effect on stats,
@@ -281,9 +341,9 @@ end
 xi.fate.isInArea = function(player, zoneID, eventIdx)
     local def = xi.fate.getEventDef(zoneID, eventIdx)
     if not def then return false end
-    local dx = player:getXPos() - def.area.x
-    local dz = player:getZPos() - def.area.z
-    return (dx * dx + dz * dz) <= (def.area.radius * def.area.radius)
+    local dx = player:getXPos() - def.area[1]
+    local dz = player:getZPos() - def.area[3]
+    return (dx * dx + dz * dz) <= (def.area[4] * def.area[4])
 end
 
 -----------------------------------
@@ -369,7 +429,7 @@ end
 xi.fate.notify = function(zone, eventDef, zoneID, eventIdx)
     local n         = xi.fate.getScaleN(zoneID, eventIdx)
     local scaleStr  = n > 1 and string.format(" [%dp scale]", n) or ""
-    local stars   = eventDef.isBoss and (eventDef.bossStars or 1) or 0
+    local stars   = eventDef.superboss and 5 or (eventDef.isBoss and (eventDef.bossStars or 1) or 0)
     local bossStr = stars > 0 and (string.rep(string.char(0x81, 0x9A), stars) .. " ") or ""
     local posStr = eventDef.mapPos and string.format(" at (%s)", eventDef.mapPos) or ""
     local msg = string.format("[FATE] %s%s (Lv%d)%s has begun! Approach the marker%s to participate.", bossStr, eventDef.name, eventDef.level, scaleStr, posStr)
@@ -409,24 +469,149 @@ xi.fate.spawnMobs = function(zoneID, eventIdx)
         end
     end
 
-    for _, entry in ipairs(mobs) do
-        local mob = entry.entity
-        if mob and not mob:isSpawned() then
-            mob:setMobMod(xi.mobMod.HP_SCALE,               hpPct * (entry.hpMultiplier or 1))
-            mob:setMobMod(xi.mobMod.BASE_DAMAGE_MULTIPLIER, dmgPct * (entry.dmgMultiplier or 1))
-            mob:setSpawn(entry.spawnPt[1], entry.spawnPt[2], entry.spawnPt[3], entry.spawnPt[4] or 0)
-            mob:setDropID(0)
-            DisallowRespawn(mob:getID(), false)
-            mob:spawn()
-            mob:setLocalVar("fateEventIdx", eventIdx)
-            mob:setLocalVar("fateZoneID",   zoneID)
-            mob:setMobLevel(def.level)
-            mob:setLocalVar("NO_CASKET", 1)
-            mob:setCallForHelpBlocked(true)
-            mob:setRespawnTime(30)
-            mob:setHP(mob:getMaxHP())
-            mob:updateHealth()
+    if def.dynamicDifficulty then
+        local tier = GetServerVariable(dynDiffKey(zoneID, eventIdx))
+        if tier > 0 then
+            hpPct  = math.min(hpPct  + tier * 20, 400)
+            dmgPct = math.min(dmgPct + tier * 15, 300)
         end
+    end
+
+    -- Re-randomize shared spawn point assignments each activation so mob placement
+    -- varies between runs of the same event.
+    if def.sharedSpawnPoints and #def.sharedSpawnPoints > 0 then
+        local pool = {}
+        for _, pt in ipairs(def.sharedSpawnPoints) do
+            pool[#pool + 1] = pt
+        end
+        for j = #pool, 2, -1 do
+            local k = math.random(j)
+            pool[j], pool[k] = pool[k], pool[j]
+        end
+        for mobIdx, entry in ipairs(mobs) do
+            entry.spawnPt = pool[((mobIdx - 1) % #pool) + 1]
+        end
+    end
+
+    for _, entry in ipairs(mobs) do
+        xi.fate.spawnMobEntry(entry, hpPct, dmgPct, eventIdx, zoneID, def)
+    end
+end
+
+-- Spawn a single mob entry with the given scaling percentages.
+-- Shared by spawnMobs (regular FATEs) and spawnWave (superboss waves).
+xi.fate.spawnMobEntry = function(entry, hpPct, dmgPct, eventIdx, zoneID, def)
+    local mob = entry.entity
+    if not mob or mob:isSpawned() then return end
+
+    -- targetHP/targetDmg express desired stats at 1-player 1-star baseline;
+    -- hpPct/dmgPct (which already fold in star multipliers and player count)
+    -- are applied on top so scaling behaves identically to the multiplier path.
+    local hpScale, dmgScale
+    if entry.targetHP and entry.nativeHP and entry.nativeHP > 0 then
+        hpScale = math.max(1, math.floor(entry.targetHP * hpPct / entry.nativeHP))
+    else
+        hpScale = hpPct * (entry.hpMultiplier or 1)
+    end
+    if entry.targetDmg then
+        dmgScale = math.max(1, math.floor(entry.targetDmg * dmgPct / 100))
+    else
+        dmgScale = dmgPct * (entry.dmgMultiplier or 1)
+    end
+
+    mob:setMobMod(xi.mobMod.HP_SCALE,               hpScale)
+    mob:setMobMod(xi.mobMod.BASE_DAMAGE_MULTIPLIER, dmgScale)
+    mob:setSpawn(entry.spawnPt[1], entry.spawnPt[2], entry.spawnPt[3], entry.spawnPt[4] or 0)
+    mob:setDropID(0)
+    DisallowRespawn(mob:getID(), false)
+    mob:spawn()
+    mob:setLocalVar("fateEventIdx", eventIdx)
+    mob:setLocalVar("fateZoneID",   zoneID)
+    mob:setMobLevel(def.level)
+    mob:setLocalVar("NO_CASKET", 1)
+    mob:setCallForHelpBlocked(true)
+    mob:setRespawnTime(30)
+    mob:setHP(mob:getMaxHP())
+    mob:updateHealth()
+
+    if entry.isBoss and def.superboss then
+        mob:setLocalVar("sbIsBoss", 1)
+        mob:setLocalVar("sbPhase", 0)
+    end
+end
+
+-- Spawn all mob entries belonging to a specific wave index.
+-- Called by activate() for wave 1 and by checkWaveCleared() for subsequent waves.
+xi.fate.spawnWave = function(zoneID, eventIdx, waveIdx)
+    local entries = xi.fate.mobEntities[zoneID] and xi.fate.mobEntities[zoneID][eventIdx]
+    local def     = xi.fate.getEventDef(zoneID, eventIdx)
+    if not entries or not def then return end
+
+    SetVolatileServerVariable(sbWaveKey(zoneID, eventIdx), waveIdx)
+
+    local waves = def.waves
+    if waves and waves[waveIdx] and waves[waveIdx].announcement then
+        local zone = GetZone(zoneID)
+        if zone then
+            for _, p in pairs(zone:getPlayers()) do
+                p:printToPlayer("[FATE] " .. waves[waveIdx].announcement, xi.msg.channel.SYSTEM_3)
+            end
+        end
+    end
+
+    local n      = xi.fate.getScaleN(zoneID, eventIdx)
+    local hpPct  = 100 + (n - 1) * 50
+    local dmgPct = 100 + (n - 1) * 15
+
+    for _, entry in ipairs(entries) do
+        if entry.waveIdx == waveIdx then
+            xi.fate.spawnMobEntry(entry, hpPct, dmgPct, eventIdx, zoneID, def)
+        end
+    end
+
+    -- For defend FATEs, path each newly spawned mob to its nearest alive target.
+    if def.objective and def.objective.type == "defend" then
+        local dTargets = xi.fate.defenseTargetNPCs[zoneID] and xi.fate.defenseTargetNPCs[zoneID][eventIdx]
+        if dTargets then
+            for _, entry in ipairs(entries) do
+                if entry.waveIdx == waveIdx then
+                    entry.entity:timer(200, function(mob)
+                        if not mob:isSpawned() then return end
+                        local nearest, nearestDistSq = nil, math.huge
+                        for _, t in ipairs(dTargets) do
+                            if t:getLocalVar("defHP") > 0 then
+                                local dx = mob:getXPos() - t:getXPos()
+                                local dz = mob:getZPos() - t:getZPos()
+                                local d  = dx * dx + dz * dz
+                                if d < nearestDistSq then
+                                    nearestDistSq = d
+                                    nearest = t
+                                end
+                            end
+                        end
+                        if nearest then
+                            mob:pathTo(nearest:getXPos(), nearest:getYPos(), nearest:getZPos())
+                        end
+                    end)
+                end
+            end
+        end
+    end
+end
+
+-- Called when all non-boss mobs of waveIdx are dead; advances to the next wave.
+xi.fate.checkWaveCleared = function(zoneID, eventIdx, waveIdx)
+    if not waveIdx then return end
+    local entries = xi.fate.mobEntities[zoneID] and xi.fate.mobEntities[zoneID][eventIdx]
+    if not entries then return end
+    for _, entry in ipairs(entries) do
+        if entry.waveIdx == waveIdx and not entry.isBoss and entry.entity:isAlive() then
+            return  -- wave still has live mobs
+        end
+    end
+    local def = xi.fate.getEventDef(zoneID, eventIdx)
+    if def and def.waves and waveIdx < #def.waves then
+        xi.fate.spawnWave(zoneID, eventIdx, waveIdx + 1)
     end
 end
 
@@ -453,13 +638,13 @@ xi.fate.leashMobs = function(zoneID)
         if not mobs then goto continue end
 
         local area = def.area
-        local r2   = area.radius * area.radius
+        local r2   = area[4] * area[4]
 
         for _, entry in ipairs(mobs) do
             local mob = entry.entity
             if mob and mob:isSpawned() then
-                local dx = mob:getXPos() - area.x
-                local dz = mob:getZPos() - area.z
+                local dx = mob:getXPos() - area[1]
+                local dz = mob:getZPos() - area[3]
                 if (dx * dx + dz * dz) > r2 then
                     local sp = entry.spawnPt
                     DisallowRespawn(mob:getID(), true)
@@ -555,9 +740,75 @@ xi.fate.onKill = function(mob, player, zoneID, eventIdx)
         end
     end
 
-    if kills >= target then
+    -- Collect FATEs run for their full duration regardless of mob kills.
+    local objType = def.objective and def.objective.type or "kill"
+    if kills >= target and objType ~= "collect" then
         xi.fate.resolve(zoneID, eventIdx, true)
     end
+end
+
+-----------------------------------
+-- Collection FATE handler
+-----------------------------------
+xi.fate.onCollect = function(player, npc, zoneID, eventIdx)
+    if not xi.fate.isActive(zoneID, eventIdx) then return end
+    if npc:getLocalVar("fateCollected") == 1 then return end
+
+    local def = xi.fate.getEventDef(zoneID, eventIdx)
+    if not def then return end
+
+    -- Auto-register on first interaction (collect FATEs are open-world).
+    if player:getCharVar(regKey(zoneID, eventIdx)) ~= 1 then
+        xi.fate.register(player, zoneID, eventIdx)
+    end
+
+    -- Mark this point as taken; it will respawn after 15 seconds.
+    npc:setLocalVar("fateCollected", 1)
+    npc:setStatus(xi.status.DISAPPEAR)
+
+    -- Give the collection item directly to the player.
+    if def.collectItem then
+        if player:getFreeSlotsCount() > 0 then
+            npcUtil.giveItem(player, def.collectItem)
+        else
+            player:printToPlayer("[FATE] Your inventory is full - collection item lost!", xi.msg.channel.SYSTEM_3)
+        end
+    end
+
+    -- Track each player's personal collection count (determines their tier at resolution).
+    player:incrementCharVar(collectCountKey(zoneID, eventIdx), 1)
+    local personal = player:getCharVar(collectCountKey(zoneID, eventIdx))
+
+    xi.fate.addScore(player, zoneID, eventIdx, "ws", SCORE_KILL)
+    xi.fate.broadcastEventSync(zoneID, eventIdx)
+
+    -- Show this player their personal progress and current tier standing.
+    local tiers = def.collectTiers or { gold = 10, silver = 5, bronze = 1 }
+    local tier
+    if     personal >= tiers.gold   then tier = "Gold"
+    elseif personal >= tiers.silver then tier = "Silver"
+    elseif personal >= tiers.bronze then tier = "Bronze"
+    end
+    if tier then
+        player:printToPlayer(
+            string.format("[FATE] %s recovered - %d collected. Tier: %s!", def.collectName or "Item", personal, tier),
+            xi.msg.channel.SYSTEM_3)
+    else
+        player:printToPlayer(
+            string.format("[FATE] %s recovered - %d collected. Reach %d for Bronze.",
+                def.collectName or "Item", personal, tiers.bronze),
+            xi.msg.channel.SYSTEM_3)
+    end
+
+    -- Respawn this collection point after 15 seconds (if FATE still active).
+    npc:timer(15000, function(n)
+        local zID = n:getLocalVar("fateZoneID")
+        local i   = n:getLocalVar("fateEventIdx")
+        if xi.fate.isActive(zID, i) then
+            n:setLocalVar("fateCollected", 0)
+            n:setStatus(xi.status.NORMAL)
+        end
+    end)
 end
 
 -----------------------------------
@@ -585,6 +836,16 @@ xi.fate.openChest = function(player, npc)
     local def = xi.fate.getEventDef(zoneID, eventIdx)
     if not def then return end
 
+    -- Superboss personal kill cooldown: participation and EXP are still awarded but loot is gated.
+    if def.superboss and def.killCooldown then
+        local lastKill = player:getCharVar(sbPersonalCoolKey(def.id))
+        if lastKill > 0 and GetSystemTime() - lastKill < def.killCooldown then
+            local days = math.ceil((def.killCooldown - (GetSystemTime() - lastKill)) / 86400)
+            player:printToPlayer(string.format("[FATE] You may not claim spoils from %s again for %d day(s).", def.name, days), xi.msg.channel.SYSTEM_3)
+            return
+        end
+    end
+
     npc:setAnimation(xi.anim.OPEN_DOOR)
 
     -- Items are rolled exactly once on first open and stored in char vars.
@@ -599,17 +860,21 @@ xi.fate.openChest = function(player, npc)
             local pools = victory and def.loot.victory or def.loot.fail
             if pools then
                 for _, itemID in ipairs(pools.guaranteed or {}) do
-                    table.insert(rolled, itemID)
+                    if itemID and itemID ~= 0 then
+                        table.insert(rolled, itemID)
+                    end
                 end
                 local mults     = xi.mimic.bonus.getMultipliers()
                 local dropBase  = math.floor(mults.drop)
                 local dropFrac  = mults.drop - dropBase
                 local function rollInto(pool)
                     for _, entry in ipairs(pool) do
-                        local passes = dropBase + (math.random() < dropFrac and 1 or 0)
-                        for _ = 1, passes do
-                            if math.random(1, 1000) <= entry[2] then
-                                table.insert(rolled, entry[1])
+                        if entry[1] and entry[1] ~= 0 then
+                            local passes = dropBase + (math.random() < dropFrac and 1 or 0)
+                            for _ = 1, passes do
+                                if math.random(1, 1000) <= entry[2] then
+                                    table.insert(rolled, entry[1])
+                                end
                             end
                         end
                     end
@@ -637,7 +902,10 @@ xi.fate.openChest = function(player, npc)
                     elseif                pools.bronze and #pools.bronze > 0 then fallback = pools.bronze
                     end
                     if fallback then
-                        table.insert(rolled, fallback[math.random(#fallback)][1])
+                        local entry = fallback[math.random(#fallback)]
+                        if entry[1] and entry[1] ~= 0 then
+                            table.insert(rolled, entry[1])
+                        end
                     end
                 end
             end
@@ -660,14 +928,18 @@ xi.fate.openChest = function(player, npc)
     local nextSlot = math.max(1, player:getCharVar(lootIdxKey(zoneID, eventIdx)))
     for s = nextSlot, stored do
         local itemID = player:getCharVar(lootSlotKey(zoneID, eventIdx, s))
-        if not npcUtil.giveItem(player, itemID) then
-            player:printToPlayer("Your inventory is full. Make room and try again.", xi.msg.channel.SYSTEM_3)
-            return
+        if itemID ~= 0 then
+            if not npcUtil.giveItem(player, itemID) then
+                return
+            end
         end
         player:setCharVar(lootIdxKey(zoneID, eventIdx), s + 1)
     end
 
     player:setCharVar(lootedKey(zoneID, eventIdx), 1)
+    if def.superboss and def.killCooldown then
+        player:setCharVar(sbPersonalCoolKey(def.id), GetSystemTime())
+    end
 end
 
 xi.fate.spawnChest = function(zone, eventDef, zoneID, eventIdx, victory)
@@ -699,8 +971,22 @@ local function assignBandsAndRewards(zoneID, eventIdx, eventDef, victory)
         if PlayerHasValidSession(playerID) then
             local player = GetPlayerByID(playerID)
             if player then
-                local score = player:getCharVar(scoreKey(zoneID, eventIdx))
-                local band  = xi.fate.calcBand(score)
+                local band
+                local score = 0
+                if eventDef.objective and eventDef.objective.type == "collect" then
+                    -- Collect FATEs: band is determined by each player's personal item count.
+                    local count  = player:getCharVar(collectCountKey(zoneID, eventIdx))
+                    local tiers  = eventDef.collectTiers or { gold = 10, silver = 5, bronze = 1 }
+                    if     count >= tiers.gold   then band = 3
+                    elseif count >= tiers.silver then band = 2
+                    elseif count >= tiers.bronze then band = 1
+                    else                              band = 0
+                    end
+                    score = count
+                else
+                    score = player:getCharVar(scoreKey(zoneID, eventIdx)) or 0
+                    band = xi.fate.calcBand(score)
+                end
                 player:setCharVar(bandKey(zoneID, eventIdx), band)
 
                 local tierNames = { "Bronze", "Silver", "Gold" }
@@ -713,8 +999,9 @@ local function assignBandsAndRewards(zoneID, eventIdx, eventDef, victory)
                     elseif pools.bronze               then exp = pools.bronze.exp or 0
                     end
                     if exp > 0 then
-                        local mults = xi.mimic.bonus.getMultipliers()
-                        player:addExp(math.floor(exp * mults.exp))
+                        local mults    = xi.mimic.bonus.getMultipliers()
+                        local momentum = xi.fate.getMomentumBonus(zoneID)
+                        player:addExp(math.floor(exp * mults.exp * (1 + momentum)))
                     end
                 end
 
@@ -727,6 +1014,12 @@ local function assignBandsAndRewards(zoneID, eventIdx, eventDef, victory)
                     local bestKey = string.format('[FATE][%d]BestBand', zoneID)
                     if band > player:getCharVar(bestKey) then
                         player:setCharVar(bestKey, band)
+                    end
+
+                    -- Regional vendor weekly FATE tally.
+                    local region = (xi.fate.zones[zoneID] or {}).region
+                    if region and xi.fate.vendor and xi.fate.vendor.onFateComplete then
+                        xi.fate.vendor.onFateComplete(player, region)
                     end
                 end
             end
@@ -769,6 +1062,104 @@ xi.fate.resolve = function(zoneID, eventIdx, victory, silent)
         end
     end
 
+    -- Record completion timestamp so superboss prereq checks can verify recency.
+    if victory then
+        SetServerVariable(sbPrereqKey(def.id), GetSystemTime())
+    end
+
+    if def.superboss then
+        -- Stamp global kill cooldown so this superboss can't re-trigger for globalCooldown seconds.
+        if victory then
+            SetServerVariable(sbGlobalCoolKey(def.id), GetSystemTime())
+        end
+        -- Clear runtime state.
+        SetServerVariable(sbEnrageStartKey(zoneID, eventIdx),  0)
+        SetServerVariable(sbEnragedKey(zoneID, eventIdx),      0)
+        SetVolatileServerVariable(sbRageKey(zoneID, eventIdx), 0)
+        SetVolatileServerVariable(sbWaveKey(zoneID, eventIdx), 0)
+        -- World-state callbacks.
+        if victory and def.onVictory then
+            def.onVictory(zoneID)
+        elseif not victory and def.onFailure then
+            def.onFailure(zoneID)
+        end
+        -- Participation trophy: every registered player gets this item regardless of score band.
+        if def.participationItem then
+            local pool = xi.fate.participants[zoneID] and xi.fate.participants[zoneID][eventIdx]
+            for playerID in pairs(pool or {}) do
+                if PlayerHasValidSession(playerID) then
+                    local p = GetPlayerByID(playerID)
+                    if p then npcUtil.giveItem(p, def.participationItem) end
+                end
+            end
+        end
+    end
+
+    -- Defense FATE: clear wave tracker and hide target NPCs on resolution.
+    if def.objective and def.objective.type == "defend" then
+        SetVolatileServerVariable(sbWaveKey(zoneID, eventIdx), 0)
+        local dTargets = xi.fate.defenseTargetNPCs[zoneID] and xi.fate.defenseTargetNPCs[zoneID][eventIdx]
+        if dTargets then
+            for _, t in ipairs(dTargets) do
+                t:setStatus(xi.status.DISAPPEAR)
+            end
+        end
+    end
+
+    -- Collect FATE: hide any uncollected NPCs and reset their state.
+    if def.objective and def.objective.type == "collect" then
+        local cnpcs = xi.fate.collectNPCs[zoneID] and xi.fate.collectNPCs[zoneID][eventIdx]
+        if cnpcs then
+            for _, c in ipairs(cnpcs) do
+                c:setStatus(xi.status.DISAPPEAR)
+                c:setLocalVar("fateCollected", 0)
+            end
+        end
+    end
+
+    -- Zone momentum: consecutive victories stack an EXP bonus; any failure resets the streak.
+    if not def.chainOnly then
+        if victory then
+            local streak = GetServerVariable(momentumKey(zoneID)) + 1
+            SetServerVariable(momentumKey(zoneID), streak)
+            local bonus = xi.fate.getMomentumBonus(zoneID)
+            if streak == 3 or streak == 5 or streak == 8 then
+                local pct = math.floor(bonus * 100)
+                local msg = string.format("[FATE] Zone momentum! %d consecutive victories - +%d%% EXP bonus now active.", streak, pct)
+                for _, p in pairs(zone:getPlayers()) do
+                    p:printToPlayer(msg, xi.msg.channel.SYSTEM_3)
+                end
+            end
+        else
+            if GetServerVariable(momentumKey(zoneID)) > 0 then
+                SetServerVariable(momentumKey(zoneID), 0)
+                for _, p in pairs(zone:getPlayers()) do
+                    p:printToPlayer("[FATE] Zone momentum lost - win streak broken.", xi.msg.channel.SYSTEM_3)
+                end
+            end
+        end
+    end
+
+    -- Dynamic difficulty: fast clears increase the difficulty tier; slow/failed clears reset it.
+    if def.dynamicDifficulty then
+        if victory then
+            local elapsed  = GetSystemTime() - GetServerVariable(startKey(zoneID, eventIdx))
+            local halfDur  = math.floor((def.duration or 600) / 2)
+            if elapsed < halfDur then
+                local tier = GetServerVariable(dynDiffKey(zoneID, eventIdx)) + 1
+                SetServerVariable(dynDiffKey(zoneID, eventIdx), tier)
+                if tier >= 2 then
+                    local msg = string.format("[FATE] The enemy has adapted. Difficulty increases (tier %d).", tier)
+                    for _, p in pairs(zone:getPlayers()) do p:printToPlayer(msg, xi.msg.channel.SYSTEM_3) end
+                end
+            else
+                SetServerVariable(dynDiffKey(zoneID, eventIdx), 0)
+            end
+        else
+            SetServerVariable(dynDiffKey(zoneID, eventIdx), 0)
+        end
+    end
+
     local zoneData = xi.fate.zones[zoneID]
     local cooldown = def.minCooldown or (zoneData and zoneData.minCooldown) or xi.fate.settings.DEFAULT_COOLDOWN
     SetServerVariable(cooldownKey(zoneID, eventIdx), GetSystemTime() + cooldown)
@@ -806,11 +1197,21 @@ end
 xi.fate.preannounce = function(zone, eventDef, zoneID, eventIdx)
     SetServerVariable(stateKey(zoneID, eventIdx), STATE_PENDING)
 
-    local warnings = eventDef.bossWarnings or {}
-    local msg1 = warnings[1] or "[FATE] A powerful creature stirs..."
-    for _, player in pairs(zone:getPlayers()) do
-        player:printToPlayer(msg1, xi.msg.channel.SYSTEM_3)
+    local isSuperBoss = eventDef.superboss == true
+
+    local function broadcastMsg(msg)
+        if isSuperBoss then
+            xi.fate.broadcastToFateZones(msg)
+        else
+            for _, player in pairs(zone:getPlayers()) do
+                player:printToPlayer(msg, xi.msg.channel.SYSTEM_3)
+            end
+        end
     end
+
+    local warnings = eventDef.bossWarnings or {}
+    local msg1 = warnings[1] or (isSuperBoss and "[FATE] ★★★★★ An ancient terror awakens. All adventurers - prepare yourselves." or "[FATE] A powerful creature stirs...")
+    broadcastMsg(msg1)
 
     local entry = xi.fate.entryNPCs[zoneID] and xi.fate.entryNPCs[zoneID][eventIdx]
     if not entry then
@@ -826,13 +1227,22 @@ xi.fate.preannounce = function(zone, eventDef, zoneID, eventIdx)
         local def = xi.fate.getEventDef(zID, i)
         if not z or not def then return end
 
-        local w    = def.bossWarnings or {}
-        local msg2 = w[2] or "[FATE] The creature draws near..."
-        for _, player in pairs(z:getPlayers()) do
-            player:printToPlayer(msg2, xi.msg.channel.SYSTEM_3)
+        local isSuper2 = def.superboss == true
+        local function broadcastMsg2(msg)
+            if isSuper2 then
+                xi.fate.broadcastToFateZones(msg)
+            else
+                for _, player in pairs(z:getPlayers()) do
+                    player:printToPlayer(msg, xi.msg.channel.SYSTEM_3)
+                end
+            end
         end
 
-        if (def.bossStars or 1) >= 3 then
+        local w    = def.bossWarnings or {}
+        local msg2 = w[2] or (isSuper2 and "[FATE] ★★★★★ The ground trembles. This is your final warning." or "[FATE] The creature draws near...")
+        broadcastMsg2(msg2)
+
+        if (def.bossStars or 1) >= 3 or isSuper2 then
             -- 3-star bosses get an extra 5-minute warning step (15-min total lead).
             e:timer(300000, function(e2)
                 local zID2 = e2:getLocalVar("fateZoneID")
@@ -841,10 +1251,15 @@ xi.fate.preannounce = function(zone, eventDef, zoneID, eventIdx)
                 local z2   = GetZone(zID2)
                 local def2 = xi.fate.getEventDef(zID2, i2)
                 if not z2 or not def2 then return end
-                local w2   = def2.bossWarnings or {}
-                local msg3 = w2[3] or "[FATE] An overwhelming presence descends upon you..."
-                for _, player in pairs(z2:getPlayers()) do
-                    player:printToPlayer(msg3, xi.msg.channel.SYSTEM_3)
+                local w2      = def2.bossWarnings or {}
+                local isSuper3 = def2.superboss == true
+                local msg3    = w2[3] or (isSuper3 and "[FATE] ★★★★★ Its arrival is imminent. Rally now." or "[FATE] An overwhelming presence descends upon you...")
+                if isSuper3 then
+                    xi.fate.broadcastToFateZones(msg3)
+                else
+                    for _, player in pairs(z2:getPlayers()) do
+                        player:printToPlayer(msg3, xi.msg.channel.SYSTEM_3)
+                    end
                 end
                 e2:timer(300000, function(e3)
                     local zID3 = e3:getLocalVar("fateZoneID")
@@ -892,6 +1307,7 @@ xi.fate.activate = function(zone, eventDef, zoneID, eventIdx)
     ClearCharVarFromAll(lootedKey(zoneID, eventIdx))
     ClearCharVarFromAll(lootCountKey(zoneID, eventIdx))
     ClearCharVarFromAll(lootIdxKey(zoneID, eventIdx))
+    ClearCharVarFromAll(collectCountKey(zoneID, eventIdx))
     for s = 1, MAX_LOOT_SLOTS do
         ClearCharVarFromAll(lootSlotKey(zoneID, eventIdx, s))
     end
@@ -903,7 +1319,53 @@ xi.fate.activate = function(zone, eventDef, zoneID, eventIdx)
     SetServerVariable(startKey(zoneID, eventIdx), GetSystemTime())
     SetVolatileServerVariable(killKey(zoneID, eventIdx), 0)
 
-    xi.fate.spawnMobs(zoneID, eventIdx)
+    if eventDef.superboss then
+        -- Reset all superboss runtime state.
+        SetServerVariable(sbEnrageStartKey(zoneID, eventIdx),  0)
+        SetServerVariable(sbEnragedKey(zoneID, eventIdx),      0)
+        SetVolatileServerVariable(sbRageKey(zoneID, eventIdx), 0)
+        SetVolatileServerVariable(sbWaveKey(zoneID, eventIdx), 0)
+        -- Auto-register every player currently in the zone.
+        for _, p in pairs(zone:getPlayers()) do
+            xi.fate.register(p, zoneID, eventIdx)
+        end
+        -- Server-wide broadcast across all active FATE zones.
+        if eventDef.worldBroadcast then
+            xi.fate.broadcastToFateZones(eventDef.worldBroadcast)
+        end
+        -- Kick off wave 1 instead of the normal flat spawn.
+        xi.fate.spawnWave(zoneID, eventIdx, 1)
+    elseif eventDef.objective and eventDef.objective.type == "defend" then
+        -- Show and reset defense target NPCs.
+        local dTargets = xi.fate.defenseTargetNPCs[zoneID] and xi.fate.defenseTargetNPCs[zoneID][eventIdx]
+        if dTargets and eventDef.defenseTargets then
+            for tIdx, t in ipairs(dTargets) do
+                local tDef  = eventDef.defenseTargets[tIdx]
+                local maxHP = tDef and tDef.hp or 100
+                t:setLocalVar("defHP",    maxHP)
+                t:setLocalVar("defMaxHP", maxHP)
+                t:setStatus(xi.status.NORMAL)
+            end
+        end
+        -- Defense FATEs use time-gated waves; spawn wave 1 now and let tickDefenseFATEs handle the rest.
+        SetVolatileServerVariable(sbWaveKey(zoneID, eventIdx), 1)
+        xi.fate.spawnWave(zoneID, eventIdx, 1)
+    elseif eventDef.objective and eventDef.objective.type == "collect" then
+        -- Reveal all collection-point NPCs.
+        local cnpcs = xi.fate.collectNPCs[zoneID] and xi.fate.collectNPCs[zoneID][eventIdx]
+        if cnpcs then
+            for _, c in ipairs(cnpcs) do
+                c:setLocalVar("fateCollected", 0)
+                c:setStatus(xi.status.NORMAL)
+            end
+        end
+        -- Spawn optional atmosphere/guard mobs if defined alongside the collect points.
+        if eventDef.mobs then
+            xi.fate.spawnMobs(zoneID, eventIdx)
+        end
+    else
+        xi.fate.spawnMobs(zoneID, eventIdx)
+    end
 
     local entry = xi.fate.entryNPCs[zoneID] and xi.fate.entryNPCs[zoneID][eventIdx]
     if entry then
@@ -913,7 +1375,9 @@ xi.fate.activate = function(zone, eventDef, zoneID, eventIdx)
             local i   = npc:getLocalVar("fateEventIdx")
             local zID = npc:getLocalVar("fateZoneID")
             if xi.fate.isActive(zID, i) then
-                xi.fate.resolve(zID, i, false)
+                local d         = xi.fate.getEventDef(zID, i)
+                local isCollect = d and d.objective and d.objective.type == "collect"
+                xi.fate.resolve(zID, i, isCollect == true)
             end
         end)
     end
@@ -923,9 +1387,308 @@ xi.fate.activate = function(zone, eventDef, zoneID, eventIdx)
 end
 
 -----------------------------------
+-- Superboss system
+-----------------------------------
+
+-- Broadcast a message to every player currently in any registered FATE zone.
+xi.fate.broadcastToFateZones = function(message)
+    for zID in pairs(xi.fate.zones) do
+        local z = GetZone(zID)
+        if z then
+            for _, p in pairs(z:getPlayers()) do
+                p:printToPlayer(message, xi.msg.channel.SYSTEM_3)
+            end
+        end
+    end
+end
+
+-- Auto-register players who zone in while a superboss is active.
+xi.fate.superbossCheckZoneIn = function(player, zoneID)
+    local zoneData = xi.fate.zones[zoneID]
+    if not zoneData then return end
+    for eventIdx, def in ipairs(zoneData.events) do
+        if def.superboss and xi.fate.isActive(zoneID, eventIdx) then
+            xi.fate.register(player, zoneID, eventIdx)
+        end
+    end
+end
+
+-- Returns the eventIdx of any currently active superboss in this zone, or nil.
+xi.fate.getActiveSuperbossIdx = function(zoneID)
+    local zoneData = xi.fate.zones[zoneID]
+    if not zoneData then return nil end
+    for eventIdx, def in ipairs(zoneData.events) do
+        if def.superboss and xi.fate.isActive(zoneID, eventIdx) then
+            return eventIdx
+        end
+    end
+    return nil
+end
+
+-- Returns true if the superboss event is eligible to activate (cooldown clear, all prereqs met).
+xi.fate.superbossEligible = function(zoneID, eventIdx)
+    local def = xi.fate.getEventDef(zoneID, eventIdx)
+    if not def or not def.superboss then return false end
+    local now = GetSystemTime()
+    local lastKill = GetServerVariable(sbGlobalCoolKey(def.id))
+    if lastKill > 0 and now - lastKill < (def.globalCooldown or 259200) then return false end
+    if def.prereqs then
+        local window = def.prereqWindow or 172800
+        for _, prereqID in ipairs(def.prereqs) do
+            local lastComplete = GetServerVariable(sbPrereqKey(prereqID))
+            if lastComplete == 0 or now - lastComplete > window then return false end
+        end
+    end
+    return true
+end
+
+-- Rage: increment stack counter and raise the boss's damage multiplier live.
+xi.fate.addRage = function(zoneID, eventIdx, amount)
+    local def = xi.fate.getEventDef(zoneID, eventIdx)
+    if not def or not def.superboss then return end
+    local current = GetVolatileServerVariable(sbRageKey(zoneID, eventIdx))
+    local new     = math.min(current + (amount or 1), def.rageCap or 60)
+    if new == current then return end
+    SetVolatileServerVariable(sbRageKey(zoneID, eventIdx), new)
+    local entries = xi.fate.mobEntities[zoneID] and xi.fate.mobEntities[zoneID][eventIdx]
+    if not entries then return end
+    local n      = xi.fate.getScaleN(zoneID, eventIdx)
+    local dmgPct = 100 + (n - 1) * 15
+    for _, entry in ipairs(entries) do
+        if entry.isBoss and entry.entity:isSpawned() then
+            local base = entry.targetDmg and math.floor(entry.targetDmg * dmgPct / 100)
+                         or dmgPct * (entry.dmgMultiplier or 1)
+            local rageBonus = new * (def.ragePerDeath or 3)
+            entry.entity:setMobMod(xi.mobMod.BASE_DAMAGE_MULTIPLIER, math.floor(base * (100 + rageBonus) / 100))
+        end
+    end
+    if new % 5 == 0 then
+        local zone = GetZone(zoneID)
+        if zone then
+            local bonus = new * (def.ragePerDeath or 3)
+            for _, p in pairs(zone:getPlayers()) do
+                p:printToPlayer(string.format("[FATE] %s grows stronger from your losses! (+%d%% damage)", def.name, bonus), xi.msg.channel.SYSTEM_3)
+            end
+        end
+    end
+end
+
+-- Called from zone onPlayerDeath; triggers event-level ragePerDeath and per-boss callbacks.
+xi.fate.onPlayerDeath = function(player, zoneID)
+    local zoneData = xi.fate.zones[zoneID]
+    if not zoneData then return end
+    for eventIdx, def in ipairs(zoneData.events) do
+        if not def.superboss or not xi.fate.isActive(zoneID, eventIdx) then goto sbNextEvt end
+        if player:getCharVar(regKey(zoneID, eventIdx)) == 0 then goto sbNextEvt end
+        if def.ragePerDeath then xi.fate.addRage(zoneID, eventIdx, 1) end
+        local entries = xi.fate.mobEntities[zoneID] and xi.fate.mobEntities[zoneID][eventIdx]
+        for _, entry in ipairs(entries or {}) do
+            if entry.isBoss and entry.onPlayerDeath then
+                entry.onPlayerDeath(player, zoneID, eventIdx)
+            end
+        end
+        ::sbNextEvt::
+    end
+end
+
+-- Check and fire HP-threshold phases for the superboss. Called from onMobFight.
+xi.fate.checkSuperBossPhases = function(mob, zoneID, eventIdx)
+    local def = xi.fate.getEventDef(zoneID, eventIdx)
+    if not def or not def.phases then return end
+    local currentPhase = mob:getLocalVar("sbPhase")
+    if currentPhase >= #def.phases then return end
+    local maxHP = mob:getMaxHP()
+    if maxHP == 0 then return end
+    local hpPct = mob:getHP() * 100 / maxHP
+    for phaseIdx = currentPhase + 1, #def.phases do
+        if hpPct <= def.phases[phaseIdx].hpPct then
+            mob:setLocalVar("sbPhase", phaseIdx)
+            def.phases[phaseIdx].onTrigger(mob, zoneID, eventIdx)
+            break
+        end
+    end
+end
+
+-- Make the boss effectively unkillable and notify the zone.
+xi.fate.triggerSuperBossEnrage = function(zoneID, eventIdx)
+    local def     = xi.fate.getEventDef(zoneID, eventIdx)
+    local entries = xi.fate.mobEntities[zoneID] and xi.fate.mobEntities[zoneID][eventIdx]
+    if not def or not entries then return end
+    SetServerVariable(sbEnragedKey(zoneID, eventIdx), 1)
+    local zone = GetZone(zoneID)
+    for _, entry in ipairs(entries) do
+        if entry.isBoss and entry.entity:isSpawned() then
+            -- Extreme damage so players cannot survive; combined with wipe-reset this keeps fight alive.
+            entry.entity:setMobMod(xi.mobMod.BASE_DAMAGE_MULTIPLIER, 99999)
+            if def.onEnrage then def.onEnrage(entry.entity, zoneID, eventIdx) end
+        end
+    end
+    if zone then
+        for _, p in pairs(zone:getPlayers()) do
+            p:printToPlayer(string.format("[FATE] %s - ENRAGE! The beast is beyond stopping!", def.name), xi.msg.channel.SYSTEM_3)
+        end
+    end
+end
+
+-- After an enrage wipe, respawn the boss at full HP with all state reset.
+xi.fate.resetSuperBoss = function(zoneID, eventIdx)
+    local def     = xi.fate.getEventDef(zoneID, eventIdx)
+    local entries = xi.fate.mobEntities[zoneID] and xi.fate.mobEntities[zoneID][eventIdx]
+    if not def or not entries then return end
+    SetServerVariable(sbEnrageStartKey(zoneID, eventIdx),  0)
+    SetServerVariable(sbEnragedKey(zoneID, eventIdx),      0)
+    SetVolatileServerVariable(sbRageKey(zoneID, eventIdx), 0)
+    -- Despawn all remaining mobs and reschedule the boss wave spawn.
+    local bossWave = nil
+    for _, entry in ipairs(entries) do
+        local mob = entry.entity
+        if mob:isSpawned() then
+            DisallowRespawn(mob:getID(), true)
+            DespawnMob(mob:getID())
+        end
+        if entry.isBoss then bossWave = entry.waveIdx end
+    end
+    local zone = GetZone(zoneID)
+    if zone then
+        for _, p in pairs(zone:getPlayers()) do
+            p:printToPlayer("[FATE] The beast loses its prey and resets. The hard cap is still ticking.", xi.msg.channel.SYSTEM_3)
+        end
+    end
+    if bossWave then
+        -- Small delay before respawn so players can regroup.
+        local entry = xi.fate.entryNPCs[zoneID] and xi.fate.entryNPCs[zoneID][eventIdx]
+        local npcRef = entry
+        if npcRef then
+            npcRef:timer(15000, function(npc)
+                local zID = npc:getLocalVar("fateZoneID")
+                local i   = npc:getLocalVar("fateEventIdx")
+                if xi.fate.isActive(zID, i) then
+                    xi.fate.spawnWave(zID, i, bossWave)
+                end
+            end)
+        end
+    end
+end
+
+-- Per-tick superboss maintenance: enrage check, wipe-reset detection.
+xi.fate.superbossTick = function(zone, zoneID)
+    local zoneData = xi.fate.zones[zoneID]
+    if not zoneData then return end
+    for eventIdx, def in ipairs(zoneData.events) do
+        if not def.superboss or not xi.fate.isActive(zoneID, eventIdx) then goto sbTick end
+        local now         = GetSystemTime()
+        local enrageStart = GetServerVariable(sbEnrageStartKey(zoneID, eventIdx))
+        if enrageStart == 0 then goto sbTick end  -- nobody has pulled yet
+        local enraged = GetServerVariable(sbEnragedKey(zoneID, eventIdx))
+        if enraged == 0 then
+            if now - enrageStart >= (def.enrageTime or 1800) then
+                xi.fate.triggerSuperBossEnrage(zoneID, eventIdx)
+            end
+        else
+            -- Enraged: if boss is spawned but has no enmity, it's a wipe - reset.
+            local entries = xi.fate.mobEntities[zoneID] and xi.fate.mobEntities[zoneID][eventIdx]
+            for _, entry in ipairs(entries or {}) do
+                if entry.isBoss and entry.entity:isSpawned() and not entry.entity:isEngaged() then
+                    xi.fate.resetSuperBoss(zoneID, eventIdx)
+                    break
+                end
+            end
+        end
+        ::sbTick::
+    end
+end
+
+-- Death handler for mobs belonging to a superboss event.
+xi.fate.onSuperBossMobDeath = function(mob, player, optParams, zoneID, eventIdx)
+    if not xi.fate.isActive(zoneID, eventIdx) then return end
+    local entries = xi.fate.mobEntities[zoneID] and xi.fate.mobEntities[zoneID][eventIdx]
+    if not entries then return end
+    local thisEntry
+    for _, e in ipairs(entries) do
+        if e.entity:getID() == mob:getID() then thisEntry = e break end
+    end
+    if not thisEntry then return end
+    local killer = optParams.isKiller and player
+    if not killer and optParams.noKiller then killer = xi.fate.findRegisteredPlayer(zoneID, eventIdx) end
+    if killer and killer:getCharVar(regKey(zoneID, eventIdx)) > 0 then
+        xi.fate.addScore(killer, zoneID, eventIdx, "ws", SCORE_KILL)
+    end
+    DisallowRespawn(mob:getID(), true)
+    if thisEntry.isBoss then
+        local killerName = killer and killer:getName() or "Unknown"
+        xi.fate.onSuperBossVictory(mob, killerName, zoneID, eventIdx)
+    else
+        xi.fate.checkWaveCleared(zoneID, eventIdx, thisEntry.waveIdx)
+    end
+end
+
+-- Snapshot leaderboard data and create tombstone NPC at boss's death position.
+xi.fate.onSuperBossVictory = function(mob, killerName, zoneID, eventIdx)
+    local def  = xi.fate.getEventDef(zoneID, eventIdx)
+    local zone = GetZone(zoneID)
+    if not def then return end
+
+    if def.tombstone and zone then
+        -- Snapshot participant scores.
+        local data = { killedAt = os.time(), killedBy = killerName, participants = {} }
+        local pool = xi.fate.participants[zoneID] and xi.fate.participants[zoneID][eventIdx] or {}
+        for playerID in pairs(pool) do
+            if PlayerHasValidSession(playerID) then
+                local p = GetPlayerByID(playerID)
+                if p then
+                    local score = p:getCharVar(scoreKey(zoneID, eventIdx))
+                    local band  = xi.fate.calcBand(score)
+                    local tiers = { "Bronze", "Silver", "Gold" }
+                    table.insert(data.participants, { name = p:getName(), score = score, tier = band > 0 and tiers[band] or "-", tierNum = band })
+                end
+            end
+        end
+        table.sort(data.participants, function(a, b) return a.score > b.score end)
+        xi.fate.tombstones[def.id] = data
+
+        local tombNPC = zone:insertDynamicEntity({
+            objtype   = xi.objType.NPC,
+            name      = "Mark of Battle",
+            look      = 1402,
+            x = mob:getXPos(), y = mob:getYPos(), z = mob:getZPos(), rotation = 0,
+            widescan  = 0,
+            onTrigger = function(p, npc)
+                local zID2 = npc:getLocalVar("fateZoneID")
+                local i2   = npc:getLocalVar("fateEventIdx")
+                local d    = xi.fate.getEventDef(zID2, i2)
+                if d then xi.fate.displayTombstone(p, d.id) end
+            end,
+        })
+        if tombNPC then
+            tombNPC:setLocalVar("fateZoneID",   zoneID)
+            tombNPC:setLocalVar("fateEventIdx", eventIdx)
+            tombNPC:timer(3600000, function(npc) npc:setStatus(xi.status.DISAPPEAR) end)
+        end
+    end
+
+    xi.fate.resolve(zoneID, eventIdx, true)
+end
+
+-- Display the leaderboard stored for a superboss event to a player.
+xi.fate.displayTombstone = function(player, eventID)
+    local data = xi.fate.tombstones[eventID]
+    if not data then
+        player:printToPlayer("The stone is weathered and silent.", xi.msg.channel.SYSTEM_3)
+        return
+    end
+    player:printToPlayer(string.format("Defeated: %s  |  Killing blow: %s", os.date("%Y-%m-%d %H:%M", data.killedAt), data.killedBy), xi.msg.channel.SYSTEM_3)
+    player:printToPlayer("─────────────────────────────────────────────", xi.msg.channel.SYSTEM_3)
+    for rank, entry in ipairs(data.participants) do
+        if rank > 20 then break end
+        player:printToPlayer(string.format("  %2d. %-20s %-7s (%d pts)", rank, entry.name, entry.tier, entry.score), xi.msg.channel.SYSTEM_3)
+    end
+    player:printToPlayer(string.format("  %d participants total.", #data.participants), xi.msg.channel.SYSTEM_3)
+end
+
+-----------------------------------
 -- Zone initialization helpers
 --
--- !! LSB CLOSURE CAPTURE BUG — READ BEFORE EDITING !!
+-- !! LSB CLOSURE CAPTURE BUG - READ BEFORE EDITING !!
 -- This runtime shares upvalue slots across ALL calls to the same function,
 -- including function parameters. ANY local captured in a deferred callback
 -- (timer, onTrigger, onMobDeath, etc.) will hold the value from the MOST
@@ -941,7 +1704,7 @@ end
 -----------------------------------
 local function initFATEEvent(zone, zoneID, idx, eventDef, areaID)
     eventDef.triggerAreaID = areaID
-    zone:registerCylindricalTriggerArea(areaID, eventDef.area.x, eventDef.area.z, eventDef.area.radius)
+    zone:registerCylindricalTriggerArea(areaID, eventDef.area[1], eventDef.area[3], eventDef.area[4])
 
     local entryEntity = zone:insertDynamicEntity({
         objtype   = xi.objType.NPC,
@@ -984,10 +1747,119 @@ local function initFATEEvent(zone, zoneID, idx, eventDef, areaID)
     xi.fate.mobEntities[zoneID]      = xi.fate.mobEntities[zoneID] or {}
     xi.fate.mobEntities[zoneID][idx] = {}
 
-    for i, mobGroup in ipairs(eventDef.mobs) do
+    -- Determine if this event uses navmesh-driven spawn placement.
+    -- Requires a non-zero area center and a positive radius.
+    -- Use tools/navmesh_sample.py to generate valid area centers offline.
+    local areaX = eventDef.area and eventDef.area[1] or 0
+    local areaY = eventDef.area and eventDef.area[2] or 0
+    local areaZ = eventDef.area and eventDef.area[3] or 0
+    local areaR = eventDef.area and eventDef.area[4] or 0
+    local useNavmeshSpawns = (areaX ~= 0 or areaY ~= 0 or areaZ ~= 0) and areaR > 0
+
+    -- Build a shuffled shared pool for events that declare sharedSpawnPoints so that
+    -- mobs from different groups spread across the full set of points at init time.
+    -- Only used when navmesh spawning is not active.
+    local sharedPool    = nil
+    local sharedPoolIdx = 0
+    if not useNavmeshSpawns and eventDef.sharedSpawnPoints and #eventDef.sharedSpawnPoints > 0 then
+        sharedPool = {}
+        for _, pt in ipairs(eventDef.sharedSpawnPoints) do
+            sharedPool[#sharedPool + 1] = pt
+        end
+        for j = #sharedPool, 2, -1 do
+            local k = math.random(j)
+            sharedPool[j], sharedPool[k] = sharedPool[k], sharedPool[j]
+        end
+    end
+
+    -- Initialise collection-point NPCs if this is a collect-type event.
+    if eventDef.objective and eventDef.objective.type == "collect" and eventDef.collectPoints then
+        xi.fate.collectNPCs[zoneID]      = xi.fate.collectNPCs[zoneID] or {}
+        xi.fate.collectNPCs[zoneID][idx] = {}
+        for cIdx, pt in ipairs(eventDef.collectPoints) do
+            local cNPC = zone:insertDynamicEntity({
+                objtype   = xi.objType.NPC,
+                name      = eventDef.collectName or "Collection Point",
+                look      = 969,
+                x         = pt[1], y = pt[2], z = pt[3],
+                rotation  = pt[4] or 0,
+                widescan  = 0,
+                onTrigger = function(player, npc)
+                    xi.fate.onCollect(player, npc, npc:getLocalVar("fateZoneID"), npc:getLocalVar("fateEventIdx"))
+                end,
+            })
+            if cNPC then
+                cNPC:setStatus(xi.status.DISAPPEAR)
+                cNPC:setLocalVar("fateZoneID",    zoneID)
+                cNPC:setLocalVar("fateEventIdx",  idx)
+                cNPC:setLocalVar("fateCollectIdx", cIdx)
+                xi.fate.collectNPCs[zoneID][idx][cIdx] = cNPC
+            end
+        end
+    end
+
+    -- Create defense target NPCs if this is a defend-type event.
+    if eventDef.objective and eventDef.objective.type == "defend" and eventDef.defenseTargets then
+        xi.fate.defenseTargetNPCs[zoneID]      = xi.fate.defenseTargetNPCs[zoneID] or {}
+        xi.fate.defenseTargetNPCs[zoneID][idx] = {}
+        for tIdx, tDef in ipairs(eventDef.defenseTargets) do
+            local dtNPC = zone:insertDynamicEntity({
+                objtype   = xi.objType.NPC,
+                name      = tDef.name or "Supply Post",
+                look      = tDef.look or 969,
+                x         = tDef.pos[1], y = tDef.pos[2], z = tDef.pos[3],
+                rotation  = tDef.pos[4] or 0,
+                widescan  = 1,
+                onTrigger = function(player, npc)
+                    local hp    = npc:getLocalVar("defHP")
+                    local maxHP = npc:getLocalVar("defMaxHP")
+                    player:printToPlayer(string.format("[FATE] %s: %d/%d HP", npc:getName(), hp, maxHP), xi.msg.channel.SYSTEM_3)
+                end,
+            })
+            if dtNPC then
+                dtNPC:setStatus(xi.status.DISAPPEAR)
+                dtNPC:setLocalVar("fateZoneID",    zoneID)
+                dtNPC:setLocalVar("fateEventIdx",  idx)
+                dtNPC:setLocalVar("fateDefendIdx", tIdx)
+                dtNPC:setLocalVar("defHP",         tDef.hp or 100)
+                dtNPC:setLocalVar("defMaxHP",      tDef.hp or 100)
+                xi.fate.defenseTargetNPCs[zoneID][idx][tIdx] = dtNPC
+            end
+        end
+    end
+
+    -- Flatten mob groups from waves (wave-based events) or the regular mobs array.
+    -- Each entry carries a waveIdx (nil for flat-spawn events).
+    local flatGroups = {}
+    if eventDef.waves then
+        for wIdx, wave in ipairs(eventDef.waves) do
+            for _, mg in ipairs(wave.mobs or {}) do
+                table.insert(flatGroups, { group = mg, waveIdx = wIdx })
+            end
+        end
+    else
+        for _, mg in ipairs(eventDef.mobs or {}) do
+            table.insert(flatGroups, { group = mg, waveIdx = nil })
+        end
+    end
+
+    for _, item in ipairs(flatGroups) do
+        local mobGroup = item.group
+        local waveIdx  = item.waveIdx
         local aggroType = mobGroup.aggroType  -- captured per-group before inner loop; nil = keep template default
         for n = 1, mobGroup.count do
-            local spawnPt = mobGroup.spawnPoints[((n - 1) % #mobGroup.spawnPoints) + 1]
+            local spawnPt
+            if useNavmeshSpawns then
+                local pt = zone:getRandomNavmeshPoint({ x = areaX, y = areaY, z = areaZ }, areaR)
+                spawnPt = pt and { pt.x, pt.y, pt.z, math.random(0, 255) } or { areaX, areaY, areaZ, 0 }
+            elseif sharedPool then
+                sharedPoolIdx = sharedPoolIdx + 1
+                spawnPt = sharedPool[((sharedPoolIdx - 1) % #sharedPool) + 1]
+            elseif mobGroup.spawnPoints and #mobGroup.spawnPoints > 0 then
+                spawnPt = mobGroup.spawnPoints[((n - 1) % #mobGroup.spawnPoints) + 1]
+            else
+                spawnPt = { 0, 0, 0, 0 }
+            end
 
             local mobEntity = zone:insertDynamicEntity({
                 objtype         = xi.objType.MOB,
@@ -1027,9 +1899,23 @@ local function initFATEEvent(zone, zoneID, idx, eventDef, areaID)
                         if valid then mob:updateClaim(valid) end
                     end
                     local def = xi.fate.getEventDef(zID, i)
+                    -- Superboss: start the enrage countdown on the very first pull of any mob.
+                    if def and def.superboss then
+                        if GetServerVariable(sbEnrageStartKey(zID, i)) == 0 then
+                            SetServerVariable(sbEnrageStartKey(zID, i), GetSystemTime())
+                            local zone = GetZone(zID)
+                            if zone then
+                                local mins = math.floor((def.enrageTime or 1800) / 60)
+                                for _, p in pairs(zone:getPlayers()) do
+                                    p:printToPlayer(string.format("[FATE] The battle has begun! Enrage in %d minutes.", mins), xi.msg.channel.SYSTEM_3)
+                                end
+                            end
+                        end
+                    end
                     if def and def.onMobEngage then
                         def.onMobEngage(mob, target, zID, i)
                     end
+                    xi.fate.callMobScript(mob, zID, "onMobEngage", mob, target)
                 end,
 
                 onMobDisengage = function(mob)
@@ -1038,6 +1924,14 @@ local function initFATEEvent(zone, zoneID, idx, eventDef, areaID)
                 onMobDeath = function(mob, player, optParams)
                     local i   = mob:getLocalVar("fateEventIdx")
                     local zID = mob:getLocalVar("fateZoneID")
+                    -- Superboss wave-aware death handling - fully replaces the regular path.
+                    do
+                        local def = xi.fate.getEventDef(zID, i)
+                        if def and def.superboss then
+                            xi.fate.onSuperBossMobDeath(mob, player, optParams, zID, i)
+                            return
+                        end
+                    end
                     local entries = xi.fate.mobEntities[zID] and xi.fate.mobEntities[zID][i]
                     if entries then
                         for _, entry in ipairs(entries) do
@@ -1074,7 +1968,19 @@ local function initFATEEvent(zone, zoneID, idx, eventDef, areaID)
                 end,
 
                 onMagicHit = function(caster, target, spell)
-                    xi.fate.onMagic(caster, spell, target:getLocalVar("fateZoneID"), target:getLocalVar("fateEventIdx"))
+                    local zID = target:getLocalVar("fateZoneID")
+                    local i   = target:getLocalVar("fateEventIdx")
+                    xi.fate.onMagic(caster, spell, zID, i)
+                    -- Dispatch per-mob onSpellHit callback (used for custom rage triggers, e.g. fire damage).
+                    local entries = xi.fate.mobEntities[zID] and xi.fate.mobEntities[zID][i]
+                    if entries then
+                        for _, entry in ipairs(entries) do
+                            if entry.entity:getID() == target:getID() and entry.onSpellHit then
+                                entry.onSpellHit(target, caster, spell, zID, i)
+                                break
+                            end
+                        end
+                    end
                 end,
 
                 onPlayerAbilityUse = function(mob, player, ability)
@@ -1086,17 +1992,39 @@ local function initFATEEvent(zone, zoneID, idx, eventDef, areaID)
                 end,
 
                 onMobFight = function(mob, target)
-                    xi.fate.onMelee(target, mob:getLocalVar("fateZoneID"), mob:getLocalVar("fateEventIdx"))
+                    local zID = mob:getLocalVar("fateZoneID")
+                    local i   = mob:getLocalVar("fateEventIdx")
+                    xi.fate.onMelee(target, zID, i)
+                    -- Superboss boss: check HP phase thresholds each melee round.
+                    if mob:getLocalVar("sbIsBoss") == 1 then
+                        xi.fate.checkSuperBossPhases(mob, zID, i)
+                    end
+                    xi.fate.callMobScript(mob, zID, "onMobFight", mob, target)
                 end,
             })
             if mobEntity then
                 mobEntity:setLocalVar("fateEventIdx", idx)
                 mobEntity:setLocalVar("fateZoneID",   zoneID)
                 DisallowRespawn(mobEntity:getID(), true)
+                -- Read native HP before despawn so targetHP can compute the correct HP_SCALE later.
+                local nativeHP = mobEntity:isSpawned() and mobEntity:getMaxHP() or nil
                 if mobEntity:isSpawned() then
                     DespawnMob(mobEntity:getID())
                 end
-                table.insert(xi.fate.mobEntities[zoneID][idx], { entity = mobEntity, spawnPt = spawnPt, isBoss = mobGroup.isBoss or false, noCount = mobGroup.noCount or false, hpMultiplier = mobGroup.hpMultiplier or 1, dmgMultiplier = mobGroup.dmgMultiplier or 1 })
+                table.insert(xi.fate.mobEntities[zoneID][idx], {
+                    entity        = mobEntity,
+                    spawnPt       = spawnPt,
+                    waveIdx       = waveIdx,
+                    isBoss        = mobGroup.isBoss        or false,
+                    noCount       = mobGroup.noCount       or false,
+                    hpMultiplier  = mobGroup.hpMultiplier  or 1,
+                    dmgMultiplier = mobGroup.dmgMultiplier or 1,
+                    targetHP      = mobGroup.targetHP,
+                    targetDmg     = mobGroup.targetDmg,
+                    nativeHP      = nativeHP,
+                    onPlayerDeath = mobGroup.onPlayerDeath,
+                    onSpellHit    = mobGroup.onSpellHit,
+                })
             end
         end
     end
@@ -1111,6 +2039,10 @@ xi.fate.onZoneInitialize = function(zone, zoneID)
 
     local areaID = FATE_AREA_ID_BASE
     for eventIdx, eventDef in ipairs(zoneData.events) do
+        local a = eventDef.area
+        if a and a.x ~= nil then
+            eventDef.area = { a.x, a.y, a.z, a.radius }
+        end
         initFATEEvent(zone, zoneID, eventIdx, eventDef, areaID)
         areaID = areaID + 1
     end
@@ -1188,6 +2120,139 @@ xi.fate.onEntryTrigger = function(player, npc, zoneID, eventIdx)
 end
 
 -----------------------------------
+-- Defense FATE wave timer + target damage
+-- Runs every 10s alongside the leash check.
+-- Spawns the next wave once enough time has elapsed (time-gated, not kill-gated).
+-- Unengaged mobs are re-pathed toward the nearest alive supply target each tick.
+-- Mobs within 4 units of a target deal targetDamagePerTick HP per tick; when a
+-- target hits 0 HP it is despawned. If all targets fall the FATE fails.
+-----------------------------------
+xi.fate.tickDefenseFATEs = function(zone, zoneID, now)
+    local zoneData = xi.fate.zones[zoneID]
+    if not zoneData then return end
+    for eventIdx, def in ipairs(zoneData.events) do
+        if not (def.objective and def.objective.type == "defend" and def.waves
+            and xi.fate.isActive(zoneID, eventIdx))
+        then
+            goto nextDefEvent
+        end
+
+        do
+            -- Wave spawn (time-gated).
+            local numWaves    = #def.waves
+            local currentWave = GetVolatileServerVariable(sbWaveKey(zoneID, eventIdx))
+            if currentWave < numWaves then
+                local interval = def.waveInterval or 90
+                local elapsed  = now - GetServerVariable(startKey(zoneID, eventIdx))
+                local nextDue  = currentWave * interval
+                if elapsed >= nextDue then
+                    local nextWave = currentWave + 1
+                    SetVolatileServerVariable(sbWaveKey(zoneID, eventIdx), nextWave)
+                    xi.fate.spawnWave(zoneID, eventIdx, nextWave)
+                    for _, p in pairs(zone:getPlayers()) do
+                        p:printToPlayer(string.format("[FATE] %s - Wave %d incoming!", def.name, nextWave), xi.msg.channel.SYSTEM_3)
+                    end
+                end
+            end
+
+            -- Supply target pathing and damage.
+            local entries  = xi.fate.mobEntities[zoneID] and xi.fate.mobEntities[zoneID][eventIdx]
+            local dTargets = xi.fate.defenseTargetNPCs[zoneID] and xi.fate.defenseTargetNPCs[zoneID][eventIdx]
+            if not (entries and dTargets) then goto nextDefEvent end
+
+            for _, entry in ipairs(entries) do
+                local mob = entry.entity
+                if not mob:isSpawned() or mob:isEngaged() then goto nextDefMob end
+
+                -- Find nearest alive target.
+                local nearest, nearestDistSq = nil, math.huge
+                for _, t in ipairs(dTargets) do
+                    if t:getLocalVar("defHP") > 0 then
+                        local dx = mob:getXPos() - t:getXPos()
+                        local dz = mob:getZPos() - t:getZPos()
+                        local d  = dx * dx + dz * dz
+                        if d < nearestDistSq then
+                            nearestDistSq = d
+                            nearest = t
+                        end
+                    end
+                end
+
+                if nearest then
+                    if nearestDistSq <= 16 then
+                        -- Within 4 units: deal damage to the target.
+                        local dmg   = def.targetDamagePerTick or 10
+                        local hp    = nearest:getLocalVar("defHP")
+                        local maxHP = nearest:getLocalVar("defMaxHP")
+                        local newHP = math.max(0, hp - dmg)
+                        nearest:setLocalVar("defHP", newHP)
+                        for _, p in pairs(zone:getPlayers()) do
+                            p:printToPlayer(string.format("[FATE] A supply post is under attack! (%d%%)", math.floor(newHP * 100 / maxHP)), xi.msg.channel.SYSTEM_3)
+                        end
+                        if newHP == 0 then
+                            nearest:setStatus(xi.status.DISAPPEAR)
+                            local surviving = 0
+                            for _, t in ipairs(dTargets) do
+                                if t:getLocalVar("defHP") > 0 then surviving = surviving + 1 end
+                            end
+                            for _, p in pairs(zone:getPlayers()) do
+                                if surviving > 0 then
+                                    p:printToPlayer(string.format("[FATE] A supply post has been destroyed! (%d remaining)", surviving), xi.msg.channel.SYSTEM_3)
+                                end
+                            end
+                            if surviving == 0 then
+                                xi.fate.resolve(zoneID, eventIdx, false)
+                                goto nextDefEvent
+                            end
+                        end
+                    else
+                        -- Out of range: advance toward target.
+                        mob:pathTo(nearest:getXPos(), nearest:getYPos(), nearest:getZPos())
+                    end
+                end
+                ::nextDefMob::
+            end
+        end
+        ::nextDefEvent::
+    end
+end
+
+-----------------------------------
+-- Proximity alert on zone-in
+-- Informs players arriving mid-FATE what is currently underway.
+-----------------------------------
+xi.fate.notifyActiveOnZoneIn = function(player, zoneID)
+    local zoneData = xi.fate.zones[zoneID]
+    if not zoneData then return end
+    for eventIdx, def in ipairs(zoneData.events) do
+        if xi.fate.isActive(zoneID, eventIdx) then
+            local remaining = xi.fate.getRemaining(zoneID, eventIdx)
+            local mins      = math.max(1, math.ceil(remaining / 60))
+            local collected = GetVolatileServerVariable(killKey(zoneID, eventIdx))
+            local target    = def.objective and def.objective.count or 0
+            local objType   = def.objective and def.objective.type  or "kill"
+            local progress
+            if objType == "collect" then
+                progress = string.format("%d/%d recovered", collected, target)
+            elseif objType == "defend" then
+                local wave    = GetVolatileServerVariable(sbWaveKey(zoneID, eventIdx))
+                local numWave = def.waves and #def.waves or 1
+                progress = string.format("wave %d/%d underway", wave, numWave)
+            else
+                progress = string.format("%d/%d defeated", collected, target)
+            end
+            local dynTier = def.dynamicDifficulty and GetServerVariable(dynDiffKey(zoneID, eventIdx)) or 0
+            local tierStr = dynTier > 0 and string.format(" [Difficulty +%d]", dynTier) or ""
+            player:printToPlayer(
+                string.format("[FATE] %s is underway! (%s, %dm remaining%s) - speak to the herald to join.",
+                    def.name, progress, mins, tierStr),
+                xi.msg.channel.SYSTEM_3
+            )
+        end
+    end
+end
+
+-----------------------------------
 -- Scheduler (called from onZoneTick override)
 -- Each non-chain event runs its own independent state machine.
 -----------------------------------
@@ -1199,7 +2264,14 @@ xi.fate.tick = function(zone, zoneID)
     if (xi.fate.lastLeashTick[zoneID] or 0) + 10 <= now then
         xi.fate.lastLeashTick[zoneID] = now
         xi.fate.leashMobs(zoneID)
+        xi.fate.tickDefenseFATEs(zone, zoneID, now)
     end
+
+    -- Always run superboss maintenance (enrage, wipe-reset, phases) regardless of scheduler throttle.
+    xi.fate.superbossTick(zone, zoneID)
+
+    -- Suppress the regular FATE scheduler while a superboss is active in this zone.
+    if xi.fate.getActiveSuperbossIdx(zoneID) then return end
 
     if (xi.fate.lastTick[zoneID] or 0) + xi.fate.settings.SCHEDULER_PERIOD > now then
         return
@@ -1215,7 +2287,12 @@ xi.fate.tick = function(zone, zoneID)
             if state == STATE_ACTIVE then
                 xi.fate.onHealTickForEvent(zoneID, eventIdx)
                 if xi.fate.getRemaining(zoneID, eventIdx) <= 0 then
-                    xi.fate.resolve(zoneID, eventIdx, false, true)
+                    local isCollect = def.objective and def.objective.type == "collect"
+                    if isCollect then
+                        xi.fate.resolve(zoneID, eventIdx, true,  false)  -- collect: always victory
+                    else
+                        xi.fate.resolve(zoneID, eventIdx, false, true)   -- others: silent fail
+                    end
                 end
             elseif state == STATE_COOLDOWN then
                 if now >= GetServerVariable(cooldownKey(zoneID, eventIdx)) then
@@ -1234,15 +2311,20 @@ xi.fate.tick = function(zone, zoneID)
 
     local passed = {}
     for _, e in ipairs(eligible) do
+        -- Superboss events require all prereqs to be met within their window.
+        if e.def.superboss and not xi.fate.superbossEligible(zoneID, e.idx) then
+            goto nextEligible
+        end
         local chance = e.def.spawnChance or zoneData.spawnChance or xi.fate.settings.DEFAULT_CHANCE
         if math.random() <= chance then
             table.insert(passed, e)
         end
+        ::nextEligible::
     end
     if #passed == 0 then return end
 
     local pick = passed[math.random(#passed)]
-    if pick.def.isBoss then
+    if pick.def.isBoss or pick.def.superboss then
         xi.fate.preannounce(zone, pick.def, zoneID, pick.idx)
     else
         xi.fate.activate(zone, pick.def, zoneID, pick.idx)

@@ -1,4 +1,4 @@
------------------------------------
+﻿-----------------------------------
 -- FATE Zone: Konschtat Highlands
 -- Zone ID: 108
 -- Region pool: STARTER_ZULKHEIM
@@ -229,7 +229,7 @@ xi.fate.zones[xi.zone.KONSCHTAT_HIGHLANDS] =
             bossWarnings =
             {
                 "The ground shudders beneath the Konschtat Highlands...",
-                "Deep cracks split the highland rock — something ancient rises from below...",
+                "Deep cracks split the highland rock - something ancient rises from below...",
             },
 
             onMobEngage = function(mob, target, zoneID, eventIdx)
@@ -634,7 +634,7 @@ xi.fate.zones[xi.zone.KONSCHTAT_HIGHLANDS] =
             bossWarnings =
             {
                 "The clatter of Quadav armour rings across the Konschtat Highlands...",
-                "A wall of shields crests the hill — a veteran Quadav commander leads the advance...",
+                "A wall of shields crests the hill - a veteran Quadav commander leads the advance...",
             },
 
             onMobEngage = function(mob, target, zoneID, eventIdx)

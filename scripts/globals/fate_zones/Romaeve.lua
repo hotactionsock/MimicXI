@@ -1,4 +1,4 @@
------------------------------------
+﻿-----------------------------------
 -- FATE Zone: Ro'Maeve
 -- Zone ID: 122
 -- Region pool: LITEILOR
@@ -22,8 +22,8 @@ xi.fate.zones[xi.zone.ROMAEVE] =
         -----------------------------------
         -- Undead Convergence
         -- The restless dead of Ro'Maeve's
-        -- ancient ruins — Skeletons and
-        -- Ghosts — surge outward from the
+        -- ancient ruins - Skeletons and
+        -- Ghosts - surge outward from the
         -- crumbling towers in alarming numbers.
         -----------------------------------
         {
@@ -208,9 +208,9 @@ xi.fate.zones[xi.zone.ROMAEVE] =
 
         -----------------------------------
         -- The Eternal Sentry
-        -- The tower's undying guardian —
+        -- The tower's undying guardian -
         -- a massive Lich infused with the
-        -- Water Crystal's power — manifests
+        -- Water Crystal's power - manifests
         -- fully to destroy all trespassers.
         -----------------------------------
         {

@@ -674,6 +674,7 @@ public:
     auto spawnHandler() const -> SpawnHandler*;
 
     std::unique_ptr<CNavMesh> m_navMesh;
+    auto navMesh() const -> CNavMesh* { return m_navMesh.get(); }
     std::unique_ptr<ZoneLos>  lineOfSight;
 
     auto zoneMesh() const -> Maybe<CZoneMesh*>;

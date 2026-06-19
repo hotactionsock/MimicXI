@@ -10,11 +10,27 @@ local gate = {}
 
 local DIFFICULTY_LABEL = { [1]='Normal', [2]='Hardened', [3]='Transcendent' }
 
+local function isPartyLeader(player)
+    local leader = player:getPartyLeader()
+    return leader == nil or leader:getID() == player:getID()
+end
+
+local function notifyParty(player, tier, difficulty)
+    local leaderName = player:getName()
+    local msg = string.format(
+        '%s has entered the party for Tier Trial Lv%d %s - Joining instance...',
+        leaderName, tier, DIFFICULTY_LABEL[difficulty] or 'Normal')
+    for _, member in pairs(player:getParty()) do
+        if member:getID() ~= player:getID() then
+            member:printToPlayer(msg, xi.msg.channel.SYSTEM_1)
+        end
+    end
+end
+
 local function warpParty(player, instance, tier, difficulty)
     instance:setLocalVar('tier',       tier)
     instance:setLocalVar('difficulty', difficulty)
     for _, member in pairs(player:getParty()) do
-        -- TODO: replace 0,0,0,0 with real zone 183 start coords once measured
         member:setPos(0, 0, 0, 0, instance:getZone():getID())
     end
     player:setLocalVar('TT_InstanceRequested', 0)
@@ -38,6 +54,11 @@ end
 local function tryJoin(player, tier, difficulty)
     local def = xi.tierTrial.TIERS[tier]
 
+    if not isPartyLeader(player) then
+        player:printToPlayer('Only the party leader can start a Tier Trial.', xi.msg.channel.SYSTEM_3)
+        return
+    end
+
     if not xi.tierTrial.canAttempt(player, tier, difficulty) then
         player:printToPlayer('Requirements not met.', xi.msg.channel.SYSTEM_3)
         return
@@ -46,6 +67,8 @@ local function tryJoin(player, tier, difficulty)
     if player:getLocalVar('TT_InstanceRequested') == 1 then
         return  -- already waiting
     end
+
+    notifyParty(player, tier, difficulty)
 
     player:setLocalVar('TT_InstanceRequested', 1)
     player:createInstance(def.instanceId)

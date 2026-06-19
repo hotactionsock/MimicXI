@@ -135,6 +135,45 @@ end
 -- Shared helper: grant rewards on wave 5 clear
 -- Called from each instance script's onInstanceComplete
 -----------------------------------
+local DIFF_NAMES = { [1] = 'Standard', [2] = 'Hardened', [3] = 'Transcendent' }
+
+-----------------------------------
+-- Called from the boss onMobDeath with the mob entity as dropper so that
+-- shards and weapons enter the party treasure pool (lot/pass UI).
+-----------------------------------
+xi.tierTrial.dropLoot = function(instance, dropper)
+    local tier       = instance:getLocalVar('tier')
+    local difficulty = instance:getLocalVar('difficulty')
+    local tierDef    = xi.tierTrial.TIERS[tier]
+    if not tierDef then return end
+
+    local shards   = xi.tierTrial.SHARD_DROP_COUNT[difficulty]
+    local dropRate = xi.tierTrial.WEAPON_DROP_RATE[difficulty]
+
+    for _, player in pairs(instance:getChars()) do
+        -- Each player earns their own shard(s) via treasure pool
+        if tierDef.shardItem and tierDef.shardItem > 0 then
+            for _ = 1, shards do
+                player:addTreasure(tierDef.shardItem, dropper)
+            end
+        end
+
+        -- Per-player weapon roll, job-family matched, into treasure pool
+        local roll = math.random(100)
+        if roll <= dropRate then
+            local jobFamily  = xi.tierTrial.getJobFamily(player:getMainJob())
+            local weaponItem = jobFamily and tierDef.weapons[jobFamily]
+            if weaponItem and weaponItem > 0 then
+                player:addTreasure(weaponItem, dropper)
+            end
+        end
+    end
+end
+
+-----------------------------------
+-- Called from onInstanceComplete: awards Proving Marks and records the clear.
+-- Item drops are handled separately in dropLoot (boss onMobDeath).
+-----------------------------------
 xi.tierTrial.grantRewards = function(instance, elapsed)
     local tier       = instance:getLocalVar('tier')
     local difficulty = instance:getLocalVar('difficulty')
@@ -142,37 +181,28 @@ xi.tierTrial.grantRewards = function(instance, elapsed)
 
     if not tierDef then return end
 
-    local marks    = xi.tierTrial.MARK_REWARDS[difficulty]
-    local shards   = xi.tierTrial.SHARD_DROP_COUNT[difficulty]
-    local dropRate = xi.tierTrial.WEAPON_DROP_RATE[difficulty]
+    local marks = xi.tierTrial.MARK_REWARDS[difficulty]
 
     -- Time bonus
+    local timeBonus = false
     local startTime = instance:getLocalVar('startTime')
     if startTime > 0 and (elapsed - startTime) < xi.tierTrial.TIME_BONUS_THRESHOLD then
-        marks = marks + xi.tierTrial.TIME_BONUS_MARKS
+        marks     = marks + xi.tierTrial.TIME_BONUS_MARKS
+        timeBonus = true
     end
 
+    local diffName = DIFF_NAMES[difficulty] or 'Standard'
+
     for _, player in pairs(instance:getChars()) do
-        -- Marks (stored as char var, spent at vendor NPC)
         local markVar = tierDef.markVar
         player:setCharVar(markVar, player:getCharVar(markVar) + marks)
 
-        -- Shards
-        for i = 1, shards do
-            player:addItem(tierDef.shardItem, 1)
-        end
+        local bonusSuffix = timeBonus and ' (+1 time bonus)' or ''
+        player:printToPlayer(
+            string.format('Tier Trial Lv%d %s complete. Proving Marks awarded: %d%s.',
+                tier, diffName, marks, bonusSuffix),
+            xi.msg.channel.SYSTEM_1)
 
-        -- Weapon drop (family-matched to player's main job)
-        local roll = math.random(100)
-        if roll <= dropRate then
-            local jobFamily  = xi.tierTrial.getJobFamily(player:getMainJob())
-            local weaponItem = jobFamily and tierDef.weapons[jobFamily]
-            if weaponItem and weaponItem > 0 then
-                player:addItem(weaponItem, 1)
-            end
-        end
-
-        -- Record clear and unlock next difficulty
         xi.tierTrial.recordClear(player, tier, difficulty)
     end
 end

@@ -1,4 +1,4 @@
------------------------------------
+﻿-----------------------------------
 -- FATE Zone: Attohwa Chasm
 -- Zone ID: 7
 -- Region pool: SKY_SEA_HIGHEND
@@ -115,8 +115,8 @@ xi.fate.zones[xi.zone.ATTOHWA_CHASM] =
 
         -----------------------------------
         -- The Chasm Sovereign
-        -- A titanic Bugard elder — the source
-        -- of the herd's panic — emerges from
+        -- A titanic Bugard elder - the source
+        -- of the herd's panic - emerges from
         -- the deepest part of the chasm,
         -- intent on destroying all prey.
         -----------------------------------

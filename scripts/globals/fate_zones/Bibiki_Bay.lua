@@ -1,4 +1,4 @@
------------------------------------
+﻿-----------------------------------
 -- FATE Zone: Bibiki Bay
 -- Zone ID: 4
 -- Region pool: KOLSHUSHU_ELSHIMO
@@ -228,7 +228,7 @@ xi.fate.zones[xi.zone.BIBIKI_BAY] =
             bossWarnings =
             {
                 "The waters of Bibiki Bay begin to spiral in a colossal whirlpool...",
-                "Titanic tentacles erupt from the vortex — the Bay Kraken rises...",
+                "Titanic tentacles erupt from the vortex - the Bay Kraken rises...",
             },
 
             onMobEngage = function(mob, target, zoneID, eventIdx)

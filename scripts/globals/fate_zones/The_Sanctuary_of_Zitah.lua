@@ -1,4 +1,4 @@
------------------------------------
+﻿-----------------------------------
 -- FATE Zone: The Sanctuary of Zi'Tah
 -- Zone ID: 121
 -- Region pool: LITEILOR
@@ -116,9 +116,9 @@ xi.fate.zones[xi.zone.THE_SANCTUARY_OF_ZITAH] =
 
         -----------------------------------
         -- The Grove Devourer
-        -- An ancient, corrupted Treant —
+        -- An ancient, corrupted Treant -
         -- the former spirit-guardian of the
-        -- Sanctuary — awakens in fury and
+        -- Sanctuary - awakens in fury and
         -- begins consuming the grove itself.
         -----------------------------------
         {

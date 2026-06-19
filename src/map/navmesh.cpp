@@ -21,7 +21,6 @@
 
 #include "navmesh.h"
 
-#include <DetourCommon.h>
 #include <DetourNavMesh.h>
 #include <DetourNavMeshQuery.h>
 
@@ -29,7 +28,6 @@
 #include "common/xirand.h"
 
 #include <fstream>
-#include <iostream>
 #include <set>
 #include <vector>
 
@@ -243,27 +241,100 @@ bool CNavMesh::load(const std::string& filename)
     return true;
 }
 
-void CNavMesh::reload()
-{
-    this->unload();
-    this->load(this->m_filename);
-}
-
 void CNavMesh::unload()
 {
     dtFreeNavMesh(m_navMesh);
     m_navMesh = nullptr;
 }
 
+void CNavMesh::reload()
+{
+    unload();
+    load(m_filename);
+}
+
+bool CNavMesh::inWater(const position_t& /*point*/)
+{
+    return false;
+}
+
+bool CNavMesh::installNavMesh(dtNavMesh* newNavMesh)
+{
+    if (!newNavMesh)
+    {
+        return false;
+    }
+
+    unload();
+
+    m_navMesh = newNavMesh;
+
+    const auto status = m_navMeshQuery.init(m_navMesh, MAX_NAV_POLYS);
+    if (dtStatusFailed(status))
+    {
+        ShowErrorFmt("CNavMesh::installNavMesh: Could not init navMeshQuery ({})", m_zoneID);
+        unload();
+        return false;
+    }
+
+    return true;
+}
+
+bool CNavMesh::save(const std::string& path) const
+{
+    if (!m_navMesh || path.empty())
+    {
+        return false;
+    }
+
+    std::ofstream file(path, std::ios::binary);
+    if (!file.good())
+    {
+        ShowErrorFmt("CNavMesh::save: Could not open file for writing ({})", path);
+        return false;
+    }
+
+    const auto* nav = m_navMesh;
+
+    auto header    = NavMeshSetHeader{};
+    header.magic   = NAVMESHSET_MAGIC;
+    header.version = NAVMESHSET_VERSION;
+    header.params  = *nav->getParams();
+
+    for (auto i = 0; i < nav->getMaxTiles(); ++i)
+    {
+        const auto* tile = nav->getTile(i);
+        if (tile && tile->header && tile->dataSize > 0)
+        {
+            header.numTiles++;
+        }
+    }
+
+    file.write(reinterpret_cast<const char*>(&header), sizeof(header));
+
+    for (auto i = 0; i < nav->getMaxTiles(); ++i)
+    {
+        const auto* tile = nav->getTile(i);
+        if (!tile || !tile->header || tile->dataSize <= 0)
+        {
+            continue;
+        }
+
+        const auto tileHeader = NavMeshTileHeader{
+            .tileRef  = nav->getTileRef(tile),
+            .dataSize = tile->dataSize,
+        };
+
+        file.write(reinterpret_cast<const char*>(&tileHeader), sizeof(tileHeader));
+        file.write(reinterpret_cast<const char*>(tile->data), tile->dataSize);
+    }
+
+    return true;
+}
+
 auto CNavMesh::findPath(const position_t& start, const position_t& end) -> std::vector<pathpoint_t>
 {
     TracyZoneScoped;
-
-    if (!m_navMesh)
-    {
-        DebugNavmesh("CNavMesh::findPath No navmesh loaded (%u)", m_zoneID);
-        return {};
-    }
 
     if (std::isnan(start.x) || std::isnan(start.y) || std::isnan(start.z) ||
         std::isnan(end.x) || std::isnan(end.y) || std::isnan(end.z))
@@ -417,11 +488,6 @@ std::pair<int16, position_t> CNavMesh::findRandomPosition(const position_t& star
 {
     TracyZoneScoped;
 
-    if (!m_navMesh)
-    {
-        return {};
-    }
-
     DebugNavmesh("CNavMesh::findRandomPosition (%f, %f, %f) (%u)", start.x, start.y, start.z, m_zoneID);
 
     dtStatus status = 0;
@@ -478,25 +544,38 @@ std::pair<int16, position_t> CNavMesh::findRandomPosition(const position_t& star
     return std::make_pair(0, position_t{ randomPt[0], randomPt[1], randomPt[2], 0, 0 });
 }
 
-bool CNavMesh::inWater(const position_t& point)
+std::pair<int16, position_t> CNavMesh::findAnyRandomPosition()
 {
-    if (!m_navMesh)
+    TracyZoneScoped;
+
+    dtQueryFilter filter;
+    filter.setIncludeFlags(INCLUDE_FLAGS);
+    filter.setExcludeFlags(EXCLUDE_FLAGS);
+
+    dtPolyRef randomRef = 0;
+    float     randomPt[3];
+
+    dtStatus status = m_navMeshQuery.findRandomPoint(
+        &filter,
+        []() -> float { return xirand::GetRandomNumber(1.0f); },
+        &randomRef,
+        randomPt);
+
+    if (dtStatusFailed(status))
     {
-        return false;
+        ShowError("CNavMesh::findAnyRandomPosition Error (%u)", m_zoneID);
+        ShowError(detourStatusString(status));
+        return std::make_pair(ERROR_NEARESTPOLY, position_t{});
     }
 
-    // TODO:
-    return false;
+    CNavMesh::ToFFXIPos(randomPt);
+
+    return std::make_pair(0, position_t{ randomPt[0], randomPt[1], randomPt[2], 0, 0 });
 }
 
 bool CNavMesh::validPosition(const position_t& position)
 {
     TracyZoneScoped;
-
-    if (!m_navMesh)
-    {
-        return true;
-    }
 
     DebugNavmesh("CNavMesh::validPosition (%f, %f, %f) (%u)", position.x, position.y, position.z, m_zoneID);
 
@@ -525,11 +604,6 @@ bool CNavMesh::findClosestValidPoint(const position_t& position, float* validPoi
 {
     TracyZoneScoped;
 
-    if (!m_navMesh)
-    {
-        return true;
-    }
-
     DebugNavmesh("CNavMesh::findClosestValidPoint (%f, %f, %f) (%u)", position.x, position.y, position.z, m_zoneID);
 
     float spos[3];
@@ -555,11 +629,6 @@ bool CNavMesh::findClosestValidPoint(const position_t& position, float* validPoi
 bool CNavMesh::findFurthestValidPoint(const position_t& startPosition, const position_t& endPosition, float* validEndPoint)
 {
     TracyZoneScoped;
-
-    if (!m_navMesh)
-    {
-        return true;
-    }
 
     DebugNavmesh("CNavMesh::findFurthestValidPoint (%f, %f, %f) -> (%f, %f, %f) (%u)", startPosition.x, startPosition.y, startPosition.z, endPosition.x, endPosition.y, endPosition.z, m_zoneID);
 
@@ -600,11 +669,6 @@ void CNavMesh::snapToValidPosition(position_t& position)
 {
     TracyZoneScoped;
 
-    if (!m_navMesh)
-    {
-        return;
-    }
-
     DebugNavmesh("CNavMesh::snapToValidPosition (%f, %f, %f) (%u)", position.x, position.y, position.z, m_zoneID);
 
     float spos[3];
@@ -636,14 +700,10 @@ void CNavMesh::snapToValidPosition(position_t& position)
     }
 }
 
+
 bool CNavMesh::onSameFloor(const position_t& start, float* spos, const position_t& end, float* epos, dtQueryFilter& filter)
 {
     TracyZoneScoped;
-
-    if (!m_navMesh)
-    {
-        return true;
-    }
 
     DebugNavmesh("CNavMesh::onSameFloor (%f, %f, %f) -> (%f, %f, %f) (%u)", start.x, start.y, start.z, end.x, end.y, end.z, m_zoneID);
 
@@ -706,11 +766,6 @@ bool CNavMesh::raycast(const position_t& start, const position_t& end)
     TracyZoneScoped;
 
     if (start.x == end.x && start.y == end.y && start.z == end.z)
-    {
-        return true;
-    }
-
-    if (!m_navMesh)
     {
         return true;
     }

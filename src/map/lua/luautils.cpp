@@ -4539,18 +4539,36 @@ void AfterInstanceRegister(CBaseEntity* PChar)
     auto zone     = PChar->loc.zone->getName();
     auto instance = PChar->PInstance->GetName();
 
+    ShowDebug("luautils::AfterInstanceRegister: zone=%s instance=%s char=%s", zone.c_str(), instance.c_str(), PChar->name.c_str());
+
     auto afterInstanceRegister = lua["xi"]["zones"][zone]["instances"][instance]["afterInstanceRegister"];
     if (!afterInstanceRegister.valid())
     {
+        ShowDebug("luautils::AfterInstanceRegister: no callback, returning");
         return;
     }
 
-    auto result = afterInstanceRegister(PChar);
-    if (!result.valid())
+    try
     {
-        sol::error err = result;
-        ShowError("luautils::afterInstanceRegister %s", err.what());
+        auto result = afterInstanceRegister(PChar);
+        if (!result.valid())
+        {
+            sol::error err = result;
+            ShowError("luautils::afterInstanceRegister %s", err.what());
+        }
     }
+    catch (const std::exception& e)
+    {
+        ShowError("luautils::AfterInstanceRegister C++ exception: %s", e.what());
+        throw;
+    }
+    catch (...)
+    {
+        ShowError("luautils::AfterInstanceRegister unknown C++ exception");
+        throw;
+    }
+
+    ShowDebug("luautils::AfterInstanceRegister: complete");
 }
 
 int32 OnInstanceLoadFailed(CZone* PZone)
@@ -4628,6 +4646,8 @@ void OnInstanceCreatedCallback(CCharEntity* PChar, CInstance* PInstance)
 
     auto instanceData = instanceutils::GetInstanceData(PInstance->GetID());
 
+    ShowDebug("luautils::OnInstanceCreatedCallback: instanceid=%u filename=%s", PInstance->GetID(), instanceData.filename.c_str());
+
     auto onInstanceCreatedCallback = GetCacheEntryFromFilename(instanceData.filename)["onInstanceCreatedCallback"];
     if (!onInstanceCreatedCallback.valid())
     {
@@ -4635,12 +4655,27 @@ void OnInstanceCreatedCallback(CCharEntity* PChar, CInstance* PInstance)
         return;
     }
 
-    auto result = onInstanceCreatedCallback(PChar, PInstance);
-    if (!result.valid())
+    try
     {
-        sol::error err = result;
-        ShowError("luautils::OnInstanceCreatedCallback %s", err.what());
+        auto result = onInstanceCreatedCallback(PChar, PInstance);
+        if (!result.valid())
+        {
+            sol::error err = result;
+            ShowError("luautils::OnInstanceCreatedCallback %s", err.what());
+        }
     }
+    catch (const std::exception& e)
+    {
+        ShowError("luautils::OnInstanceCreatedCallback C++ exception: %s", e.what());
+        throw;
+    }
+    catch (...)
+    {
+        ShowError("luautils::OnInstanceCreatedCallback unknown C++ exception");
+        throw;
+    }
+
+    ShowDebug("luautils::OnInstanceCreatedCallback: complete");
 }
 
 void OnInstanceCreated(CInstance* PInstance)
@@ -4650,18 +4685,36 @@ void OnInstanceCreated(CInstance* PInstance)
     auto zone = PInstance->GetZone()->getName();
     auto name = PInstance->GetName();
 
+    ShowDebug("luautils::OnInstanceCreated: zone=%s instance=%s", zone.c_str(), name.c_str());
+
     auto onInstanceCreated = lua["xi"]["zones"][zone]["instances"][name]["onInstanceCreated"];
     if (!onInstanceCreated.valid())
     {
+        ShowDebug("luautils::OnInstanceCreated: no callback defined, returning");
         return;
     }
 
-    auto result = onInstanceCreated(PInstance);
-    if (!result.valid())
+    try
     {
-        sol::error err = result;
-        ShowError("luautils::onInstanceCreated %s", err.what());
+        auto result = onInstanceCreated(PInstance);
+        if (!result.valid())
+        {
+            sol::error err = result;
+            ShowError("luautils::onInstanceCreated %s", err.what());
+        }
     }
+    catch (const std::exception& e)
+    {
+        ShowError("luautils::OnInstanceCreated C++ exception: %s", e.what());
+        throw;
+    }
+    catch (...)
+    {
+        ShowError("luautils::OnInstanceCreated unknown C++ exception");
+        throw;
+    }
+
+    ShowDebug("luautils::OnInstanceCreated: complete");
 }
 
 void OnInstanceCapacityReached(CCharEntity* PChar)
@@ -5429,7 +5482,15 @@ void HandleCustomMenu(CCharEntity* PChar, const std::string& selection)
         });
     // clang-format on
 
-    const auto context = customMenuContext[PChar->id];
+    const auto context = customMenuContext.find(PChar->id) != customMenuContext.end()
+                             ? customMenuContext[PChar->id]
+                             : sol::table{};
+
+    if (!context.valid())
+    {
+        ShowError("luautils::HandleCustomMenu: no context for player %s", PChar->name.c_str());
+        return;
+    }
 
     if (wasCancelled || wasCancelledEvent)
     {
@@ -5455,25 +5516,56 @@ void HandleCustomMenu(CCharEntity* PChar, const std::string& selection)
             result.pop_back();
         }
 
-        for (const auto& entry : context["options"].get<sol::table>())
+        auto optionsProxy = context["options"];
+        if (optionsProxy.get_type() != sol::type::table)
         {
-            if (entry.second.get_type() == sol::type::table)
+            ShowError("luautils::HandleCustomMenu: options is not a table for player %s", PChar->name.c_str());
+        }
+        else
+        {
+            try
             {
-                auto table = entry.second.as<sol::table>();
-                auto name  = table[1].get<std::string>();
-                auto func  = table[2].get<sol::function>();
-
-                if (result.compare(name) == 0)
+                for (const auto& entry : optionsProxy.get<sol::table>())
                 {
-                    auto result = func(PChar);
-                    if (!result.valid())
+                    if (entry.second.get_type() == sol::type::table)
                     {
-                        sol::error err = result;
-                        ShowError("Menu error: %s", err.what());
-                        ReportErrorToPlayer(PChar, err.what());
+                        auto table    = entry.second.as<sol::table>();
+                        auto nameProxy = table[1];
+                        auto funcProxy = table[2];
+
+                        if (nameProxy.get_type() != sol::type::string)
+                        {
+                            continue;
+                        }
+
+                        auto name = nameProxy.get<std::string>();
+                        if (result.compare(name) == 0)
+                        {
+                            if (funcProxy.get_type() != sol::type::function)
+                            {
+                                ShowError("luautils::HandleCustomMenu: option '%s' has no function", name.c_str());
+                                break;
+                            }
+                            auto func       = funcProxy.get<sol::function>();
+                            auto menuResult = func(PChar);
+                            if (!menuResult.valid())
+                            {
+                                sol::error err = menuResult;
+                                ShowError("Menu error: %s", err.what());
+                                ReportErrorToPlayer(PChar, err.what());
+                            }
+                            break;
+                        }
                     }
-                    break;
                 }
+            }
+            catch (const std::exception& e)
+            {
+                ShowError("luautils::HandleCustomMenu C++ exception: %s", e.what());
+            }
+            catch (...)
+            {
+                ShowError("luautils::HandleCustomMenu unknown C++ exception");
             }
         }
     }

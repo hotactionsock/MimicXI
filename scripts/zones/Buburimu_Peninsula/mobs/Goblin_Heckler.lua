@@ -7,12 +7,19 @@
 -----------------------------------
 local entity = {}
 
+local function at(key)
+    return string.char(0xFD, key % 256, math.floor(key / 256) % 256, math.floor(key / 65536) % 256, math.floor(key / 16777216) % 256, 0xFD)
+end
+
 -- Ambient taunts broadcast to the area while roaming.
 local roamTaunts =
 {
     "Adventurers! More experience points for me!",
     "Did you travel all this way just to get embarrassed? How efficient!",
-    "This beach is Goblin territory! Your face is making it ugly!",
+    "This beach is Goblin territory! Stop the boats!",
+    "No more adventurers!",
+    "Adventurers are taking our jobs!",
+    "Make Buburimu great again!",
     "Hey! Nice weapon! It will look much better in MY collection!",
     "I have seen Quadav with better posture than you lot!",
     "The smell of adventurer! Almost as bad as dead adventurer. Almost.",
@@ -27,7 +34,6 @@ local roamTaunts =
 }
 
 -- Combat taunts. The target name is prepended at runtime.
--- Start with '!' if the prefix should be omitted (generic fallback).
 local fightTaunts =
 {
     { prefix = true,  msg = "! You fight like a Mandragora in a stiff breeze!" },
@@ -38,11 +44,13 @@ local fightTaunts =
     { prefix = true,  msg = "! You call THAT a weapon? I have seen deadlier Crab claws!" },
     { prefix = true,  msg = "! The sea behind you is embarrassed on your behalf!" },
     { prefix = true,  msg = "! Keep swinging! You might hit something eventually!" },
-    { prefix = true,  msg = "! Worst fight I have had all week. And I fought a Sea Leech yesterday." },
+    { prefix = true,  msg = "! Worst fight I have had all week. And I fought a bad stomach yesterday." },
     { prefix = true,  msg = "! Did your linkshell dare you to come here? Did you LOSE?" },
     { prefix = false, msg = "Ha ha ha! Is this a fight or a comedy performance?" },
     { prefix = false, msg = "I have been hit harder by cooking smells!" },
     { prefix = false, msg = "Stop. You are making ME look bad just by association!" },
+    { prefix = false, msg = "Did you set your homepoint, little adventurer?" },
+	{ prefix = false, msg = at(1041957378) .. " " .. at(17957378)},
 }
 
 -- One-liners when first engaging a target.
@@ -54,17 +62,18 @@ local engageTaunts =
     "Today is a good day to ruin someone else's day!",
     "Ooh, they are FIGHTING back! Love the confidence. Very misplaced, but I appreciate it!",
     "I am going to enjoy this. You are going to enjoy this significantly less.",
+    at(1041957378) .. " " .. at(17957378),
 }
 
-local ROAM_CHANCE   = 8   -- percent per roam tick
-local FIGHT_CHANCE  = 12  -- percent per fight tick
+local ROAM_CHANCE   = 4   -- percent per roam tick
+local FIGHT_CHANCE  = 4  -- percent per fight tick
 local ENGAGE_CHANCE = 55  -- percent on first engage
 
 local function say(mob, text)
-    mob:printToArea(text, xi.chat.SAY, 30, mob:getName(), false)
+    mob:sayToArea(text)
 end
 
-entity.onMobEngaged = function(mob, target)
+entity.onMobEngage = function(mob, target)
     if math.random(100) <= ENGAGE_CHANCE then
         say(mob, engageTaunts[math.random(#engageTaunts)])
     end

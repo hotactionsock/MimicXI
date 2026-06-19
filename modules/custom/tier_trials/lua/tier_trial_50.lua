@@ -4,8 +4,6 @@
 -- Era: Beaucedine Glacier / Xarcabard / Shadow Lord territory
 -- Enemies: Demons, Shadow Beastmen, Elementals, Undead
 -- Boss: Valdris the Hollowed
---
--- NOTE: mob IDs and instanceId marked TODO — fill from DB after SQL is run
 -----------------------------------
 
 xi = xi or {}
@@ -34,31 +32,26 @@ xi.tierTrial.TIERS[50] =
     {
         [1] =
         {
-            { mobId = 17526811 }, -- Imp A
-            { mobId = 17526812 }, -- Imp B
-            { mobId = 17526813 }, -- Imp C
+            { name = 'Imp', groupId = 12026, groupZoneId = 183, level = 48, count = 3 },
         },
         [2] =
         {
-            { mobId = 17526814 }, -- Shadow Orc A
-            { mobId = 17526815 }, -- Shadow Orc B
-            { mobId = 17526816 }, -- Undead Quadav
+            { name = 'Shadow Orc',    groupId = 12029, groupZoneId = 183, level = 48, count = 2 },
+            { name = 'Undead Quadav', groupId = 12031, groupZoneId = 183, level = 48 },
         },
         [3] =
         {
-            { mobId = 17526817 }, -- Fire Elemental
-            { mobId = 17526818 }, -- Ice Elemental
+            { name = 'Fire Elemental', groupId = 12032, groupZoneId = 183, level = 48 },
+            { name = 'Ice Elemental',  groupId = 12033, groupZoneId = 183, level = 48 },
         },
         [4] =
         {
-            { mobId = 17526819 }, -- Haunt A
-            { mobId = 17526820 }, -- Haunt B
-            { mobId = 17526821 }, -- Imp A
-            { mobId = 17526822 }, -- Imp B
+            { name = 'Haunt', groupId = 12034, groupZoneId = 183, level = 49, count = 2 },
+            { name = 'Imp',   groupId = 12026, groupZoneId = 183, level = 49, count = 2 },
         },
         [5] =
         {
-            { mobId = 17526823, isBoss = true }, -- Valdris the Hollowed
+            { name = 'Valdris the Hollowed', groupId = 12038, groupZoneId = 183, level = 54, isBoss = true },
         },
     },
 
@@ -72,6 +65,7 @@ xi.tierTrial.TIERS[50] =
     bossPhaseThreshold = 25,
 
     -- Valdris absorbs a random element at fight start (cycled every 60s)
-    -- Instance script reads this and sets appropriate absorb effect on boss
-    bossAbsorbCycle = 60000, -- ms between element absorption changes
+    bossAbsorbCycle = 60000,
 }
+
+return {}

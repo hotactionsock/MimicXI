@@ -66,6 +66,13 @@ CInstance* CInstanceLoader::LoadInstance() const
 {
     TracyZoneScoped;
 
+    if (m_PInstance == nullptr)
+    {
+        return nullptr;
+    }
+
+    ShowDebug("instance_loader: LoadInstance start (instanceid=%u)", m_PInstance->GetID());
+
     auto rset = db::preparedStmt("SELECT mobname, mobid, pos_rot, pos_x, pos_y, pos_z, "
                                  "respawntime, spawntype, dropid, mob_groups.HP, mob_groups.MP, minLevel, maxLevel, "
                                  "modelid, mJob, sJob, cmbSkill, cmbDmgMult, cmbDelay, behavior, links, mobType, immunity, "
@@ -84,8 +91,10 @@ CInstance* CInstanceLoader::LoadInstance() const
                                  "INNER JOIN mob_pools ON mob_groups.poolid = mob_pools.poolid "
                                  "INNER JOIN mob_resistances ON mob_resistances.resist_id = mob_pools.resist_id "
                                  "INNER JOIN mob_family_system ON mob_pools.familyid = mob_family_system.familyID "
-                                 "WHERE instanceid = ? AND NOT (pos_x = 0 AND pos_y = 0 AND pos_z = 0)",
+                                 "WHERE instanceid = ?",
                                  m_PInstance->GetID());
+
+    ShowDebug("instance_loader: DB query complete, failed=%d", m_PInstance->Failed());
 
     if (!m_PInstance->Failed())
     {
@@ -228,8 +237,10 @@ CInstance* CInstanceLoader::LoadInstance() const
             mobutils::InitializeMob(PMob);
             PMob->PInstance = m_PInstance;
 
+            ShowDebug("instance_loader: inserting mob id=%u name=%s targid=%u", PMob->id, PMob->name.c_str(), PMob->targid);
             m_PInstance->InsertMOB(PMob);
         }
+        ShowDebug("instance_loader: mob DB loop complete");
 
         const uint32 zoneMin = (m_PZone->GetID() << 12) + 0x1000000;
         const uint32 zoneMax = zoneMin + 1024;
@@ -281,6 +292,7 @@ CInstance* CInstanceLoader::LoadInstance() const
             m_PInstance->InsertNPC(PNpc);
         }
 
+        ShowDebug("instance_loader: starting mob setup (OnMobInitialize/ApplyMixins) loop");
         // clang-format off
         // Finish setting up Mobs
         m_PInstance->ForEachMob([&](CMobEntity* PMob)
@@ -313,12 +325,18 @@ CInstance* CInstanceLoader::LoadInstance() const
         });
         // clang-format on
 
+        ShowDebug("instance_loader: mob/NPC setup complete, caching instance script");
         // Cache Instance script (TODO: This will be done multiple times, don't do that)
         luautils::CacheLuaObjectFromFile(instanceutils::GetInstanceData(m_PInstance->GetID()).filename);
+        ShowDebug("instance_loader: instance script cached");
 
-        // Finish setup
-        luautils::OnInstanceCreatedCallback(m_PRequester, m_PInstance);
+        // Finish setup — OnInstanceCreated must run first to initialize local vars,
+        // then OnInstanceCreatedCallback reads those vars to set difficulty and spawn wave 1.
+        ShowDebug("instance_loader: calling OnInstanceCreated");
         luautils::OnInstanceCreated(m_PInstance);
+        ShowDebug("instance_loader: OnInstanceCreated complete, calling OnInstanceCreatedCallback");
+        luautils::OnInstanceCreatedCallback(m_PRequester, m_PInstance);
+        ShowDebug("instance_loader: OnInstanceCreatedCallback complete");
     }
 
     return m_PInstance;

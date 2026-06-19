@@ -238,6 +238,46 @@ bool CLuaZone::isNavigablePoint(const sol::table& point)
     }
 }
 
+auto CLuaZone::getRandomNavmeshPoint(sol::optional<sol::table> center, sol::optional<float> radius) -> sol::optional<sol::table>
+{
+    if (!m_pLuaZone->navMesh())
+    {
+        return sol::nullopt;
+    }
+
+    std::pair<int16, position_t> result;
+
+    if (center.has_value() && radius.has_value())
+    {
+        // clang-format off
+        position_t pos
+        {
+            center->get_or("x", 0.f),
+            center->get_or("y", 0.f),
+            center->get_or("z", 0.f),
+            0,
+            0
+        };
+        // clang-format on
+        result = m_pLuaZone->navMesh()->findRandomPosition(pos, *radius);
+    }
+    else
+    {
+        result = m_pLuaZone->navMesh()->findAnyRandomPosition();
+    }
+
+    if (result.first != 0)
+    {
+        return sol::nullopt;
+    }
+
+    auto out = lua.create_table();
+    out["x"] = result.second.x;
+    out["y"] = result.second.y;
+    out["z"] = result.second.z;
+    return out;
+}
+
 auto CLuaZone::insertDynamicEntity(sol::table table) -> CBaseEntity*
 {
     return luautils::GenerateDynamicEntity(m_pLuaZone, nullptr, std::move(table));
@@ -387,6 +427,7 @@ void CLuaZone::Register()
     SOL_REGISTER("getUptime", CLuaZone::getUptime);
     SOL_REGISTER("reloadNavmesh", CLuaZone::reloadNavmesh);
     SOL_REGISTER("isNavigablePoint", CLuaZone::isNavigablePoint);
+    SOL_REGISTER("getRandomNavmeshPoint", CLuaZone::getRandomNavmeshPoint);
     SOL_REGISTER("getTerrainType", CLuaZone::getTerrainType);
     SOL_REGISTER("getFloorId", CLuaZone::getFloorId);
     SOL_REGISTER("insertDynamicEntity", CLuaZone::insertDynamicEntity);

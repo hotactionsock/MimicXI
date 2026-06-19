@@ -1,4 +1,4 @@
------------------------------------
+﻿-----------------------------------
 -- FATE Zone: Jugner Forest
 -- Zone ID: 104
 -- Region pool: NORVALLEN_QUFIM
@@ -137,7 +137,7 @@ xi.fate.zones[xi.zone.JUGNER_FOREST] =
             bossWarnings =
             {
                 "A deep groan resonates through the ancient wood of Jugner Forest...",
-                "The canopy shudders violently — the oldest tree in the forest has awakened...",
+                "The canopy shudders violently - the oldest tree in the forest has awakened...",
             },
 
             onMobEngage = function(mob, target, zoneID, eventIdx)

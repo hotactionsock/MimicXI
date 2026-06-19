@@ -1082,7 +1082,20 @@ void CZone::createZoneTimers()
         kLogicUpdateInterval,
         [this]() -> Task<void>
         {
-            co_await this->ZoneServer(timer::now());
+            try
+            {
+                co_await this->ZoneServer(timer::now());
+            }
+            catch (const std::exception& e)
+            {
+                ShowError("ZoneServer exception in zone %s: %s", this->getName(), e.what());
+                throw;
+            }
+            catch (...)
+            {
+                ShowError("ZoneServer unknown exception in zone %s", this->getName());
+                throw;
+            }
         });
 
     zoneTimerTriggerAreasToken_ = scheduler_.intervalOnMainThread(

@@ -19,7 +19,6 @@
 -----------------------------------
 require('modules/module_utils')
 
-local m = Module:new('casket_loot_starter_zones')
 
 -- Augment stat IDs from augments.sql (packet IDs, not dat IDs)
 xi          = xi          or {}
@@ -623,4 +622,4 @@ xi.caskets.augmentPools =
     },
 }
 
-return m
+return {}

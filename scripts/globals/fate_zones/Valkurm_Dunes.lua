@@ -1,4 +1,4 @@
------------------------------------
+﻿-----------------------------------
 -- FATE Zone: Valkurm Dunes
 -- Zone ID: 103
 -- Region pool: STARTER_ZULKHEIM
@@ -136,7 +136,7 @@ xi.fate.zones[xi.zone.VALKURM_DUNES] =
             bossWarnings =
             {
                 "A distant droning fills the air above the Valkurm Dunes...",
-                "The droning becomes a roar — a shadow blots out the sun over the dunes...",
+                "The droning becomes a roar - a shadow blots out the sun over the dunes...",
             },
 
             onMobEngage = function(mob, target, zoneID, eventIdx)
@@ -644,8 +644,8 @@ xi.fate.zones[xi.zone.VALKURM_DUNES] =
         -----------------------------------
         -- The Eternal Hunger
         -- An Orobon of mythical proportions
-        -- — said to have eaten a ship whole
-        -- in the Crystal War — washes ashore
+        -- - said to have eaten a ship whole
+        -- in the Crystal War - washes ashore
         -- during a violent tide.
         -- Spawns rarely. Escape or die trying.
         -----------------------------------

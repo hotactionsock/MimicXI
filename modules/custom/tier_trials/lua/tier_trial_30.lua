@@ -5,7 +5,9 @@
 -- Enemies: Goblins, Orcs, Quadavs
 -- Boss: Brakk the Lockjaw
 --
--- NOTE: mob IDs and instanceId marked TODO — fill from DB after SQL is run
+-- groupId / groupZoneId reference mob_groups entries in zone 183.
+-- instance_entities rows are NOT required; mobs are created dynamically
+-- via instance:insertDynamicEntity in onInstanceCreated.
 -----------------------------------
 
 xi = xi or {}
@@ -30,49 +32,51 @@ xi.tierTrial.TIERS[30] =
         kite     = 23936, caligo   = 20002,
     },
 
-    -- Wave definitions — mob IDs match mob_spawn_points entries in tier_trials.sql
+    -- Wave definitions using dynamic entity fields:
+    --   name        : display name sent to client
+    --   groupId     : mob_groups.groupid (zone 183)
+    --   groupZoneId : mob_groups.zoneid (always 183 for tier trial templates)
+    --   level       : spawned level (overrides group default)
+    --   count       : number of this mob to create (default 1)
+    --   isBoss      : true → onMobDeath calls instance:complete()
     waves =
     {
         [1] =
         {
-            { mobId = 17526785 }, -- Goblin Leecher A
-            { mobId = 17526786 }, -- Goblin Leecher B
-            { mobId = 17526787 }, -- Goblin Bouncer
+            { name = 'Goblin Leecher',  groupId = 12000, groupZoneId = 183, level = 28, count = 2 },
+            { name = 'Goblin Bouncer',  groupId = 12002, groupZoneId = 183, level = 29 },
         },
         [2] =
         {
-            { mobId = 17526788 }, -- Orcish Grunt A
-            { mobId = 17526789 }, -- Orcish Grunt B
-            { mobId = 17526790 }, -- Orcish Cursemaker
+            { name = 'Orcish Grunt',      groupId = 12003, groupZoneId = 183, level = 28, count = 2 },
+            { name = 'Orcish Cursemaker', groupId = 12005, groupZoneId = 183, level = 29 },
         },
         [3] =
         {
-            { mobId = 17526791 }, -- Brass Quadav A
-            { mobId = 17526792 }, -- Brass Quadav B
-            { mobId = 17526793 }, -- Copper Quadav
+            { name = 'Brass Quadav',  groupId = 12006, groupZoneId = 183, level = 28, count = 2 },
+            { name = 'Copper Quadav', groupId = 12008, groupZoneId = 183, level = 29 },
         },
         [4] =
         {
-            { mobId = 17526794 }, -- Goblin Leecher A
-            { mobId = 17526795 }, -- Goblin Leecher B
-            { mobId = 17526796 }, -- Orcish Grunt A
-            { mobId = 17526797 }, -- Orcish Grunt B
+            { name = 'Goblin Leecher', groupId = 12000, groupZoneId = 183, level = 29, count = 2 },
+            { name = 'Orcish Grunt',   groupId = 12003, groupZoneId = 183, level = 29, count = 2 },
         },
         [5] =
         {
-            { mobId = 17526798, isBoss = true }, -- Brakk the Lockjaw
+            { name = 'Brakk the Lockjaw', groupId = 12013, groupZoneId = 183, level = 32, isBoss = true, size = 3,},
         },
     },
 
     -- Hardened aura effect applied from wave 3 onwards
-    -- Applied to all players on wave start via player:addStatusEffect
     hardenedAura =
     {
         effect   = xi.effect.ACCURACY_DOWN,
         power    = 10,
-        duration = 0, -- persistent while in wave, removed on wave end
+        duration = 0,
     },
 
     -- Transcendent mode: boss second phase threshold (% HP)
     bossPhaseThreshold = 50,
 }
+
+return {}

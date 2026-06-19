@@ -451,6 +451,41 @@ void CLuaBaseEntity::printToArea(const std::string& message, const sol::object& 
 }
 
 /************************************************************************
+ *  Function: sayToArea()
+ *  Purpose : Broadcast a free-form chat message from any entity (mob, NPC,
+ *            or PC) to all players within say range. Unlike printToArea this
+ *            works on non-PC entities and passes raw message bytes intact so
+ *            embedded auto-translate sequences (0xFD … 0xFD) reach clients.
+ *  Example : mob:sayToArea("Hello!")
+ *          : mob:sayToArea("text", MESSAGE_SHOUT)
+ ************************************************************************/
+
+void CLuaBaseEntity::sayToArea(const std::string& message, const sol::object& messageTypeObj)
+{
+    if (!m_PBaseEntity->loc.zone)
+    {
+        return;
+    }
+
+    CHAT_MESSAGE_TYPE messageType = (messageTypeObj != sol::lua_nil) ? messageTypeObj.as<CHAT_MESSAGE_TYPE>() : MESSAGE_SAY;
+
+    // Prefer packetName (the display name) over the internal name which may carry
+    // a "DE_" prefix for dynamic entities. Strip any leading non-ASCII byte (e.g.
+    // the 0xA6 FATE prefix) so only the clean name reaches the client's chat window.
+    const std::string& raw        = m_PBaseEntity->packetName.empty() ? m_PBaseEntity->name : m_PBaseEntity->packetName;
+    const std::string  senderName = (!raw.empty() && static_cast<uint8_t>(raw[0]) > 127) ? raw.substr(1) : raw;
+
+    m_PBaseEntity->loc.zone->PushPacket(
+        m_PBaseEntity,
+        CHAR_INRANGE,
+        std::make_unique<GP_SERV_COMMAND_CHAT_STD>(
+            senderName,
+            m_PBaseEntity->loc.zone->GetID(),
+            messageType,
+            message));
+}
+
+/************************************************************************
  *  Function: messageBasic()
  *  Purpose : Send a basic message packet to the PC
  *  Example : target:messageBasic(xi.msg.basic.RECOVERS_HP_AND_MP);
@@ -19624,6 +19659,7 @@ void CLuaBaseEntity::Register()
     SOL_REGISTER("messageText", CLuaBaseEntity::messageText);
     SOL_REGISTER("printToPlayer", CLuaBaseEntity::printToPlayer);
     SOL_REGISTER("printToArea", CLuaBaseEntity::printToArea);
+    SOL_REGISTER("sayToArea", CLuaBaseEntity::sayToArea);
     SOL_REGISTER("messageBasic", CLuaBaseEntity::messageBasic);
     SOL_REGISTER("messageName", CLuaBaseEntity::messageName);
     SOL_REGISTER("messagePublic", CLuaBaseEntity::messagePublic);

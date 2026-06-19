@@ -7240,13 +7240,14 @@ void SendToZone(CCharEntity* PChar, uint16 zoneId)
 
     auto ip   = ipp.getIP();
     auto port = ipp.getPort();
+    ShowDebug("SendToZone: updating accounts_sessions for char %u -> zone %u", PChar->id, zoneId);
     db::preparedStmt("UPDATE accounts_sessions "
                      "SET server_addr = ?, server_port = ? "
                      "WHERE charid = ?",
                      ip,
                      port,
                      PChar->id);
-
+    ShowDebug("SendToZone: updating chars for char %u", PChar->id);
     db::preparedStmt("UPDATE chars "
                      "SET pos_zone = ?, pos_prevzone = ?, pos_rot = ?,"
                      "pos_x = ?, pos_y = ?, pos_z = ?,"
@@ -7261,6 +7262,7 @@ void SendToZone(CCharEntity* PChar, uint16 zoneId)
                      PChar->m_moghouseID,
                      PChar->loc.boundary,
                      PChar->id);
+    ShowDebug("SendToZone: DB updates complete for char %u", PChar->id);
 
     if (PChar->shouldPetPersistThroughZoning())
     {

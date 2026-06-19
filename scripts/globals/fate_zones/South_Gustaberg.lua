@@ -23,23 +23,18 @@ xi.fate.zones[xi.zone.SOUTH_GUSTABERG] =
         -- pushes toward Bastok Outskirts.
         -----------------------------------
         {
-            id          = "SG_GOBLIN_01",
-            name        = "Goblin Assault",
-            level       = 8,
-            duration    = 600,
-            chainOnly   = false,
-            chainOnWin  = "SG_GOBLIN_02",
-            progressVal = 1,
+            id                = "SG_GOBLIN_01",
+            name              = "Goblin Assault",
+            level             = 8,
+            duration          = 600,
+            chainOnly         = false,
+            chainOnWin        = "SG_GOBLIN_02",
+            progressVal       = 1,
+            dynamicDifficulty = true,
 
             objective = { type = "kill", count = 8 },
 
-            area =
-            {
-                x      = -95,
-                y      = 10,
-                z      = -260,
-                radius = 75,
-            },
+            area = { -95, 10, -260, 75 },
 
             entryPos = { -91.489, 11.053, -260.794, 120 }, -- !pos -91.489 11.053 -260.794 107
 
@@ -121,13 +116,7 @@ xi.fate.zones[xi.zone.SOUTH_GUSTABERG] =
 
             objective = { type = "kill", count = 4 },
 
-            area =
-            {
-                x      = -149,
-                y      = 10,
-                z      = -329,
-                radius = 63,
-            },
+            area = { -149, 10, -329, 63 },
 
             entryPos = { -149.675, 10.283, -329.442, 241 }, -- !pos -149.675 10.283 -329.442 107
 
@@ -205,22 +194,17 @@ xi.fate.zones[xi.zone.SOUTH_GUSTABERG] =
         -- Palborough Mines into the zone.
         -----------------------------------
         {
-            id          = "SG_QUADAV_01",
-            name        = "Quadav Incursion",
-            level       = 12,
-            duration    = 720,
-            chainOnly   = false,
-            progressVal = 1,
+            id                = "SG_QUADAV_01",
+            name              = "Quadav Incursion",
+            level             = 12,
+            duration          = 720,
+            chainOnly         = false,
+            progressVal       = 1,
+            dynamicDifficulty = true,
 
             objective = { type = "kill", count = 10 },
 
-            area =
-            {
-                x      = -420,
-                y      = 42,
-                z      = -377,
-                radius = 81,
-            },
+            area = { -420, 42, -377, 81 },
 
             entryPos = { -420.117, 42.682, -377.874, 12 }, -- !pos -420.117 42.682 -377.874 107
 
@@ -334,13 +318,7 @@ xi.fate.zones[xi.zone.SOUTH_GUSTABERG] =
                 end
             end,
 
-            area =
-            {
-                x      = 203,
-                y      = -60,
-                z      = -424,
-                radius = 81,
-            },
+            area = { 203, -60, -424, 81 },
 
             entryPos = { 214.892, -59.589, -428.583, 75 }, -- !pos 214.892 -59.589 -428.583 107
 
@@ -432,13 +410,7 @@ xi.fate.zones[xi.zone.SOUTH_GUSTABERG] =
 
             objective = { type = "kill", count = 8 },
 
-            area =
-            {
-                x      = 400,   -- TODO: !pos survey
-                y      = 0,   -- TODO: !pos survey
-                z      = -411,   -- TODO: !pos survey
-                radius = 70,
-            },
+            area = { 400, 0, -411, 70 },
 
             entryPos = { 398.322, -0.053, -384.667, 192 }, -- !pos 398.322 -0.053 -384.667 107
 
@@ -533,13 +505,7 @@ xi.fate.zones[xi.zone.SOUTH_GUSTABERG] =
 
             objective = { type = "kill", count = 8 },
 
-            area =
-            {
-                x      = -11,   -- TODO: !pos survey
-                y      = -1,   -- TODO: !pos survey
-                z      = -493,   -- TODO: !pos survey
-                radius = 70,
-            },
+            area = { -11, -1, -493, 70 },
 
             entryPos = { -11.004, -0.903, -493.384, 173 }, -- !pos -11.004 -0.903 -493.384 107
 
@@ -635,13 +601,7 @@ xi.fate.zones[xi.zone.SOUTH_GUSTABERG] =
 
             objective = { type = "kill", count = 5 },
 
-            area =
-            {
-                x      = 2,   -- TODO: !pos survey
-                y      = 9.8,   -- TODO: !pos survey
-                z      = -345,   -- TODO: !pos survey
-                radius = 60,
-            },
+            area = { 2, 9.8, -345, 60 },
 
             entryPos = { 2.040, 9.897, -345.539, 73 }, -- !pos 2.040 9.897 -345.539 107
 
@@ -757,13 +717,7 @@ xi.fate.zones[xi.zone.SOUTH_GUSTABERG] =
                 end
             end,
 
-            area =
-            {
-                x      = 447,   -- TODO: !pos survey
-                y      = 0,   -- TODO: !pos survey
-                z      = -672,   -- TODO: !pos survey
-                radius = 70,
-            },
+            area = { 447, 0, -672, 70 },
 
             entryPos = { 434.730, -1.039, -650.120, 187 }, -- !pos 434.730 -1.039 -650.120 107
 
@@ -838,6 +792,272 @@ xi.fate.zones[xi.zone.SOUTH_GUSTABERG] =
         },
 
         -----------------------------------
+        -- Hold the Line
+        -- Defense FATE: three time-gated
+        -- waves of goblins assault three
+        -- Bastok supply posts on the southern
+        -- road. Mobs advance on the posts;
+        -- intercept them before all three are
+        -- destroyed. Kill all 10 goblins to
+        -- win. All posts destroyed = fail.
+        -- TODO: waves 2 and 3 spawn points
+        -- still use old area coords; survey
+        -- and update to match wave 1.
+        -----------------------------------
+        {
+            id                  = "SG_DEFEND_01",
+            name                = "Hold the Line",
+            level               = 10,
+            duration            = 600,
+            chainOnly           = false,
+            progressVal         = 1,
+            waveInterval        = 90,  -- seconds between time-gated wave spawns
+            targetDamagePerTick = 10,  -- HP removed per 10s tick when a mob is in range
+
+            objective = { type = "defend", count = 10 },
+
+            -- Three supply posts north of the combat zone (mobs advance from the south).
+            -- Positions are approximate; survey all three with !pos and adjust y to match terrain.
+            -- look = 969 is the treasure-chest placeholder; swap for the correct supply-crate model.
+            defenseTargets =
+            {
+                {
+                    name = string.char(0xA6) .. "Supply Post",
+                    look = 961,
+                    pos  = { -518.228, 39.929, -498.892, 92 }, -- !pos -518.228 39.929 -498.892 107
+                    hp   = 200,
+                },
+                {
+                    name = string.char(0xA6) .. "Supply Post",
+                    look = 961,
+                    pos  = { -513.208, 40.173, -501.085, 238 }, -- !pos -513.208 40.173 -501.085 107
+                    hp   = 200,
+                },
+                {
+                    name = string.char(0xA6) .. "Supply Post",
+                    look = 961,
+                    pos  = { -508.485, 40.250, -510.269, 98 }, -- !pos -508.485 40.250 -510.269 107
+                    hp   = 200,
+                },
+            },
+
+            area = { -539.382, 39.796, -530.132, 250 }, -- !pos -539.382 39.796 -530.132 107
+
+            entryPos = { -511.759, 40.250, -509.325, 97 }, -- !pos -511.759 40.250 -509.325 107
+
+            waves =
+            {
+                -----------------------------------
+                -- Wave 1 (T+0): forward scouts
+                -----------------------------------
+                {
+                    announcement = "Hold the Line Wave 1: Goblin scouts close in on the supply post!",
+                    mobs =
+                    {
+                        {
+                            base        = { 107, 13 },
+                            name        = string.char(0xA6) .. "Goblin Scout",
+                            count       = 3,
+                            spawnPoints =
+                            {
+                                { -551.459, 39.921, -560.309, 239 }, -- !pos -551.459 39.921 -560.309 107
+                                { -565.243, 38.747, -550.009, 170 }, -- !pos -565.243 38.747 -550.009 107
+                                { -568.963, 38.776, -529.102, 223 }, -- !pos -568.963 38.776 -529.102 107
+                            },
+                        },
+                    },
+                },
+                -----------------------------------
+                -- Wave 2 (T+90s): weavers lay traps
+                -----------------------------------
+                {
+                    announcement = "Hold the Line Wave 2: Goblin weavers approach, spreading traps!",
+                    mobs =
+                    {
+                        {
+                            base        = { 107, 16 },
+                            name        = string.char(0xA6) .. "Goblin Sapper",
+                            count       = 3,
+                            spawnPoints =
+                            {
+                                { -551.459, 39.921, -560.309, 239 }, -- !pos -551.459 39.921 -560.309 107
+                                { -565.243, 38.747, -550.009, 170 }, -- !pos -565.243 38.747 -550.009 107
+                                { -568.963, 38.776, -529.102, 223 }, -- !pos -568.963 38.776 -529.102 107
+                            },
+                        },
+                    },
+                },
+                -----------------------------------
+                -- Wave 3 (T+180s): main assault
+                -----------------------------------
+                {
+                    announcement = "Hold the Line Final wave: The main goblin assault arrives!",
+                    mobs =
+                    {
+                        {
+                            base        = { 107, 13 },
+                            name        = string.char(0xA6) .. "Goblin Raider",
+                            count       = 3,
+                            spawnPoints =
+                            {
+                                { -551.459, 39.921, -560.309, 239 }, -- !pos -551.459 39.921 -560.309 107
+                                { -565.243, 38.747, -550.009, 170 }, -- !pos -565.243 38.747 -550.009 107
+                                { -568.963, 38.776, -529.102, 223 }, -- !pos -568.963 38.776 -529.102 107
+                            },
+                        },
+                        {
+                            base        = { 107, 31 },
+                            name        = string.char(0xA6) .. "Goblin Chief",
+                            count       = 1,
+                            isBoss      = true,
+                            spawnPoints =
+                            {
+                                { -570.822, 38.835, -542.991, 22 }, -- !pos -570.822 38.835 -542.991 107
+                            },
+                        },
+                    },
+                },
+            },
+
+            rewards =
+            {
+                victory =
+                {
+                    gold   = { exp = 1000 },
+                    silver = { exp = 500  },
+                    bronze = { exp = 250  },
+                },
+                fail =
+                {
+                    gold   = { exp = 300 },
+                    silver = { exp = 150 },
+                    bronze = { exp = 75  },
+                },
+            },
+
+            loot =
+            {
+                victory =
+                {
+                    guaranteed = {},
+                    bronze = { { xi.item.BONE_CHIP,            150 } },
+                    silver = { { xi.item.GOBLIN_ARMOR,         150 },
+                               { xi.item.BONE_CHIP,            150 } },
+                    gold   = { { xi.item.GOBLIN_MASK,          150 },
+                               { xi.item.GOBLIN_ARMOR,         150 },
+                               { xi.item.CHUNK_OF_COPPER_ORE,  100 } },
+                },
+                fail =
+                {
+                    guaranteed = {},
+                    bronze = {},
+                    silver = { { xi.item.BONE_CHIP,             50 } },
+                    gold   = { { xi.item.BONE_CHIP,            100 } },
+                },
+            },
+        },
+
+        -----------------------------------
+        -- Reclaim the Spoils
+        -- Collection FATE: Goblins fled and
+        -- dropped stolen goods across the road.
+        -- Touch glowing piles to recover items
+        -- — each gives 1x directly to your
+        -- inventory. Points respawn every 15s.
+        -- Leftover goblin stragglers guard
+        -- the drops. Runs for the full
+        -- duration; no fail state.
+        -- Gold: 10 items, Silver: 5, Bronze: 1
+        -----------------------------------
+        {
+            id          = "SG_COLLECT_01",
+            name        = "Reclaim the Spoils",
+            level       = 5,
+            duration    = 300,
+            chainOnly   = false,
+            progressVal = 1,
+
+            objective     = { type = "collect" },
+            collectItem   = xi.item.GOBLIN_ARMOR,   -- item awarded per collection point
+            collectName   = "Stolen Goods",
+            collectTiers  = { gold = 10, silver = 5, bronze = 1 },
+
+            area = { -95, 10, -260, 100 },
+
+            entryPos = { -91.489, 11.053, -260.794, 120 }, -- !pos -91.489 11.053 -260.794 107
+
+            -- 20 collection points scattered across the area.
+            -- All positions are approximate — TODO: survey in-game.
+            collectPoints =
+            {
+                { -72,  10, -252, 180 },   -- north-east cluster
+                { -80,  10, -250, 200 },
+                { -88,  10, -248, 143 },
+                { -100, 10, -246, 100 },
+                { -110, 10, -250, 60  },
+                { -115, 10, -258, 30  },   -- west edge
+                { -118, 10, -268, 10  },
+                { -112, 10, -278, 340 },
+                { -100, 10, -286, 300 },
+                { -88,  10, -290, 280 },   -- south cluster
+                { -76,  10, -288, 260 },
+                { -68,  10, -278, 240 },
+                { -65,  10, -265, 220 },   -- south-east
+                { -70,  10, -255, 200 },
+                { -80,  10, -260, 160 },   -- centre
+                { -95,  10, -260, 120 },
+                { -105, 10, -260, 80  },
+                { -95,  10, -272, 100 },
+                { -85,  10, -272, 140 },
+                { -95,  10, -248, 90  },   -- north centre
+            },
+
+            -- Goblin stragglers guarding the drops.
+            -- noCount = true so they don't interfere with any kill objective.
+            mobs =
+            {
+                {
+                    base        = { 107, 13 },
+                    name        = string.char(0xA6) .. "Goblin Thief",
+                    count       = 4,
+                    noCount     = true,
+                    spawnPoints =
+                    {
+                        { -80,  10, -268, 143 },
+                        { -110, 10, -268, 30  },
+                        { -95,  10, -280, 100 },
+                        { -95,  10, -245, 160 },
+                    },
+                },
+            },
+
+            rewards =
+            {
+                -- No fail rewards — this FATE always resolves as victory.
+                victory =
+                {
+                    gold   = { exp = 600 },
+                    silver = { exp = 300 },
+                    bronze = { exp = 100 },
+                },
+            },
+
+            loot =
+            {
+                victory =
+                {
+                    guaranteed = {},
+                    bronze = { { xi.item.BONE_CHIP,           150 } },
+                    silver = { { xi.item.BONE_CHIP,           150 },
+                               { xi.item.CHUNK_OF_COPPER_ORE, 100 } },
+                    gold   = { { xi.item.GOBLIN_MASK,         100 },
+                               { xi.item.BONE_CHIP,           150 },
+                               { xi.item.CHUNK_OF_COPPER_ORE, 150 } },
+                },
+            },
+        },
+
+        -----------------------------------
         -- The Adamantine Juggernaut
         -- A primordial Stone Eater of
         -- legendary size, last seen during
@@ -865,13 +1085,7 @@ xi.fate.zones[xi.zone.SOUTH_GUSTABERG] =
 				"A hulk of sentient earth has been spotted! It's presence blights the land!",
             },
 
-            area =
-            {
-                x      = 146,   -- TODO: !pos survey
-                y      = -19.7,   -- TODO: !pos survey
-                z      = -521,   -- TODO: !pos survey
-                radius = 100,
-            },
+            area = { 146, -19.7, -521, 100 },
 
             entryPos = { 146.202, -19.727, -521.774, 146 }, -- !pos 146.202 -19.727 -521.774 107
 
@@ -879,7 +1093,7 @@ xi.fate.zones[xi.zone.SOUTH_GUSTABERG] =
             {
                 {
                     base         = { 111, 29 },  -- Golem family
-                    name         = string.char(0xA6) .. "Iron Colossus",
+                    name         = string.char(0xA6) .. "Iron Giant",
                     count        = 1,
                     isBoss       = true,
                     size         = 3,

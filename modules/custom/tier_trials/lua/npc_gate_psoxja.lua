@@ -1,7 +1,7 @@
 -----------------------------------
 -- Module: Tier Trial Gatekeeper — Pso'Xja (Lv60)
 -- NPC: Trial_Gatekeeper_PsoXja
--- Elvaan female warrior look (model 2568)
+-- Hume female warrior look (model 2552)
 -----------------------------------
 require('modules/module_utils')
 require('scripts/zones/PsoXja/Zone')
@@ -16,7 +16,7 @@ m:addOverride('xi.zones.PsoXja.Zone.onInitialize', function(zone)
     zone:insertDynamicEntity({
         objtype   = xi.objType.NPC,
         name      = 'Trial_Gatekeeper_PsoXja',
-        look      = 2568,
+        look      = 2552,
         x         = -177.633,
         y         = 0.009,
         z         = -39.339,

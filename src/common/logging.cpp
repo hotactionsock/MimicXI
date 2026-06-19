@@ -134,10 +134,8 @@ void logging::InitializeLog(const std::string& serverName, const std::string& lo
 {
     ServerName = serverName;
 
-    // If you create more than one worker thread, messages may be delivered out of order
-    spdlog::init_thread_pool(8192, 1);
-    spdlog::flush_on(spdlog::level::warn);
-    spdlog::flush_every(5s);
+    // Synchronous loggers: every write goes directly to disk, no background thread.
+    // This ensures crash logs are complete up to the exact point of failure.
 
     // Sink to console
     std::vector<spdlog::sink_ptr> sinks;
@@ -156,9 +154,11 @@ void logging::InitializeLog(const std::string& serverName, const std::string& lo
 
     for (auto& name : logNames)
     {
-        auto logger = std::make_shared<spdlog::async_logger>(name, sinks.begin(), sinks.end(), spdlog::thread_pool());
+        auto logger = std::make_shared<spdlog::logger>(name, sinks.begin(), sinks.end());
         spdlog::register_logger(logger);
     }
+
+    spdlog::flush_on(spdlog::level::debug);
 
     spdlog::set_level(spdlog::level::debug);
 

@@ -3,7 +3,6 @@
 -----------------------------------
 require("modules/module_utils")
 -----------------------------------
-local m = Module:new("LQS_signet")
 
 LQS = LQS or {}
 
@@ -19,4 +18,4 @@ LQS.signetEffect = function()
     }
 end
 
-return m
+return {}

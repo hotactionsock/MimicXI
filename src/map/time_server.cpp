@@ -64,11 +64,11 @@ auto time_server(Scheduler& scheduler, MapConfig config) -> Task<void>
         if (jstHour == 0)
         {
             // Daily tick (midnight JST)
-            ShowDebugFmt("Daily tick... (current tick: {})", tickNum);
+            // ShowDebugFmt("Daily tick... (current tick: {})", tickNum);
             if (jstWeekday == 1)
             {
                 // Weekly tick (Monday JST)
-                ShowDebugFmt("Weekly tick... (current tick: {})", tickNum);
+                // ShowDebugFmt("Weekly tick... (current tick: {})", tickNum);
                 roeutils::CycleWeeklyRecords();
                 roeutils::CycleUnityRankings();
             }
@@ -78,18 +78,18 @@ auto time_server(Scheduler& scheduler, MapConfig config) -> Task<void>
             luautils::UpdateSanrakusMobs();
         }
         // 1-hour tick
-        ShowDebugFmt("1-hour tick... (current tick: {})", tickNum);
+        // ShowDebugFmt("1-hour tick... (current tick: {})", tickNum);
         roeutils::UpdateUnityRankings();
 
         if (jstHour % 2 == 0)
         {
             // 2-hour tick
-            ShowDebugFmt("2-hour tick... (current tick: {})", tickNum);
+            // ShowDebugFmt("2-hour tick... (current tick: {})", tickNum);
             luautils::ZNMPopPriceDecay();
             if (jstHour % 4 == 0)
             {
                 // 4-hour tick
-                ShowDebugFmt("4-hour tick... (current tick: {})", tickNum);
+                // ShowDebugFmt("4-hour tick... (current tick: {})", tickNum);
                 roeutils::CycleTimedRecords();
             }
         }
@@ -130,7 +130,7 @@ auto time_server(Scheduler& scheduler, MapConfig config) -> Task<void>
         {
             // Vana'diel Day
             TracyZoneScoped;
-            ShowDebugFmt("Vana'diel day tick... (current tick: {})", tickNum);
+            // ShowDebugFmt("Vana'diel day tick... (current tick: {})", tickNum);
 
             zoneutils::ForEachZone(
                 [](CZone* PZone)

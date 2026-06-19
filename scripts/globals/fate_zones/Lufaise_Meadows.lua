@@ -1,4 +1,4 @@
------------------------------------
+﻿-----------------------------------
 -- FATE Zone: Lufaise Meadows
 -- Zone ID: 24
 -- Region pool: LUFAISE_MISAREAUX
@@ -117,9 +117,9 @@ xi.fate.zones[xi.zone.LUFAISE_MEADOWS] =
 
         -----------------------------------
         -- The Meadow Titan
-        -- An enormous battle-scarred Ram —
+        -- An enormous battle-scarred Ram -
         -- ancient patriarch of the Lufaise
-        -- herds — descends from the crags,
+        -- herds - descends from the crags,
         -- laying waste to all in its path.
         -----------------------------------
         {
@@ -137,7 +137,7 @@ xi.fate.zones[xi.zone.LUFAISE_MEADOWS] =
             bossWarnings =
             {
                 "The ground of Lufaise Meadows trembles under thunderous hoofbeats...",
-                "A massive horned shape crests the hill — the Meadow Titan descends...",
+                "A massive horned shape crests the hill - the Meadow Titan descends...",
             },
 
             onMobEngage = function(mob, target, zoneID, eventIdx)

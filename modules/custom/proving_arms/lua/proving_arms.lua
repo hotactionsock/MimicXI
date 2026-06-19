@@ -387,6 +387,23 @@ xi.provingArms.consumeMaterials = function(player, recipe)
 end
 
 -----------------------------------
+-- Acquisition recipe: cost to start a new weapon path at the Forge (Tier 0→1).
+-- Players choose their weapon family here instead of receiving a job-locked drop.
+-- Cost is 1 shard of the appropriate tier plus the matching Proving Marks.
+-----------------------------------
+xi.provingArms.getAcquireRecipe = function(weaponTier)
+    local item  = xi.provingArms.item
+    local costs =
+    {
+        [1] = { materials = { { id = item.NASCENT_SHARD,  qty = 1 } }, markVar = '[TierTrial]ValkurumMarks',   markCost = 1, circuitPoints = 0 },
+        [2] = { materials = { { id = item.TEMPERED_SHARD, qty = 1 } }, markVar = '[TierTrial]QufimMarks',      markCost = 1, circuitPoints = 0 },
+        [3] = { materials = { { id = item.FORGED_SHARD,   qty = 1 } }, markVar = '[TierTrial]FauregandiMarks', markCost = 1, circuitPoints = 0 },
+        [4] = { materials = { { id = item.RESOLUTE_SHARD, qty = 1 } }, markVar = nil,                          markCost = 0, circuitPoints = 0 },
+    }
+    return costs[weaponTier or 1]
+end
+
+-----------------------------------
 -- Perform an upgrade: consume source weapon, give next tier
 -----------------------------------
 xi.provingArms.doUpgrade = function(player, fromItemId, fromTier, family)

@@ -47,74 +47,128 @@ local function showAugmentPick(player, rolls, onPick)
 end
 
 -----------------------------------
--- Upgrade path
+-- Upgrade / acquire path
+-- Shows ALL weapon families. Players choose which path to pursue regardless
+-- of current job. Families with no weapon show an Acquire option; families
+-- with a T1-T4 weapon show the next upgrade; T5 families are omitted (complete).
 -----------------------------------
+local FAMILIES =
+{
+    'blade', 'nodachi', 'kukri', 'cesti', 'rod',
+    'falchion', 'sceptre', 'spatha', 'kite', 'caligo',
+}
+
 local function showUpgradeMenu(player)
     xi.provingArms.buildLookup()
-    local eligible = {}
 
-    for itemId, info in pairs(xi.provingArms.WEAPON_LOOKUP) do
-        if info.tier < 5 and player:getItemCount(itemId) > 0 then
-            local recipe = xi.provingArms.getRecipe(info.tier)
+    local options = {}
+
+    for _, family in ipairs(FAMILIES) do
+        local fam     = family
+        local famName = FAMILY_LABEL[family] or family
+
+        -- Find the highest tier the player owns for this family
+        local currentTier   = 0
+        local currentItemId = nil
+        for tier = 5, 1, -1 do
+            local id = xi.provingArms.WEAPONS[tier] and xi.provingArms.WEAPONS[tier][fam]
+            if id and id > 0 and player:getItemCount(id) > 0 then
+                currentTier   = tier
+                currentItemId = id
+                break
+            end
+        end
+
+        if currentTier == 0 then
+            -- No weapon in this family — offer Tier 1 acquisition
+            local recipe = xi.provingArms.getAcquireRecipe(1)
+            local canDo  = recipe and xi.provingArms.checkMaterials(player, recipe)
+            table.insert(options, {
+                string.format('%s: Acquire Nascent%s', famName, canDo and '' or ' [!]'),
+                function(p)
+                    local ok = recipe and xi.provingArms.checkMaterials(p, recipe)
+                    if not ok then
+                        msg(p, 'Need 1 Nascent Shard + 1 Valkurm Mark to start this path.')
+                        return
+                    end
+                    local t1Id = xi.provingArms.WEAPONS[1] and xi.provingArms.WEAPONS[1][fam]
+                    if not t1Id or t1Id == 0 then
+                        msg(p, famName .. ' Tier 1 not yet configured.')
+                        return
+                    end
+                    p:timer(100, function(pp)
+                        pp:customMenu({
+                            title   = 'Acquire ' .. famName,
+                            options =
+                            {
+                                { 'Acquire Nascent', function(ppp)
+                                    xi.provingArms.consumeMaterials(ppp, recipe)
+                                    ppp:addItem(t1Id, 1)
+                                    msg(ppp, famName .. ' Nascent acquired.')
+                                end },
+                                { 'Cancel', function() end },
+                            },
+                        })
+                    end)
+                end,
+            })
+
+        elseif currentTier < 5 then
+            -- Player has T1-T4 of this family — offer the next upgrade
+            local recipe = xi.provingArms.getRecipe(currentTier)
             if recipe then
-                local canDo, _ = xi.provingArms.checkMaterials(player, recipe)
-                table.insert(eligible, {
-                    itemId = itemId, tier = info.tier,
-                    family = info.family, recipe = recipe, canDo = canDo,
+                local e =
+                {
+                    itemId = currentItemId,
+                    tier   = currentTier,
+                    family = fam,
+                    recipe = recipe,
+                }
+                local canDo    = xi.provingArms.checkMaterials(player, recipe)
+                local tierName = TIER_LABEL[e.tier] or ('Tier '..e.tier)
+                local nextName = TIER_LABEL[e.tier + 1] or '?'
+                table.insert(options, {
+                    string.format('%s %s->%s%s', famName, tierName, nextName, canDo and '' or ' [!]'),
+                    function(p)
+                        local ok, _ = xi.provingArms.checkMaterials(p, e.recipe)
+                        if not ok then
+                            msg(p, 'Missing materials for this upgrade.')
+                            return
+                        end
+                        p:timer(100, function(pp)
+                            pp:customMenu({
+                                title   = string.format('%s %s->%s Confirm', famName, tierName, nextName),
+                                options =
+                                {
+                                    { 'Upgrade', function(ppp)
+                                        xi.provingArms.consumeMaterials(ppp, e.recipe)
+                                        local success, err = xi.provingArms.doUpgrade(ppp, e.itemId, e.tier, e.family)
+                                        if success then
+                                            msg(ppp, string.format('%s %s complete.', famName, nextName))
+                                        else
+                                            msg(ppp, 'Upgrade failed: ' .. tostring(err))
+                                        end
+                                    end },
+                                    { 'Cancel', function() end },
+                                },
+                            })
+                        end)
+                    end,
                 })
             end
         end
+        -- T5 (Proven) families omitted — use Activate/Reroll Augment menus
     end
 
-    if #eligible == 0 then
-        msg(player, 'No upgradeable weapons found.')
+    if #options == 0 then
+        msg(player, 'All weapon paths at Proven tier. Use Activate/Reroll Augment.')
         return
     end
 
-    local options = {}
-    for _, entry in ipairs(eligible) do
-        local e = entry
-        local tierName  = TIER_LABEL[e.tier] or ('Tier '..e.tier)
-        local famName   = FAMILY_LABEL[e.family] or e.family
-        local readyMark = e.canDo and '' or ' [!]'
-        table.insert(options, {
-            string.format('%s %s->%s%s', famName, tierName,
-                TIER_LABEL[e.tier+1] or '?', readyMark),
-            function(p)
-                local ok, missing = xi.provingArms.checkMaterials(p, e.recipe)
-                if not ok then
-                    msg(p, 'Missing materials for this upgrade.')
-                    return
-                end
-
-                -- Confirm sub-menu
-                player:timer(100, function(pp)
-                    pp:customMenu({
-                        title = string.format('%s->%s Confirm',
-                            tierName, TIER_LABEL[e.tier+1] or '?'),
-                        options = {
-                            { 'Upgrade', function(ppp)
-                                xi.provingArms.consumeMaterials(ppp, e.recipe)
-                                local success, err = xi.provingArms.doUpgrade(
-                                    ppp, e.itemId, e.tier, e.family)
-                                if success then
-                                    msg(ppp, string.format('%s %s complete.',
-                                        famName, TIER_LABEL[e.tier+1] or ''))
-                                else
-                                    msg(ppp, 'Upgrade failed: ' .. tostring(err))
-                                end
-                            end },
-                            { 'Cancel', function() end },
-                        },
-                    })
-                end)
-            end,
-        })
-    end
     table.insert(options, { 'Back', function(p) forge.onTrigger(p, nil) end })
 
     player:timer(100, function(p)
-        p:customMenu({ title = 'Upgrade Weapon', options = options })
+        p:customMenu({ title = 'Weapon Paths', options = options })
     end)
 end
 

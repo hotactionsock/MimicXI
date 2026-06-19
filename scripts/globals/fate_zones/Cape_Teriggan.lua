@@ -1,4 +1,4 @@
------------------------------------
+﻿-----------------------------------
 -- FATE Zone: Cape Teriggan
 -- Zone ID: 113
 -- Region pool: KOLSHUSHU_ELSHIMO
@@ -136,7 +136,7 @@ xi.fate.zones[xi.zone.CAPE_TERIGGAN] =
             bossWarnings =
             {
                 "A deep, rumbling growl carries across Cape Teriggan on the sea wind...",
-                "The growl fills the cape — an immense shadow stalks the clifftops...",
+                "The growl fills the cape - an immense shadow stalks the clifftops...",
             },
 
             onMobEngage = function(mob, target, zoneID, eventIdx)

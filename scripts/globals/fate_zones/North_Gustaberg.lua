@@ -1,4 +1,4 @@
------------------------------------
+﻿-----------------------------------
 -- FATE Zone: North Gustaberg
 -- Zone ID: 106
 -- Loot rates are out of 1000:
@@ -317,7 +317,7 @@ xi.fate.zones[xi.zone.NORTH_GUSTABERG] =
             bossWarnings =
             {
                 "The ground trembles underfoot across North Gustaberg...",
-                "Deep rumbling shakes the cliffs — something massive stirs below...",
+                "Deep rumbling shakes the cliffs - something massive stirs below...",
             },
 
             onMobEngage = function(mob, target, zoneID, eventIdx)
@@ -723,7 +723,7 @@ xi.fate.zones[xi.zone.NORTH_GUSTABERG] =
             bossWarnings =
             {
                 "A subsidence crack opens along the northern road of Gustaberg...",
-                "The crack widens and heaves — something ancient and enormous forces its way free...",
+                "The crack widens and heaves - something ancient and enormous forces its way free...",
             },
 
             onMobEngage = function(mob, target, zoneID, eventIdx)
@@ -846,7 +846,7 @@ xi.fate.zones[xi.zone.NORTH_GUSTABERG] =
             bossWarnings =
             {
                 "The entire hillside of North Gustaberg begins to tremble...",
-                "A catastrophic upheaval splits the rock face — something unimaginably vast emerges...",
+                "A catastrophic upheaval splits the rock face - something unimaginably vast emerges...",
             },
 
             onMobEngage = function(mob, target, zoneID, eventIdx)

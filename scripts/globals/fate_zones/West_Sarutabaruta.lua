@@ -1,4 +1,4 @@
------------------------------------
+﻿-----------------------------------
 -- FATE Zone: West Sarutabaruta
 -- Zone ID: 115
 -- Loot rates are out of 1000:
@@ -443,7 +443,7 @@ xi.fate.zones[xi.zone.WEST_SARUTABARUTA] =
             bossWarnings =
             {
                 "A deafening buzz reverberates across the sarutabaruta grasslands...",
-                "The droning grows closer — something enormous circles overhead...",
+                "The droning grows closer - something enormous circles overhead...",
             },
 
             onMobEngage = function(mob, target, zoneID, eventIdx)

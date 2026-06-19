@@ -239,7 +239,10 @@ void CInstance::CheckTime(timer::time_point tick)
     }
     if (m_lastTimeCheck + checkFrequency <= tick && !Failed())
     {
-        luautils::OnInstanceTimeUpdate(GetZone(), this, static_cast<uint32>(timer::count_milliseconds(GetElapsedTime(tick))));
+        auto elapsedMs = static_cast<uint32>(timer::count_milliseconds(GetElapsedTime(tick)));
+        ShowDebug("CheckTime: firing OnInstanceTimeUpdate instanceid=%u elapsed=%u", m_instanceid, elapsedMs);
+        luautils::OnInstanceTimeUpdate(GetZone(), this, elapsedMs);
+        ShowDebug("CheckTime: OnInstanceTimeUpdate complete instanceid=%u", m_instanceid);
         m_lastTimeCheck = tick;
     }
 }

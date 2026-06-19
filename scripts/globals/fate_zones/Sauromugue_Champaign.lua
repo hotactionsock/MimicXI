@@ -1,4 +1,4 @@
------------------------------------
+﻿-----------------------------------
 -- FATE Zone: Sauromugue Champaign
 -- Zone ID: 120
 -- Region pool: NORVALLEN_QUFIM
@@ -229,7 +229,7 @@ xi.fate.zones[xi.zone.SAUROMUGUE_CHAMPAIGN] =
             bossWarnings =
             {
                 "War drums roll across the Sauromugue Champaign...",
-                "A war banner appears on the horizon — the Orcish Warlord rides to battle...",
+                "A war banner appears on the horizon - the Orcish Warlord rides to battle...",
             },
 
             onMobEngage = function(mob, target, zoneID, eventIdx)

@@ -1,4 +1,4 @@
------------------------------------
+﻿-----------------------------------
 -- FATE Zone: Xarcabard
 -- Zone ID: 112
 -- Region pool: NORTHLANDS
@@ -135,7 +135,7 @@ xi.fate.zones[xi.zone.XARCABARD] =
             bossWarnings =
             {
                 "The darkness over Xarcabard deepens beyond all natural measure...",
-                "A cold void tears open in the sky — something vast and formless descends...",
+                "A cold void tears open in the sky - something vast and formless descends...",
             },
 
             onMobEngage = function(mob, target, zoneID, eventIdx)

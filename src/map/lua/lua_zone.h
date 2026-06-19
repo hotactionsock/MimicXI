@@ -64,6 +64,7 @@ public:
     uint32      getUptime();
     void        reloadNavmesh();
     bool        isNavigablePoint(const sol::table& position);
+    auto        getRandomNavmeshPoint(sol::optional<sol::table> center, sol::optional<float> radius) -> sol::optional<sol::table>;
     auto        getTerrainType(const sol::table& position) -> TerrainType;
     auto        getFloorId(const sol::table& position) -> uint8;
     auto        insertDynamicEntity(sol::table table) -> CBaseEntity*;

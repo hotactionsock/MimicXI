@@ -3,7 +3,6 @@
 -----------------------------------
 require("modules/module_utils")
 -----------------------------------
-local m = Module:new("LQS_teleporter")
 
 LQS = LQS or {}
 
@@ -282,4 +281,4 @@ LQS.outpostTeleporter = function(config)
     return LQS.teleporter(config)
 end
 
-return m
+return {}

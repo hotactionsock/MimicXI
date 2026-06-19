@@ -1,4 +1,4 @@
------------------------------------
+﻿-----------------------------------
 -- FATE Zone: La Theine Plateau
 -- Zone ID: 102
 -- Region pool: STARTER_ZULKHEIM
@@ -228,7 +228,7 @@ xi.fate.zones[xi.zone.LA_THEINE_PLATEAU] =
             bossWarnings =
             {
                 "A low, rumbling growl rolls across La Theine Plateau...",
-                "The growl shakes the earth itself — something huge prowls the highland...",
+                "The growl shakes the earth itself - something huge prowls the highland...",
             },
 
             onMobEngage = function(mob, target, zoneID, eventIdx)
@@ -753,7 +753,7 @@ xi.fate.zones[xi.zone.LA_THEINE_PLATEAU] =
 
             bossWarnings =
             {
-                "An eerie stillness descends on La Theine Plateau — all other creatures flee...",
+                "An eerie stillness descends on La Theine Plateau - all other creatures flee...",
                 "A white shape moves between the highland stones, crossing the plateau in total silence...",
             },
 

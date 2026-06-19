@@ -1,4 +1,4 @@
------------------------------------
+﻿-----------------------------------
 -- FATE Zone: Tahrongi Canyon
 -- Zone ID: 117
 -- Region pool: STARTER_ZULKHEIM
@@ -137,7 +137,7 @@ xi.fate.zones[xi.zone.TAHRONGI_CANYON] =
             bossWarnings =
             {
                 "A faint chittering echoes from the upper cliffs of Tahrongi...",
-                "The chittering grows deafening — something immense descends the canyon walls...",
+                "The chittering grows deafening - something immense descends the canyon walls...",
             },
 
             onMobEngage = function(mob, target, zoneID, eventIdx)
@@ -633,7 +633,7 @@ xi.fate.zones[xi.zone.TAHRONGI_CANYON] =
             bossWarnings =
             {
                 "Thundering hoofbeats boom through the lower canyon of Tahrongi...",
-                "Stones clatter off the cliff walls — something enormous is charging down the gorge...",
+                "Stones clatter off the cliff walls - something enormous is charging down the gorge...",
             },
 
             onMobEngage = function(mob, target, zoneID, eventIdx)
@@ -757,7 +757,7 @@ xi.fate.zones[xi.zone.TAHRONGI_CANYON] =
             bossWarnings =
             {
                 "The walls of Tahrongi Canyon begin to crack and groan with unnatural force...",
-                "A massive fissure opens in the canyon floor — something geological rises from below...",
+                "A massive fissure opens in the canyon floor - something geological rises from below...",
             },
 
             onMobEngage = function(mob, target, zoneID, eventIdx)

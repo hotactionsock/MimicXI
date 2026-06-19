@@ -1,4 +1,4 @@
------------------------------------
+﻿-----------------------------------
 -- FATE Zone: Beaucedine Glacier
 -- Zone ID: 111
 -- Region pool: NORTHLANDS
@@ -209,8 +209,8 @@ xi.fate.zones[xi.zone.BEAUCEDINE_GLACIER] =
         -----------------------------------
         -- The Glacier Titan
         -- A colossal ice-encrusted Gigas
-        -- King — long thought frozen in the
-        -- deepest ice — stirs and advances
+        -- King - long thought frozen in the
+        -- deepest ice - stirs and advances
         -- across the glacier under storm.
         -----------------------------------
         {

@@ -1,4 +1,4 @@
------------------------------------
+﻿-----------------------------------
 -- FATE Zone: Pashhow Marshlands
 -- Zone ID: 109
 -- Region pool: DERFLAND_ARAGONEU
@@ -229,7 +229,7 @@ xi.fate.zones[xi.zone.PASHHOW_MARSHLANDS] =
             bossWarnings =
             {
                 "The marsh waters churn and bubble ominously across Pashhow...",
-                "A foul stench rises from the deepest bog — something vast stirs beneath...",
+                "A foul stench rises from the deepest bog - something vast stirs beneath...",
             },
 
             onMobEngage = function(mob, target, zoneID, eventIdx)
@@ -623,7 +623,7 @@ xi.fate.zones[xi.zone.PASHHOW_MARSHLANDS] =
             bossWarnings =
             {
                 "An unbearable stench drifts across the marshland of Pashhow...",
-                "The bog ripples — something vast and foul pulls itself toward the surface...",
+                "The bog ripples - something vast and foul pulls itself toward the surface...",
             },
 
             onMobEngage = function(mob, target, zoneID, eventIdx)
@@ -746,7 +746,7 @@ xi.fate.zones[xi.zone.PASHHOW_MARSHLANDS] =
             bossWarnings =
             {
                 "The marsh water turns brackish and dark across the whole of Pashhow...",
-                "Ancient vines rip through the bogwater — the Fetid Empress stirs from her sump...",
+                "Ancient vines rip through the bogwater - the Fetid Empress stirs from her sump...",
             },
 
             onMobEngage = function(mob, target, zoneID, eventIdx)

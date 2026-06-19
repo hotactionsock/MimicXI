@@ -232,7 +232,20 @@ auto MapEngine::init() -> Task<void>
             kTimeServerTickInterval,
             [this]() -> Task<void>
             {
-                co_await time_server(scheduler_, config_);
+                try
+                {
+                    co_await time_server(scheduler_, config_);
+                }
+                catch (const std::exception& e)
+                {
+                    ShowError("time_server exception: %s", e.what());
+                    throw;
+                }
+                catch (...)
+                {
+                    ShowError("time_server unknown exception");
+                    throw;
+                }
             });
 
         persistVolatileServerVarsToken_ = scheduler_.intervalOnMainThread(kPersistVolatileServerVarsInterval, serverutils::PersistVolatileServerVars);

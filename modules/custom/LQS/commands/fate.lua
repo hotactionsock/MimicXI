@@ -174,31 +174,50 @@ commandObj.onTrigger = function(player, subcmd, arg1, arg2)
 
         local zone = GetZone(zoneID)
 
+        local function resetEvent(eventIdx)
+            local def = xi.fate.getEventDef(zoneID, eventIdx)
+            if xi.fate.isActive(zoneID, eventIdx) and zone then
+                xi.fate.sweepMobs(zoneID, eventIdx)
+                local entry = xi.fate.entryNPCs and xi.fate.entryNPCs[zoneID] and xi.fate.entryNPCs[zoneID][eventIdx]
+                if entry then entry:setStatus(xi.status.DISAPPEAR) end
+                -- Hide defense target NPCs (Supply Posts etc.)
+                if def and def.objective and def.objective.type == "defend" then
+                    SetVolatileServerVariable(string.format("[SBOSS][%d][%d]Wave", zoneID, eventIdx), 0)
+                    local dTargets = xi.fate.defenseTargetNPCs and xi.fate.defenseTargetNPCs[zoneID] and xi.fate.defenseTargetNPCs[zoneID][eventIdx]
+                    if dTargets then
+                        for _, t in ipairs(dTargets) do
+                            t:setStatus(xi.status.DISAPPEAR)
+                        end
+                    end
+                end
+                -- Hide collection-point NPCs
+                if def and def.objective and def.objective.type == "collect" then
+                    local cnpcs = xi.fate.collectNPCs and xi.fate.collectNPCs[zoneID] and xi.fate.collectNPCs[zoneID][eventIdx]
+                    if cnpcs then
+                        for _, c in ipairs(cnpcs) do
+                            c:setStatus(xi.status.DISAPPEAR)
+                            c:setLocalVar("fateCollected", 0)
+                        end
+                    end
+                end
+            end
+            SetServerVariable(stateKey(zoneID, eventIdx),    STATE_IDLE)
+            SetServerVariable(cooldownKey(zoneID, eventIdx), 0)
+        end
+
         if eventID then
             local eventIdx = findEventIdx(zoneID, eventID)
             if not eventIdx then
                 player:printToPlayer(string.format("[FATE] Event '%s' not found in zone %d.", eventID, zoneID))
                 return
             end
-            if xi.fate.isActive(zoneID, eventIdx) and zone then
-                xi.fate.sweepMobs(zoneID, eventIdx)
-                local entry = xi.fate.entryNPCs and xi.fate.entryNPCs[zoneID] and xi.fate.entryNPCs[zoneID][eventIdx]
-                if entry then entry:setStatus(xi.status.DISAPPEAR) end
-            end
-            SetServerVariable(stateKey(zoneID, eventIdx),    STATE_IDLE)
-            SetServerVariable(cooldownKey(zoneID, eventIdx), 0)
+            resetEvent(eventIdx)
             xi.fate.participants[zoneID]           = xi.fate.participants[zoneID] or {}
             xi.fate.participants[zoneID][eventIdx] = {}
             player:printToPlayer(string.format("[FATE] Zone %d event %s: reset to IDLE.", zoneID, eventID))
         else
             for eventIdx, _ in ipairs(zoneData.events) do
-                if xi.fate.isActive(zoneID, eventIdx) and zone then
-                    xi.fate.sweepMobs(zoneID, eventIdx)
-                    local entry = xi.fate.entryNPCs and xi.fate.entryNPCs[zoneID] and xi.fate.entryNPCs[zoneID][eventIdx]
-                    if entry then entry:setStatus(xi.status.DISAPPEAR) end
-                end
-                SetServerVariable(stateKey(zoneID, eventIdx),    STATE_IDLE)
-                SetServerVariable(cooldownKey(zoneID, eventIdx), 0)
+                resetEvent(eventIdx)
             end
             xi.fate.participants[zoneID] = {}
             player:printToPlayer(string.format("[FATE] Zone %d: all events reset to IDLE.", zoneID))

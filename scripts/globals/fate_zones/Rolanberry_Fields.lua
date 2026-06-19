@@ -1,4 +1,4 @@
------------------------------------
+﻿-----------------------------------
 -- FATE Zone: Rolanberry Fields
 -- Zone ID: 110
 -- Region pool: DERFLAND_ARAGONEU
@@ -137,7 +137,7 @@ xi.fate.zones[xi.zone.ROLANBERRY_FIELDS] =
             bossWarnings =
             {
                 "An eerie silence falls over the Rolanberry Fields...",
-                "The fields rustle violently — enormous mandibles part the crops...",
+                "The fields rustle violently - enormous mandibles part the crops...",
             },
 
             onMobEngage = function(mob, target, zoneID, eventIdx)
@@ -539,7 +539,7 @@ xi.fate.zones[xi.zone.ROLANBERRY_FIELDS] =
             bossWarnings =
             {
                 "The ground shakes with heavy impacts deep in the Rolanberry Fields...",
-                "Crops scatter in all directions — something immense tears through the orchard rows...",
+                "Crops scatter in all directions - something immense tears through the orchard rows...",
             },
 
             onMobEngage = function(mob, target, zoneID, eventIdx)
@@ -659,7 +659,7 @@ xi.fate.zones[xi.zone.ROLANBERRY_FIELDS] =
 
             bossWarnings =
             {
-                "The Rolanberry Fields tremble — deep root systems writhe beneath the surface...",
+                "The Rolanberry Fields tremble - deep root systems writhe beneath the surface...",
                 "The earth splits across the fields as the Ancient Cultivator tears free...",
             },
 

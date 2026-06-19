@@ -15,6 +15,9 @@ zones[xi.zone.MAQUETTE_ABDHALJS_LEGION_A] =
         LOGIN_CAMPAIGN_UNDERWAY       = 7003, -- The [/January/February/March/April/May/June/July/August/September/October/November/December] <number> Login Campaign is currently underway!
         LOGIN_NUMBER                  = 7004, -- In celebration of your most recent login (login no. <number>), we have provided you with <number> points! You currently have a total of <number> points.
         MEMBERS_LEVELS_ARE_RESTRICTED = 7024, -- Your party is unable to participate because certain members' levels are restricted.
+        TIME_REMAINING_MINUTES        = 7428, -- Time remaining: <number> [minute/minutes] (Earth time).
+        TIME_REMAINING_SECONDS        = 7429, -- Time remaining: <number> [second/seconds] (Earth time).
+        PARTY_FALLEN                  = 7431, -- All party members have fallen in battle. Mission failure in <number> [minute/minutes].
     },
     mob =
     {

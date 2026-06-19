@@ -504,6 +504,7 @@ xi.item =
     VIAL_OF_FIEND_BLOOD                 = 924,
     GIANT_STINGER                       = 925,
     LIZARD_TAIL                         = 926,
+    COEURL_WHISKER                      = 927,
     PINCH_OF_BOMB_ASH                   = 928,
     JAR_OF_BLACK_INK                    = 929,
     VIAL_OF_BEASTMAN_BLOOD              = 930,

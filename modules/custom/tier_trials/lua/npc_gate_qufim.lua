@@ -1,7 +1,7 @@
 -----------------------------------
 -- Module: Tier Trial Gatekeeper — Qufim Island (Lv40)
 -- NPC: Trial_Gatekeeper_Qufim
--- Elvaan male warrior look (model 2562)
+-- Hume female warrior look (model 2552)
 -----------------------------------
 require('modules/module_utils')
 require('scripts/zones/Qufim_Island/Zone')
@@ -16,7 +16,7 @@ m:addOverride('xi.zones.Qufim_Island.Zone.onInitialize', function(zone)
     zone:insertDynamicEntity({
         objtype   = xi.objType.NPC,
         name      = 'Trial_Gatekeeper_Qufim',
-        look      = 2562,
+        look      = 2552,
         x         = -275.192,
         y         = -20.000,
         z         = 326.279,

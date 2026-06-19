@@ -130,7 +130,9 @@ void CheckInstance()
 
         auto loader = std::make_unique<CInstanceLoader>(instanceId, PRequester);
         loader->LoadInstance();
+        // ShowDebug("instanceutils::CheckInstance: LoadInstance returned for instanceid=%u", instanceId);
     }
+    // ShowDebug("instanceutils::CheckInstance: returning");
 }
 
 void LoadInstance(uint32 instanceid, CCharEntity* PRequester)

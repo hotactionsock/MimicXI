@@ -10,6 +10,9 @@
 -- !circuit leaderboard <id>    — show top 5 for circuit id
 -----------------------------------
 
+-- Renamed to circuit.lua — this file is intentionally empty.
+do return {} end
+
 local CMD = {}
 
 CMD['circuit'] = function(player, command, args)

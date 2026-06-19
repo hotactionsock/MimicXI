@@ -28,7 +28,6 @@
 -----------------------------------
 require('modules/module_utils')
 
-local m = Module:new('casket_augment_tiers')
 
 xi         = xi or {}
 xi.caskets = xi.caskets or {}
@@ -736,4 +735,4 @@ xi.caskets.rarePools[xi.zone.RUAUN_GARDENS]      = xi.caskets.rarePools[xi.zone.
 xi.caskets.rarePools[xi.zone.VELUGANNON_PALACE]  = xi.caskets.rarePools[xi.zone.VELUGANNON_PALACE]  or tier7RareItems
 xi.caskets.rarePools[xi.zone.THE_SHRINE_OF_RUAVITAU] = xi.caskets.rarePools[xi.zone.THE_SHRINE_OF_RUAVITAU] or tier7RareItems
 
-return m
+return {}

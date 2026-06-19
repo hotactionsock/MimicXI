@@ -810,6 +810,10 @@ auto CGambitsContainer::Tick(timer::time_point tick) -> Task<void>
                 else
                 {
                     target = POwner->GetBattleTarget();
+                    if (!target)
+                    {
+                        break;
+                    }
                 }
 
                 if (action.select == G_SELECT::SPECIFIC)

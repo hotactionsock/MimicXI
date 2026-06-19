@@ -12,6 +12,9 @@
 -- !forge materials           — print player's current shard/mark/point counts
 -----------------------------------
 
+-- Renamed to forge.lua — this file is intentionally empty.
+do return {} end
+
 local CMD = {}
 
 local FAMILY_NAMES =

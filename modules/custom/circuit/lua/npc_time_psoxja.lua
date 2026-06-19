@@ -1,7 +1,7 @@
 -----------------------------------
 -- Module: Circuit Timekeeper — Pso'Xja (Lv60)
 -- NPC: Circuit_Timekeeper_PsoXja
--- Tarutaru female scholar look (model 2463)
+-- Tarutaru male scholar look (model 2457)
 -----------------------------------
 require('modules/module_utils')
 require('scripts/zones/PsoXja/Zone')
@@ -16,7 +16,7 @@ m:addOverride('xi.zones.PsoXja.Zone.onInitialize', function(zone)
     zone:insertDynamicEntity({
         objtype   = xi.objType.NPC,
         name      = 'Circuit_Timekeeper_PsoXja',
-        look      = 2463,
+        look      = 2457,
         x         = -177.082,
         y         = 0.000,
         z         = -42.328,

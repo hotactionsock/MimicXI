@@ -1,4 +1,4 @@
------------------------------------
+﻿-----------------------------------
 -- FATE Zone: Buburimu Peninsula
 -- Zone ID: 118
 -- Region pool: DERFLAND_ARAGONEU
@@ -36,13 +36,7 @@ xi.fate.zones[xi.zone.BUBURIMU_PENINSULA] =
 
             objective = { type = "kill", count = 10 },
 
-            area =
-            {
-                x      = 0,   -- TODO: !pos survey
-                y      = 0,   -- TODO: !pos survey
-                z      = 0,   -- TODO: !pos survey
-                radius = 75,
-            },
+            area = { 0, 0, 0, 75 },
 
             entryPos = { 0, 0, 0, 0 }, -- TODO: !pos survey 118
 
@@ -133,15 +127,9 @@ xi.fate.zones[xi.zone.BUBURIMU_PENINSULA] =
 
             objective = { type = "kill", count = 8 },
 
-            area =
-            {
-                x      = 0,   -- TODO: !pos survey
-                y      = 0,   -- TODO: !pos survey
-                z      = 0,   -- TODO: !pos survey
-                radius = 75,
-            },
+            area = { 144.060, 1.402, -153.530, 75 }, -- !pos 144.060 1.402 -153.530 118
 
-            entryPos = { 0, 0, 0, 0 }, -- TODO: !pos survey 118
+            entryPos = { 142.750, -0.392, -170.404, 179 }, -- !pos 142.750 -0.392 -170.404 118
 
             mobs =
             {
@@ -149,20 +137,10 @@ xi.fate.zones[xi.zone.BUBURIMU_PENINSULA] =
                     -- Script: scripts/zones/Buburimu_Peninsula/mobs/Goblin_Heckler.lua
                     -- Loaded automatically by the engine when mob name matches the script filename.
                     -- Ensure mob_groups entry name matches "Goblin Heckler" exactly.
-                    base        = { 118, 5 },  -- TODO: verify mob_groups (Goblin Heckler)
-                    name        = string.char(0xA6) .. "Goblin Heckler",
-                    count       = 8,
-                    spawnPoints =
-                    {
-                        { 0, 0, 0, 0 }, -- TODO: !pos survey 118
-                        { 0, 0, 0, 0 }, -- TODO: !pos survey 118
-                        { 0, 0, 0, 0 }, -- TODO: !pos survey 118
-                        { 0, 0, 0, 0 }, -- TODO: !pos survey 118
-                        { 0, 0, 0, 0 }, -- TODO: !pos survey 118
-                        { 0, 0, 0, 0 }, -- TODO: !pos survey 118
-                        { 0, 0, 0, 0 }, -- TODO: !pos survey 118
-                        { 0, 0, 0, 0 }, -- TODO: !pos survey 118
-                    },
+                    base  = { 118, 17 },  -- TODO: verify mob_groups (Goblin Heckler)
+                    name  = string.char(0xA6) .. "Goblin Heckler",
+                    count = 8,
+                    -- spawn positions generated from area center via navmesh at runtime
                 },
             },
 
@@ -227,7 +205,7 @@ xi.fate.zones[xi.zone.BUBURIMU_PENINSULA] =
             bossWarnings =
             {
                 "A piercing shriek cuts through the sea breeze on the peninsula...",
-                "Heavy wingbeats drum overhead — the peninsula's apex predator has stirred...",
+                "Heavy wingbeats drum overhead - the peninsula's apex predator has stirred...",
             },
 
             onMobEngage = function(mob, target, zoneID, eventIdx)
@@ -247,13 +225,7 @@ xi.fate.zones[xi.zone.BUBURIMU_PENINSULA] =
                 end
             end,
 
-            area =
-            {
-                x      = 0,   -- TODO: !pos survey
-                y      = 0,   -- TODO: !pos survey
-                z      = 0,   -- TODO: !pos survey
-                radius = 81,
-            },
+            area = { 0, 0, 0, 81 },
 
             entryPos = { 0, 0, 0, 0 }, -- TODO: !pos survey 118
 
@@ -343,13 +315,7 @@ xi.fate.zones[xi.zone.BUBURIMU_PENINSULA] =
 
             objective = { type = "kill", count = 12 },
 
-            area =
-            {
-                x      = 0,   -- TODO: !pos survey
-                y      = 0,   -- TODO: !pos survey
-                z      = 0,   -- TODO: !pos survey
-                radius = 70,
-            },
+            area = { 0, 0, 0, 70 },
 
             entryPos = { 0, 0, 0, 0 }, -- TODO: !pos survey 118
 
@@ -434,13 +400,7 @@ xi.fate.zones[xi.zone.BUBURIMU_PENINSULA] =
 
             objective = { type = "kill", count = 10 },
 
-            area =
-            {
-                x      = 0,   -- TODO: !pos survey
-                y      = 0,   -- TODO: !pos survey
-                z      = 0,   -- TODO: !pos survey
-                radius = 75,
-            },
+            area = { 0, 0, 0, 75 },
 
             entryPos = { 0, 0, 0, 0 }, -- TODO: !pos survey 118
 
@@ -510,7 +470,7 @@ xi.fate.zones[xi.zone.BUBURIMU_PENINSULA] =
         -- Chains from Snipper Skirmish.
         -- The retreat signal draws the
         -- largest Snippers from the deep
-        -- tide pools — massive veterans
+        -- tide pools - massive veterans
         -- with armour like ship timber.
         -----------------------------------
         {
@@ -523,13 +483,7 @@ xi.fate.zones[xi.zone.BUBURIMU_PENINSULA] =
 
             objective = { type = "kill", count = 5 },
 
-            area =
-            {
-                x      = 0,   -- TODO: !pos survey
-                y      = 0,   -- TODO: !pos survey
-                z      = 0,   -- TODO: !pos survey
-                radius = 65,
-            },
+            area = { 0, 0, 0, 65 },
 
             entryPos = { 0, 0, 0, 0 }, -- TODO: !pos survey 118
 
@@ -632,13 +586,7 @@ xi.fate.zones[xi.zone.BUBURIMU_PENINSULA] =
                 end
             end,
 
-            area =
-            {
-                x      = 0,   -- TODO: !pos survey
-                y      = 0,   -- TODO: !pos survey
-                z      = 0,   -- TODO: !pos survey
-                radius = 88,
-            },
+            area = { 0, 0, 0, 88 },
 
             entryPos = { 0, 0, 0, 0 }, -- TODO: !pos survey 118
 
@@ -734,7 +682,7 @@ xi.fate.zones[xi.zone.BUBURIMU_PENINSULA] =
 
             bossWarnings =
             {
-                "The sea turns black offshore from Buburimu — something ancient stirs below...",
+                "The sea turns black offshore from Buburimu - something ancient stirs below...",
                 "A titanic wake crashes across the beach as the Devourer of Tides surfaces...",
             },
 
@@ -755,13 +703,7 @@ xi.fate.zones[xi.zone.BUBURIMU_PENINSULA] =
                 end
             end,
 
-            area =
-            {
-                x      = 0,   -- TODO: !pos survey
-                y      = 0,   -- TODO: !pos survey
-                z      = 0,   -- TODO: !pos survey
-                radius = 110,
-            },
+            area = { 0, 0, 0, 110 },
 
             entryPos = { 0, 0, 0, 0 }, -- TODO: !pos survey 118
 

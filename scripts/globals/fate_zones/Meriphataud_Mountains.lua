@@ -1,4 +1,4 @@
------------------------------------
+﻿-----------------------------------
 -- FATE Zone: Meriphataud Mountains
 -- Zone ID: 119
 -- Region pool: DERFLAND_ARAGONEU
@@ -228,7 +228,7 @@ xi.fate.zones[xi.zone.MERIPHATAUD_MOUNTAINS] =
             bossWarnings =
             {
                 "A deep, rhythmic rumbling echoes from the Meriphataud passes...",
-                "The mountain shakes — a blazing shape rolls down the high road...",
+                "The mountain shakes - a blazing shape rolls down the high road...",
             },
 
             onMobEngage = function(mob, target, zoneID, eventIdx)
@@ -750,7 +750,7 @@ xi.fate.zones[xi.zone.MERIPHATAUD_MOUNTAINS] =
 
             bossWarnings =
             {
-                "A shadow crosses the sun above the Meriphataud passes — impossibly large wings...",
+                "A shadow crosses the sun above the Meriphataud passes - impossibly large wings...",
                 "The Summit Predator banks into a dive above the mountain road...",
             },
 

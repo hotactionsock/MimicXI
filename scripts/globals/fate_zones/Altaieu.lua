@@ -1,4 +1,4 @@
------------------------------------
+﻿-----------------------------------
 -- FATE Zone: Al'Taieu
 -- Zone ID: 33
 -- Region pool: SKY_SEA_HIGHEND
@@ -135,7 +135,7 @@ xi.fate.zones[xi.zone.ALTAIEU] =
             bossWarnings =
             {
                 "The crystalline sea of Al'Taieu resonates with a singular, piercing tone...",
-                "A radiant figure descends from the upper tiers — an Ix'aern approaches...",
+                "A radiant figure descends from the upper tiers - an Ix'aern approaches...",
             },
 
             onMobEngage = function(mob, target, zoneID, eventIdx)

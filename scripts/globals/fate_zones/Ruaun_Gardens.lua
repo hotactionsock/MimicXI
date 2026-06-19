@@ -1,4 +1,4 @@
------------------------------------
+﻿-----------------------------------
 -- FATE Zone: Ru'Aun Gardens
 -- Zone ID: 130
 -- Region pool: SKY_SEA_HIGHEND
@@ -207,8 +207,8 @@ xi.fate.zones[xi.zone.RUAUN_GARDENS] =
 
         -----------------------------------
         -- The Garden Destroyer
-        -- An ancient divine avatar — bound
-        -- in the gardens for aeons — breaks
+        -- An ancient divine avatar - bound
+        -- in the gardens for aeons - breaks
         -- free from its seal, tearing through
         -- the upper platforms in a blind rage.
         -----------------------------------
@@ -227,7 +227,7 @@ xi.fate.zones[xi.zone.RUAUN_GARDENS] =
             bossWarnings =
             {
                 "The platforms of Ru'Aun Gardens tremble as something immense stirs below...",
-                "A blinding light erupts across the upper gardens — an ancient force walks free...",
+                "A blinding light erupts across the upper gardens - an ancient force walks free...",
             },
 
             onMobEngage = function(mob, target, zoneID, eventIdx)

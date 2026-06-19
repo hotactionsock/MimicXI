@@ -4,8 +4,6 @@
 -- Era: Pso'Xja / Sacrarium / Tavnazia
 -- Enemies: Ahriman, Ghosts, Demons
 -- Boss: Vraeth the Tetrachromic
---
--- NOTE: mob IDs and instanceId marked TODO — fill from DB after SQL is run
 -----------------------------------
 
 xi = xi or {}
@@ -34,31 +32,26 @@ xi.tierTrial.TIERS[60] =
     {
         [1] =
         {
-            { mobId = 17526824 }, -- Ahriman A
-            { mobId = 17526825 }, -- Ahriman B
+            { name = 'Ahriman', groupId = 12039, groupZoneId = 183, level = 58, count = 2 },
         },
         [2] =
         {
-            { mobId = 17526826 }, -- Haunt A
-            { mobId = 17526827 }, -- Haunt B
-            { mobId = 17526828 }, -- Specter
+            { name = 'Haunt',   groupId = 12041, groupZoneId = 183, level = 58, count = 2 },
+            { name = 'Specter', groupId = 12043, groupZoneId = 183, level = 59 },
         },
         [3] =
         {
-            { mobId = 17526829 }, -- Demon Knight A
-            { mobId = 17526830 }, -- Demon Knight B
-            { mobId = 17526831 }, -- Demon Warlock
+            { name = 'Demon Knight',   groupId = 12044, groupZoneId = 183, level = 58, count = 2 },
+            { name = 'Demon Warlock',  groupId = 12046, groupZoneId = 183, level = 59 },
         },
         [4] =
         {
-            { mobId = 17526832 }, -- Ahriman A
-            { mobId = 17526833 }, -- Ahriman B
-            { mobId = 17526834 }, -- Demon Knight A
-            { mobId = 17526835 }, -- Demon Knight B
+            { name = 'Ahriman',      groupId = 12039, groupZoneId = 183, level = 59, count = 2 },
+            { name = 'Demon Knight', groupId = 12044, groupZoneId = 183, level = 59, count = 2 },
         },
         [5] =
         {
-            { mobId = 17526836, isBoss = true }, -- Vraeth the Tetrachromic
+            { name = 'Vraeth the Tetrachromic', groupId = 12051, groupZoneId = 183, level = 64, isBoss = true },
         },
     },
 
@@ -72,6 +65,7 @@ xi.tierTrial.TIERS[60] =
     bossPhaseThreshold = 20,
 
     -- Vraeth weakness changes at these HP% thresholds: 80 / 60 / 40 / 20
-    -- Each threshold cycles to the next weakness in the list
     bossWeaknessCycle = { xi.element.FIRE, xi.element.ICE, xi.element.WIND, xi.element.EARTH },
 }
+
+return {}
