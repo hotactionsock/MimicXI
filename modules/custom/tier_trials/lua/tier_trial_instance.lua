@@ -248,7 +248,6 @@ xi.tierTrial.instance.build = function(tier)
 
         for _, member in pairs(player:getParty()) do
             member:setInstance(instance)
-            member:setPos(0, 0, 0, 0, instance:getZone():getID())
         end
     end
 

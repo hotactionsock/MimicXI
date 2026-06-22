@@ -197,6 +197,7 @@ uint8 CTreasurePool::addItem(uint16 ItemID, CBaseEntity* PEntity, std::vector<st
         // If everyone has this rare item, don't add it to the pool
         if (!doesNotHaveRareItem)
         {
+            ShowDebug("TreasurePool::addItem: itemID=%u blocked — all %zu member(s) already hold a Rare copy", ItemID, m_Members.size());
             return m_count; // no change
         }
     }

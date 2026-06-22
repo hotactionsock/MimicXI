@@ -4530,7 +4530,13 @@ void AfterInstanceRegister(CBaseEntity* PChar)
 {
     if (!PChar->PInstance)
     {
-        ShowWarning("PInstance is null.");
+        ShowWarning("AfterInstanceRegister: PInstance is null for %s.", PChar->name.c_str());
+        return;
+    }
+
+    if (!PChar->loc.zone)
+    {
+        ShowWarning("AfterInstanceRegister: loc.zone is null for %s (may have disconnected before 400ms timer fired).", PChar->name.c_str());
         return;
     }
 
@@ -4550,7 +4556,8 @@ void AfterInstanceRegister(CBaseEntity* PChar)
 
     try
     {
-        auto result = afterInstanceRegister(PChar);
+        sol::protected_function fn = afterInstanceRegister;
+        auto result = fn(PChar);
         if (!result.valid())
         {
             sol::error err = result;
@@ -4560,12 +4567,10 @@ void AfterInstanceRegister(CBaseEntity* PChar)
     catch (const std::exception& e)
     {
         ShowError("luautils::AfterInstanceRegister C++ exception: %s", e.what());
-        throw;
     }
     catch (...)
     {
         ShowError("luautils::AfterInstanceRegister unknown C++ exception");
-        throw;
     }
 
     ShowDebug("luautils::AfterInstanceRegister: complete");
@@ -4657,7 +4662,8 @@ void OnInstanceCreatedCallback(CCharEntity* PChar, CInstance* PInstance)
 
     try
     {
-        auto result = onInstanceCreatedCallback(PChar, PInstance);
+        sol::protected_function fn = onInstanceCreatedCallback;
+        auto result = fn(PChar, PInstance);
         if (!result.valid())
         {
             sol::error err = result;
@@ -4667,12 +4673,10 @@ void OnInstanceCreatedCallback(CCharEntity* PChar, CInstance* PInstance)
     catch (const std::exception& e)
     {
         ShowError("luautils::OnInstanceCreatedCallback C++ exception: %s", e.what());
-        throw;
     }
     catch (...)
     {
         ShowError("luautils::OnInstanceCreatedCallback unknown C++ exception");
-        throw;
     }
 
     ShowDebug("luautils::OnInstanceCreatedCallback: complete");
@@ -4696,7 +4700,8 @@ void OnInstanceCreated(CInstance* PInstance)
 
     try
     {
-        auto result = onInstanceCreated(PInstance);
+        sol::protected_function fn = onInstanceCreated;
+        auto result = fn(PInstance);
         if (!result.valid())
         {
             sol::error err = result;
@@ -4706,12 +4711,10 @@ void OnInstanceCreated(CInstance* PInstance)
     catch (const std::exception& e)
     {
         ShowError("luautils::OnInstanceCreated C++ exception: %s", e.what());
-        throw;
     }
     catch (...)
     {
         ShowError("luautils::OnInstanceCreated unknown C++ exception");
-        throw;
     }
 
     ShowDebug("luautils::OnInstanceCreated: complete");

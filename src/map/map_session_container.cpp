@@ -213,7 +213,7 @@ void MapSessionContainer::cleanupSessions(IPP mapIPP)
                 PChar->updatemask |= UPDATE_HP;
 
                 // Is this unintentionally sending extra packets when a player is disconnecting?
-                if (PChar->status == STATUS_TYPE::NORMAL)
+                if (PChar->status == STATUS_TYPE::NORMAL && PChar->loc.zone != nullptr)
                 {
                     PChar->loc.zone->SpawnPCs(PChar);
                 }

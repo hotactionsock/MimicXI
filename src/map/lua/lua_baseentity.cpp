@@ -18923,16 +18923,30 @@ void CLuaBaseEntity::addTreasure(uint16 itemID, const sol::object& arg1, const s
         droprate = arg1.as<uint16>();
     }
 
-    auto   thDropRateFunction = lua["xi"]["combat"]["treasureHunter"]["getDropRate"];
-    uint16 thDropRate         = droprate * 10;
+    auto   thDropRateProxy = lua["xi"]["combat"]["treasureHunter"]["getDropRate"];
+    uint16 thDropRate      = droprate * 10;
     if (auto* PMob = dynamic_cast<CMobEntity*>(PEntity))
     {
-        thDropRate = thDropRateFunction(PMob->m_THLvl, thDropRate);
+        if (thDropRateProxy.valid() && thDropRateProxy.get_type() == sol::type::function)
+        {
+            sol::protected_function thDropRateFn = thDropRateProxy;
+            auto result = thDropRateFn(PMob->m_THLvl, thDropRate);
+            if (result.valid())
+            {
+                thDropRate = result.get<uint16>();
+            }
+        }
     }
 
+    ShowDebug("addTreasure: itemID=%u droprate=%u thDropRate=%u pool=%p", itemID, droprate, thDropRate, (void*)PChar->PTreasurePool);
     if (thDropRate > 0 && (1 + xirand::GetRandomNumber(10000)) <= thDropRate * settings::get<float>("map.DROP_RATE_MULTIPLIER"))
     {
+        ShowDebug("addTreasure: calling PTreasurePool->addItem itemID=%u", itemID);
         PChar->PTreasurePool->addItem(itemID, PEntity, std::move(augments));
+    }
+    else
+    {
+        ShowDebug("addTreasure: drop rate check failed for itemID=%u", itemID);
     }
 }
 

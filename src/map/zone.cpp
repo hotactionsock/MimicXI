@@ -1089,12 +1089,10 @@ void CZone::createZoneTimers()
             catch (const std::exception& e)
             {
                 ShowError("ZoneServer exception in zone %s: %s", this->getName(), e.what());
-                throw;
             }
             catch (...)
             {
                 ShowError("ZoneServer unknown exception in zone %s", this->getName());
-                throw;
             }
         });
 

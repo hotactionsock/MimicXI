@@ -153,6 +153,12 @@ auto MapEngine::init() -> Task<void>
                      mapIPP.getIP(),
                      mapIPP.getPort());
 
+    // Return any character whose current zone is an instance zone to their previous zone.
+    // Instance state does not survive server reboots; leaving chars in these zones makes
+    // them unable to log in.
+    db::preparedStmt("UPDATE chars SET pos_x = 0, pos_y = 0, pos_z = 0, pos_rot = 0, pos_zone = pos_prevzone "
+                    "WHERE pos_zone IN (SELECT DISTINCT instance_zone FROM instance_list WHERE instance_zone > 0)");
+
     ShowInfo("do_init: zlib is reading");
     zlib_init();
 
@@ -239,12 +245,10 @@ auto MapEngine::init() -> Task<void>
                 catch (const std::exception& e)
                 {
                     ShowError("time_server exception: %s", e.what());
-                    throw;
                 }
                 catch (...)
                 {
                     ShowError("time_server unknown exception");
-                    throw;
                 }
             });
 

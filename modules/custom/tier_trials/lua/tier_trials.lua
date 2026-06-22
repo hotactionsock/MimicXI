@@ -141,32 +141,39 @@ local DIFF_NAMES = { [1] = 'Standard', [2] = 'Hardened', [3] = 'Transcendent' }
 -- Called from the boss onMobDeath with the mob entity as dropper so that
 -- shards and weapons enter the party treasure pool (lot/pass UI).
 -----------------------------------
+-- All items go into the shared party treasure pool once — everyone lots/passes together.
 xi.tierTrial.dropLoot = function(instance, dropper)
     local tier       = instance:getLocalVar('tier')
     local difficulty = instance:getLocalVar('difficulty')
     local tierDef    = xi.tierTrial.TIERS[tier]
     if not tierDef then return end
 
+    -- addTreasure must be called on a player; any pool member works since the pool is shared.
+    local anchor
+    for _, p in pairs(instance:getChars()) do anchor = p; break end
+    if not anchor then return end
+
     local shards   = xi.tierTrial.SHARD_DROP_COUNT[difficulty]
     local dropRate = xi.tierTrial.WEAPON_DROP_RATE[difficulty]
 
-    for _, player in pairs(instance:getChars()) do
-        -- Each player earns their own shard(s) via treasure pool
-        if tierDef.shardItem and tierDef.shardItem > 0 then
-            for _ = 1, shards do
-                player:addTreasure(tierDef.shardItem, dropper)
-            end
+    -- Shards: one pool entry per shard, the party lots them out.
+    if tierDef.shardItem and tierDef.shardItem > 0 and shards > 0 then
+        for _ = 1, shards do
+            anchor:addTreasure(tierDef.shardItem, dropper)
         end
+    end
 
-        -- Per-player weapon roll, job-family matched, into treasure pool
-        local roll = math.random(100)
-        if roll <= dropRate then
-            local jobFamily  = xi.tierTrial.getJobFamily(player:getMainJob())
-            local weaponItem = jobFamily and tierDef.weapons[jobFamily]
-            if weaponItem and weaponItem > 0 then
-                player:addTreasure(weaponItem, dropper)
-            end
+    -- Weapon: one roll for the whole party, random from the tier's weapon pool.
+    -- addTreasure rate is 0-1000; dropRate is 0-100.
+    local weaponPool = {}
+    for _, id in pairs(tierDef.weapons) do
+        if id and id > 0 then
+            weaponPool[#weaponPool + 1] = id
         end
+    end
+    if #weaponPool > 0 then
+        local weaponItem = weaponPool[math.random(#weaponPool)]
+        anchor:addTreasure(weaponItem, dropper, dropRate * 10)
     end
 end
 

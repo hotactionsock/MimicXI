@@ -23,6 +23,7 @@
 #include "ai/ai_container.h"
 #include "common/timer.h"
 #include "entities/charentity.h"
+#include "treasure_pool.h"
 #include "lua/luautils.h"
 #include "enums/msg_std.h"
 #include "packets/s2c/0x053_systemmes.h"
@@ -222,8 +223,9 @@ void CZoneInstance::IncreaseZoneCounter(CCharEntity* PChar)
 
     if (PChar->PTreasurePool != nullptr)
     {
-        ShowWarning("PTreasurePool was not empty for %s.", PChar->getName());
-        return;
+        ShowWarning("PTreasurePool was not empty for %s, cleaning up before instance zone-in.", PChar->getName());
+        PChar->PTreasurePool->delMember(PChar);
+        // delMember sets PChar->PTreasurePool = nullptr
     }
 
     // return char to instance (d/c or logout)

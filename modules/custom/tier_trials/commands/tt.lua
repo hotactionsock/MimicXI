@@ -37,6 +37,21 @@ commandObj.onTrigger = function(player, sub, arg1, arg2)
         player:createInstance(tierDef.instanceId)
         player:printToPlayer(string.format('Creating Tier %d instance (difficulty %d)...', tier, difficulty))
 
+        local function pollAndWarp(p, attempts)
+            attempts = attempts or 0
+            local instance = p:getInstance()
+            if instance then
+                for _, member in pairs(p:getParty()) do
+                    member:setPos(0, 0, 0, 0, instance:getZone():getID())
+                end
+            elseif attempts < 10 then
+                p:timer(500, function(pp) pollAndWarp(pp, attempts + 1) end)
+            else
+                p:printToPlayer('Instance creation timed out.')
+            end
+        end
+        player:timer(500, function(p) pollAndWarp(p, 0) end)
+
     elseif sub == 'difficulty' then
         local diff = tonumber(arg1) or 1
         diff = math.max(1, math.min(3, diff))

@@ -96,7 +96,20 @@ void GP_CLI_COMMAND_LOGIN::process(MapSession* PSession, CCharEntity* PChar) con
             return;
         }
 
-        destZone->IncreaseZoneCounter(PChar);
+        try
+        {
+            destZone->IncreaseZoneCounter(PChar);
+        }
+        catch (const std::exception& e)
+        {
+            ShowError("GP_CLI_COMMAND_LOGIN: IncreaseZoneCounter threw for %s: %s", PChar->getName(), e.what());
+            return;
+        }
+        catch (...)
+        {
+            ShowError("GP_CLI_COMMAND_LOGIN: IncreaseZoneCounter threw unknown exception for %s", PChar->getName());
+            return;
+        }
 
         // Current zone could either be current zone or destination
         CZone* currentZone = zoneutils::GetZone(PChar->getZone());

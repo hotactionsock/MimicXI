@@ -70,6 +70,7 @@ local function tryJoin(player, tier, difficulty)
 
     notifyParty(player, tier, difficulty)
 
+    player:setLocalVar('TT_Difficulty',        difficulty)
     player:setLocalVar('TT_InstanceRequested', 1)
     player:createInstance(def.instanceId)
     player:timer(500, function(p)
