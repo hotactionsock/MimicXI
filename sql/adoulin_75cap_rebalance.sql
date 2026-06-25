@@ -1,9 +1,20 @@
--- Adoulin Zone Mob Level Rebalance for 75-cap Era
--- Original Adoulin levels (99-128) remapped to three tiers:
---   Tier 1: 99-105  -> 55-70  (entry-level outdoor content)
---   Tier 2: 106-115 -> 71-75  (mid-tier threats)
---   Tier 3: 116-128 -> 76-85  (high-end / NM-adjacent)
--- Static-level spawns (level 0 or 1) are left untouched.
+-- Adoulin Zone Mob Rebalance for 75-cap Era
+--
+-- PART 1 — Spawn levels
+--   Original Adoulin levels (99-128) remapped to three tiers:
+--     Tier 1: 99-105  -> 55-70  (entry-level outdoor content)
+--     Tier 2: 106-115 -> 71-75  (mid-tier threats)
+--     Tier 3: 116-128 -> 76-85  (high-end / NM-adjacent)
+--   Static-level spawns (level 0 or 1) are left untouched.
+--
+-- PART 2 — HP overrides (mob_groups)
+--   Adoulin is intended as endgame content in the 75-cap context, so HP is
+--   scaled to 45% of original rather than a lower ratio used for regular zones.
+--   This puts the bulk of HP-overridden mobs above classic 75-cap NM territory:
+--     ~4,000-6,800  (tougher outdoor / soloable for well-geared 75s)
+--     ~8,550-9,000  (NM-tier, party content)
+--     ~10,800       (named fights)
+--     ~27,000-43,000 (boss / HNM-adjacent)
 --
 -- Covered zones:
 --   258  Rala Waterways         (17833985 - 17834136)
@@ -49,4 +60,16 @@ WHERE mobid BETWEEN 17833985 AND 17834136   -- Rala Waterways
    OR mobid BETWEEN 17883137 AND 17883749   -- Cirdas Caverns
    OR mobid BETWEEN 17887233 AND 17887844   -- Cirdas Caverns [U]
    OR mobid BETWEEN 17891329 AND 17891565   -- Dho Gates
+;
+
+-- -----------------------------------------------------------------------
+-- PART 2: Scale explicit HP overrides in mob_groups to 45% of original.
+-- Only affects the 69 mobs that have a non-zero HP value; the rest
+-- inherit HP from level + family formula and are unaffected.
+-- -----------------------------------------------------------------------
+
+UPDATE mob_groups
+SET HP = ROUND(HP * 0.45)
+WHERE HP > 0
+  AND zoneid IN (258, 259, 261, 262, 263, 264, 266, 267, 270, 271, 272)
 ;
