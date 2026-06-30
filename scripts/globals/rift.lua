@@ -7,8 +7,8 @@ xi = xi or {}
 xi.rift = xi.rift or {}
 
 -- Item players must possess to unlock tier 1.
--- TODO: Replace xi.item.GIL with your actual rift unlock item once defined.
-xi.rift.UNLOCK_ITEM = xi.item.GIL -- placeholder
+-- TODO: Replace with a custom rift unlock item once defined.
+xi.rift.UNLOCK_ITEM = xi.item.DARK_MATTER
 
 -- Char var tracking highest tier cleared (0 = never cleared any tier).
 xi.rift.VAR_CLEARED  = 'RIFT_TIER_CLEARED'
