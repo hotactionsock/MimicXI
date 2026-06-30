@@ -10,6 +10,10 @@ xi.rift = xi.rift or {}
 -- TODO: Replace with a custom rift unlock item once defined.
 xi.rift.UNLOCK_ITEM = xi.item.DARK_MATTER
 
+-- Shard drops from rift mobs. Replace with real item IDs once defined.
+xi.rift.NASCENT_SHARD  = xi.item.DARK_MATTER -- TODO: Nascent Shard item ID
+xi.rift.TEMPERED_SHARD = xi.item.DARK_MATTER -- TODO: Tempered Shard item ID
+
 -- Char var tracking highest tier cleared (0 = never cleared any tier).
 xi.rift.VAR_CLEARED  = 'RIFT_TIER_CLEARED'
 
@@ -140,6 +144,29 @@ function xi.rift.mobCount(tier)
     return 4 + tier
 end
 
+-- Treasure Hunter level applied to every rift mob (1 per 3 tiers, max 4).
+function xi.rift.thLevel(tier)
+    return math.ceil(tier / 3)
+end
+
+-- Roll shard drops for a killed mob and award to the killing player.
+-- Nascent Shard: 20% base + 4% per tier above 1 (20% at T1, 56% at T10).
+-- Tempered Shard: 5% base + 3% per tier above 1 (5% at T1, 32% at T10).
+-- Boss mobs pass isBoss = true for doubled rates.
+function xi.rift.rollDrops(player, tier, isBoss)
+    local mult          = isBoss and 2 or 1
+    local nascentRate   = math.min((20 + (tier - 1) * 4) * mult, 100)
+    local temperedRate  = math.min((5  + (tier - 1) * 3) * mult, 100)
+
+    if math.random(100) <= nascentRate then
+        player:addItem(xi.rift.NASCENT_SHARD)
+    end
+
+    if math.random(100) <= temperedRate then
+        player:addItem(xi.rift.TEMPERED_SHARD)
+    end
+end
+
 -- ---------------------------------------------------------------------------
 -- Leaderboard write
 -- Called from onInstanceComplete with the elapsed time in milliseconds.
@@ -171,18 +198,25 @@ end
 -- ---------------------------------------------------------------------------
 -- Mob death handler — called from each dynamic mob's onMobDeath.
 -- Tracks remaining mobs; completes the instance when the boss dies.
+-- Awards shard drops to the killing player.
 -- ---------------------------------------------------------------------------
-function xi.rift.onMobDeath(mob, instance)
+function xi.rift.onMobDeath(mob, player, instance, isBoss)
     if not instance then return end
 
-    if instance:getLocalVar('bossSpawned') == 0 then
+    local tier = instance:getLocalVar('tier')
+
+    -- Award shard drops to the killing player (if a PC).
+    if player and player:isPC() then
+        xi.rift.rollDrops(player, tier, isBoss)
+    end
+
+    if not isBoss then
         -- Regular mob killed; increment kill counter.
         local kills    = instance:getLocalVar('kills') + 1
         local required = instance:getLocalVar('killsRequired')
         instance:setLocalVar('kills', kills)
 
         if kills >= required then
-            -- All regular mobs down — spawn the boss.
             xi.rift.spawnBoss(instance)
         end
     else
@@ -219,7 +253,7 @@ function xi.rift.spawnBoss(instance)
         end,
 
         onMobDeath = function(mob, player, optParams)
-            xi.rift.onMobDeath(mob, instance)
+            xi.rift.onMobDeath(mob, player, instance, true)
         end,
     })
 end
@@ -232,34 +266,53 @@ end
 -- On success the player is teleported to Walk of Echoes; onZoneIn there
 -- completes the instance load and layer entry.
 -- ---------------------------------------------------------------------------
+-- Surveyor NPC trigger.
+-- First trigger cycles the selected tier and shows it (wraps 1 → max available).
+-- Triggering again within 5 seconds enters the rift at the selected tier.
+-- Players can access any tier from 1 up to their highest cleared + 1.
 function xi.rift.onSurveyorTrigger(player, npc)
-    local cleared = player:getCharVar(xi.rift.VAR_CLEARED)
-    local tier    = math.min(cleared + 1, xi.rift.MAX_TIER)
+    local cleared      = player:getCharVar(xi.rift.VAR_CLEARED)
+    local maxAvailable = math.min(cleared + 1, xi.rift.MAX_TIER)
 
     -- First-time players need the unlock item.
     if cleared == 0 and not player:hasItem(xi.rift.UNLOCK_ITEM) then
-        -- TODO: Replace with a proper message ID once rift text strings are defined.
+        -- TODO: Replace with a rift-specific "you need the unlock item" message.
         player:messageBasic(xi.msg.basic.CANNOT_BE_PROCESSED)
         return
     end
 
-    -- Block re-entry if already inside an instance.
     if player:getInstance() then
         player:messageBasic(xi.msg.basic.CANNOT_BE_PROCESSED)
         return
     end
 
-    -- Store the chosen tier so onZoneIn in Walk of Echoes can read it.
-    player:setLocalVar(xi.rift.VAR_PENDING, tier)
-
-    -- Teleport the party to Walk of Echoes.
-    -- onZoneIn will detect VAR_PENDING and complete the instance load + layer entry.
-    local sp = xi.rift.SPAWN_POINTS[1] -- WoE entry anchor
-    for _, member in pairs(player:getParty()) do
-        if member:getZoneID() == player:getZoneID() then
-            member:setPos(sp[1], sp[2], sp[3], sp[4], xi.zone.WALK_OF_ECHOES)
+    -- If a confirm is pending (player triggered within 5s), enter.
+    if player:getLocalVar('RIFT_CONFIRMING') == 1 then
+        player:setLocalVar('RIFT_CONFIRMING', 0)
+        local tier = player:getLocalVar('RIFT_SELECTED_TIER')
+        local sp   = xi.rift.SPAWN_POINTS[1]
+        player:setLocalVar(xi.rift.VAR_PENDING, tier)
+        for _, member in pairs(player:getParty()) do
+            if member:getZoneID() == player:getZoneID() then
+                member:setPos(sp[1], sp[2], sp[3], sp[4], xi.zone.WALK_OF_ECHOES)
+            end
         end
+        return
     end
+
+    -- Cycle to the next available tier (wraps back to 1 after max).
+    local current  = player:getLocalVar('RIFT_SELECTED_TIER')
+    local next     = (current % maxAvailable) + 1
+    player:setLocalVar('RIFT_SELECTED_TIER', next)
+    player:setLocalVar('RIFT_CONFIRMING', 1)
+
+    -- TODO: Replace with a real message e.g. "Tier X selected. Trigger again to enter."
+    player:messageBasic(xi.msg.basic.CANNOT_BE_PROCESSED)
+
+    -- Cancel the confirm window after 5 seconds.
+    player:timer(5000, function(p)
+        p:setLocalVar('RIFT_CONFIRMING', 0)
+    end)
 end
 
 -- ---------------------------------------------------------------------------

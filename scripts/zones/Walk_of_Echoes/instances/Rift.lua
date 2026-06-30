@@ -52,10 +52,11 @@ instanceObject.onInstanceCreated = function(instance)
             onMobInitialize = function(mob)
                 mob:setMaxHP(math.floor(mob:getMaxHP() * mult))
                 mob:restoreHP()
+                mob:setMobMod(xi.mobMod.TREASURE_HUNTER, xi.rift.thLevel(tier))
             end,
 
             onMobDeath = function(mob, player, optParams)
-                xi.rift.onMobDeath(mob, instance)
+                xi.rift.onMobDeath(mob, player, instance, false)
             end,
         })
     end
