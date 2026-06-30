@@ -59,6 +59,7 @@ public:
     void SpawnConditionalNPCs(CCharEntity* PChar); // display Moogle in MogHouse in zone
     void SpawnTransport(CCharEntity* PChar);       // display ship/boat in zone
     void DespawnPC(CCharEntity* PChar);
+    void EraseChar(CCharEntity* PChar); // Remove a player from the char list without zone-out cleanup (for layer transitions)
     void SavePlayTime();
 
     void WideScan(CCharEntity* PChar, uint16 radius);

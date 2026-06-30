@@ -552,6 +552,7 @@ class CBaseEntity;
 class CCharEntity;
 class CMobEntity;
 class CNpcEntity;
+class CInstance;
 class CPetEntity;
 class CBattleEntity;
 class CTrustEntity;
@@ -651,6 +652,12 @@ public:
     bool           IsZoneActive() const;
     CZoneEntities* GetZoneEntities();
 
+    // In-zone instance layer support: any regular zone can host overlay instances.
+    CInstance* CreateInstance(uint32 instanceid);
+    uint32     CountInstancesOf(uint32 instanceid) const;
+    void       EnterInstanceLayer(CCharEntity* PChar);
+    void       LeaveInstanceLayer(CCharEntity* PChar);
+
     weatherVector_t m_WeatherVector; // The probability of each weather type
 
     virtual auto ZoneServer(timer::time_point tick) -> Task<void>;
@@ -742,4 +749,8 @@ private:
     timer::time_point m_timeZoneEmpty; // The time point when the last player left the zone
 
     std::unordered_map<std::string, QueryByNameResult_t> m_queryByNameResults;
+
+    std::vector<std::unique_ptr<CInstance>> m_InstanceList;
+
+    bool HasAnyPlayers() const;
 };

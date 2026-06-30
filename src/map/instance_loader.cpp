@@ -46,7 +46,7 @@ CInstanceLoader::CInstanceLoader(uint32 instanceid, CCharEntity* PRequester)
     auto   instanceData = instanceutils::GetInstanceData(instanceid);
     CZone* PZone        = zoneutils::GetZone(instanceData.instance_zone);
 
-    if (!PZone || !(PZone->GetTypeMask() & ZONE_TYPE::INSTANCED))
+    if (!PZone)
     {
         ShowError("Invalid zone for instanceid: %d", instanceid);
         return;
@@ -54,7 +54,7 @@ CInstanceLoader::CInstanceLoader(uint32 instanceid, CCharEntity* PRequester)
 
     m_PRequester = PRequester;
     m_PZone      = PZone;
-    m_PInstance  = ((CZoneInstance*)PZone)->CreateInstance(instanceid);
+    m_PInstance  = PZone->CreateInstance(instanceid);
 }
 
 CInstanceLoader::~CInstanceLoader()
