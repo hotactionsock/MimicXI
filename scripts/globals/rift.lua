@@ -14,7 +14,8 @@ xi.rift.UNLOCK_ITEM = xi.item.DARK_MATTER
 xi.rift.NASCENT_SHARD  = xi.item.DARK_MATTER -- TODO: Nascent Shard item ID
 xi.rift.TEMPERED_SHARD = xi.item.DARK_MATTER -- TODO: Tempered Shard item ID
 
--- Ultra-rare chase item.
+-- Ultra-rare chase item pool (boss-only). Expand this table as more UR items are added.
+-- Drop chance is controlled by UR_RATES; each entry here is rolled independently.
 xi.rift.VOIDHEART_HAUBERGEON = xi.item.VOIDHEART_HAUBERGEON
 
 -- Char var tracking highest tier cleared (0 = never cleared any tier).
@@ -159,7 +160,7 @@ end
 --
 -- Nascent Shard  (common):      2% at T1  → 18% at T20  (~4-5 per run at T20)
 -- Tempered Shard (uncommon):    0.5% at T1 → 8% at T20  (~2 per run at T20)
--- Voidheart Haubergeon (rare):  0.02% at T1 → 0.2% at T20  (~1 per 19 runs at T20)
+-- Ultra-Rare (boss-only):        0.03% at T1 → 4% at T20  (1 in 3333 at T1, 1 in 25 at T20)
 
 local NASCENT_RATES =
 {
@@ -179,7 +180,7 @@ local TEMPERED_RATES =
 
 -- Power curve (^1.5) from T1 to T10, linear extension T11-T20.
 -- T1=0.03%, T10=1% (1 in 100), T20=2% (1 in 50).
-local VOIDHEART_RATES =
+local UR_RATES =
 {
     [1]  =   3, [2]  =   9, [3]  =  16, [4]  =  25, [5]  =  35,
     [6]  =  46, [7]  =  59, [8]  =  72, [9]  =  85, [10] = 100,
@@ -192,7 +193,7 @@ function xi.rift.rollDrops(player, tier, isBoss)
     local cap          = xi.rift.MAX_TIER
     local nascentRate  = (NASCENT_RATES[tier]   or NASCENT_RATES[cap]) * mult
     local temperedRate = (TEMPERED_RATES[tier]  or TEMPERED_RATES[cap]) * mult
-    local voidheartRate= (VOIDHEART_RATES[tier] or VOIDHEART_RATES[cap])
+    local urRate       = (UR_RATES[tier] or UR_RATES[cap])
 
     if math.random(10000) <= nascentRate then
         player:addItem(xi.rift.NASCENT_SHARD)
@@ -202,7 +203,7 @@ function xi.rift.rollDrops(player, tier, isBoss)
         player:addItem(xi.rift.TEMPERED_SHARD)
     end
 
-    if isBoss and math.random(10000) <= voidheartRate then
+    if isBoss and math.random(10000) <= urRate then
         player:addItem(xi.rift.VOIDHEART_HAUBERGEON)
         local msg = string.format('[Rift] %s has obtained the Voidheart Haubergeon!', player:getName())
         player:printToArea(msg, xi.msg.channel.SYSTEM_3, xi.msg.area.SYSTEM)
