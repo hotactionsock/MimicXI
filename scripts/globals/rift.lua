@@ -14,9 +14,13 @@ xi.rift.UNLOCK_ITEM = xi.item.DARK_MATTER
 xi.rift.NASCENT_SHARD  = xi.item.DARK_MATTER -- TODO: Nascent Shard item ID
 xi.rift.TEMPERED_SHARD = xi.item.DARK_MATTER -- TODO: Tempered Shard item ID
 
--- Ultra-rare chase item pool (boss-only). Expand this table as more UR items are added.
--- Drop chance is controlled by UR_RATES; each entry here is rolled independently.
-xi.rift.VOIDHEART_HAUBERGEON = xi.item.VOIDHEART_HAUBERGEON
+-- Ultra-rare item pool (boss-only).
+-- One item is chosen at random if the UR rate roll succeeds — never multiple per kill.
+-- Add entries here as new UR items are introduced; displayName is used in the announcement.
+xi.rift.UR_POOL =
+{
+    { item = xi.item.VOIDHEART_HAUBERGEON, displayName = 'Voidheart Haubergeon' },
+}
 
 -- Char var tracking highest tier cleared (0 = never cleared any tier).
 xi.rift.VAR_CLEARED  = 'RIFT_TIER_CLEARED'
@@ -204,8 +208,10 @@ function xi.rift.rollDrops(player, tier, isBoss)
     end
 
     if isBoss and math.random(10000) <= urRate then
-        player:addItem(xi.rift.VOIDHEART_HAUBERGEON)
-        local msg = string.format('[Rift] %s has obtained the Voidheart Haubergeon!', player:getName())
+        local pool  = xi.rift.UR_POOL
+        local entry = pool[math.random(#pool)]
+        player:addItem(entry.item)
+        local msg = string.format('[Rift] %s has obtained the %s!', player:getName(), entry.displayName)
         player:printToArea(msg, xi.msg.channel.SYSTEM_3, xi.msg.area.SYSTEM)
     end
 end
