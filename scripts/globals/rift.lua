@@ -144,9 +144,9 @@ function xi.rift.mobCount(tier)
     return 4 + tier
 end
 
--- Treasure Hunter level applied to every rift mob (1 per 3 tiers, max 4).
+-- Treasure Hunter level applied to every rift mob (1 per 2 tiers, no cap).
 function xi.rift.thLevel(tier)
-    return math.ceil(tier / 3)
+    return math.ceil(tier / 2)
 end
 
 -- Roll shard drops for a killed mob and award to the killing player.
