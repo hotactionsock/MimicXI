@@ -53,6 +53,7 @@ instanceObject.onInstanceCreated = function(instance)
                 mob:setMaxHP(math.floor(mob:getMaxHP() * mult))
                 mob:restoreHP()
                 mob:setMobMod(xi.mobMod.TREASURE_HUNTER, xi.rift.thLevel(tier))
+                xi.rift.applyMobModifiers(mob, tier)
             end,
 
             onMobDeath = function(mob, player, optParams)
@@ -102,6 +103,10 @@ instanceObject.onInstanceTimeUpdate = function(instance, elapsed)
     end
 
     xi.instance.updateInstanceTime(instance, elapsed, zones[xi.zone.WALK_OF_ECHOES].text)
+
+    -- Run any active seasonal modifiers (HP drain, MP drain, etc.).
+    local tier = instance:getLocalVar('tier')
+    xi.rift.tickModifiers(instance, elapsed, tier)
 end
 
 -- Record the clear and schedule ejection.

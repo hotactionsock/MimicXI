@@ -321,12 +321,149 @@ function xi.rift.spawnBoss(instance)
             mob:setMaxHP(math.floor(mob:getMaxHP() * mult * 2)) -- boss has 2x the regular HP mult
             mob:restoreHP()
             mob:setMobMod(xi.mobMod.CHECK_AS_NM, 1)
+            xi.rift.applyBossModifiers(mob, tier)
         end,
 
         onMobDeath = function(mob, player, optParams)
             xi.rift.onMobDeath(mob, player, instance, true)
         end,
     })
+end
+
+-- ---------------------------------------------------------------------------
+-- Seasonal modifier system
+--
+-- Modifiers are named entries in xi.rift.MODIFIERS. Each may define:
+--   onMobInit(mob, tier)              — called inside every mob's onMobInitialize
+--   onBossInit(mob, tier)             — called inside the boss's onMobInitialize
+--   onTick(instance, elapsed, tier)   — called every second in onInstanceTimeUpdate
+--
+-- Active modifiers for the current season are stored in server vars:
+--   RIFT_MOD_1 .. RIFT_MOD_5  (string keys matching xi.rift.MODIFIERS)
+-- Set them via GM command or SQL:
+--   UPDATE server_vars SET value = 'BLOODDRAIN' WHERE varname = 'RIFT_MOD_1';
+-- Clear a slot by setting its value to '' or 0.
+--
+-- Up to 5 modifiers can stack simultaneously.
+-- ---------------------------------------------------------------------------
+
+xi.rift.MODIFIERS =
+{
+    -- All enemies attack faster.
+    ENRAGE =
+    {
+        description = 'All enemies move with terrible haste.',
+        onMobInit = function(mob, tier)
+            mob:setMobMod(xi.mobMod.HASTE, 20 + tier * 2)
+        end,
+        onBossInit = function(mob, tier)
+            mob:setMobMod(xi.mobMod.HASTE, 30 + tier * 2)
+        end,
+    },
+
+    -- Players lose HP every 3 seconds. Cannot kill (stops at 1 HP).
+    BLOODDRAIN =
+    {
+        description = 'A dark force steadily drains the life of all within.',
+        onTick = function(instance, elapsed, tier)
+            if elapsed % 3000 < 1000 then
+                local drain = math.max(1, math.floor(50 + tier * 10))
+                for _, player in pairs(instance:getChars()) do
+                    if player:getHP() > drain then
+                        player:addHP(-drain)
+                    end
+                end
+            end
+        end,
+    },
+
+    -- Players lose MP every 5 seconds.
+    MANADRAIN =
+    {
+        description = 'Arcane interference saps the magical reserves of all within.',
+        onTick = function(instance, elapsed, tier)
+            if elapsed % 5000 < 1000 then
+                local drain = math.max(1, math.floor(20 + tier * 5))
+                for _, player in pairs(instance:getChars()) do
+                    if player:getMP() > drain then
+                        player:addMP(-drain)
+                    end
+                end
+            end
+        end,
+    },
+
+    -- All enemies hit significantly harder.
+    EMPOWERED =
+    {
+        description = 'The enemies of the Rift are bolstered beyond their natural limits.',
+        onMobInit = function(mob, tier)
+            mob:setMobMod(xi.mobMod.DMG_MULTIPLIER, 100 + tier * 10)
+        end,
+        onBossInit = function(mob, tier)
+            mob:setMobMod(xi.mobMod.DMG_MULTIPLIER, 120 + tier * 10)
+        end,
+    },
+
+    -- All enemies have greatly increased HP.
+    FORTIFIED =
+    {
+        description = 'An unknown power reinforces the enemies of the Rift.',
+        onMobInit = function(mob, tier)
+            mob:setMaxHP(math.floor(mob:getMaxHP() * 1.5))
+            mob:restoreHP()
+        end,
+    },
+
+    -- TP builds faster on all enemies.
+    ACCELERATED =
+    {
+        description = 'Enemies gain TP with unnatural speed.',
+        onMobInit = function(mob, tier)
+            mob:setMobMod(xi.mobMod.TP_MULTIPLIER, 150 + tier * 5)
+        end,
+    },
+}
+
+-- Returns a list of active modifier entries for the current season.
+function xi.rift.getSeasonModifiers()
+    local active = {}
+    for i = 1, 5 do
+        local key = xi.serverVariable.get(string.format('RIFT_MOD_%d', i))
+        if key and key ~= '' and key ~= '0' and xi.rift.MODIFIERS[key] then
+            active[#active + 1] = xi.rift.MODIFIERS[key]
+        end
+    end
+    return active
+end
+
+-- Apply mob-init modifiers. Call from inside onMobInitialize for regular mobs.
+function xi.rift.applyMobModifiers(mob, tier)
+    for _, mod in ipairs(xi.rift.getSeasonModifiers()) do
+        if mod.onMobInit then
+            mod.onMobInit(mob, tier)
+        end
+    end
+end
+
+-- Apply boss-init modifiers. Call from inside the boss's onMobInitialize.
+function xi.rift.applyBossModifiers(mob, tier)
+    for _, mod in ipairs(xi.rift.getSeasonModifiers()) do
+        if mod.onBossInit then
+            mod.onBossInit(mob, tier)
+        elseif mod.onMobInit then
+            mod.onMobInit(mob, tier)
+        end
+    end
+end
+
+-- Run tick modifiers. Call from onInstanceTimeUpdate each second.
+function xi.rift.tickModifiers(instance, elapsed, tier)
+    for _, mod in ipairs(xi.rift.getSeasonModifiers()) do
+        if mod.onTick then
+            mod.onTick(instance, elapsed, tier)
+        end
+    end
 end
 
 -- ---------------------------------------------------------------------------
