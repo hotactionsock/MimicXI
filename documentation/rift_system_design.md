@@ -35,7 +35,7 @@ There are 10 tiers at launch, expanding to 20. Each tier increases mob level, HP
 
 | Function | Formula | T1 | T10 |
 |---------|---------|-----|-----|
-| `mobLevel(tier)` | `75 + (tier-1) * 5` | 75 | 120 |
+| `mobLevel(tier)` | `floor(75 + (tier-1) * 25/19)` | 75 | 86 (T10) / 100 (T20) |
 | `hpMult(tier)` | `1.0 + (tier-1) * 0.4` | 1.0x | 4.6x |
 | `mobCount(tier)` | `4 + tier` | 5 | 14 |
 | `thLevel(tier)` | `ceil(tier / 2)` | TH1 | TH5 |

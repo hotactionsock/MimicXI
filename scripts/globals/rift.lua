@@ -146,9 +146,10 @@ function xi.rift.getBoss(tier)
     return xi.rift.BOSSES[bracket]
 end
 
--- Base mob level for a tier (75 at tier 1, 120 at tier 10).
+-- Base mob level for a tier (75 at T1, 100 at T20).
+-- Boss is always +5 on top of this value.
 function xi.rift.mobLevel(tier)
-    return 75 + (tier - 1) * 5
+    return math.floor(75 + (tier - 1) * 25 / 19)
 end
 
 -- HP multiplier applied at spawn via onMobInitialize (1.0x at tier 1, 4.6x at tier 10).
