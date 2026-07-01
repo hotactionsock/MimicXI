@@ -73,6 +73,71 @@ Roll once against `UR_RATES`. If successful, one item is selected at random from
 ```
 No other changes required. Adding items dilutes the per-item rate proportionally.
 
+### Current UR Pool — Item Stats
+
+All items are EX/RARE (flags=0x0C00). Mod IDs marked *(unconfirmed)* must be verified against `mods_by_id.txt` before SQL insert.
+
+---
+
+**Voidheart Haubergeon** `xi.item.VOIDHEART_HAUBERGEON`
+Body — Lv.72 — WAR/MNK/THF/DRK/NIN/RUN — DEF:58
+STR+5, DEX+4, ACC+10, ATT+14, Haste+3%, Double Attack+1%
+
+---
+
+**Covenant Plate** `xi.item.COVENANT_PLATE`
+Body — Lv.70 — WAR/PLD/RUN — DEF:65
+HP+60, VIT+6, Enmity+8, Magic Damage Taken-8% *(unconfirmed)*, Shield Block Rate+5%
+
+---
+
+**Starweaver's Robe** `xi.item.STARWEAVERS_ROBE`
+Body — Lv.72 — BLM/WHM/RDM/BRD/SMN/SCH/GEO — DEF:38
+INT+7, MND+5, MP+50, Haste+2%, Magic Burst Bonus+10%
+
+---
+
+**Saintwood Staff** `xi.item.SAINTWOOD_STAFF`
+Staff — Lv.72 — WHM/SCH — DMG:69 Delay:366
+MND+6, Healing Magic Skill+10, Cure Potency+10%, Refresh+1 *(unconfirmed)*
+
+---
+
+**Eclipse Katana** `xi.item.ECLIPSE_KATANA`
+Katana (MAIN/SUB) — Lv.72 — NIN/SAM — DMG:64 Delay:245
+DEX+6, Store TP+6, Dual Wield+1, Crit Hit Rate+3%
+
+---
+
+**Abyssal Tabar** `xi.item.ABYSSAL_TABAR`
+Great Axe — Lv.70 — WAR/DRK — DMG:100 Delay:444
+STR+6, ACC+8, ATT+18, Double Attack+1%, Smite+20
+
+---
+
+**Fateweaver Mantle** `xi.item.FATEWEAVER_MANTLE`
+Back — Lv.70 — SMN/BRD — DEF:10
+MND+3, Blood Pact Rage Damage+10%, Blood Pact Delay-10, Avatar Perpetuation Cost-2
+
+---
+
+**Requiem Torque** `xi.item.REQUIEM_TORQUE`
+Neck — Lv.72 — ALL JOBS
+CHR+6, Singing Skill+8 *(unconfirmed)*, Song Duration Bonus+15%
+
+---
+
+**Shadowstrike Ring** `xi.item.SHADOWSTRIKE_RING`
+Ring — Lv.70 — ALL JOBS
+DEX+5, AGI+4, Sneak Attack DEX Bonus+5%, Triple Attack+1%, Waltz Potency+2%
+
+---
+
+**Feral Warder's Cuirass** `xi.item.FERAL_WARDERS_CUIRASS`
+Body — Lv.70 — BST only — DEF:55
+STR+4, Pet ATK+20, Pet ACC+15, Reward HP Potency+15%, Pet TP Bonus+1000
+*(PET_ATK_DEF / PET_ACC_EVA / REWARD_HP_BONUS value scales — verify against pet mod docs)*
+
 ---
 
 ## Seasonal Modifier System
