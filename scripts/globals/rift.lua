@@ -204,19 +204,36 @@ function xi.rift.rollDrops(player, tier, isBoss)
 
     if isBoss and math.random(10000) <= voidheartRate then
         player:addItem(xi.rift.VOIDHEART_HAUBERGEON)
+        local msg = string.format('[Rift] %s has obtained the Voidheart Haubergeon!', player:getName())
+        player:printToArea(msg, xi.msg.channel.SYSTEM_3, xi.msg.area.SYSTEM)
     end
 end
 
 -- ---------------------------------------------------------------------------
 -- Leaderboard write
 -- Called from onInstanceComplete with the elapsed time in milliseconds.
+-- Checks for a new tier speed record and broadcasts globally if beaten.
 -- ---------------------------------------------------------------------------
+local function formatTime(seconds)
+    return string.format('%d:%02d', math.floor(seconds / 60), seconds % 60)
+end
+
 function xi.rift.recordClear(instance, elapsedMs)
     local tier    = instance:getLocalVar('tier')
     local seconds = math.floor(elapsedMs / 1000)
     local season  = xi.serverVariable.get('RIFT_SEASON') or 1
 
-    for _, player in pairs(instance:getChars()) do
+    -- Check current speed record for this tier/season before inserting.
+    local recordVar = string.format('RIFT_RECORD_T%d_S%d', tier, season)
+    local prevRecord = xi.serverVariable.get(recordVar) or 0
+
+    local isNewRecord = prevRecord == 0 or seconds < prevRecord
+    if isNewRecord then
+        xi.serverVariable.set(recordVar, seconds)
+    end
+
+    local chars = instance:getChars()
+    for _, player in pairs(chars) do
         db.query(
             "INSERT INTO rift_leaderboard (char_id, char_name, tier, clear_time, season) "
             .. "VALUES (%u, '%s', %u, %u, %u)",
@@ -231,6 +248,20 @@ function xi.rift.recordClear(instance, elapsedMs)
         local cleared = player:getCharVar(xi.rift.VAR_CLEARED)
         if tier > cleared then
             player:setCharVar(xi.rift.VAR_CLEARED, tier)
+        end
+    end
+
+    -- Broadcast new record to entire server using first party member as the sender vehicle.
+    if isNewRecord then
+        local announcer = next(chars)
+        if announcer then
+            local msg = string.format(
+                '[Rift] The speed record for Rift T%d has been beaten! The new record is %s, set by %s!',
+                tier,
+                formatTime(seconds),
+                announcer:getName()
+            )
+            announcer:printToArea(msg, xi.msg.channel.SYSTEM_3, xi.msg.area.SYSTEM)
         end
     end
 end
