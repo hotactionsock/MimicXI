@@ -347,6 +347,10 @@ end
 -- Up to 5 modifiers can stack simultaneously.
 -- ---------------------------------------------------------------------------
 
+-- PDT/MDT note: xi.mod.DMGPHYS / DMGMAGIC use negative values to reduce damage taken
+-- and positive values to increase it. Vanilla cap is ±50%; UDMGPHYS/UDMGMAGIC bypass it.
+-- Applied via mob:addMod() which works on any CBattleEntity.
+
 xi.rift.MODIFIERS =
 {
     -- All enemies attack faster.
@@ -405,13 +409,27 @@ xi.rift.MODIFIERS =
         end,
     },
 
-    -- All enemies have greatly increased HP.
+    -- Enemies shrug off physical damage but crumble to magic.
+    -- -50% PDT (capped), +50% MDT. Forces magic-heavy strategies.
     FORTIFIED =
     {
-        description = 'An unknown power reinforces the enemies of the Rift.',
+        description = 'The enemies of the Rift are encased in impenetrable physical armour, but burn bright with magical vulnerability.',
         onMobInit = function(mob, tier)
+            mob:addMod(xi.mod.DMGPHYS,   -50) -- -50% physical damage taken (capped)
+            mob:addMod(xi.mod.DMGMAGIC,   50) -- +50% magic damage taken
             mob:setMaxHP(math.floor(mob:getMaxHP() * 1.5))
             mob:restoreHP()
+        end,
+    },
+
+    -- Enemies shrug off magic but buckle to physical pressure.
+    -- -50% MDT (capped), +50% PDT. Forces melee-heavy strategies.
+    WARDED =
+    {
+        description = 'Ancient wards repel all magical forces within the Rift, but leave the body exposed to physical ruin.',
+        onMobInit = function(mob, tier)
+            mob:addMod(xi.mod.DMGMAGIC,  -50) -- -50% magic damage taken (capped)
+            mob:addMod(xi.mod.DMGPHYS,    50) -- +50% physical damage taken
         end,
     },
 
@@ -421,6 +439,23 @@ xi.rift.MODIFIERS =
         description = 'Enemies gain TP with unnatural speed.',
         onMobInit = function(mob, tier)
             mob:setMobMod(xi.mobMod.TP_MULTIPLIER, 150 + tier * 5)
+        end,
+    },
+
+    -- Enemies take less of all damage types — a pure survival check.
+    -- Uses uncapped mods so the reduction is meaningful at high tiers.
+    UNYIELDING =
+    {
+        description = 'The enemies of the Rift resist all forms of harm.',
+        onMobInit = function(mob, tier)
+            local reduction = math.min(40, 20 + tier * 2) -- 22% T1, capped at 40%
+            mob:addMod(xi.mod.UDMGPHYS,  -reduction)
+            mob:addMod(xi.mod.UDMGMAGIC, -reduction)
+        end,
+        onBossInit = function(mob, tier)
+            local reduction = math.min(50, 30 + tier * 2)
+            mob:addMod(xi.mod.UDMGPHYS,  -reduction)
+            mob:addMod(xi.mod.UDMGMAGIC, -reduction)
         end,
     },
 }
