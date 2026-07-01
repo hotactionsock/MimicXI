@@ -200,7 +200,7 @@ function xi.rift.rollDrops(player, tier, isBoss)
         player:addItem(xi.rift.TEMPERED_SHARD)
     end
 
-    if math.random(10000) <= voidheartRate then
+    if isBoss and math.random(10000) <= voidheartRate then
         player:addItem(xi.rift.VOIDHEART_HAUBERGEON)
     end
 end
