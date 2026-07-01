@@ -19,7 +19,16 @@ xi.rift.TEMPERED_SHARD = xi.item.DARK_MATTER -- TODO: Tempered Shard item ID
 -- Add entries here as new UR items are introduced; displayName is used in the announcement.
 xi.rift.UR_POOL =
 {
-    { item = xi.item.VOIDHEART_HAUBERGEON, displayName = 'Voidheart Haubergeon' },
+    { item = xi.item.VOIDHEART_HAUBERGEON,   displayName = 'Voidheart Haubergeon'   },
+    { item = xi.item.COVENANT_PLATE,         displayName = 'Covenant Plate'         },
+    { item = xi.item.STARWEAVERS_ROBE,       displayName = "Starweaver's Robe"      },
+    { item = xi.item.SAINTWOOD_STAFF,        displayName = 'Saintwood Staff'        },
+    { item = xi.item.ECLIPSE_KATANA,         displayName = 'Eclipse Katana'         },
+    { item = xi.item.ABYSSAL_TABAR,          displayName = 'Abyssal Tabar'          },
+    { item = xi.item.FATEWEAVER_MANTLE,      displayName = "Fateweaver Mantle"      },
+    { item = xi.item.REQUIEM_TORQUE,         displayName = 'Requiem Torque'         },
+    { item = xi.item.SHADOWSTRIKE_RING,      displayName = 'Shadowstrike Ring'      },
+    { item = xi.item.FERAL_WARDERS_CUIRASS,  displayName = "Feral Warder's Cuirass" },
 }
 
 -- Char var tracking highest tier cleared (0 = never cleared any tier).
