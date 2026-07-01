@@ -2,13 +2,13 @@
 
 ## New Content: Nephalem Rift
 
-A new endgame challenge is now available. Speak with the **Rift Surveyor** in **Xarcabard** to begin.
+A new challenge is now available. A mysterious stranger bids you enter a forgotten realm to defeat the horrors within. Speak with the **Rift Surveyor** in **Xarcabard** to learn more.
 
 ---
 
 ### What is the Rift?
 
-The Nephalem Rift is a repeatable instanced challenge set within the Walk of Echoes. Face increasingly powerful enemies across 10 tiers of difficulty, with higher tiers unlocking as you prove yourself against the ones below. Your party enters a fully isolated instance — no interference from other players, no shared spawns.
+The Rift is a repeatable instanced challenge set within the Walk of Echoes. Face increasingly powerful enemies across multiple tiers of difficulty, with higher tiers unlocking as you prove yourself against the ones below. Climb the ranks and defeat the boss to earn yourself powerful rewards!
 
 There is no penalty for failure. Clear a tier once and it remains available to repeat as many times as you like.
 
@@ -18,35 +18,34 @@ There is no penalty for failure. Clear a tier once and it remains available to r
 
 - Locate the **Rift Surveyor** NPC in Xarcabard.
 - Speak with him to cycle through your available tiers.
-- Confirm your selection within 5 seconds to enter.
 - Your party will be transported to the Walk of Echoes and dropped straight into the fight.
 
-You can access any tier from 1 up to one above your current highest clear. First-time challengers must have a **Dark Matter** in their inventory to unlock access.
+You can access any tier from 1 up to one above your current highest clear. Challengers must have a **Dark Matter** in their inventory to unlock access.
+
+- Dark Matter drops from multiple new sources - FATEs, Circuits, Trials etc.
+- Once you enter a Rift, you will lose your Dark Matter.
 
 ---
 
 ### The Challenge
 
-Each tier sends a wave of enemies your way before the boss appears. The boss will not spawn until every regular enemy is dead — coordinate your party and manage the room.
+Each tier has a wave of enemies standing in your way before the boss appears. The boss will not spawn until every regular enemy is dead — coordinate your party and manage the room.
 
 Difficulty scales meaningfully across tiers:
 
-- **Enemy levels** rise from 75 at Tier 1 to 120 at Tier 10
-- **Enemy HP** increases sharply — up to 4.6× base at Tier 10
-- **Enemy count** grows from 5 mobs at Tier 1 to 14 at Tier 10
-- **Treasure Hunter** is applied to all enemies and scales with tier, reaching TH5 at Tier 10
+- **Enemy levels** will increase, as will their base stats.
+- **Enemy HP** increases sharply - bring more damage as you ascend.
+- **Enemy count** grows every tier, more chance for Shards to drop but will eat into your remaining time.
 
 ---
 
 ### Rewards
 
-#### Nascent & Tempered Shards
-Currency drops from every enemy in the Rift. Drop rates increase with tier — at high tiers you can expect several shards per run. These will be exchangeable for equipment and consumables (exchange NPCs coming soon).
+#### Forge Shards
+Currency drops from every enemy in the Rift. Drop rates increase with tier — at high tiers you can expect several shards per run. These shards can be used to upgrade weapons at the Resonance Forge or exchanged for a variety of goods from the **Rift Purveyor**.
 
-#### Ultra-Rare Equipment (Boss Only)
-The boss of each tier has a chance to drop a piece of rare endgame equipment. Only one item can drop per kill, chosen at random from the prize pool. Odds increase with tier — from very low at Tier 1 to 1-in-100 at Tier 10.
-
-A server-wide announcement will be made whenever a piece of rare equipment is obtained.
+#### Equipment (Boss Only)
+Clearing a tier can confer powerful items to you - these items are incredibly powerful, so to ensure the best odds, climb the tier ranking as much as possible!
 
 Current prize pool includes equipment for all jobs and roles, with more items to be added as the content matures.
 
