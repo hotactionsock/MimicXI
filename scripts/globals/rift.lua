@@ -149,20 +149,38 @@ function xi.rift.thLevel(tier)
     return math.ceil(tier / 2)
 end
 
--- Roll shard drops for a killed mob and award to the killing player.
--- Nascent Shard: 20% base + 4% per tier above 1 (20% at T1, 56% at T10).
--- Tempered Shard: 5% base + 3% per tier above 1 (5% at T1, 32% at T10).
--- Boss mobs pass isBoss = true for doubled rates.
-function xi.rift.rollDrops(player, tier, isBoss)
-    local mult          = isBoss and 2 or 1
-    local nascentRate   = math.min((20 + (tier - 1) * 4) * mult, 100)
-    local temperedRate  = math.min((5  + (tier - 1) * 3) * mult, 100)
+-- Custom drop rates per tier, out of 10000, independent of the TH bracket table.
+-- Mirrors the TH curve shape but tuned for rift rarity (roughly half UR rates).
+-- Nascent Shard:  0.10% at T1 → 0.45% at T20
+-- Tempered Shard: 0.05% at T1 → 0.22% at T20
+-- Boss mobs receive 2x rate.
+-- Extend the tier→rate curve naturally beyond T10 as content is added.
+local NASCENT_RATES =
+{
+    [1]  =  10, [2]  =  13, [3]  =  16, [4]  =  18, [5]  =  20,
+    [6]  =  22, [7]  =  25, [8]  =  28, [9]  =  31, [10] =  34,
+    [11] =  36, [12] =  38, [13] =  39, [14] =  40, [15] =  41,
+    [16] =  42, [17] =  43, [18] =  44, [19] =  44, [20] =  45,
+}
 
-    if math.random(100) <= nascentRate then
+local TEMPERED_RATES =
+{
+    [1]  =   5, [2]  =   6, [3]  =   7, [4]  =   8, [5]  =   9,
+    [6]  =  10, [7]  =  11, [8]  =  12, [9]  =  13, [10] =  15,
+    [11] =  16, [12] =  17, [13] =  18, [14] =  18, [15] =  19,
+    [16] =  20, [17] =  20, [18] =  21, [19] =  21, [20] =  22,
+}
+
+function xi.rift.rollDrops(player, tier, isBoss)
+    local mult         = isBoss and 2 or 1
+    local nascentRate  = (NASCENT_RATES[tier]  or NASCENT_RATES[xi.rift.MAX_TIER])  * mult
+    local temperedRate = (TEMPERED_RATES[tier] or TEMPERED_RATES[xi.rift.MAX_TIER]) * mult
+
+    if math.random(10000) <= nascentRate then
         player:addItem(xi.rift.NASCENT_SHARD)
     end
 
-    if math.random(100) <= temperedRate then
+    if math.random(10000) <= temperedRate then
         player:addItem(xi.rift.TEMPERED_SHARD)
     end
 end
