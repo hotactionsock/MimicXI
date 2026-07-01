@@ -179,18 +179,18 @@ local TEMPERED_RATES =
 
 local VOIDHEART_RATES =
 {
-    [1]  =   2, [2]  =   3, [3]  =   4, [4]  =   5, [5]  =   6,
-    [6]  =   7, [7]  =   8, [8]  =   9, [9]  =  10, [10] =  11,
-    [11] =  12, [12] =  13, [13] =  14, [14] =  15, [15] =  16,
-    [16] =  17, [17] =  18, [18] =  19, [19] =  19, [20] =  20,
+    [1]  =   1, [2]  =   1, [3]  =   2, [4]  =   2, [5]  =   3,
+    [6]  =   3, [7]  =   4, [8]  =   4, [9]  =   5, [10] =   5,
+    [11] =   6, [12] =   6, [13] =   7, [14] =   7, [15] =   8,
+    [16] =   8, [17] =   9, [18] =   9, [19] =   9, [20] =  10,
 }
 
 function xi.rift.rollDrops(player, tier, isBoss)
     local mult         = isBoss and 2 or 1
     local cap          = xi.rift.MAX_TIER
-    local nascentRate  = (NASCENT_RATES[tier]    or NASCENT_RATES[cap])    * mult
-    local temperedRate = (TEMPERED_RATES[tier]   or TEMPERED_RATES[cap])   * mult
-    local voidheartRate= (VOIDHEART_RATES[tier]  or VOIDHEART_RATES[cap])  * mult
+    local nascentRate  = (NASCENT_RATES[tier]   or NASCENT_RATES[cap]) * mult
+    local temperedRate = (TEMPERED_RATES[tier]  or TEMPERED_RATES[cap]) * mult
+    local voidheartRate= (VOIDHEART_RATES[tier] or VOIDHEART_RATES[cap])
 
     if math.random(10000) <= nascentRate then
         player:addItem(xi.rift.NASCENT_SHARD)
