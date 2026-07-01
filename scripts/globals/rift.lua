@@ -14,6 +14,9 @@ xi.rift.UNLOCK_ITEM = xi.item.DARK_MATTER
 xi.rift.NASCENT_SHARD  = xi.item.DARK_MATTER -- TODO: Nascent Shard item ID
 xi.rift.TEMPERED_SHARD = xi.item.DARK_MATTER -- TODO: Tempered Shard item ID
 
+-- Ultra-rare chase item.
+xi.rift.VOIDHEART_HAUBERGEON = xi.item.VOIDHEART_HAUBERGEON
+
 -- Char var tracking highest tier cleared (0 = never cleared any tier).
 xi.rift.VAR_CLEARED  = 'RIFT_TIER_CLEARED'
 
@@ -149,32 +152,45 @@ function xi.rift.thLevel(tier)
     return math.ceil(tier / 2)
 end
 
--- Custom drop rates per tier, out of 10000, independent of the TH bracket table.
--- Mirrors the TH curve shape but tuned for rift rarity (roughly half UR rates).
--- Nascent Shard:  0.10% at T1 → 0.45% at T20
--- Tempered Shard: 0.05% at T1 → 0.22% at T20
--- Boss mobs receive 2x rate.
--- Extend the tier→rate curve naturally beyond T10 as content is added.
+-- All drop rates are out of 10000.
+-- Shard rates are generous — players should reliably accumulate these as currency.
+-- Voidheart Haubergeon is a true chase item even at peak tier.
+-- Boss mobs receive 2x on all rates.
+--
+-- Nascent Shard  (common):      2% at T1  → 18% at T20  (~4-5 per run at T20)
+-- Tempered Shard (uncommon):    0.5% at T1 → 8% at T20  (~2 per run at T20)
+-- Voidheart Haubergeon (rare):  0.02% at T1 → 0.2% at T20  (~1 per 19 runs at T20)
+
 local NASCENT_RATES =
 {
-    [1]  =  10, [2]  =  13, [3]  =  16, [4]  =  18, [5]  =  20,
-    [6]  =  22, [7]  =  25, [8]  =  28, [9]  =  31, [10] =  34,
-    [11] =  36, [12] =  38, [13] =  39, [14] =  40, [15] =  41,
-    [16] =  42, [17] =  43, [18] =  44, [19] =  44, [20] =  45,
+    [1]  =  200, [2]  =  300, [3]  =  400, [4]  =  500, [5]  =  600,
+    [6]  =  700, [7]  =  800, [8]  =  900, [9]  = 1000, [10] = 1100,
+    [11] = 1200, [12] = 1300, [13] = 1400, [14] = 1450, [15] = 1500,
+    [16] = 1550, [17] = 1600, [18] = 1650, [19] = 1700, [20] = 1800,
 }
 
 local TEMPERED_RATES =
 {
-    [1]  =   5, [2]  =   6, [3]  =   7, [4]  =   8, [5]  =   9,
-    [6]  =  10, [7]  =  11, [8]  =  12, [9]  =  13, [10] =  15,
-    [11] =  16, [12] =  17, [13] =  18, [14] =  18, [15] =  19,
-    [16] =  20, [17] =  20, [18] =  21, [19] =  21, [20] =  22,
+    [1]  =   50, [2]  =   75, [3]  =  100, [4]  =  150, [5]  =  200,
+    [6]  =  250, [7]  =  300, [8]  =  350, [9]  =  400, [10] =  450,
+    [11] =  500, [12] =  550, [13] =  600, [14] =  630, [15] =  660,
+    [16] =  700, [17] =  730, [18] =  760, [19] =  780, [20] =  800,
+}
+
+local VOIDHEART_RATES =
+{
+    [1]  =   2, [2]  =   3, [3]  =   4, [4]  =   5, [5]  =   6,
+    [6]  =   7, [7]  =   8, [8]  =   9, [9]  =  10, [10] =  11,
+    [11] =  12, [12] =  13, [13] =  14, [14] =  15, [15] =  16,
+    [16] =  17, [17] =  18, [18] =  19, [19] =  19, [20] =  20,
 }
 
 function xi.rift.rollDrops(player, tier, isBoss)
     local mult         = isBoss and 2 or 1
-    local nascentRate  = (NASCENT_RATES[tier]  or NASCENT_RATES[xi.rift.MAX_TIER])  * mult
-    local temperedRate = (TEMPERED_RATES[tier] or TEMPERED_RATES[xi.rift.MAX_TIER]) * mult
+    local cap          = xi.rift.MAX_TIER
+    local nascentRate  = (NASCENT_RATES[tier]    or NASCENT_RATES[cap])    * mult
+    local temperedRate = (TEMPERED_RATES[tier]   or TEMPERED_RATES[cap])   * mult
+    local voidheartRate= (VOIDHEART_RATES[tier]  or VOIDHEART_RATES[cap])  * mult
 
     if math.random(10000) <= nascentRate then
         player:addItem(xi.rift.NASCENT_SHARD)
@@ -182,6 +198,10 @@ function xi.rift.rollDrops(player, tier, isBoss)
 
     if math.random(10000) <= temperedRate then
         player:addItem(xi.rift.TEMPERED_SHARD)
+    end
+
+    if math.random(10000) <= voidheartRate then
+        player:addItem(xi.rift.VOIDHEART_HAUBERGEON)
     end
 end
 
