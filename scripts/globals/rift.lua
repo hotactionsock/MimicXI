@@ -373,6 +373,7 @@ function xi.rift.spawnBoss(instance)
             mob:restoreHP()
             mob:setMobMod(xi.mobMod.CHECK_AS_NM, 1)
             xi.rift.applyBossModifiers(mob, tier)
+            xi.rift.applyFloorBossModifiers(mob, instance, tier)
         end,
 
         onMobDeath = function(mob, player, optParams)
@@ -546,6 +547,215 @@ end
 -- Run tick modifiers. Call from onInstanceTimeUpdate each second.
 function xi.rift.tickModifiers(instance, elapsed, tier)
     for _, mod in ipairs(xi.rift.getSeasonModifiers()) do
+        if mod.onTick then
+            mod.onTick(instance, elapsed, tier)
+        end
+    end
+end
+
+-- ---------------------------------------------------------------------------
+-- Per-floor randomised modifiers
+--
+-- Rolled at instance creation from xi.rift.FLOOR_MODIFIER_POOL and stored in
+-- instance local vars RIFT_FMOD_1 .. RIFT_FMOD_N (numeric key index).
+-- Higher tiers guarantee more modifier slots and draw from a harder sub-pool.
+--
+-- Modifier count by tier:
+--   T1-3  : 0 guaranteed; 10 % chance of 1
+--   T4-6  : 20 % chance of 1; 10 % chance of 2
+--   T7-9  : 1 guaranteed; 30 % chance of 2nd
+--   T10   : 2 guaranteed; 40 % chance of 3rd
+-- ---------------------------------------------------------------------------
+
+-- Numeric key index → modifier definition.
+-- Each entry may define onMobInit(mob,tier), onBossInit(mob,tier), onTick(instance,elapsed,tier).
+xi.rift.FLOOR_MODIFIER_POOL =
+{
+    -- 1: Double Attack — enemies strike twice frequently.
+    {
+        key         = 'DOUBLE_ATTACK',
+        description = 'Enemies strike with uncanny speed, landing double blows.',
+        onMobInit = function(mob, tier)
+            mob:addMod(xi.mod.DOUBLE_ATTACK, 20 + tier * 3) -- 23 % T1 → 50 % T10
+        end,
+        onBossInit = function(mob, tier)
+            mob:addMod(xi.mod.DOUBLE_ATTACK, 35 + tier * 3)
+        end,
+    },
+
+    -- 2: Triple Attack — enemies sometimes land a triple strike.
+    {
+        key         = 'TRIPLE_ATTACK',
+        description = 'Enemies unleash a flurry of three blows in rapid succession.',
+        onMobInit = function(mob, tier)
+            mob:addMod(xi.mod.TRIPLE_ATTACK, 10 + tier * 2) -- 12 % T1 → 30 % T10
+        end,
+        onBossInit = function(mob, tier)
+            mob:addMod(xi.mod.TRIPLE_ATTACK, 20 + tier * 2)
+        end,
+    },
+
+    -- 3: High Magic Accuracy — spells land more reliably.
+    {
+        key         = 'HIGH_MACC',
+        description = 'Arcane forces within the Rift sharpen the magical precision of all enemies.',
+        onMobInit = function(mob, tier)
+            mob:addMod(xi.mod.MACC, 20 + tier * 5) -- +25 T1 → +70 T10
+        end,
+        onBossInit = function(mob, tier)
+            mob:addMod(xi.mod.MACC, 40 + tier * 5)
+        end,
+    },
+
+    -- 4: Quickened — attack delay is reduced.
+    {
+        key         = 'QUICKENED',
+        description = 'Enemies move with preternatural swiftness; their blows fall without pause.',
+        onMobInit = function(mob, tier)
+            mob:setMobMod(xi.mobMod.HASTE, 15 + tier * 2)
+        end,
+        onBossInit = function(mob, tier)
+            mob:setMobMod(xi.mobMod.HASTE, 25 + tier * 2)
+        end,
+    },
+
+    -- 5: Bloodlust — each kill heals the remaining enemies.
+    {
+        key         = 'BLOODLUST',
+        description = 'Each fallen ally invigorates the remaining enemies.',
+        onMobInit = function(mob, tier)
+            mob:setMobMod(xi.mobMod.REGEN, 5 + tier * 2)
+        end,
+    },
+
+    -- 6: Spellbound — enemies cast spells at elevated frequency.
+    {
+        key         = 'SPELLBOUND',
+        description = 'The Rift resonates with magical energy, driving enemies to cast without restraint.',
+        onMobInit = function(mob, tier)
+            mob:setMobMod(xi.mobMod.MAGIC_COOL, math.max(10, 60 - tier * 5)) -- shorter recast
+        end,
+        onBossInit = function(mob, tier)
+            mob:setMobMod(xi.mobMod.MAGIC_COOL, math.max(5, 40 - tier * 4))
+        end,
+    },
+
+    -- 7: TP Surge — enemies build TP rapidly and weaponskill often.
+    {
+        key         = 'TP_SURGE',
+        description = 'Enemies pulse with battle energy, readying their deadliest attacks with haste.',
+        onMobInit = function(mob, tier)
+            mob:setMobMod(xi.mobMod.TP_MULTIPLIER, 130 + tier * 8)
+        end,
+    },
+
+    -- 8: Ironhide — enemies shrug off a portion of all damage.
+    {
+        key         = 'IRONHIDE',
+        description = 'A thick hide of crystallised void-energy makes these enemies difficult to bring down.',
+        onMobInit = function(mob, tier)
+            local dr = math.min(30, 10 + tier * 2)
+            mob:addMod(xi.mod.UDMGPHYS,  -dr)
+            mob:addMod(xi.mod.UDMGMAGIC, -dr)
+        end,
+        onBossInit = function(mob, tier)
+            local dr = math.min(40, 20 + tier * 2)
+            mob:addMod(xi.mod.UDMGPHYS,  -dr)
+            mob:addMod(xi.mod.UDMGMAGIC, -dr)
+        end,
+    },
+}
+
+-- Build a lookup by numeric index for storage in instance local vars.
+-- Keys 1-N map to entries in FLOOR_MODIFIER_POOL.
+
+-- Rolls floor modifiers for a new instance and stores them in instance local vars.
+-- Returns the list of active definitions so onInstanceCreated can announce them.
+function xi.rift.rollFloorModifiers(instance, tier)
+    -- Determine the number of modifier slots for this tier.
+    local slots = 0
+    if tier >= 10 then
+        slots = 2
+        if math.random(100) <= 40 then slots = 3 end
+    elseif tier >= 7 then
+        slots = 1
+        if math.random(100) <= 30 then slots = 2 end
+    elseif tier >= 4 then
+        local roll = math.random(100)
+        if     roll <= 10 then slots = 2
+        elseif roll <= 30 then slots = 1
+        end
+    else -- T1-3
+        if math.random(100) <= 10 then slots = 1 end
+    end
+
+    -- Pick `slots` distinct modifiers at random.
+    local pool    = xi.rift.FLOOR_MODIFIER_POOL
+    local indices = {}
+    for i = 1, #pool do indices[i] = i end
+
+    -- Shuffle (Fisher-Yates partial, stopping after `slots` picks).
+    local chosen = {}
+    for s = 1, slots do
+        local remaining = #pool - s + 1
+        local r = math.random(remaining)
+        table.insert(chosen, pool[indices[r]])
+        indices[r] = indices[remaining]
+    end
+
+    -- Store numeric IDs in instance local vars (1-indexed).
+    for i, entry in ipairs(chosen) do
+        -- Store the index in FLOOR_MODIFIER_POOL for reconstruction at mob-spawn time.
+        -- We store the 1-based position of `entry` in the pool.
+        for poolIdx, poolEntry in ipairs(pool) do
+            if poolEntry == entry then
+                instance:setLocalVar('RIFT_FMOD_' .. i, poolIdx)
+                break
+            end
+        end
+    end
+    instance:setLocalVar('RIFT_FMOD_COUNT', slots)
+
+    return chosen
+end
+
+-- Returns the list of active floor modifier definitions for an instance.
+function xi.rift.getFloorModifiers(instance)
+    local count = instance:getLocalVar('RIFT_FMOD_COUNT')
+    local pool  = xi.rift.FLOOR_MODIFIER_POOL
+    local result = {}
+    for i = 1, count do
+        local idx = instance:getLocalVar('RIFT_FMOD_' .. i)
+        if idx > 0 and pool[idx] then
+            result[#result + 1] = pool[idx]
+        end
+    end
+    return result
+end
+
+-- Apply floor modifier mob-init hooks. Call alongside applyMobModifiers.
+function xi.rift.applyFloorMobModifiers(mob, instance, tier)
+    for _, mod in ipairs(xi.rift.getFloorModifiers(instance)) do
+        if mod.onMobInit then
+            mod.onMobInit(mob, tier)
+        end
+    end
+end
+
+-- Apply floor modifier boss-init hooks. Call alongside applyBossModifiers.
+function xi.rift.applyFloorBossModifiers(mob, instance, tier)
+    for _, mod in ipairs(xi.rift.getFloorModifiers(instance)) do
+        if mod.onBossInit then
+            mod.onBossInit(mob, tier)
+        elseif mod.onMobInit then
+            mod.onMobInit(mob, tier)
+        end
+    end
+end
+
+-- Run floor modifier tick hooks. Call alongside tickModifiers.
+function xi.rift.tickFloorModifiers(instance, elapsed, tier)
+    for _, mod in ipairs(xi.rift.getFloorModifiers(instance)) do
         if mod.onTick then
             mod.onTick(instance, elapsed, tier)
         end

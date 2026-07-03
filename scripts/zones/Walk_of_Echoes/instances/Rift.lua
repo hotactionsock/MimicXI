@@ -22,6 +22,9 @@ instanceObject.onInstanceCreated = function(instance)
     instance:setLocalVar('killsRequired', count)
     instance:setLocalVar('bossSpawned', 0)
 
+    -- Roll per-floor random modifiers (more frequent and dangerous at higher tiers).
+    xi.rift.rollFloorModifiers(instance, tier)
+
     -- Shuffle spawn points so mob placement varies each run.
     local pts = {}
     for _, p in ipairs(xi.rift.SPAWN_POINTS) do
@@ -54,6 +57,7 @@ instanceObject.onInstanceCreated = function(instance)
                 mob:restoreHP()
                 mob:setMobMod(xi.mobMod.TREASURE_HUNTER, xi.rift.thLevel(tier))
                 xi.rift.applyMobModifiers(mob, tier)
+                xi.rift.applyFloorMobModifiers(mob, instance, tier)
             end,
 
             onMobDeath = function(mob, player, optParams)
@@ -73,7 +77,15 @@ instanceObject.afterInstanceRegister = function(player)
     local instance = player:getInstance()
     if not instance then return end
     local tier = instance:getLocalVar('tier')
-    player:messageSpecial(zones[xi.zone.WALK_OF_ECHOES].text.NOTHING_OUT_OF_ORDINARY) -- placeholder; replace with a rift-specific message ID
+
+    -- Announce any active floor modifiers so players know what they're up against.
+    local mods = xi.rift.getFloorModifiers(instance)
+    if #mods > 0 then
+        player:sys(string.format('[Rift T%d] Floor modifiers active this run:', tier))
+        for _, mod in ipairs(mods) do
+            player:sys(string.format('  • %s', mod.description))
+        end
+    end
 end
 
 -- Fires every second. Handles locking, ejection, and time updates.
@@ -104,9 +116,10 @@ instanceObject.onInstanceTimeUpdate = function(instance, elapsed)
 
     xi.instance.updateInstanceTime(instance, elapsed, zones[xi.zone.WALK_OF_ECHOES].text)
 
-    -- Run any active seasonal modifiers (HP drain, MP drain, etc.).
+    -- Run seasonal and per-floor modifiers.
     local tier = instance:getLocalVar('tier')
     xi.rift.tickModifiers(instance, elapsed, tier)
+    xi.rift.tickFloorModifiers(instance, elapsed, tier)
 end
 
 -- Record the clear and schedule ejection.
