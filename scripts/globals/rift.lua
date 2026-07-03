@@ -601,10 +601,33 @@ xi.rift.TRADE_DOWN =
     { from = xi.rift.TEMPERED_SHARD, to = xi.rift.NASCENT_SHARD,  ratio = 3 },
 }
 
--- Shop catalogue — items purchasable from the Purveyor.
--- Add entries here when items are defined. Format:
---   { item = xi.item.ITEM_ID, cost = qty, currency = xi.rift.FORGED_SHARD, name = 'Display Name' }
-xi.rift.PURVEYOR_SHOP = {}
+-- Shop catalogue — items purchasable from the Purveyor, grouped by currency tier.
+-- Each entry: { name = 'Display Name', item = xi.item.ID, cost = qty }
+-- The currency used is implied by the sub-table key (nascent/tempered/forged).
+-- Add entries to the relevant tier; no other changes needed.
+xi.rift.PURVEYOR_SHOP =
+{
+    nascent =
+    {
+        { name = 'Keen Earring',      item = xi.item.KEEN_EARRING,      cost = 50 },
+        { name = "Soldier's Ring",    item = xi.item.SOLDIERS_RING,     cost = 40 },
+        { name = "Scholar's Collar",  item = xi.item.SCHOLARS_COLLAR,   cost = 50 },
+        { name = "Tracker's Mantle",  item = xi.item.TRACKERS_MANTLE,   cost = 60 },
+    },
+    tempered =
+    {
+        { name = 'Fleetfoot Sollerets', item = xi.item.FLEETFOOT_SOLLERETS, cost = 30 },
+        { name = 'Ironweave Cuisses',   item = xi.item.IRONWEAVE_CUISSES,   cost = 25 },
+        { name = 'Ironguard Hauberk',   item = xi.item.IRONGUARD_HAUBERK,   cost = 35 },
+        { name = "Duelist's Chain",     item = xi.item.DUELISTS_CHAIN,      cost = 30 },
+    },
+    forged =
+    {
+        { name = 'Ironveil Gauntlets', item = xi.item.IRONVEIL_GAUNTLETS, cost = 20 },
+        { name = "Ranger's Surcoat",   item = xi.item.RANGERS_SURCOAT,    cost = 15 },
+        { name = 'Hexweave Obi',       item = xi.item.HEXWEAVE_OBI,       cost = 18 },
+    },
+}
 
 -- ---------------------------------------------------------------------------
 -- Entry NPC — Rift Surveyor in Xarcabard

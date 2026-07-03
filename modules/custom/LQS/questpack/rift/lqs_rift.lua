@@ -11,7 +11,104 @@ end
 require('scripts/globals/rift')
 
 -----------------------------------
--- NPC definitions
+-- Purveyor shop helpers
+-----------------------------------
+
+-- Opens a paginated LQS.simpleShop for one shard tier.
+-- Each item in the catalogue is converted to { displayName (with cost), itemId, cost }
+-- which is the format LQS.simpleShop expects.
+local function openShop(player, npc, tier, currencyItemId)
+    local catalogue  = xi.rift.PURVEYOR_SHOP[tier]
+    local balance    = xi.rift.getPurveyorBalance(player, currencyItemId)
+    local currName   = xi.rift.SHARD_NAME[currencyItemId]
+
+    local shopList = {}
+    for _, entry in ipairs(catalogue) do
+        table.insert(shopList, { entry.name, entry.item, entry.cost })
+    end
+
+    local purchaseFunc = function(p, n, item)
+        local cost = item[3]
+        local bal  = xi.rift.getPurveyorBalance(p, currencyItemId)
+
+        if cost > bal then
+            p:sys(string.format("You need %d %s for that. You only have %d.", cost, currName, bal))
+            return
+        end
+
+        -- Confirm menu before deducting
+        p:timer(300, function(pArg)
+            pArg:customMenu({
+                title = string.format("Buy %s (%d %s)?", item[1], cost, currName),
+                options =
+                {
+                    {
+                        "No",
+                        function() end,
+                    },
+                    {
+                        "Yes",
+                        function()
+                            if npcUtil.giveItem(pArg, item[2]) then
+                                xi.rift.addPurveyorShards(pArg, currencyItemId, -cost)
+                                local remaining = xi.rift.getPurveyorBalance(pArg, currencyItemId)
+                                pArg:sys(string.format(
+                                    "You obtained %s. You have %d %s remaining.",
+                                    item[1], remaining, currName))
+                            end
+                        end,
+                    },
+                },
+            })
+        end)
+    end
+
+    LQS.simpleShop(player, npc, shopList, purchaseFunc,
+        string.format("%s Shop  [%d %s]", currName, balance, currName))
+end
+
+-- Opens a sub-menu listing all available trade-downs with current balances shown.
+local function openTradeDown(player, npc)
+    local options = {}
+
+    for _, entry in ipairs(xi.rift.TRADE_DOWN) do
+        local fromBal  = xi.rift.getPurveyorBalance(player, entry.from)
+        local fromName = xi.rift.SHARD_NAME[entry.from]
+        local toName   = xi.rift.SHARD_NAME[entry.to]
+        local label    = string.format("%s → %dx %s  (have %d)", fromName, entry.ratio, toName, fromBal)
+
+        -- Capture loop vars for the closure
+        local capturedFrom  = entry.from
+        local capturedRatio = entry.ratio
+        local capturedTo    = entry.to
+
+        table.insert(options, {
+            label,
+            function()
+                local bal = xi.rift.getPurveyorBalance(player, capturedFrom)
+                if bal < 1 then
+                    player:sys(string.format("You don't have any %s to break down.", fromName))
+                    return
+                end
+                xi.rift.addPurveyorShards(player, capturedFrom, -1)
+                local gained  = capturedRatio
+                xi.rift.addPurveyorShards(player, capturedTo, gained)
+                local newFrom = xi.rift.getPurveyorBalance(player, capturedFrom)
+                local newTo   = xi.rift.getPurveyorBalance(player, capturedTo)
+                player:sys(string.format(
+                    "Converted 1 %s into %d %s. You now have %d and %d respectively.",
+                    fromName, gained, toName, newFrom, newTo))
+            end,
+        })
+    end
+
+    player:timer(300, function(p)
+        p:customMenu({ title = "Break down shards (1 at a time)", options = options })
+    end)
+end
+
+-----------------------------------
+-- NPC callbacks
 -----------------------------------
 
 -- Surveyor: cycles available tiers and sends the player into the Rift.
@@ -19,7 +116,7 @@ local function surveyorTrigger(player, npc)
     xi.rift.onSurveyorTrigger(player, npc)
 end
 
--- Purveyor: accepts shard deposits, trade-downs, and shop purchases.
+-- Purveyor: trade shards in to credit the stored balance.
 local function purveyorTrade(player, npc, trade)
     local deposited = false
 
@@ -48,84 +145,40 @@ local function purveyorTrade(player, npc, trade)
     end
 end
 
+-- Purveyor trigger: show balance summary then open the top-level menu.
 local function purveyorTrigger(player, npc)
     local nascent  = xi.rift.getPurveyorBalance(player, xi.rift.NASCENT_SHARD)
     local tempered = xi.rift.getPurveyorBalance(player, xi.rift.TEMPERED_SHARD)
     local forged   = xi.rift.getPurveyorBalance(player, xi.rift.FORGED_SHARD)
     local resolute = xi.rift.getPurveyorBalance(player, xi.rift.RESOLUTE_SHARD)
 
-    player:messageText(npc, string.format(
-        "Your stores: Nascent x%d | Tempered x%d | Forged x%d | Resolute x%d. "
-        .. "Trade me shards to deposit them.",
-        nascent, tempered, forged, resolute))
+    player:timer(300, function(p)
+        p:customMenu({
+            title = string.format(
+                "Nascent: %d  Tempered: %d  Forged: %d  Resolute: %d",
+                nascent, tempered, forged, resolute),
+            options =
+            {
+                {
+                    string.format("Nascent Shop  [%d]", nascent),
+                    function() openShop(p, npc, "nascent",  xi.rift.NASCENT_SHARD)  end,
+                },
+                {
+                    string.format("Tempered Shop  [%d]", tempered),
+                    function() openShop(p, npc, "tempered", xi.rift.TEMPERED_SHARD) end,
+                },
+                {
+                    string.format("Forged Shop  [%d]", forged),
+                    function() openShop(p, npc, "forged",   xi.rift.FORGED_SHARD)   end,
+                },
+                {
+                    "Break down shards",
+                    function() openTradeDown(p, npc) end,
+                },
+            },
+        })
+    end)
 end
-
--- Perform a trade-down: spend qty of fromItemId, receive ratio × qty of the next tier down.
--- Returns true on success, false if the player can't afford it.
-local function doTradeDown(player, npc, fromItemId, qty)
-    qty = qty or 1
-    local balance = xi.rift.getPurveyorBalance(player, fromItemId)
-
-    if balance < qty then
-        player:messageText(npc, string.format(
-            "You don't have enough %ss for that.",
-            xi.rift.SHARD_NAME[fromItemId] or 'shards'))
-        return false
-    end
-
-    for _, entry in ipairs(xi.rift.TRADE_DOWN) do
-        if entry.from == fromItemId then
-            xi.rift.addPurveyorShards(player, fromItemId, -qty)
-            local gained = qty * entry.ratio
-            xi.rift.addPurveyorShards(player, entry.to, gained)
-            local newFrom = xi.rift.getPurveyorBalance(player, fromItemId)
-            local newTo   = xi.rift.getPurveyorBalance(player, entry.to)
-            player:messageText(npc, string.format(
-                "Converted %d %s into %d %s. You now have %d and %d respectively.",
-                qty, xi.rift.SHARD_NAME[fromItemId],
-                gained, xi.rift.SHARD_NAME[entry.to],
-                newFrom, newTo))
-            return true
-        end
-    end
-
-    return false
-end
-
--- Purchase an item from the Purveyor shop catalogue.
--- shopIndex matches an entry in xi.rift.PURVEYOR_SHOP.
-local function doPurchase(player, npc, shopIndex, qty)
-    qty = qty or 1
-    local item = xi.rift.PURVEYOR_SHOP[shopIndex]
-
-    if not item then
-        player:messageText(npc, "That item isn't available right now.")
-        return false
-    end
-
-    local totalCost = item.cost * qty
-    local balance   = xi.rift.getPurveyorBalance(player, item.currency)
-
-    if balance < totalCost then
-        local currencyName = xi.rift.SHARD_NAME[item.currency] or 'shards'
-        player:messageText(npc, string.format(
-            "You need %d %s for %s. You only have %d.",
-            totalCost, currencyName, item.name, balance))
-        return false
-    end
-
-    xi.rift.addPurveyorShards(player, item.currency, -totalCost)
-    player:addItem(item.item, qty)
-    local remaining = xi.rift.getPurveyorBalance(player, item.currency)
-    player:messageText(npc, string.format(
-        "There you are — %s. You have %d %s remaining.",
-        item.name, remaining, xi.rift.SHARD_NAME[item.currency] or 'shards'))
-    return true
-end
-
--- Expose trade-down and purchase helpers on xi.rift so other scripts can call them.
-xi.rift.doTradeDown = doTradeDown
-xi.rift.doPurchase  = doPurchase
 
 -----------------------------------
 -- Register NPC entities via LQS
@@ -134,7 +187,7 @@ xi.rift.doPurchase  = doPurchase
 LQS.npc(m, {
     Xarcabard =
     {
-        -- Rift Surveyor — tier selection and entry
+        -- Rift Surveyor — tier selection and entry.
         -- Replace pos with /pos output before going live.
         {
             name       = "Rift_Surveyor",
@@ -145,7 +198,7 @@ LQS.npc(m, {
             onTrigger  = surveyorTrigger,
         },
 
-        -- Rift Purveyor — shard storage, trade-down, and shop
+        -- Rift Purveyor — shard storage, trade-down, and shop.
         -- Positioned next to the Surveyor (4 units east). Replace before going live.
         {
             name       = "Rift_Purveyor",
