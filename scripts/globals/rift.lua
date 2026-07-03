@@ -837,6 +837,29 @@ end
 -- Proc effects
 -- ---------------------------------------------------------------------------
 
+-- Fires the White proc 2 seconds after the final colour proc lands.
+-- Runs after every colour proc so any of the three can be the trigger.
+local function checkWhiteProc(mob, instance)
+    if instance:getLocalVar('RIFT_WHITE_DONE')  == 1 then return end
+    if instance:getLocalVar('RIFT_YELLOW_DONE') ~= 1 then return end
+    if instance:getLocalVar('RIFT_BLUE_DONE')   ~= 1 then return end
+    if instance:getLocalVar('RIFT_RED_DONE')    ~= 1 then return end
+
+    instance:setLocalVar('RIFT_WHITE_DONE', 1)
+
+    -- Short delay so White feels like a separate payoff, not a same-tick stack.
+    mob:timer(2000, function(m)
+        if not m:isAlive() then return end
+        m:weaknessTrigger(0) -- White !! animation
+        m:addMod(xi.mod.UDMGPHYS,  20)
+        m:addMod(xi.mod.UDMGMAGIC, 20)
+        m:setLocalVar('RiftWhiteProc', 1)
+        for _, p in pairs(instance:getChars()) do
+            p:sys('[Rift] !! WHITE PROC !! The boss has been broken — its defences crumble!')
+        end
+    end)
+end
+
 -- Sends the !! animation and applies the colour-specific effect.
 -- color: 1=Red, 2=Yellow, 3=Blue (matches WeaknessType in C++).
 local function fireBossProc(mob, instance, tier, color)
@@ -862,10 +885,9 @@ local function fireBossProc(mob, instance, tier, color)
         end
 
     elseif color == 1 then
-        -- Red: extended Terror + strip one buff + increment White counter.
+        -- Red: extended Terror + strip one buff.
         local terrorDur = math.min(10000, 4000 + tier * 600)
         mob:addStatusEffect(xi.effect.TERROR, 0, 0, terrorDur / 1000)
-        -- Strip the first dispellable status effect on the boss.
         local stripped = mob:dispelStatusEffect(xi.dispelType.MAGIC)
         for _, p in pairs(instance:getChars()) do
             if stripped then
@@ -874,23 +896,10 @@ local function fireBossProc(mob, instance, tier, color)
                 p:sys('[Rift] Red proc! The boss is staggered.')
             end
         end
-
-        -- Check if all three procs are now done → White.
-        if  instance:getLocalVar('RIFT_YELLOW_DONE') == 1 and
-            instance:getLocalVar('RIFT_BLUE_DONE')   == 1 and
-            instance:getLocalVar('RIFT_WHITE_DONE')  == 0
-        then
-            instance:setLocalVar('RIFT_WHITE_DONE', 1)
-            mob:weaknessTrigger(0) -- White !! animation (level 0)
-            -- Permanent PDT/MDT-down for the rest of the fight.
-            mob:addMod(xi.mod.UDMGPHYS,  20)
-            mob:addMod(xi.mod.UDMGMAGIC, 20)
-            mob:setLocalVar('RiftWhiteProc', 1)
-            for _, p in pairs(instance:getChars()) do
-                p:sys('[Rift] !! WHITE PROC !! The boss has been broken — its defences crumble!')
-            end
-        end
     end
+
+    -- After any proc, check if all three are now done and queue White.
+    checkWhiteProc(mob, instance)
 end
 
 -- Called from MAGIC_TAKE listener on the boss.
