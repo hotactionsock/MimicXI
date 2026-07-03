@@ -145,6 +145,83 @@ local function purveyorTrade(player, npc, trade)
     end
 end
 
+-- Opens a quantity picker then withdraws physical shard items to inventory.
+local function openWithdraw(player, npc, currencyItemId)
+    local bal      = xi.rift.getPurveyorBalance(player, currencyItemId)
+    local currName = xi.rift.SHARD_NAME[currencyItemId]
+
+    if bal < 1 then
+        player:sys(string.format("You have no %s stored.", currName))
+        return
+    end
+
+    -- Build quantity options up to the player's balance.
+    local presets = { 1, 5, 10, 25, 50 }
+    local options = {}
+    for _, qty in ipairs(presets) do
+        if qty <= bal then
+            table.insert(options, {
+                string.format("%d", qty),
+                function()
+                    if npcUtil.giveItem(player, { currencyItemId, qty }) then
+                        xi.rift.addPurveyorShards(player, currencyItemId, -qty)
+                        local remaining = xi.rift.getPurveyorBalance(player, currencyItemId)
+                        player:sys(string.format(
+                            "Withdrew %d %s. You have %d stored.", qty, currName, remaining))
+                    end
+                end,
+            })
+        end
+    end
+
+    -- "All" option — always present when bal >= 1.
+    if bal > 0 and (#options == 0 or presets[#presets] ~= bal) then
+        table.insert(options, {
+            string.format("All (%d)", bal),
+            function()
+                if npcUtil.giveItem(player, { currencyItemId, bal }) then
+                    xi.rift.addPurveyorShards(player, currencyItemId, -bal)
+                    player:sys(string.format("Withdrew all %d %s.", bal, currName))
+                end
+            end,
+        })
+    end
+
+    player:timer(300, function(p)
+        p:customMenu({
+            title   = string.format("Withdraw %s  (stored: %d)", currName, bal),
+            options = options,
+        })
+    end)
+end
+
+-- Sub-menu: pick which shard tier to withdraw.
+local function openWithdrawMenu(player, npc)
+    local tiers =
+    {
+        { xi.rift.NASCENT_SHARD  },
+        { xi.rift.TEMPERED_SHARD },
+        { xi.rift.FORGED_SHARD   },
+        { xi.rift.RESOLUTE_SHARD },
+    }
+
+    local options = {}
+    for _, t in ipairs(tiers) do
+        local itemId  = t[1]
+        local name    = xi.rift.SHARD_NAME[itemId]
+        local bal     = xi.rift.getPurveyorBalance(player, itemId)
+        local capturedId = itemId
+        table.insert(options, {
+            string.format("%s  [%d]", name, bal),
+            function() openWithdraw(player, npc, capturedId) end,
+        })
+    end
+
+    player:timer(300, function(p)
+        p:customMenu({ title = "Withdraw which shard?", options = options })
+    end)
+end
+
 -- Purveyor trigger: show balance summary then open the top-level menu.
 local function purveyorTrigger(player, npc)
     local nascent  = xi.rift.getPurveyorBalance(player, xi.rift.NASCENT_SHARD)
@@ -174,6 +251,10 @@ local function purveyorTrigger(player, npc)
                 {
                     "Break down shards",
                     function() openTradeDown(p, npc) end,
+                },
+                {
+                    "Withdraw shards",
+                    function() openWithdrawMenu(p, npc) end,
                 },
             },
         })
