@@ -553,6 +553,60 @@ function xi.rift.tickModifiers(instance, elapsed, tier)
 end
 
 -- ---------------------------------------------------------------------------
+-- Rift Purveyor — shard storage and exchange
+--
+-- Shards are stored in player charvars rather than the actual inventory.
+-- The player trades physical shard items to the Purveyor who adds them to
+-- their stored balance. Trade-down and shop spend from this balance.
+-- ---------------------------------------------------------------------------
+
+xi.rift.PURVEYOR_VAR =
+{
+    [xi.rift.NASCENT_SHARD]  = 'RIFT_PURVEYOR_NASCENT',
+    [xi.rift.TEMPERED_SHARD] = 'RIFT_PURVEYOR_TEMPERED',
+    [xi.rift.FORGED_SHARD]   = 'RIFT_PURVEYOR_FORGED',
+    [xi.rift.RESOLUTE_SHARD] = 'RIFT_PURVEYOR_RESOLUTE',
+}
+
+-- Friendly names used in NPC dialogue.
+xi.rift.SHARD_NAME =
+{
+    [xi.rift.NASCENT_SHARD]  = 'Nascent Shard',
+    [xi.rift.TEMPERED_SHARD] = 'Tempered Shard',
+    [xi.rift.FORGED_SHARD]   = 'Forged Shard',
+    [xi.rift.RESOLUTE_SHARD] = 'Resolute Shard',
+}
+
+-- Returns how many stored shards of a given item type the player has.
+function xi.rift.getPurveyorBalance(player, itemId)
+    local var = xi.rift.PURVEYOR_VAR[itemId]
+    if not var then return 0 end
+    return player:getCharVar(var)
+end
+
+-- Adds (or subtracts) stored shards of a given item type for the player.
+function xi.rift.addPurveyorShards(player, itemId, amount)
+    local var = xi.rift.PURVEYOR_VAR[itemId]
+    if not var then return end
+    local current = player:getCharVar(var)
+    player:setCharVar(var, math.max(0, current + amount))
+end
+
+-- Trade-down rates: spending one higher shard produces this many lower shards.
+-- 1 Resolute → 2 Forged, 1 Forged → 3 Tempered, 1 Tempered → 3 Nascent.
+xi.rift.TRADE_DOWN =
+{
+    { from = xi.rift.RESOLUTE_SHARD, to = xi.rift.FORGED_SHARD,   ratio = 2 },
+    { from = xi.rift.FORGED_SHARD,   to = xi.rift.TEMPERED_SHARD, ratio = 3 },
+    { from = xi.rift.TEMPERED_SHARD, to = xi.rift.NASCENT_SHARD,  ratio = 3 },
+}
+
+-- Shop catalogue — items purchasable from the Purveyor.
+-- Add entries here when items are defined. Format:
+--   { item = xi.item.ITEM_ID, cost = qty, currency = xi.rift.FORGED_SHARD, name = 'Display Name' }
+xi.rift.PURVEYOR_SHOP = {}
+
+-- ---------------------------------------------------------------------------
 -- Entry NPC — Rift Surveyor in Xarcabard
 --
 -- Tier selection: player enters at the highest tier they have unlocked + 1.

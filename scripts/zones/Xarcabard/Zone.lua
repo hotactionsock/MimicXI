@@ -27,6 +27,35 @@ zoneObject.onInitialize = function(zone)
             xi.rift.onSurveyorTrigger(player, npc)
         end,
     })
+
+    -- Rift Purveyor NPC — positioned next to the Surveyor.
+    -- Replace x/y/z/rotation with /pos output from in-game before going live.
+    local purveyor = require('zones/Xarcabard/npcs/Rift_Purveyor')
+    zone:insertDynamicEntity({
+        objtype    = xi.objType.NPC,
+        name       = 'Rift_Purveyor',
+        packetName = 'Rift Purveyor',
+        look       = 0x0000B009, -- placeholder look
+        x = -281.0, y = -100.0, z = 196.0,
+        rotation   = 0,
+        namevis    = 1,
+
+        onTrade = function(player, npc, trade)
+            purveyor.onTrade(player, npc, trade)
+        end,
+
+        onTrigger = function(player, npc)
+            purveyor.onTrigger(player, npc)
+        end,
+
+        onEventUpdate = function(player, csid, option, npc)
+            purveyor.onEventUpdate(player, csid, option, npc)
+        end,
+
+        onEventFinish = function(player, csid, option, npc)
+            purveyor.onEventFinish(player, csid, option, npc)
+        end,
+    })
 end
 
 zoneObject.onZoneIn = function(player, prevZone)
