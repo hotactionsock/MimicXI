@@ -2,60 +2,12 @@
 -- Zone: Xarcabard (112)
 -----------------------------------
 ---@type TZone
-require('globals/rift')
-
 local zoneObject = {}
 
 zoneObject.onInitialize = function(zone)
     xi.conquest.setRegionalConquestOverseers(zone:getRegionID())
     xi.voidwalker.zoneOnInit(zone)
     xi.fate.onZoneInitialize(zone, zone:getID())
-
-    -- Rift Surveyor NPC — position is a placeholder near the Dynamis entrance.
-    -- Replace x/y/z/rotation with /pos output from in-game before going live.
-    zone:insertDynamicEntity({
-        objtype     = xi.objType.NPC,
-        name        = 'Rift_Surveyor',
-        packetName  = 'Rift Surveyor',
-        -- TODO: Set look to an appropriate model ID.
-        look        = 0x0000B009, -- placeholder look
-        x = -285.0, y = -100.0, z = 196.0,
-        rotation    = 0,
-        namevis     = 1,
-
-        onTrigger = function(player, npc)
-            xi.rift.onSurveyorTrigger(player, npc)
-        end,
-    })
-
-    -- Rift Purveyor NPC — positioned next to the Surveyor.
-    -- Replace x/y/z/rotation with /pos output from in-game before going live.
-    local purveyor = require('zones/Xarcabard/npcs/Rift_Purveyor')
-    zone:insertDynamicEntity({
-        objtype    = xi.objType.NPC,
-        name       = 'Rift_Purveyor',
-        packetName = 'Rift Purveyor',
-        look       = 0x0000B009, -- placeholder look
-        x = -281.0, y = -100.0, z = 196.0,
-        rotation   = 0,
-        namevis    = 1,
-
-        onTrade = function(player, npc, trade)
-            purveyor.onTrade(player, npc, trade)
-        end,
-
-        onTrigger = function(player, npc)
-            purveyor.onTrigger(player, npc)
-        end,
-
-        onEventUpdate = function(player, csid, option, npc)
-            purveyor.onEventUpdate(player, csid, option, npc)
-        end,
-
-        onEventFinish = function(player, csid, option, npc)
-            purveyor.onEventFinish(player, csid, option, npc)
-        end,
-    })
 end
 
 zoneObject.onZoneIn = function(player, prevZone)

@@ -2,8 +2,6 @@
 -- Zone: Walk_of_Echoes
 -----------------------------------
 ---@type TZone
-require('globals/rift')
-
 local zoneObject = {}
 
 zoneObject.onInitialize = function(zone)
@@ -19,9 +17,6 @@ zoneObject.onZoneIn = function(player, prevZone)
     then
         player:setPos(-420, 14, -49, 192)
     end
-
-    -- Rift entry: if the player zoned in with a pending tier, load the instance.
-    xi.rift.onZoneIn(player)
 
     return cs
 end
