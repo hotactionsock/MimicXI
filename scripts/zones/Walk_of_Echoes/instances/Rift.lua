@@ -78,12 +78,12 @@ instanceObject.afterInstanceRegister = function(player)
     if not instance then return end
     local tier = instance:getLocalVar('tier')
 
-    -- Announce any active floor modifiers so players know what they're up against.
+    -- Announce active floor modifiers.
     local mods = xi.rift.getFloorModifiers(instance)
     if #mods > 0 then
         player:sys(string.format('[Rift T%d] Floor modifiers active this run:', tier))
         for _, mod in ipairs(mods) do
-            player:sys(string.format('  • %s', mod.description))
+            player:sys(string.format('  \xE2\x80\xA2 %s', mod.description))
         end
     end
 end
@@ -125,7 +125,9 @@ end
 -- Record the clear and schedule ejection.
 instanceObject.onInstanceComplete = function(instance)
     local elapsed = instance:getLocalVar('elapsed')
+    local tier    = instance:getLocalVar('tier')
     xi.rift.recordClear(instance, elapsed)
+    xi.rift.procBonusDrop(instance, tier)
     instance:setLocalVar('ejectAt', elapsed + 15000)
 end
 

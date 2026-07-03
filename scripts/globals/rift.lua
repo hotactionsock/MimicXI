@@ -357,6 +357,9 @@ function xi.rift.spawnBoss(instance)
 
     instance:setLocalVar('bossSpawned', 1)
 
+    -- Assign proc weaknesses now so they're stored before the entity is created.
+    xi.rift.assignBossWeaknesses(instance)
+
     instance:insertDynamicEntity({
         objtype     = xi.objType.MOB,
         name        = boss.name .. '_Rift',
@@ -374,6 +377,23 @@ function xi.rift.spawnBoss(instance)
             mob:setMobMod(xi.mobMod.CHECK_AS_NM, 1)
             xi.rift.applyBossModifiers(mob, tier)
             xi.rift.applyFloorBossModifiers(mob, instance, tier)
+
+            -- Wire proc detection listeners.
+            mob:addListener('MAGIC_TAKE', 'RIFT_YELLOW_PROC', function(m, caster, spell, action)
+                xi.rift.checkMagicProc(m, instance, spell:getID())
+            end)
+            mob:addListener('WEAPONSKILL_TAKE', 'RIFT_BLUE_PROC', function(m, user, target, skill, spent, action)
+                xi.rift.checkWSProc(m, instance, skill:getID())
+            end)
+            mob:addListener('ABILITY_TAKE', 'RIFT_RED_PROC', function(m, user, target, ability, action)
+                xi.rift.checkJAProc(m, instance, ability:getID())
+            end)
+            -- Suppress the boss's next TP move when Yellow proc is pending.
+            mob:addListener('WEAPONSKILL_BEFORE_USE', 'RIFT_YELLOW_INTERRUPT', function(m, wsid)
+                if xi.rift.consumeYellowInterrupt(m) then
+                    m:setLocalVar('BlockNextWS', 1)
+                end
+            end)
         end,
 
         onMobDeath = function(mob, player, optParams)
@@ -550,6 +570,370 @@ function xi.rift.tickModifiers(instance, elapsed, tier)
         if mod.onTick then
             mod.onTick(instance, elapsed, tier)
         end
+    end
+end
+
+-- ---------------------------------------------------------------------------
+-- Boss proc system
+--
+-- Each boss spawned in a Rift run is assigned three weaknesses (Yellow/Blue/Red).
+-- Hitting the correct spell, weapon skill, or job ability fires the matching
+-- colored !! animation and applies a mechanical effect that helps the party.
+-- If all three are triggered in a single run the boss enters White state.
+--
+-- Yellow (magic spell)  — spell element matches the current Vana'diel day.
+--                         Effect: interrupt next TP move + brief MDT-down.
+-- Blue   (weapon skill) — WS damage type assigned randomly at spawn.
+--                         Effect: 12s PDT-down damage window.
+-- Red    (job ability)  — random JA from a curated list filtered by party jobs.
+--                         Effect: extended Terror + strip one buff + White counter++.
+-- White  (all three)    — permanent PDT/MDT-down, boss stops TP, bonus shard drop.
+--
+-- Weaknesses are stored in instance local vars:
+--   RIFT_YELLOW_WEAK  (spell ID)
+--   RIFT_BLUE_WEAK    (WS ID)
+--   RIFT_RED_WEAK     (ability ID)
+--   RIFT_YELLOW_DONE / RIFT_BLUE_DONE / RIFT_RED_DONE  (0/1)
+--   RIFT_WHITE_DONE   (0/1)
+-- ---------------------------------------------------------------------------
+
+-- Jobs that can cast offensive magic (for Yellow fallback check).
+local MAGE_JOBS = { [xi.job.BLM]=true, [xi.job.RDM]=true, [xi.job.WHM]=true,
+                    [xi.job.DRK]=true, [xi.job.BLU]=true, [xi.job.SCH]=true,
+                    [xi.job.SMN]=true }
+
+-- Yellow spell tables keyed by xi.day constant.
+-- Only spells learnable by ≤75 BLM/RDM/WHM/DRK.
+local YELLOW_BY_DAY =
+{
+    [xi.day.FIRESDAY]    = { xi.magic.spell.FIRE,     xi.magic.spell.FIRE_II,     xi.magic.spell.FIRE_III,     xi.magic.spell.FLARE    },
+    [xi.day.ICEDAY]      = { xi.magic.spell.BLIZZARD, xi.magic.spell.BLIZZARD_II, xi.magic.spell.BLIZZARD_III, xi.magic.spell.FREEZE   },
+    [xi.day.WINDSDAY]    = { xi.magic.spell.AERO,     xi.magic.spell.AERO_II,     xi.magic.spell.AERO_III,     xi.magic.spell.TORNADO  },
+    [xi.day.EARTHSDAY]   = { xi.magic.spell.STONE,    xi.magic.spell.STONE_II,    xi.magic.spell.STONE_III,    xi.magic.spell.QUAKE    },
+    [xi.day.LIGHTNINGDAY]= { xi.magic.spell.THUNDER,  xi.magic.spell.THUNDER_II,  xi.magic.spell.THUNDER_III,  xi.magic.spell.BURST    },
+    [xi.day.WATERSDAY]   = { xi.magic.spell.WATER,    xi.magic.spell.WATER_II,    xi.magic.spell.WATER_III,    xi.magic.spell.FLOOD    },
+    [xi.day.LIGHTSDAY]   = { xi.magic.spell.BANISH,   xi.magic.spell.BANISH_II,   xi.magic.spell.HOLY,         xi.magic.spell.DIA,     xi.magic.spell.DIA_II },
+    [xi.day.DARKSDAY]    = { xi.magic.spell.BIO,      xi.magic.spell.BIO_II,      xi.magic.spell.DRAIN,        xi.magic.spell.ASPIR    },
+}
+
+-- Blue weapon skill tables by damage type, tagged with which main jobs can use them.
+-- jobs = set of xi.job values (main job only).
+local BLUE_PIERCING =
+{
+    { id = xi.weaponskill.PENTA_THRUST,   jobs = { [xi.job.DRG]=true } },
+    { id = xi.weaponskill.VORPAL_THRUST,  jobs = { [xi.job.DRG]=true } },
+    { id = xi.weaponskill.SKEWER,         jobs = { [xi.job.DRG]=true } },
+    { id = xi.weaponskill.DANCING_EDGE,   jobs = { [xi.job.THF]=true, [xi.job.NIN]=true } },
+    { id = xi.weaponskill.SHADOWSTITCH,   jobs = { [xi.job.THF]=true } },
+    { id = xi.weaponskill.EVISCERATION,   jobs = { [xi.job.THF]=true, [xi.job.RDM]=true, [xi.job.NIN]=true, [xi.job.BRD]=true, [xi.job.DNC]=true } },
+    { id = xi.weaponskill.PYRRHIC_KLEOS,  jobs = { [xi.job.DNC]=true } },
+    { id = xi.weaponskill.EXENTERATOR,    jobs = { [xi.job.DNC]=true } },
+    { id = xi.weaponskill.BLADE_EI,       jobs = { [xi.job.NIN]=true } },
+    { id = xi.weaponskill.SIDEWINDER,     jobs = { [xi.job.RNG]=true } },
+    { id = xi.weaponskill.NAMAS_ARROW,    jobs = { [xi.job.RNG]=true } },
+    { id = xi.weaponskill.SLUG_SHOT,      jobs = { [xi.job.RNG]=true, [xi.job.COR]=true } },
+    { id = xi.weaponskill.LAST_STAND,     jobs = { [xi.job.RNG]=true, [xi.job.COR]=true } },
+    { id = xi.weaponskill.DETONATOR,      jobs = { [xi.job.COR]=true } },
+}
+
+local BLUE_SLASHING =
+{
+    { id = xi.weaponskill.FAST_BLADE,      jobs = { [xi.job.WAR]=true, [xi.job.PLD]=true, [xi.job.RDM]=true, [xi.job.DRK]=true, [xi.job.BRD]=true, [xi.job.BLU]=true, [xi.job.COR]=true, [xi.job.DNC]=true } },
+    { id = xi.weaponskill.RED_LOTUS_BLADE, jobs = { [xi.job.WAR]=true, [xi.job.PLD]=true, [xi.job.RDM]=true, [xi.job.DRK]=true, [xi.job.BRD]=true, [xi.job.BLU]=true, [xi.job.COR]=true, [xi.job.DNC]=true } },
+    { id = xi.weaponskill.VORPAL_BLADE,    jobs = { [xi.job.WAR]=true, [xi.job.PLD]=true, [xi.job.RDM]=true, [xi.job.DRK]=true, [xi.job.BRD]=true, [xi.job.BLU]=true, [xi.job.COR]=true, [xi.job.DNC]=true } },
+    { id = xi.weaponskill.SAVAGE_BLADE,    jobs = { [xi.job.WAR]=true, [xi.job.PLD]=true, [xi.job.RDM]=true, [xi.job.DRK]=true, [xi.job.BRD]=true, [xi.job.BLU]=true, [xi.job.COR]=true, [xi.job.DNC]=true } },
+    { id = xi.weaponskill.SPIRITS_WITHIN,  jobs = { [xi.job.PLD]=true } },
+    { id = xi.weaponskill.TACHI_ENPI,      jobs = { [xi.job.SAM]=true } },
+    { id = xi.weaponskill.TACHI_GOTEN,     jobs = { [xi.job.SAM]=true } },
+    { id = xi.weaponskill.TACHI_YUKIKAZE,  jobs = { [xi.job.SAM]=true } },
+    { id = xi.weaponskill.TACHI_GEKKO,     jobs = { [xi.job.SAM]=true } },
+    { id = xi.weaponskill.TACHI_KASHA,     jobs = { [xi.job.SAM]=true } },
+    { id = xi.weaponskill.BLADE_RETSU,     jobs = { [xi.job.NIN]=true } },
+    { id = xi.weaponskill.BLADE_JIN,       jobs = { [xi.job.NIN]=true } },
+    { id = xi.weaponskill.BLADE_HI,        jobs = { [xi.job.NIN]=true } },
+    { id = xi.weaponskill.BLADE_METSU,     jobs = { [xi.job.NIN]=true } },
+    { id = xi.weaponskill.GUILLOTINE,      jobs = { [xi.job.DRK]=true } },
+    { id = xi.weaponskill.CROSS_REAPER,    jobs = { [xi.job.DRK]=true } },
+    { id = xi.weaponskill.NIGHTMARE_SCYTHE,jobs = { [xi.job.DRK]=true } },
+    { id = xi.weaponskill.SPINNING_SLASH,  jobs = { [xi.job.DRK]=true, [xi.job.WAR]=true } },
+    { id = xi.weaponskill.RESOLUTION,      jobs = { [xi.job.DRK]=true, [xi.job.WAR]=true } },
+    { id = xi.weaponskill.STEEL_CYCLONE,   jobs = { [xi.job.WAR]=true } },
+    { id = xi.weaponskill.FELL_CLEAVE,     jobs = { [xi.job.WAR]=true } },
+    { id = xi.weaponskill.RAGING_AXE,      jobs = { [xi.job.WAR]=true, [xi.job.BST]=true, [xi.job.DRK]=true } },
+    { id = xi.weaponskill.GALE_AXE,        jobs = { [xi.job.WAR]=true, [xi.job.BST]=true, [xi.job.DRK]=true } },
+    { id = xi.weaponskill.AVALANCHE_AXE,   jobs = { [xi.job.WAR]=true, [xi.job.BST]=true, [xi.job.DRK]=true } },
+}
+
+local BLUE_BLUNT =
+{
+    { id = xi.weaponskill.COMBO,        jobs = { [xi.job.MNK]=true, [xi.job.PUP]=true } },
+    { id = xi.weaponskill.RAGING_FISTS, jobs = { [xi.job.MNK]=true, [xi.job.PUP]=true } },
+    { id = xi.weaponskill.HOWLING_FIST, jobs = { [xi.job.MNK]=true, [xi.job.PUP]=true } },
+    { id = xi.weaponskill.DRAGON_KICK,  jobs = { [xi.job.MNK]=true, [xi.job.PUP]=true } },
+    { id = xi.weaponskill.HEXA_STRIKE,  jobs = { [xi.job.WHM]=true, [xi.job.PLD]=true, [xi.job.BLU]=true } },
+    { id = xi.weaponskill.BLACK_HALO,   jobs = { [xi.job.WHM]=true, [xi.job.PLD]=true, [xi.job.BLU]=true } },
+    { id = xi.weaponskill.RETRIBUTION,  jobs = { [xi.job.WHM]=true, [xi.job.BLM]=true, [xi.job.RDM]=true, [xi.job.SMN]=true, [xi.job.SCH]=true } },
+    { id = xi.weaponskill.CATACLYSM,    jobs = { [xi.job.WHM]=true, [xi.job.BLM]=true, [xi.job.RDM]=true, [xi.job.SMN]=true, [xi.job.SCH]=true } },
+    { id = xi.weaponskill.SHOCKWAVE,    jobs = { [xi.job.WAR]=true, [xi.job.DRK]=true, [xi.job.PLD]=true } },
+}
+
+-- Red job ability pool, tagged with which jobs have access (main OR sub job).
+local RED_POOL =
+{
+    -- WAR
+    { id = xi.ja.BERSERK,          jobs = { [xi.job.WAR]=true } },
+    { id = xi.ja.WARCRY,           jobs = { [xi.job.WAR]=true } },
+    { id = xi.ja.DEFENDER,         jobs = { [xi.job.WAR]=true } },
+    { id = xi.ja.AGGRESSOR,        jobs = { [xi.job.WAR]=true } },
+    { id = xi.ja.PROVOKE,          jobs = { [xi.job.WAR]=true } },
+    -- MNK
+    { id = xi.ja.BOOST,            jobs = { [xi.job.MNK]=true } },
+    { id = xi.ja.CHAKRA,           jobs = { [xi.job.MNK]=true } },
+    { id = xi.ja.FOCUS,            jobs = { [xi.job.MNK]=true } },
+    { id = xi.ja.COUNTERSTANCE,    jobs = { [xi.job.MNK]=true } },
+    { id = xi.ja.CHI_BLAST,        jobs = { [xi.job.MNK]=true } },
+    -- WHM
+    { id = xi.ja.AFFLATUS_SOLACE,  jobs = { [xi.job.WHM]=true } },
+    { id = xi.ja.AFFLATUS_MISERY,  jobs = { [xi.job.WHM]=true } },
+    -- BLM
+    { id = xi.ja.ELEMENTAL_SEAL,   jobs = { [xi.job.BLM]=true } },
+    -- RDM
+    { id = xi.ja.COMPOSURE,        jobs = { [xi.job.RDM]=true } },
+    { id = xi.ja.SABOTEUR,         jobs = { [xi.job.RDM]=true } },
+    -- THF
+    { id = xi.ja.SNEAK_ATTACK,     jobs = { [xi.job.THF]=true } },
+    { id = xi.ja.TRICK_ATTACK,     jobs = { [xi.job.THF]=true } },
+    { id = xi.ja.FEINT,            jobs = { [xi.job.THF]=true } },
+    -- PLD
+    { id = xi.ja.SENTINEL,         jobs = { [xi.job.PLD]=true } },
+    { id = xi.ja.WEAPON_BASH,      jobs = { [xi.job.PLD]=true } },
+    { id = xi.ja.RAMPART,          jobs = { [xi.job.PLD]=true } },
+    { id = xi.ja.COVER,            jobs = { [xi.job.PLD]=true } },
+    -- DRK
+    { id = xi.ja.SOULEATER,        jobs = { [xi.job.DRK]=true } },
+    { id = xi.ja.LAST_RESORT,      jobs = { [xi.job.DRK]=true } },
+    { id = xi.ja.ARCANE_CIRCLE,    jobs = { [xi.job.DRK]=true } },
+    { id = xi.ja.NETHER_VOID,      jobs = { [xi.job.DRK]=true } },
+    -- BST
+    { id = xi.ja.REWARD,           jobs = { [xi.job.BST]=true } },
+    -- BRD
+    { id = xi.ja.PIANISSIMO,       jobs = { [xi.job.BRD]=true } },
+    { id = xi.ja.MARCATO,          jobs = { [xi.job.BRD]=true } },
+    -- RNG
+    { id = xi.ja.BARRAGE,          jobs = { [xi.job.RNG]=true } },
+    { id = xi.ja.SHADOWBIND,       jobs = { [xi.job.RNG]=true } },
+    { id = xi.ja.SHARPSHOT,        jobs = { [xi.job.RNG]=true } },
+    -- SAM
+    { id = xi.ja.MEDITATE,         jobs = { [xi.job.SAM]=true } },
+    { id = xi.ja.THIRD_EYE,        jobs = { [xi.job.SAM]=true } },
+    { id = xi.ja.SEKKANOKI,        jobs = { [xi.job.SAM]=true } },
+    { id = xi.ja.BLADE_BASH,       jobs = { [xi.job.SAM]=true } },
+    -- NIN
+    { id = xi.ja.MIGAWARI,         jobs = { [xi.job.NIN]=true } },
+    { id = xi.ja.INNIN,            jobs = { [xi.job.NIN]=true } },
+    { id = xi.ja.YONIN,            jobs = { [xi.job.NIN]=true } },
+    { id = xi.ja.FUTAE,            jobs = { [xi.job.NIN]=true } },
+    -- DRG
+    { id = xi.ja.JUMP,             jobs = { [xi.job.DRG]=true } },
+    { id = xi.ja.HIGH_JUMP,        jobs = { [xi.job.DRG]=true } },
+    { id = xi.ja.SPIRIT_JUMP,      jobs = { [xi.job.DRG]=true } },
+    { id = xi.ja.ANGON,            jobs = { [xi.job.DRG]=true } },
+    -- SMN
+    { id = xi.ja.ELEMENTAL_SIPHON, jobs = { [xi.job.SMN]=true } },
+    -- BLU
+    { id = xi.ja.BURST_AFFINITY,   jobs = { [xi.job.BLU]=true } },
+    { id = xi.ja.CHAIN_AFFINITY,   jobs = { [xi.job.BLU]=true } },
+    -- COR
+    { id = xi.ja.QUICK_DRAW,       jobs = { [xi.job.COR]=true } },
+    -- PUP
+    { id = xi.ja.VENTRILOQUY,      jobs = { [xi.job.PUP]=true } },
+    { id = xi.ja.FINE_TUNE,        jobs = { [xi.job.PUP]=true } },
+    -- DNC
+    { id = xi.ja.QUICKSTEP,        jobs = { [xi.job.DNC]=true } },
+    { id = xi.ja.VIOLENT_FLOURISH, jobs = { [xi.job.DNC]=true } },
+    -- SCH
+    { id = xi.ja.LIGHT_ARTS,       jobs = { [xi.job.SCH]=true } },
+    { id = xi.ja.DARK_ARTS,        jobs = { [xi.job.SCH]=true } },
+}
+
+-- Universal fallbacks used when no party member qualifies for a given colour.
+local FALLBACK_YELLOW = xi.magic.spell.STONE    -- any mage can cast
+local FALLBACK_BLUE   = xi.weaponskill.FAST_BLADE        -- nearly universal sword WS
+local FALLBACK_RED    = xi.ja.PROVOKE            -- nearly every job can sub WAR
+
+-- ---------------------------------------------------------------------------
+-- Weakness assignment
+-- ---------------------------------------------------------------------------
+
+-- Builds a set of { mainJob = true } and { mainJob = true, subJob = true } for
+-- every player currently in the instance.
+local function buildJobSets(instance)
+    local mainJobs = {}
+    local allJobs  = {}
+    for _, player in pairs(instance:getChars()) do
+        local mj = player:getMainJob()
+        local sj = player:getSubJob()
+        mainJobs[mj] = true
+        allJobs[mj]  = true
+        if sj and sj > 0 then
+            allJobs[sj] = true
+        end
+    end
+    return mainJobs, allJobs
+end
+
+-- Filters a list of { id, jobs } entries to only those usable by the given job set.
+local function filterByJobs(pool, jobSet)
+    local filtered = {}
+    for _, entry in ipairs(pool) do
+        for job in pairs(entry.jobs) do
+            if jobSet[job] then
+                filtered[#filtered + 1] = entry.id
+                break
+            end
+        end
+    end
+    return filtered
+end
+
+-- Assigns Yellow/Blue/Red weaknesses for a boss and stores them in instance vars.
+-- Call at the start of spawnBoss (before insertDynamicEntity).
+function xi.rift.assignBossWeaknesses(instance)
+    local mainJobs, allJobs = buildJobSets(instance)
+
+    -- Yellow: pick a random spell from today's element list.
+    local day     = VanadielDayOfTheWeek()
+    local dayList = YELLOW_BY_DAY[day] or YELLOW_BY_DAY[xi.day.FIRESDAY]
+    -- Check at least one mage is present; fall back to Stone if not.
+    local hasMage = false
+    for job in pairs(MAGE_JOBS) do
+        if allJobs[job] then hasMage = true; break end
+    end
+    local yellowSpell = hasMage and dayList[math.random(#dayList)] or FALLBACK_YELLOW
+    instance:setLocalVar('RIFT_YELLOW_WEAK', yellowSpell)
+
+    -- Blue: pick a random damage type then filter that type's pool by main jobs.
+    local allBlue    = {}
+    for _, entry in ipairs(BLUE_PIERCING) do allBlue[#allBlue+1] = entry end
+    for _, entry in ipairs(BLUE_SLASHING) do allBlue[#allBlue+1] = entry end
+    for _, entry in ipairs(BLUE_BLUNT)    do allBlue[#allBlue+1] = entry end
+    local bluePool   = filterByJobs(allBlue, mainJobs) -- main job only for WS
+    local blueWS     = #bluePool > 0 and bluePool[math.random(#bluePool)] or FALLBACK_BLUE
+    instance:setLocalVar('RIFT_BLUE_WEAK', blueWS)
+
+    -- Red: filter the JA pool by main + sub jobs.
+    local redPool = filterByJobs(RED_POOL, allJobs)
+    local redJA   = #redPool > 0 and redPool[math.random(#redPool)] or FALLBACK_RED
+    instance:setLocalVar('RIFT_RED_WEAK', redJA)
+
+    -- Reset proc state.
+    instance:setLocalVar('RIFT_YELLOW_DONE', 0)
+    instance:setLocalVar('RIFT_BLUE_DONE',   0)
+    instance:setLocalVar('RIFT_RED_DONE',    0)
+    instance:setLocalVar('RIFT_WHITE_DONE',  0)
+end
+
+-- ---------------------------------------------------------------------------
+-- Proc effects
+-- ---------------------------------------------------------------------------
+
+-- Sends the !! animation and applies the colour-specific effect.
+-- color: 1=Red, 2=Yellow, 3=Blue (matches WeaknessType in C++).
+local function fireBossProc(mob, instance, tier, color)
+    mob:weaknessTrigger(color)
+
+    if color == 2 then
+        -- Yellow: interrupt next TP move + apply MDT-down debuff.
+        mob:setLocalVar('RiftYellowProc', 1)
+        local mdt = math.min(30, 10 + tier * 2) -- 12% T1 → 30% T10
+        mob:addMod(xi.mod.DMGMAGIC, mdt)
+        mob:timer(15000, function(m) m:delMod(xi.mod.DMGMAGIC, mdt) end)
+        for _, p in pairs(instance:getChars()) do
+            p:sys('[Rift] Yellow proc! The boss\'s next ability is suppressed and its magical defences weaken.')
+        end
+
+    elseif color == 3 then
+        -- Blue: 12s PDT-down damage window.
+        local pdt = math.min(40, 15 + tier * 3) -- 18% T1 → 45% T10
+        mob:addMod(xi.mod.DMGPHYS, pdt)
+        mob:timer(12000, function(m) m:delMod(xi.mod.DMGPHYS, pdt) end)
+        for _, p in pairs(instance:getChars()) do
+            p:sys('[Rift] Blue proc! The boss is exposed — damage window open for 12 seconds.')
+        end
+
+    elseif color == 1 then
+        -- Red: extended Terror + strip one buff + increment White counter.
+        local terrorDur = math.min(10000, 4000 + tier * 600)
+        mob:addStatusEffect(xi.effect.TERROR, 0, 0, terrorDur / 1000)
+        -- Strip the first dispellable status effect on the boss.
+        local stripped = mob:dispelStatusEffect(xi.dispelType.MAGIC)
+        for _, p in pairs(instance:getChars()) do
+            if stripped then
+                p:sys('[Rift] Red proc! The boss is staggered and loses a buff.')
+            else
+                p:sys('[Rift] Red proc! The boss is staggered.')
+            end
+        end
+
+        -- Check if all three procs are now done → White.
+        if  instance:getLocalVar('RIFT_YELLOW_DONE') == 1 and
+            instance:getLocalVar('RIFT_BLUE_DONE')   == 1 and
+            instance:getLocalVar('RIFT_WHITE_DONE')  == 0
+        then
+            instance:setLocalVar('RIFT_WHITE_DONE', 1)
+            mob:weaknessTrigger(0) -- White !! animation (level 0)
+            -- Permanent PDT/MDT-down for the rest of the fight.
+            mob:addMod(xi.mod.UDMGPHYS,  20)
+            mob:addMod(xi.mod.UDMGMAGIC, 20)
+            mob:setLocalVar('RiftWhiteProc', 1)
+            for _, p in pairs(instance:getChars()) do
+                p:sys('[Rift] !! WHITE PROC !! The boss has been broken — its defences crumble!')
+            end
+        end
+    end
+end
+
+-- Called from MAGIC_TAKE listener on the boss.
+function xi.rift.checkMagicProc(mob, instance, spellId)
+    if instance:getLocalVar('RIFT_YELLOW_DONE') == 1 then return end
+    if spellId ~= instance:getLocalVar('RIFT_YELLOW_WEAK') then return end
+    instance:setLocalVar('RIFT_YELLOW_DONE', 1)
+    local tier = instance:getLocalVar('tier')
+    fireBossProc(mob, instance, tier, 2)
+end
+
+-- Called from WEAPONSKILL_TAKE listener on the boss.
+function xi.rift.checkWSProc(mob, instance, wsId)
+    if instance:getLocalVar('RIFT_BLUE_DONE') == 1 then return end
+    if wsId ~= instance:getLocalVar('RIFT_BLUE_WEAK') then return end
+    instance:setLocalVar('RIFT_BLUE_DONE', 1)
+    local tier = instance:getLocalVar('tier')
+    fireBossProc(mob, instance, tier, 3)
+end
+
+-- Called from ABILITY_TAKE listener on the boss.
+function xi.rift.checkJAProc(mob, instance, abilityId)
+    if instance:getLocalVar('RIFT_RED_DONE') == 1 then return end
+    if abilityId ~= instance:getLocalVar('RIFT_RED_WEAK') then return end
+    instance:setLocalVar('RIFT_RED_DONE', 1)
+    local tier = instance:getLocalVar('tier')
+    fireBossProc(mob, instance, tier, 1)
+end
+
+-- Returns true if the Yellow proc is pending — checked before a TP move fires.
+function xi.rift.consumeYellowInterrupt(mob)
+    if mob:getLocalVar('RiftYellowProc') == 1 then
+        mob:setLocalVar('RiftYellowProc', 0)
+        return true
+    end
+    return false
+end
+
+-- Called from onInstanceComplete — grants bonus shard drop if White was achieved.
+function xi.rift.procBonusDrop(instance, tier)
+    if instance:getLocalVar('RIFT_WHITE_DONE') ~= 1 then return end
+    for _, player in pairs(instance:getChars()) do
+        xi.rift.rollDrops(player, tier, true) -- extra boss-quality shard roll
     end
 end
 
