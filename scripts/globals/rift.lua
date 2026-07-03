@@ -10,9 +10,13 @@ xi.rift = xi.rift or {}
 -- TODO: Replace with a custom rift unlock item once defined.
 xi.rift.UNLOCK_ITEM = xi.item.DARK_MATTER
 
--- Shard drops from rift mobs. Replace with real item IDs once defined.
+-- Shard drops from rift mobs. Replace placeholders with real item IDs once defined.
+-- Four tiers of shard, each significantly rarer than the last.
+-- Boss kills receive 2x multiplier on all shard rates.
 xi.rift.NASCENT_SHARD  = xi.item.DARK_MATTER -- TODO: Nascent Shard item ID
 xi.rift.TEMPERED_SHARD = xi.item.DARK_MATTER -- TODO: Tempered Shard item ID
+xi.rift.FORGED_SHARD   = xi.item.DARK_MATTER -- TODO: Forged Shard item ID
+xi.rift.RESOLUTE_SHARD = xi.item.DARK_MATTER -- TODO: Resolute Shard item ID
 
 -- Ultra-rare item pool (boss-only).
 -- One item is chosen at random if the UR rate roll succeeds — never multiple per kill.
@@ -167,14 +171,17 @@ function xi.rift.thLevel(tier)
     return math.ceil(tier / 2)
 end
 
--- All drop rates are out of 10000.
--- Shard rates are generous — players should reliably accumulate these as currency.
--- Voidheart Haubergeon is a true chase item even at peak tier.
--- Boss mobs receive 2x on all rates.
+-- All drop rates are out of 10000. Boss mobs receive 2x on all shard rates.
+-- Each shard tier is significantly rarer than the previous.
+-- Resolute is rarer than a UR item drop per run even at peak tier.
 --
--- Nascent Shard  (common):      2% at T1  → 18% at T20  (~4-5 per run at T20)
--- Tempered Shard (uncommon):    0.5% at T1 → 8% at T20  (~2 per run at T20)
--- Ultra-Rare (boss-only):        0.03% at T1 → 4% at T20  (1 in 3333 at T1, 1 in 25 at T20)
+-- Tier         | T1 per mob | T10 per mob | T20 per mob | ~per run T10* | ~per run T20**
+-- Nascent      |  2%        | 11%         | 18%         | ~166%         | ~460%
+-- Tempered     |  0.5%      |  4.5%       |  8%         |  ~72%         | ~205%
+-- Forged       |  0.1%      |  0.9%       |  1.8%       |  ~14%         |  ~46%
+-- Resolute     |  0.01%     |  0.05%      |  0.15%      |   ~0.8%       |   ~3.9%
+-- UR (boss)    |  0.03%     |  1%         |  4%         |   ~1%         |   ~4%
+-- * T10 = 14 regular mobs + 1 boss (2x mult)   ** T20 = 24 regular + 1 boss
 
 local NASCENT_RATES =
 {
@@ -192,6 +199,24 @@ local TEMPERED_RATES =
     [16] =  700, [17] =  730, [18] =  760, [19] =  780, [20] =  800,
 }
 
+-- ~5x rarer than Tempered per mob. Meaningful but uncommon.
+local FORGED_RATES =
+{
+    [1]  =   10, [2]  =   15, [3]  =   22, [4]  =   30, [5]  =   38,
+    [6]  =   46, [7]  =   56, [8]  =   66, [9]  =   78, [10] =   90,
+    [11] =  100, [12] =  110, [13] =  120, [14] =  130, [15] =  140,
+    [16] =  150, [17] =  160, [18] =  170, [19] =  175, [20] =  180,
+}
+
+-- Rarer than a UR item drop per run even at T20. True prestige currency.
+local RESOLUTE_RATES =
+{
+    [1]  =   1, [2]  =   1, [3]  =   2, [4]  =   2, [5]  =   3,
+    [6]  =   3, [7]  =   4, [8]  =   4, [9]  =   4, [10] =   5,
+    [11] =   6, [12] =   7, [13] =   8, [14] =   9, [15] =  10,
+    [16] =  11, [17] =  12, [18] =  13, [19] =  14, [20] =  15,
+}
+
 -- Power curve (^1.5) from T1 to T10, linear extension T11-T20.
 -- T1=0.03%, T10=1% (1 in 100), T20=2% (1 in 50).
 local UR_RATES =
@@ -205,8 +230,10 @@ local UR_RATES =
 function xi.rift.rollDrops(player, tier, isBoss)
     local mult         = isBoss and 2 or 1
     local cap          = xi.rift.MAX_TIER
-    local nascentRate  = (NASCENT_RATES[tier]   or NASCENT_RATES[cap]) * mult
+    local nascentRate  = (NASCENT_RATES[tier]   or NASCENT_RATES[cap])  * mult
     local temperedRate = (TEMPERED_RATES[tier]  or TEMPERED_RATES[cap]) * mult
+    local forgedRate   = (FORGED_RATES[tier]    or FORGED_RATES[cap])   * mult
+    local resoluteRate = (RESOLUTE_RATES[tier]  or RESOLUTE_RATES[cap]) * mult
     local urRate       = (UR_RATES[tier] or UR_RATES[cap])
 
     if math.random(10000) <= nascentRate then
@@ -215,6 +242,14 @@ function xi.rift.rollDrops(player, tier, isBoss)
 
     if math.random(10000) <= temperedRate then
         player:addItem(xi.rift.TEMPERED_SHARD)
+    end
+
+    if math.random(10000) <= forgedRate then
+        player:addItem(xi.rift.FORGED_SHARD)
+    end
+
+    if math.random(10000) <= resoluteRate then
+        player:addItem(xi.rift.RESOLUTE_SHARD)
     end
 
     if isBoss and math.random(10000) <= urRate then
