@@ -10,13 +10,12 @@ xi.rift = xi.rift or {}
 -- TODO: Replace with a custom rift unlock item once defined.
 xi.rift.UNLOCK_ITEM = xi.item.DARK_MATTER
 
--- Shard drops from rift mobs. Replace placeholders with real item IDs once defined.
--- Four tiers of shard, each significantly rarer than the last.
+-- Shard drops from rift mobs. Four tiers, each significantly rarer than the last.
 -- Boss kills receive 2x multiplier on all shard rates.
-xi.rift.NASCENT_SHARD  = xi.item.DARK_MATTER -- TODO: Nascent Shard item ID
-xi.rift.TEMPERED_SHARD = xi.item.DARK_MATTER -- TODO: Tempered Shard item ID
-xi.rift.FORGED_SHARD   = xi.item.DARK_MATTER -- TODO: Forged Shard item ID
-xi.rift.RESOLUTE_SHARD = xi.item.DARK_MATTER -- TODO: Resolute Shard item ID
+xi.rift.NASCENT_SHARD  = xi.item.NASCENT_SHARD
+xi.rift.TEMPERED_SHARD = xi.item.TEMPERED_SHARD
+xi.rift.FORGED_SHARD   = xi.item.FORGED_SHARD
+xi.rift.RESOLUTE_SHARD = xi.item.RESOLUTE_SHARD
 
 -- Ultra-rare item pool (boss-only).
 -- One item is chosen at random if the UR rate roll succeeds — never multiple per kill.
