@@ -737,6 +737,12 @@ void CZoneEntities::ForEachAlly(const std::function<void(CMobEntity*)>& func)
     }
 }
 
+void CZoneEntities::EraseChar(CCharEntity* PChar)
+{
+    m_charList.erase(PChar->targid);
+    m_charTargIds.erase(PChar->targid);
+}
+
 void CZoneEntities::DespawnPC(CCharEntity* PChar)
 {
     TracyZoneScoped;

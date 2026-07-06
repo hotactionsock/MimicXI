@@ -12196,6 +12196,56 @@ void CLuaBaseEntity::createInstance(uint16 instanceID)
 }
 
 /************************************************************************
+ *  Function: enterInstanceLayer()
+ *  Purpose : Moves a PC from the regular zone into their assigned instance layer
+ *  Example : player:enterInstanceLayer()
+ *  Notes   : PInstance must be set before calling
+ ************************************************************************/
+
+void CLuaBaseEntity::enterInstanceLayer()
+{
+    if (m_PBaseEntity->objtype != TYPE_PC)
+    {
+        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->getName());
+        return;
+    }
+
+    auto* PChar = static_cast<CCharEntity*>(m_PBaseEntity);
+    if (!PChar->PInstance)
+    {
+        ShowWarning("CLuaBaseEntity::enterInstanceLayer: player has no instance assigned.");
+        return;
+    }
+
+    PChar->loc.zone->EnterInstanceLayer(PChar);
+}
+
+/************************************************************************
+ *  Function: leaveInstanceLayer()
+ *  Purpose : Returns a PC from their instance layer back to the regular zone
+ *  Example : player:leaveInstanceLayer()
+ *  Notes   :
+ ************************************************************************/
+
+void CLuaBaseEntity::leaveInstanceLayer()
+{
+    if (m_PBaseEntity->objtype != TYPE_PC)
+    {
+        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->getName());
+        return;
+    }
+
+    auto* PChar = static_cast<CCharEntity*>(m_PBaseEntity);
+    if (!PChar->PInstance)
+    {
+        ShowWarning("CLuaBaseEntity::leaveInstanceLayer: player is not in an instance layer.");
+        return;
+    }
+
+    PChar->loc.zone->LeaveInstanceLayer(PChar);
+}
+
+/************************************************************************
  *  Function: instanceEntry()
  *  Purpose : Creates an instance entry packet for the player
  *  Example : player:instanceEntry(target,1)
@@ -20811,6 +20861,8 @@ void CLuaBaseEntity::Register()
     SOL_REGISTER("getInstance", CLuaBaseEntity::getInstance);
     SOL_REGISTER("setInstance", CLuaBaseEntity::setInstance);
     SOL_REGISTER("createInstance", CLuaBaseEntity::createInstance);
+    SOL_REGISTER("enterInstanceLayer", CLuaBaseEntity::enterInstanceLayer);
+    SOL_REGISTER("leaveInstanceLayer", CLuaBaseEntity::leaveInstanceLayer);
     SOL_REGISTER("instanceEntry", CLuaBaseEntity::instanceEntry);
 
     SOL_REGISTER("getConfrontationEffect", CLuaBaseEntity::getConfrontationEffect);
