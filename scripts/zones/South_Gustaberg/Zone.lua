@@ -1,6 +1,7 @@
 -----------------------------------
 -- Zone: South_Gustaberg (107)
 -----------------------------------
+require('scripts/globals/fate_vendor')
 ---@type TZone
 local zoneObject = {}
 
@@ -8,6 +9,7 @@ zoneObject.onInitialize = function(zone)
     -- A Chocobo Riding Game finish line
     zone:registerCylindricalTriggerArea(1, 580.074, -307.355, 5)
     xi.fate.onZoneInitialize(zone, zone:getID())
+    xi.fate.vendor.onZoneInitialize(zone, zone:getID())
 end
 
 zoneObject.onZoneIn = function(player, prevZone)
@@ -28,10 +30,15 @@ zoneObject.afterZoneIn = function(player)
     xi.chocoboGame.handleMessage(player)
     xi.fate.checkSyncOnZoneIn(player)
     xi.fate.sendAddonDef(player, player:getZoneID())
+    xi.fate.notifyActiveOnZoneIn(player, player:getZoneID())
 end
 
 zoneObject.onConquestUpdate = function(zone, updatetype, influence, owner, ranking, isConquestAlliance)
     xi.conquest.onConquestUpdate(zone, updatetype, influence, owner, ranking, isConquestAlliance)
+    -- updatetype 1 = TALLY_END (Sunday midnight JST weekly reset). Reset vendor stock.
+    if updatetype == 1 then
+        xi.fate.vendor.onWeeklyReset()
+    end
 end
 
 zoneObject.onZoneTick = function(zone)

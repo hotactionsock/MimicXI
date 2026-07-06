@@ -391,7 +391,7 @@ void CEntityUpdatePacket::updateWith(CBaseEntity* PEntity, ENTITYUPDATE type, ui
                 {
                     ref<uint8>(0x27) |= 0x08;
                 }
-                ref<uint8>(0x28) |= PMob->StatusEffectContainer->HasStatusEffect(EFFECT_TERROR) ? 0x10 : 0x00;
+                ref<uint8>(0x28) |= PMob->StatusEffectContainer->HasStatusEffect(xi::StatusEffect::Terror) ? 0x10 : 0x00;
 
                 // Giga hack -- mobs in Pso'Xja for some reason are less "visible"
                 // Set CliPriorityFlag to force them to render on the client if they receive 0x00Es
@@ -578,7 +578,8 @@ void CEntityUpdatePacket::updateWith(CBaseEntity* PEntity, ENTITYUPDATE type, ui
         std::memcpy(start, name.c_str(), name.size());
     }
 
-    if (packet->SendFlg.General)
+    //  Don't overwrite data for model size and hitbox size from look string on NPCs
+    if (packet->SendFlg.General && (PEntity->objtype == TYPE_PC || PEntity->objtype == TYPE_PET || PEntity->objtype == TYPE_MOB))
     {
         packet->Flags1.GraphSize = PEntity->modelSize;
         // For some reason, SE reused a player struct where this "g" value is the hitbox size.

@@ -63,6 +63,11 @@ zoneObject.afterZoneIn = function(player)
     xi.chocoboGame.handleMessage(player)
     xi.fate.checkSyncOnZoneIn(player)
     xi.fate.sendAddonDef(player, player:getZoneID())
+    xi.fate.superbossCheckZoneIn(player, player:getZoneID())
+end
+
+zoneObject.onPlayerDeath = function(player, killer)
+    xi.fate.onPlayerDeath(player, player:getZoneID())
 end
 
 zoneObject.onConquestUpdate = function(zone, updatetype, influence, owner, ranking, isConquestAlliance)

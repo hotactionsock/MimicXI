@@ -1,4 +1,4 @@
-﻿/*
+/*
 ===========================================================================
 
   Copyright (c) 2010-2015 Darkstar Dev Teams
@@ -140,8 +140,8 @@ CMobEntity::CMobEntity()
 , m_GilfinderLevel(0)
 , m_ItemStolen(false)
 , m_ItemDespoiled(false)
+, m_Species(0)
 , m_Family(0)
-, m_SuperFamily(0)
 , m_MobSkillList(0)
 , m_Pool(0)
 , m_flags(0)
@@ -153,6 +153,7 @@ CMobEntity::CMobEntity()
 , m_IsPathingHome(false)
 {
     TracyZoneScoped;
+
     objtype     = ENTITYTYPE::TYPE_MOB;
     allegiance  = ALLEGIANCE_TYPE::MOB;
     m_EcoSystem = ECOSYSTEM::UNCLASSIFIED;
@@ -161,10 +162,10 @@ CMobEntity::CMobEntity()
     PEnmityContainer     = new CEnmityContainer(this);
     SpellContainer       = new CMobSpellContainer(this);
 
-    m_Weapons[SLOT_MAIN]   = new CItemWeapon(0);
-    m_Weapons[SLOT_SUB]    = new CItemWeapon(0);
-    m_Weapons[SLOT_RANGED] = new CItemWeapon(0);
-    m_Weapons[SLOT_AMMO]   = new CItemWeapon(0);
+    m_Weapons[SLOT_MAIN]   = std::make_unique<CItemWeapon>(0).release();
+    m_Weapons[SLOT_SUB]    = std::make_unique<CItemWeapon>(0).release();
+    m_Weapons[SLOT_RANGED] = std::make_unique<CItemWeapon>(0).release();
+    m_Weapons[SLOT_AMMO]   = std::make_unique<CItemWeapon>(0).release();
 
     PAI = std::make_unique<CAIContainer>(this, std::make_unique<CPathFind>(this), std::make_unique<CMobController>(this), std::make_unique<CTargetFind>(this));
 }
@@ -172,6 +173,7 @@ CMobEntity::CMobEntity()
 CMobEntity::~CMobEntity()
 {
     TracyZoneScoped;
+
     destroy(m_Weapons[SLOT_MAIN]);
     destroy(m_Weapons[SLOT_SUB]);
     destroy(m_Weapons[SLOT_RANGED]);
@@ -381,6 +383,7 @@ void CMobEntity::TapDeaggroTime()
 bool CMobEntity::CanLink(position_t* pos, int16 superLink)
 {
     TracyZoneScoped;
+
     // handle super linking
     if (superLink && getMobMod(MOBMOD_SUPERLINK) == superLink)
     {
@@ -405,8 +408,8 @@ bool CMobEntity::CanLink(position_t* pos, int16 superLink)
         return false;
     }
 
-    // Link if can see mob
-    if (getMobMod(MOBMOD_DETECTION) & DETECT_SIGHT && !facing(loc.p, *pos, 64))
+    // If a mob detects by both sight and hearing it only needs to meet one check.
+    if ((getMobMod(MOBMOD_DETECTION) & DETECT_SIGHT) && !(getMobMod(MOBMOD_DETECTION) & DETECT_HEARING) && !facing(loc.p, *pos, 64))
     {
         return false;
     }
@@ -481,7 +484,7 @@ bool CMobEntity::shouldUseTPMove(uint16 tpThreshold)
     }
 
     // mobs use three mob skills in a row under Meikyo Shisui
-    if (StatusEffectContainer->HasStatusEffect(EFFECT_MEIKYO_SHISUI) && GetLocalVar("[MeikyoShisui]MobSkillCount") > 0)
+    if (StatusEffectContainer->HasStatusEffect(xi::StatusEffect::MeikyoShisui) && GetLocalVar("[MeikyoShisui]MobSkillCount") > 0)
     {
         return true;
     }
@@ -585,6 +588,7 @@ bool CMobEntity::GetUntargetable() const
 void CMobEntity::PostTick()
 {
     TracyZoneScoped;
+
     CBattleEntity::PostTick();
     timer::time_point now = timer::now();
     if (loc.zone && updatemask && now > m_nextUpdateTimer)
@@ -610,6 +614,14 @@ float CMobEntity::GetRoamDistance()
 float CMobEntity::GetRoamRate()
 {
     return (float)getMobMod(MOBMOD_ROAM_RATE) / 10.0f;
+}
+
+float CMobEntity::GetRangedAttackRange()
+{
+    // Defaulted range is 14 as observed on all retail fomor.
+    // In the case this changes for other ranger/ninja types use mobmod
+    const int16 rangedAttackRange = getMobMod(MOBMOD_RANGED_ATTACK_RANGE);
+    return rangedAttackRange > 0 ? static_cast<float>(rangedAttackRange) : 14.0f;
 }
 
 bool CMobEntity::ValidTarget(CBattleEntity* PInitiator, uint16 targetFlags)
@@ -650,14 +662,21 @@ bool CMobEntity::ValidTarget(CBattleEntity* PInitiator, uint16 targetFlags)
 void CMobEntity::Spawn()
 {
     TracyZoneScoped;
+
+    // Reset stolen item always for battlefields or only if HP was 0 (mob died)
+    if (this->m_Type & MOBTYPE_BATTLEFIELD || health.hp == 0)
+    {
+        m_ItemStolen    = false;
+        m_ItemDespoiled = false;
+    }
+
     CBattleEntity::Spawn();
+
     m_giveExp        = true;
     m_HiPCLvl        = 0;
     m_HiPartySize    = 0;
     m_THLvl          = 0;
     m_GilfinderLevel = 0;
-    m_ItemStolen     = false;
-    m_ItemDespoiled  = false;
     m_DropItemTime   = 1000ms;
     animationsub     = (uint8)getMobMod(MOBMOD_SPAWN_ANIMATIONSUB);
     SetCallForHelpFlag(false);
@@ -713,6 +732,7 @@ void CMobEntity::Spawn()
 void CMobEntity::OnWeaponSkillFinished(CWeaponSkillState& state, action_t& action)
 {
     TracyZoneScoped;
+
     CBattleEntity::OnWeaponSkillFinished(state, action);
 
     TapDeaggroTime();
@@ -730,6 +750,7 @@ void CMobEntity::OnMobSkillFinished(CMobSkillState& state, action_t& action)
 void CMobEntity::DistributeRewards()
 {
     TracyZoneScoped;
+
     CCharEntity* PChar = (CCharEntity*)GetEntity(m_OwnerID.targid, TYPE_PC);
 
     if (PChar != nullptr && PChar->id == m_OwnerID.id)
@@ -759,7 +780,7 @@ void CMobEntity::DistributeRewards()
             });
             // clang-format on
 
-            if (m_giveExp && !PChar->StatusEffectContainer->HasStatusEffect(EFFECT_BATTLEFIELD))
+            if (m_giveExp && !PChar->StatusEffectContainer->HasStatusEffect(xi::StatusEffect::Battlefield))
             {
                 charutils::DistributeExperiencePoints(PChar, this);
                 charutils::DistributeCapacityPoints(PChar, this);
@@ -890,6 +911,7 @@ auto CMobEntity::GetEligibleGeodes() const -> std::vector<uint16>
 void CMobEntity::DropItems(CCharEntity* PChar)
 {
     TracyZoneScoped;
+
     // Adds an item to the treasure pool. Treasure pool will automatically kick out items if the pool is full (prioritizing non rare non ex items)
     auto AddItemToPool = [this, PChar](uint16 ItemID)
     {
@@ -1040,8 +1062,8 @@ void CMobEntity::DropItems(CCharEntity* PChar)
         // Begin Adding Crystals
         if (m_Element > 0)
         {
-            REGION_TYPE regionID       = PChar->loc.zone->GetRegionID();
-            EFFECT      requiredEffect = EFFECT_NONE;
+            REGION_TYPE      regionID       = PChar->loc.zone->GetRegionID();
+            xi::StatusEffect requiredEffect = xi::StatusEffect::None;
 
             switch (regionID)
             {
@@ -1051,7 +1073,7 @@ void CMobEntity::DropItems(CCharEntity* PChar)
                 case REGION_TYPE::HALVUNG:
                 case REGION_TYPE::ARRAPAGO:
                 case REGION_TYPE::ALZADAAL:
-                    requiredEffect = EFFECT_SANCTION;
+                    requiredEffect = xi::StatusEffect::Sanction;
                     break;
 
                 // Sigil Regions
@@ -1063,25 +1085,25 @@ void CMobEntity::DropItems(CCharEntity* PChar)
                 case REGION_TYPE::ARAGONEAU_FRONT:
                 case REGION_TYPE::FAUREGANDI_FRONT:
                 case REGION_TYPE::VALDEAUNIA_FRONT:
-                    requiredEffect = EFFECT_SIGIL;
+                    requiredEffect = xi::StatusEffect::Sigil;
                     break;
 
                 // Ionis Regions
                 case REGION_TYPE::ADOULIN_ISLANDS:
                 case REGION_TYPE::EAST_ULBUKA:
-                    requiredEffect = EFFECT_IONIS;
+                    requiredEffect = xi::StatusEffect::Ionis;
                     break;
 
                 // Signet Regions
                 default:
                     if (regionID < REGION_TYPE::TAVNAZIA && conquest::GetRegionOwner(regionID) <= 2)
                     {
-                        requiredEffect = EFFECT_SIGNET;
+                        requiredEffect = xi::StatusEffect::Signet;
                     }
                     break;
             }
 
-            if (requiredEffect == EFFECT_NONE)
+            if (requiredEffect == xi::StatusEffect::None)
             {
                 return;
             }
@@ -1108,11 +1130,11 @@ void CMobEntity::DropItems(CCharEntity* PChar)
             // Sanction regions: 30%
             // Others leave at 20% - TODO: need more info on WOTG+
             uint8 crystalRate = 20;
-            if (requiredEffect == EFFECT_SIGNET)
+            if (requiredEffect == xi::StatusEffect::Signet)
             {
                 crystalRate = (playersNearby == 1) ? 55 : 45;
             }
-            else if (requiredEffect == EFFECT_SANCTION)
+            else if (requiredEffect == xi::StatusEffect::Sanction)
             {
                 crystalRate = 30;
             }
@@ -1131,6 +1153,7 @@ void CMobEntity::DropItems(CCharEntity* PChar)
 bool CMobEntity::CanAttack(CBattleEntity* PTarget, std::unique_ptr<CBasicPacket>& errMsg)
 {
     TracyZoneScoped;
+
     auto skill_list_id{ getMobMod(MOBMOD_ATTACK_SKILL_LIST) };
     if (skill_list_id)
     {
@@ -1161,6 +1184,7 @@ bool CMobEntity::CanAttack(CBattleEntity* PTarget, std::unique_ptr<CBasicPacket>
 void CMobEntity::OnEngage(CAttackState& state)
 {
     TracyZoneScoped;
+
     CBattleEntity::OnEngage(state);
     luautils::OnMobEngage(this, state.GetTarget());
     unsigned int range = this->getMobMod(MOBMOD_ALLI_HATE);
@@ -1199,6 +1223,7 @@ void CMobEntity::OnEngage(CAttackState& state)
 void CMobEntity::FadeOut()
 {
     TracyZoneScoped;
+
     CBaseEntity::FadeOut();
     PEnmityContainer->Clear();
 }
@@ -1206,6 +1231,7 @@ void CMobEntity::FadeOut()
 void CMobEntity::OnDeathTimer()
 {
     TracyZoneScoped;
+
     if (!(m_Behavior & BEHAVIOR_RAISABLE))
     {
         PAI->Despawn();
@@ -1215,6 +1241,7 @@ void CMobEntity::OnDeathTimer()
 void CMobEntity::OnDespawn(CDespawnState& /*unused*/)
 {
     TracyZoneScoped;
+
     FadeOut();
 
     luautils::OnMobDespawn(this);
@@ -1271,6 +1298,7 @@ void CMobEntity::Die()
 void CMobEntity::OnDisengage(CAttackState& state)
 {
     TracyZoneScoped;
+
     PAI->PathFind->Clear();
     PEnmityContainer->Clear();
 
@@ -1291,6 +1319,7 @@ void CMobEntity::OnDisengage(CAttackState& state)
 void CMobEntity::OnCastFinished(CMagicState& state, action_t& action)
 {
     TracyZoneScoped;
+
     CBattleEntity::OnCastFinished(state, action);
 
     CMobController* mobController = dynamic_cast<CMobController*>(PAI->GetController());
@@ -1305,6 +1334,7 @@ void CMobEntity::OnCastFinished(CMagicState& state, action_t& action)
 void CMobEntity::OnCastInterrupted(CMagicState& state, action_t& action, MsgBasic msg, bool blockedCast)
 {
     TracyZoneScoped;
+
     CBattleEntity::OnCastInterrupted(state, action, msg, blockedCast);
 
     CMobController* mobController = dynamic_cast<CMobController*>(PAI->GetController());
@@ -1317,6 +1347,7 @@ void CMobEntity::OnCastInterrupted(CMagicState& state, action_t& action, MsgBasi
 bool CMobEntity::OnAttack(CAttackState& state, action_t& action)
 {
     TracyZoneScoped;
+
     TapDeaggroTime();
 
     if (getMobMod(MOBMOD_ATTACK_SKILL_LIST))

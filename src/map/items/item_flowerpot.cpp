@@ -26,6 +26,12 @@
 CItemFlowerpot::CItemFlowerpot(uint16 id)
 : CItemFurnishing(id)
 {
+    setType(ITEM_FLOWERPOT);
+}
+
+CItemFlowerpot::CItemFlowerpot(const CItemFlowerpot& other)
+: CItemFurnishing(other)
+{
 }
 
 CItemFlowerpot::~CItemFlowerpot() = default;

@@ -1,4 +1,4 @@
-﻿/*
+/*
 ===========================================================================
 
   Copyright (c) 2010-2015 Darkstar Dev Teams
@@ -26,6 +26,7 @@
 #include <cstring>
 
 #include "enums/item_lockflg.h"
+#include "items/item_access.h"
 #include "packets/basic.h"
 #include "packets/char_status.h"
 #include "packets/char_sync.h"
@@ -78,6 +79,7 @@
 #include "items/item_furnishing.h"
 #include "items/item_usable.h"
 #include "items/item_weapon.h"
+#include "items/transactions/synth.h"
 #include "job_points.h"
 #include "latent_effect_container.h"
 #include "linkshell.h"
@@ -110,15 +112,17 @@ CCharEntity::CCharEntity()
 : m_PlayTime(0s)
 {
     TracyZoneScoped;
+
     objtype     = TYPE_PC;
     m_EcoSystem = ECOSYSTEM::HUMANOID;
 
     eventPreparation = new EventPrep();
     currentEvent     = new EventInfo();
 
-    inSequence = false;
-    gotMessage = false;
-    m_Locked   = false;
+    inSequence       = false;
+    gotMessage       = false;
+    m_Locked         = false;
+    m_zoneInCutscene = false;
 
     accid        = 0;
     m_GMlevel    = 0;
@@ -129,7 +133,6 @@ CCharEntity::CCharEntity()
     TradeContainer = new CTradeContainer();
     Container      = new CTradeContainer();
     UContainer     = new CUContainer();
-    CraftContainer = new CTradeContainer();
 
     m_Inventory  = std::make_unique<CItemContainer>(LOC_INVENTORY);
     m_Mogsafe    = std::make_unique<CItemContainer>(LOC_MOGSAFE);
@@ -151,8 +154,6 @@ CCharEntity::CCharEntity()
     m_RecycleBin = std::make_unique<CItemContainer>(LOC_RECYCLEBIN);
 
     keys = {};
-    std::memset(&equip, 0, sizeof(equip));
-    std::memset(&equipLoc, 0, sizeof(equipLoc));
 
     m_SpellList.reset();
     std::memset(&m_LearnedAbilities, 0, sizeof(m_LearnedAbilities));
@@ -284,6 +285,7 @@ CCharEntity::CCharEntity()
 CCharEntity::~CCharEntity()
 {
     TracyZoneScoped;
+
     clearPacketList();
 
     if (PTreasurePool != nullptr)
@@ -338,8 +340,8 @@ CCharEntity::~CCharEntity()
                 }
             }
         }
-        StatusEffectContainer->DelStatusEffectSilent(EFFECT_LEVEL_SYNC);
-        StatusEffectContainer->DelStatusEffectSilent(EFFECT_LEVEL_RESTRICTION);
+        StatusEffectContainer->DelStatusEffectSilent(xi::StatusEffect::LevelSync);
+        StatusEffectContainer->DelStatusEffectSilent(xi::StatusEffect::LevelRestriction);
     }
 
     if (PParty && loc.destination != 0 && !inMogHouse())
@@ -371,10 +373,11 @@ CCharEntity::~CCharEntity()
 
     charutils::WriteHistory(this);
 
+    this->clearTransactions();
+
     destroy(TradeContainer);
     destroy(Container);
     destroy(UContainer);
-    destroy(CraftContainer);
     destroy(PLatentEffectContainer);
 
     PGuildShop = nullptr;
@@ -561,7 +564,7 @@ bool CCharEntity::hasAutoTargetEnabled() const
 
 auto CCharEntity::isCrafting() const -> bool
 {
-    return animation == ANIMATION_SYNTH || (CraftContainer && CraftContainer->getItemsCount() > 0);
+    return animation == ANIMATION_SYNTH || this->activeTransaction<SynthTransaction>();
 }
 
 auto CCharEntity::isFishing() const -> bool
@@ -797,6 +800,16 @@ auto CCharEntity::aman() -> CAMANContainer&
     return *m_AMAN;
 }
 
+auto CCharEntity::lastProposalCloseTime() const -> timer::time_point
+{
+    return lastProposalCloseTime_;
+}
+
+void CCharEntity::setLastProposalCloseTime(timer::time_point t)
+{
+    lastProposalCloseTime_ = t;
+}
+
 auto CCharEntity::inMogHouse() const -> bool
 {
     return m_moghouseID != 0;
@@ -805,6 +818,11 @@ auto CCharEntity::inMogHouse() const -> bool
 auto CCharEntity::gmCallContainer() -> GMCallContainer&
 {
     return gmCallContainer_;
+}
+
+auto CCharEntity::maze() -> maze_t&
+{
+    return maze_;
 }
 
 int8 CCharEntity::getShieldSize()
@@ -936,16 +954,74 @@ timer::duration CCharEntity::GetPlayTime(bool needUpdate)
 
 auto CCharEntity::getEquip(const SLOTTYPE slot) const -> CItemEquipment*
 {
-    const uint8     loc  = equip[slot];
-    const uint8     est  = equipLoc[slot];
-    CItemEquipment* item = nullptr;
-
-    if (loc != 0)
+    if (slot >= EquipSlotCount)
     {
-        item = static_cast<CItemEquipment*>(getStorage(est)->GetItem(loc));
+        ShowWarningFmt("getEquip: slot {} out of range", slot);
+        return nullptr;
     }
 
-    return item;
+    return static_cast<CItemEquipment*>(equipped_[slot]);
+}
+
+auto CCharEntity::equipLocation(const uint8 equipSlot) const -> std::optional<ItemLocation>
+{
+    if (equipSlot >= EquipSlotCount)
+    {
+        ShowWarningFmt("equipLocation: slot {} out of range", equipSlot);
+        return std::nullopt;
+    }
+
+    if (!equipped_[equipSlot])
+    {
+        return std::nullopt;
+    }
+
+    return ItemLocation{
+        static_cast<CONTAINER_ID>(equipped_[equipSlot]->getLocationID()),
+        equipped_[equipSlot]->getSlotID(),
+    };
+}
+
+auto CCharEntity::bindEquip(const uint8 equipSlot, CItem* item) -> bool
+{
+    if (equipSlot >= EquipSlotCount)
+    {
+        ShowWarningFmt("bindEquip: slot {} out of range", equipSlot);
+        return false;
+    }
+
+    if (!item)
+    {
+        ShowWarningFmt("bindEquip: null item for slot {}", equipSlot);
+        return false;
+    }
+
+    if (!xi::items::mark(item, ItemState::Equipped))
+    {
+        return false;
+    }
+
+    clearEquip(equipSlot);
+    equipped_[equipSlot] = item;
+    return true;
+}
+
+void CCharEntity::clearEquip(const uint8 equipSlot)
+{
+    if (equipSlot >= EquipSlotCount)
+    {
+        return;
+    }
+
+    if (auto* item = equipped_[equipSlot]; item != nullptr)
+    {
+        if (!xi::items::mark(item, ItemState::Free))
+        {
+            return;
+        }
+
+        equipped_[equipSlot] = nullptr;
+    }
 }
 
 void CCharEntity::ReloadPartyInc()
@@ -979,10 +1055,6 @@ void CCharEntity::RemoveTrust(CTrustEntity* PTrust)
 
     if (trustIt != PTrusts.end())
     {
-        if (PTrust->animation == ANIMATION_DESPAWN)
-        {
-            luautils::OnMobDespawn(PTrust);
-        }
         PTrust->PAI->Despawn();
         PTrusts.erase(trustIt);
     }
@@ -1085,6 +1157,8 @@ auto CCharEntity::Tick(timer::time_point tick) -> Task<void>
     {
         gardenutils::UpdateGardening(this, SendPacket::Yes);
     }
+
+    co_return;
 }
 
 void CCharEntity::PostTick()
@@ -1255,8 +1329,8 @@ bool CCharEntity::ValidTarget(CBattleEntity* PInitiator, uint16 targetFlags)
     bool isSoloPetMaster  = PParty == nullptr && PInitiator->PMaster == this;
     bool targetsParty     = targetFlags & TARGET_PLAYER_PARTY;
     bool targetsAlliance  = targetFlags & TARGET_PLAYER_ALLIANCE;
-    bool hasPianissimo    = (targetFlags & TARGET_PLAYER_PARTY_PIANISSIMO) && PInitiator->StatusEffectContainer->HasStatusEffect(EFFECT_PIANISSIMO);
-    bool hasEntrust       = (targetFlags & TARGET_PLAYER_PARTY_ENTRUST) && PInitiator->StatusEffectContainer->HasStatusEffect(EFFECT_ENTRUST);
+    bool hasPianissimo    = (targetFlags & TARGET_PLAYER_PARTY_PIANISSIMO) && PInitiator->StatusEffectContainer->HasStatusEffect(xi::StatusEffect::Pianissimo);
+    bool hasEntrust       = (targetFlags & TARGET_PLAYER_PARTY_ENTRUST) && PInitiator->StatusEffectContainer->HasStatusEffect(xi::StatusEffect::Entrust);
     bool isDifferentChar  = PInitiator != this;
     bool isTrust          = PInitiator->objtype == TYPE_TRUST;
 
@@ -1287,12 +1361,14 @@ bool CCharEntity::ValidTarget(CBattleEntity* PInitiator, uint16 targetFlags)
 bool CCharEntity::CanUseSpell(CSpell* PSpell)
 {
     TracyZoneScoped;
+
     return charutils::hasSpell(this, static_cast<uint16>(PSpell->getID())) && CBattleEntity::CanUseSpell(PSpell);
 }
 
 void CCharEntity::OnChangeTarget(CBattleEntity* PNewTarget)
 {
     TracyZoneScoped;
+
     battleutils::RelinquishClaim(this);
     pushPacket<GP_SERV_COMMAND_ASSIST>(this, PNewTarget);
     PLatentEffectContainer->CheckLatentsTargetChange();
@@ -1301,6 +1377,7 @@ void CCharEntity::OnChangeTarget(CBattleEntity* PNewTarget)
 void CCharEntity::OnEngage(CAttackState& state)
 {
     TracyZoneScoped;
+
     CBattleEntity::OnEngage(state);
     PLatentEffectContainer->CheckLatentsTargetChange();
     this->m_charHistory.battlesFought++;
@@ -1309,6 +1386,7 @@ void CCharEntity::OnEngage(CAttackState& state)
 void CCharEntity::OnDisengage(CAttackState& state)
 {
     TracyZoneScoped;
+
     battleutils::RelinquishClaim(this);
     CBattleEntity::OnDisengage(state);
     if (state.HasErrorMsg())
@@ -1336,7 +1414,7 @@ bool CCharEntity::CanAttack(CBattleEntity* PTarget, std::unique_ptr<CBasicPacket
         PAI->Disengage();
         return false;
     }
-    else if (!this->StatusEffectContainer->HasStatusEffect({ EFFECT_CHARM, EFFECT_CHARM_II }) && dist > 30)
+    else if (!this->StatusEffectContainer->HasStatusEffect({ xi::StatusEffect::CharmI, xi::StatusEffect::CharmIi }) && dist > 30)
     {
         errMsg = std::make_unique<GP_SERV_COMMAND_BATTLE_MESSAGE>(this, PTarget, 0, 0, MsgBasic::LoseSight);
         PAI->Disengage();
@@ -1358,6 +1436,7 @@ bool CCharEntity::CanAttack(CBattleEntity* PTarget, std::unique_ptr<CBasicPacket
 bool CCharEntity::OnAttack(CAttackState& state, action_t& action)
 {
     TracyZoneScoped;
+
     auto* controller{ static_cast<CPlayerController*>(PAI->GetController()) };
     controller->setLastAttackTime(timer::now());
     auto ret = CBattleEntity::OnAttack(state, action);
@@ -1376,7 +1455,7 @@ void CCharEntity::OnCastFinished(CMagicState& state, action_t& action)
     // Only blue spells that act as a physical WS can TA.
     CBattleEntity* taChar = nullptr;
 
-    if (StatusEffectContainer->HasStatusEffect(EFFECT_TRICK_ATTACK) &&
+    if (StatusEffectContainer->HasStatusEffect(xi::StatusEffect::TrickAttack) &&
         PSpell->getSpellGroup() == SPELLGROUP_BLUE &&
         PSpell->dealsDamage())
     {
@@ -1395,7 +1474,7 @@ void CCharEntity::OnCastFinished(CMagicState& state, action_t& action)
             if (actionResult.param > 0 &&
                 PSpell->dealsDamage() &&
                 PSpell->getSpellGroup() == SPELLGROUP_BLUE &&
-                (StatusEffectContainer->HasStatusEffect(EFFECT_CHAIN_AFFINITY) || StatusEffectContainer->HasStatusEffect(EFFECT_AZURE_LORE)) &&
+                (StatusEffectContainer->HasStatusEffect(xi::StatusEffect::ChainAffinity) || StatusEffectContainer->HasStatusEffect(xi::StatusEffect::AzureLore)) &&
                 static_cast<CBlueSpell*>(PSpell)->getPrimarySkillchain() != 0)
             {
                 auto*      PBlueSpell = static_cast<CBlueSpell*>(PSpell);
@@ -1405,7 +1484,7 @@ void CCharEntity::OnCastFinished(CMagicState& state, action_t& action)
                     actionResult.recordSkillchain(effect, battleutils::TakeSkillchainDamage(this, PTarget, actionResult.param, taChar));
                 }
 
-                if (StatusEffectContainer->HasStatusEffect({ EFFECT_SEKKANOKI, EFFECT_MEIKYO_SHISUI }))
+                if (StatusEffectContainer->HasStatusEffect({ xi::StatusEffect::Sekkanoki, xi::StatusEffect::MeikyoShisui }))
                 {
                     health.tp = (health.tp > 1000 ? health.tp - 1000 : 0);
                 }
@@ -1414,7 +1493,7 @@ void CCharEntity::OnCastFinished(CMagicState& state, action_t& action)
                     health.tp = 0;
                 }
 
-                StatusEffectContainer->DelStatusEffectSilent(EFFECT_CHAIN_AFFINITY);
+                StatusEffectContainer->DelStatusEffectSilent(xi::StatusEffect::ChainAffinity);
             }
 
             // Immanence will create or extend a skillchain for elemental spells
@@ -1422,7 +1501,7 @@ void CCharEntity::OnCastFinished(CMagicState& state, action_t& action)
                 actionResult.param >= 0 &&
                 PSpell->dealsDamage() &&
                 PSpell->getSpellGroup() == SPELLGROUP_BLACK &&
-                (StatusEffectContainer->HasStatusEffect(EFFECT_IMMANENCE)))
+                (StatusEffectContainer->HasStatusEffect(xi::StatusEffect::Immanence)))
             {
                 auto immanenceApplies = true;
                 auto isHelix          = false;
@@ -1480,7 +1559,7 @@ void CCharEntity::OnCastFinished(CMagicState& state, action_t& action)
 
                 if (immanenceApplies)
                 {
-                    StatusEffectContainer->DelStatusEffect(EFFECT_IMMANENCE);
+                    StatusEffectContainer->DelStatusEffect(xi::StatusEffect::Immanence);
                 }
 
                 if (effect != ActionProcSkillChain::None)
@@ -1488,7 +1567,7 @@ void CCharEntity::OnCastFinished(CMagicState& state, action_t& action)
                     actionResult.recordSkillchain(effect, battleutils::TakeSkillchainDamage(this, PTarget, actionResult.param, nullptr));
 
                     // Closing a skillchain with an immanence Helix will make the magic burst window longer
-                    auto scEffect = PTarget->StatusEffectContainer->GetStatusEffect(EFFECT_SKILLCHAIN, 0);
+                    auto scEffect = PTarget->StatusEffectContainer->GetStatusEffect(xi::StatusEffect::Skillchain, 0);
                     if (isHelix && scEffect)
                     {
                         scEffect->SetDuration(scEffect->GetDuration() + 2s);
@@ -1532,6 +1611,7 @@ void CCharEntity::OnCastFinished(CMagicState& state, action_t& action)
 void CCharEntity::OnCastInterrupted(CMagicState& state, action_t& action, MsgBasic msg, bool blockedCast)
 {
     TracyZoneScoped;
+
     CBattleEntity::OnCastInterrupted(state, action, msg, blockedCast);
 
     if (state.HasErrorMsg())
@@ -1549,6 +1629,7 @@ void CCharEntity::OnCastInterrupted(CMagicState& state, action_t& action, MsgBas
 void CCharEntity::OnWeaponSkillFinished(CWeaponSkillState& state, action_t& action)
 {
     TracyZoneScoped;
+
     CBattleEntity::OnWeaponSkillFinished(state, action);
 
     auto* PWeaponSkill  = state.GetSkill();
@@ -1677,18 +1758,20 @@ void CCharEntity::OnWeaponSkillFinished(CWeaponSkillState& state, action_t& acti
     }
 
     PLatentEffectContainer->CheckLatentsWS(false);
+    this->processActionEffectFlags(action);
 }
 
 void CCharEntity::OnAbility(CAbilityState& state, action_t& action)
 {
     TracyZoneScoped;
+
     auto* PAbility = state.GetAbility();
     if (this->PRecastContainer->HasRecast(RECAST_ABILITY, PAbility->getRecastId(), PAbility->getRecastTime()))
     {
         pushPacket<GP_SERV_COMMAND_BATTLE_MESSAGE>(this, this, 0, 0, MsgBasic::WaitLonger);
         return;
     }
-    if (this->StatusEffectContainer->HasStatusEffect(EFFECT_AMNESIA))
+    if (this->StatusEffectContainer->HasStatusEffect(xi::StatusEffect::Amnesia))
     {
         pushPacket<GP_SERV_COMMAND_BATTLE_MESSAGE>(this, this, 0, 0, MsgBasic::UnableToUseJobAbility2);
         return;
@@ -1751,7 +1834,7 @@ void CCharEntity::OnAbility(CAbilityState& state, action_t& action)
 
         if (PAbility->getID() == ABILITY_LIGHT_ARTS || PAbility->getID() == ABILITY_DARK_ARTS || PAbility->getRecastId() == Recast::Strategems)
         {
-            if (this->StatusEffectContainer->HasStatusEffect(EFFECT_TABULA_RASA))
+            if (this->StatusEffectContainer->HasStatusEffect(xi::StatusEffect::TabulaRasa))
             {
                 action.recast  = 0s;
                 baseChargeTime = 0s;
@@ -1764,7 +1847,7 @@ void CCharEntity::OnAbility(CAbilityState& state, action_t& action)
             uint16 bloodPact_II_Reduction  = std::min<int16>(getMod(Mod::BP_DELAY_II), 15);
             uint16 bloodPact_III_Reduction = 0; // std::min<int16>(getMod(Mod::BP_DELAY_III, 10); TODO: BP Delay III (SMN JP gift) not implemented
 
-            CStatusEffect* avatarsFavor = this->StatusEffectContainer->GetStatusEffect(EFFECT_AVATARS_FAVOR);
+            CStatusEffect* avatarsFavor = this->StatusEffectContainer->GetStatusEffect(xi::StatusEffect::AvatarsFavor);
             if (avatarsFavor)
             {
                 favorReduction = std::min<int16>(avatarsFavor->GetPower(), 10);
@@ -1806,15 +1889,15 @@ void CCharEntity::OnAbility(CAbilityState& state, action_t& action)
                 // generic aggressive action
                 else
                 {
-                    StatusEffectContainer->DelStatusEffectsByFlag(EFFECTFLAG_DETECTABLE);
+                    StatusEffectContainer->DelStatusEffectsByFlag(xi::StatusEffectFlag::Detectable);
                 }
-                StatusEffectContainer->DelStatusEffect(EFFECT_ILLUSION);
+                StatusEffectContainer->DelStatusEffect(xi::StatusEffect::Illusion);
             }
             else if (PAbility->getID() != ABILITY_TRICK_ATTACK)
             {
                 // remove invisible only
                 charutils::RemoveInvisible(this);
-                StatusEffectContainer->DelStatusEffect(EFFECT_ILLUSION);
+                StatusEffectContainer->DelStatusEffect(xi::StatusEffect::Illusion);
             }
         }
 
@@ -1972,368 +2055,11 @@ void CCharEntity::OnAbility(CAbilityState& state, action_t& action)
         StatusEffectContainer->DelStatusEffect(PAbility->getPostActionEffectCleanup());
 
         charutils::ApplyAbilityRecast(this, PAbility, charge, baseChargeTime, action.recast);
+        this->processActionEffectFlags(action);
     }
     else if (errMsg)
     {
         pushPacket(std::move(errMsg));
-    }
-}
-
-void CCharEntity::OnRangedAttack(CRangeState& state, action_t& action)
-{
-    TracyZoneScoped;
-    auto* PTarget = static_cast<CBattleEntity*>(state.GetTarget());
-
-    if (battleutils::IsParalyzed(this))
-    {
-        ActionInterrupts::RangedParalyzed(this);
-        return;
-    }
-
-    int32 damage      = 0;
-    int32 totalDamage = 0;
-
-    action.actorId                = id;
-    action.actiontype             = ActionCategory::RangedFinish;
-    action.actionid               = static_cast<uint32_t>(FourCC::RangedFinish);
-    action_target_t& actionTarget = action.addTarget(PTarget->id);
-    action_result_t& actionResult = actionTarget.addResult();
-    actionResult.messageID        = MsgBasic::RangedAttackHit;
-
-    CItemWeapon* PItem = (CItemWeapon*)this->getEquip(SLOT_RANGED);
-    CItemWeapon* PAmmo = (CItemWeapon*)this->getEquip(SLOT_AMMO);
-
-    bool  ammoThrowing   = PAmmo ? PAmmo->isThrowing() : false;
-    bool  rangedThrowing = PItem ? PItem->isThrowing() : false;
-    uint8 slot           = SLOT_RANGED;
-
-    if (ammoThrowing)
-    {
-        slot  = SLOT_AMMO;
-        PItem = nullptr;
-    }
-    if (rangedThrowing)
-    {
-        PAmmo = nullptr;
-    }
-
-    uint8 shadowsTaken = 0;
-    uint8 hitCount     = 1; // 1 hit by default
-    uint8 realHits     = 0; // to store the real number of hit for tp multiplier
-    auto  ammoConsumed = 0;
-    bool  hitOccured   = false; // track if player hit mob at all
-    bool  wasCritical  = false; // track if any hit was critical
-    bool  isBarrage    = StatusEffectContainer->HasStatusEffect(EFFECT_BARRAGE, 0);
-    bool  isSange      = StatusEffectContainer->HasStatusEffect(EFFECT_SANGE) && getMod(Mod::SANGE_MULTI_HIT) > 0; // Pre-SoA Sange logic check, applied in SoA module
-
-    // if barrage is detected, getBarrageShotCount also checks for ammo count
-    if (!ammoThrowing && !rangedThrowing && isBarrage)
-    {
-        hitCount += battleutils::getBarrageShotCount(this);
-    }
-    else if (ammoThrowing && isSange)
-    {
-        uint8 shadows = static_cast<uint8>(getMod(Mod::UTSUSEMI));
-        StatusEffectContainer->DelStatusEffect(EFFECT_COPY_IMAGE);
-
-        hitCount += shadows;
-
-        // Clamp to available ammo
-        if (PAmmo && PAmmo->getQuantity() < hitCount)
-        {
-            hitCount = PAmmo->getQuantity();
-        }
-    }
-    else if (this->StatusEffectContainer->HasStatusEffect(EFFECT_DOUBLE_SHOT) && xirand::GetRandomNumber(100) < (40 + this->getMod(Mod::DOUBLE_SHOT_RATE)))
-    {
-        hitCount = 2;
-    }
-    else if (this->StatusEffectContainer->HasStatusEffect(EFFECT_TRIPLE_SHOT) && xirand::GetRandomNumber(100) < (40 + this->getMod(Mod::TRIPLE_SHOT_RATE)))
-    {
-        hitCount = 3;
-    }
-
-    // loop for barrage hits, if a miss occurs, the loop will end
-    for (uint8 i = 1; i <= hitCount; ++i)
-    {
-        // TODO: add Barrage mod racc bonus
-        if (xirand::GetRandomNumber(100) < battleutils::GetRangedHitRate(this, PTarget, isBarrage, 0) && !state.IsOutOfRange()) // hit!
-        {
-            // absorbed by shadow
-            if (battleutils::IsAbsorbByShadow(PTarget, this))
-            {
-                shadowsTaken++;
-            }
-            else
-            {
-                // TODO: add Barrage ratt bonus from job points
-                bool  isCritical = xirand::GetRandomNumber(100) < battleutils::GetRangedCritHitRate(this, PTarget);
-                float pdif       = battleutils::GetRangedDamageRatio(this, PTarget, isCritical, 0);
-
-                if (isCritical)
-                {
-                    wasCritical            = true;
-                    actionResult.messageID = MsgBasic::RangedAttackCrit;
-                }
-
-                // at least 1 hit occured
-                hitOccured = true;
-                realHits++;
-
-                damage = (int32)((this->GetRangedWeaponDmg() + battleutils::GetFSTR(this, PTarget, slot)) * pdif);
-
-                if (slot == SLOT_RANGED)
-                {
-                    if (PItem != nullptr)
-                    {
-                        charutils::TrySkillUP(this, (SKILLTYPE)PItem->getSkillType(), PTarget->GetMLevel());
-                    }
-                }
-                else if (slot == SLOT_AMMO && PAmmo != nullptr)
-                {
-                    charutils::TrySkillUP(this, (SKILLTYPE)PAmmo->getSkillType(), PTarget->GetMLevel());
-                }
-                totalDamage += damage;
-            }
-        }
-        else // miss
-        {
-            damage                  = 0;
-            actionResult.resolution = ActionResolution::Miss;
-            actionResult.messageID  = MsgBasic::RangedAttackMiss;
-            hitCount                = i; // end barrage, shot missed
-        }
-
-        // check for recycle chance
-        uint16 recycleChance = getMod(Mod::RECYCLE);
-        if (charutils::hasTrait(this, TRAIT_RECYCLE))
-        {
-            recycleChance += PMeritPoints->GetMeritValue(MERIT_RECYCLE, this);
-        }
-
-        recycleChance += this->PJobPoints->GetJobPointValue(JP_AMMO_CONSUMPTION);
-
-        if (this->StatusEffectContainer->HasStatusEffect(EFFECT_UNLIMITED_SHOT))
-        {
-            // Never consume ammo with Unlimited Shot active
-            recycleChance = 100;
-            // Remove unlimited shot unless retained on miss via RETAIN_UNLIMITED_SHOT mod
-            if (hitOccured || this->getMod(Mod::RETAIN_UNLIMITED_SHOT) <= 0)
-            {
-                StatusEffectContainer->DelStatusEffect(EFFECT_UNLIMITED_SHOT);
-            }
-        }
-
-        // Flashy Shot / Stealth Shot: Consumed after the next ranged attack
-        StatusEffectContainer->DelStatusEffect(EFFECT_FLASHY_SHOT);
-        StatusEffectContainer->DelStatusEffect(EFFECT_STEALTH_SHOT);
-
-        if (PAmmo != nullptr && xirand::GetRandomNumber(100) > recycleChance)
-        {
-            ++ammoConsumed;
-            TrackArrowUsageForScavenge(PAmmo);
-            if (PAmmo->getQuantity() == i)
-            {
-                hitCount = i;
-            }
-        }
-    }
-
-    // if a hit did occur (even without barrage)
-    if (hitOccured)
-    {
-        // Critical Hits don't get distance messaging
-        if (actionResult.messageID != MsgBasic::RangedAttackCrit)
-        {
-            auto rangedPenaltyFunction = lua["xi"]["combat"]["ranged"]["attackDistancePenalty"];
-            auto distancePenaltyResult = rangedPenaltyFunction(this, PTarget);
-            int  distancePenalty       = 0;
-
-            if (!distancePenaltyResult.valid())
-            {
-                sol::error err = distancePenaltyResult;
-                ShowError("charentity::OnRangedAttack: %s", err.what());
-            }
-            else
-            {
-                distancePenalty = distancePenaltyResult.get_type() == sol::type::number ? distancePenaltyResult.get<int16>(0) : 0;
-            }
-
-            if (distancePenalty == 0)
-            {
-                actionResult.messageID = MsgBasic::RangedAttackPummels;
-            }
-            else if (distancePenalty <= 15)
-            {
-                actionResult.messageID = MsgBasic::RangedAttackSquarely;
-            }
-            else
-            {
-                actionResult.messageID = MsgBasic::RangedAttackHit;
-            }
-        }
-
-        // any misses with barrage/sange cause remaining shots to miss, meaning we must check Action.reaction
-        if (actionResult.resolution != ActionResolution::Hit && (isBarrage || isSange))
-        {
-            actionResult.resolution = ActionResolution::Hit;
-        }
-
-        if (slot == SLOT_RANGED)
-        {
-            auto attackType = (state.IsRapidShot()) ? PHYSICAL_ATTACK_TYPE::RAPID_SHOT : PHYSICAL_ATTACK_TYPE::RANGED;
-            totalDamage     = attackutils::CheckForDamageMultiplier(this, PItem, totalDamage, attackType, slot, true);
-        }
-        actionResult.recordDamage(attack_outcome_t{
-            .atkType    = ATTACK_TYPE::PHYSICAL,
-            .damage     = battleutils::TakePhysicalDamage(this, PTarget, PHYSICAL_ATTACK_TYPE::RANGED, totalDamage, false, slot, realHits, nullptr, true, true),
-            .target     = PTarget,
-            .isCritical = wasCritical,
-        });
-
-        // absorb message
-        if (actionResult.param < 0)
-        {
-            actionResult.param     = -(actionResult.param);
-            actionResult.messageID = MsgBasic::RangedAttackAbsorbs;
-        }
-
-        // add additional effects
-        // this should go AFTER damage taken
-        // or else sleep effect won't work
-        // battleutils::HandleRangedAdditionalEffect(this,PTarget,&Action);
-        // TODO: move all hard coded additional effect ammo to scripts
-        if ((PAmmo != nullptr && battleutils::GetScaledItemModifier(this, PAmmo, Mod::ITEM_ADDEFFECT_TYPE) > 0) ||
-            (PItem != nullptr && battleutils::GetScaledItemModifier(this, PItem, Mod::ITEM_ADDEFFECT_TYPE) > 0))
-        {
-            // TODO
-        }
-        // Handle additional effects only if target is not already dead
-        if (PTarget->GetHPP() > 0)
-        {
-            luautils::additionalEffectAttack(this, PTarget, (PAmmo != nullptr ? PAmmo : PItem), &actionResult, totalDamage);
-        }
-    }
-    else if (shadowsTaken > 0)
-    {
-        // shadows took damage
-        actionResult.messageID  = MsgBasic::ShadowAbsorb;
-        actionResult.resolution = ActionResolution::Miss;
-        actionResult.param      = shadowsTaken;
-    }
-
-    // Barrage/Sange: override message to display as ability
-    if (isBarrage || isSange)
-    {
-        if (hitOccured)
-        {
-            actionResult.messageID = isSange ? MsgBasic::UsesSangeTakesDamage : MsgBasic::UsesBarrageTakesDamage;
-        }
-        else if (shadowsTaken == 0)
-        {
-            actionResult.messageID = MsgBasic::AbilityMisses;
-        }
-    }
-
-    // Remove barrage/sange effects after firing
-    if (isBarrage)
-    {
-        StatusEffectContainer->DelStatusEffectSilent(EFFECT_BARRAGE);
-    }
-
-    if (isSange)
-    {
-        StatusEffectContainer->DelStatusEffectSilent(EFFECT_SANGE);
-    }
-
-    battleutils::ClaimMob(PTarget, this);
-    battleutils::RemoveAmmo(this, ammoConsumed);
-
-    // Handle Camouflage effects
-    if (getMod(Mod::RETAIN_CAMOUFLAGE) > 0)
-    {
-        int16 retainChance     = 40; // Estimate base ~40% chance to keep Camouflage on a ranged attack
-        uint8 rotAllowance     = 25; // Allow for some slight variance in direction faced to be "behind" or "beside" the mob
-        float distanceToTarget = distance(this->loc.p, PTarget->loc.p);
-        float meleeRange       = PTarget->GetMeleeRange(PTarget);
-
-        if (isBarrage)
-        {
-            // Camouflage is never retained if Barrage is fired
-            retainChance = 0;
-        }
-        else if (behind(this->loc.p, PTarget->loc.p, rotAllowance))
-        {
-            // Max melee distance + .6 = safe
-            // Max melee distance + (.1~.5) = chance of deactivation
-            // Under max melee distance = certain deactivation
-            if (distanceToTarget > meleeRange + .6)
-            {
-                retainChance = 100;
-            }
-            else if (distanceToTarget > meleeRange + .1)
-            {
-                retainChance += 1.6 * distanceToTarget;
-            }
-            else
-            {
-                retainChance = 0;
-            }
-        }
-        else if (beside(this->loc.p, PTarget->loc.p, rotAllowance))
-        {
-            // Max melee distance + 5 yalms = safe
-            // (Max melee distance + 3.3) + (0.0~1.6) = chance of deactivation
-            // Under Max melee distance + 3.3 = certain deactivation
-            if (distanceToTarget > meleeRange + 5)
-            {
-                retainChance = 100;
-            }
-            else if (distanceToTarget > meleeRange + 3.3)
-            {
-                retainChance += 1.6 * distanceToTarget;
-            }
-            else
-            {
-                retainChance = 0;
-            }
-        }
-        else
-        {
-            // Max melee distance + 8.1 yalms = safe
-            // (Max melee distance + 7.1) + (0.0~.99) = chance of deactivation
-            // Under Max melee distance + 7.1 = certain deactivation
-            if (distanceToTarget > meleeRange + 8.1)
-            {
-                retainChance = 100;
-            }
-            else if (distanceToTarget > meleeRange + 7.1)
-            {
-                retainChance += 1.6 * distanceToTarget;
-            }
-            else
-            {
-                retainChance = 0;
-            }
-        }
-
-        if (xirand::GetRandomNumber(100) > retainChance)
-        {
-            // Camouflage was up, but is lost, so now all detectable effects must be dropped
-            StatusEffectContainer->DelStatusEffectsByFlag(EFFECTFLAG_DETECTABLE);
-        }
-        else
-        {
-            // Camouflage up, and retained, but all other effects must be dropped
-            StatusEffectContainer->DelStatusEffect(EFFECT_SNEAK);
-            StatusEffectContainer->DelStatusEffect(EFFECT_DEODORIZE);
-            StatusEffectContainer->DelStatusEffect(EFFECT_ILLUSION);
-        }
-    }
-    else
-    {
-        // Camouflage not up, so remove all detectable status effects
-        StatusEffectContainer->DelStatusEffectsByFlag(EFFECTFLAG_DETECTABLE);
     }
 }
 
@@ -2417,7 +2143,7 @@ void CCharEntity::OnRaise()
                 weaknessTime = 3min;
             }
 
-            CStatusEffect* PWeaknessEffect = new CStatusEffect(EFFECT_WEAKNESS, EFFECT_WEAKNESS, m_weaknessLvl, 0s, weaknessTime);
+            CStatusEffect* PWeaknessEffect = new CStatusEffect(xi::StatusEffect::Weakness, static_cast<uint16>(xi::StatusEffect::Weakness), m_weaknessLvl, 0s, weaknessTime);
             StatusEffectContainer->AddStatusEffect(PWeaknessEffect);
         }
 
@@ -2474,7 +2200,7 @@ void CCharEntity::OnRaise()
         if (expLost != 0)
         {
             uint16 xpReturned = (uint16)(ceil(expLost * ratioReturned));
-            charutils::AddExperiencePoints(true, this, this, xpReturned);
+            charutils::AddExperiencePoints(true, false, false, this, this, xpReturned);
 
             charutils::SetCharVar(this, "expLost", 0);
         }
@@ -2482,7 +2208,7 @@ void CCharEntity::OnRaise()
         // If Arise was used then apply a reraise 3 effect on the target
         if (m_hasArise)
         {
-            CStatusEffect* PReraiseEffect = new CStatusEffect(EFFECT_RERAISE, EFFECT_RERAISE, 3, 0s, 1h);
+            CStatusEffect* PReraiseEffect = new CStatusEffect(xi::StatusEffect::Reraise, static_cast<uint16>(xi::StatusEffect::Reraise), 3, 0s, 1h);
             StatusEffectContainer->AddStatusEffect(PReraiseEffect);
         }
 
@@ -2536,6 +2262,8 @@ auto CCharEntity::OnItemFinish(CItemState& state, action_t& action) -> bool
         actionResult.resolution       = ActionResolution::Hit;
         actionResult.animation        = PItem->getAnimationID();
 
+        // TODO: guard charutils::UpdateItem against InTransaction items so a
+        // Lua delItem inside OnItemUse can't decrement out-of-tx.
         int32 value = luautils::OnItemUse(this, PTargetFound, PItem, action);
 
         actionResult.param = value;
@@ -2589,11 +2317,9 @@ auto CCharEntity::OnItemFinish(CItemState& state, action_t& action) -> bool
         return false;
     }
 
-    // Consumable items
-    PItem->setSubType(ITEM_UNLOCKED);
-    const bool willBeDestroyed = PItem->getQuantity() == 1;
-    charutils::UpdateItem(this, PItem->getLocationID(), PItem->getSlotID(), -1, true);
-    return willBeDestroyed;
+    // Consumable items: signal CItemState::FinishItem to commit the ItemUseTransaction
+    // TODO: Some non-equipment items should not be consumed on use
+    return true;
 }
 
 CBattleEntity* CCharEntity::IsValidTarget(uint16 targid, uint16 validTargetFlags, std::unique_ptr<CBasicPacket>& errMsg)
@@ -2688,10 +2414,10 @@ void CCharEntity::Die(timer::duration _duration)
 
     this->ClearTrusts();
 
-    if (StatusEffectContainer->HasStatusEffect(EFFECT_WEAKNESS))
+    if (StatusEffectContainer->HasStatusEffect(xi::StatusEffect::Weakness))
     {
         // Remove weakness effect as per retail but keep track of weakness
-        StatusEffectContainer->DelStatusEffectSilent(EFFECT_WEAKNESS);
+        StatusEffectContainer->DelStatusEffectSilent(xi::StatusEffect::Weakness);
         // Increase the weakness counter if previously weakened
         m_weaknessLvl++;
     }
@@ -2919,6 +2645,7 @@ void CCharEntity::SetMoghancement(uint16 moghancementID)
 void CCharEntity::changeMoghancement(uint16 moghancementID, bool isAdding)
 {
     TracyZoneScoped;
+
     if (moghancementID == 0)
     {
         return;
@@ -3141,6 +2868,7 @@ void CCharEntity::changeMoghancement(uint16 moghancementID, bool isAdding)
 void CCharEntity::TrackArrowUsageForScavenge(CItemWeapon* PAmmo)
 {
     TracyZoneScoped;
+
     // Check if local has been set yet
     if (this->GetLocalVar("ArrowsUsed") == 0)
     {
@@ -3170,6 +2898,7 @@ void CCharEntity::TrackArrowUsageForScavenge(CItemWeapon* PAmmo)
 bool CCharEntity::OnAttackError(CAttackState& state)
 {
     TracyZoneScoped;
+
     auto* controller{ static_cast<CPlayerController*>(PAI->GetController()) };
     if (controller->getLastErrMsgTime() + std::chrono::milliseconds(this->GetWeaponDelay(false)) < PAI->getTick())
     {
@@ -3214,7 +2943,8 @@ void CCharEntity::endCurrentEvent()
     currentEvent->reset();
     eventPreparation->reset();
     setLocked(false);
-    m_Substate = CHAR_SUBSTATE::SUBSTATE_NONE;
+    m_zoneInCutscene = false;
+    m_Substate       = CHAR_SUBSTATE::SUBSTATE_NONE;
     tryStartNextEvent();
 }
 
@@ -3236,6 +2966,7 @@ void CCharEntity::queueEvent(EventInfo* eventToQueue)
 void CCharEntity::tryStartNextEvent()
 {
     TracyZoneScoped;
+
     if (isInEvent())
     {
         return;
@@ -3246,7 +2977,7 @@ void CCharEntity::tryStartNextEvent()
         updatemask |= UPDATE_POS; // TODO: decouple from this. We want the 250ms post-tick processing
 
         // Chocobo NPC (outside, gives you a mount) edge case
-        if (auto PStatusEffect = StatusEffectContainer->GetStatusEffect(EFFECT_MOUNTED))
+        if (auto PStatusEffect = StatusEffectContainer->GetStatusEffect(xi::StatusEffect::Mounted))
         {
             switch (PStatusEffect->GetPower())
             {
@@ -3278,7 +3009,7 @@ void CCharEntity::tryStartNextEvent()
     m_Substate = CHAR_SUBSTATE::SUBSTATE_IN_CS;
     if (animation == ANIMATION_HEALING)
     {
-        StatusEffectContainer->DelStatusEffect(EFFECT_HEALING);
+        StatusEffectContainer->DelStatusEffect(xi::StatusEffect::Healing);
     }
 
     if (PPet)
@@ -3319,24 +3050,29 @@ void CCharEntity::tryStartNextEvent()
 void CCharEntity::skipEvent()
 {
     TracyZoneScoped;
-    if (!m_Locked && !isInEvent() && (!currentEvent->cutsceneOptions.empty() || currentEvent->interruptText != 0))
+
+    // Locked players are untargetable and can not skip events.
+    if (!isInEvent() || m_Locked || !currentEvent->canSkip)
     {
-        pushPacket<GP_SERV_COMMAND_SYSTEMMES>(0, 0, MsgStd::EventSkipped);
-        pushPacket<GP_SERV_COMMAND_EVENTUCOFF>(this, GP_SERV_COMMAND_EVENTUCOFF_MODE::CancelEvent);
-        m_Substate = CHAR_SUBSTATE::SUBSTATE_NONE;
-
-        if (currentEvent->interruptText != 0)
-        {
-            pushPacket<GP_SERV_COMMAND_TALKNUM>(currentEvent->targetEntity, currentEvent->interruptText, false);
-        }
-
-        endCurrentEvent();
+        return;
     }
+
+    pushPacket<GP_SERV_COMMAND_SYSTEMMES>(0, 0, MsgStd::EventSkipped);
+    pushPacket<GP_SERV_COMMAND_EVENTUCOFF>(this, GP_SERV_COMMAND_EVENTUCOFF_MODE::CancelEvent);
+    m_Substate = CHAR_SUBSTATE::SUBSTATE_NONE;
+
+    if (currentEvent->interruptText != 0)
+    {
+        pushPacket<GP_SERV_COMMAND_TALKNUM>(currentEvent->targetEntity, currentEvent->interruptText, false);
+    }
+
+    endCurrentEvent();
 }
 
 void CCharEntity::setLocked(bool locked)
 {
     TracyZoneScoped;
+
     m_Locked = locked;
     if (locked)
     {

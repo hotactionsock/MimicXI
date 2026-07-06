@@ -63,6 +63,7 @@ public:
     auto        getWeather() const -> Weather;
     uint32      getUptime();
     void        reloadNavmesh();
+    void        rebuildNavmesh(const sol::table& table);
     bool        isNavigablePoint(const sol::table& position);
     auto        getRandomNavmeshPoint(sol::optional<sol::table> center, sol::optional<float> radius) -> sol::optional<sol::table>;
     auto        getTerrainType(const sol::table& position) -> TerrainType;

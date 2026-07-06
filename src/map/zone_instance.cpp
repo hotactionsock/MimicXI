@@ -45,6 +45,7 @@ CZoneInstance::~CZoneInstance()
 CCharEntity* CZoneInstance::GetCharByName(const std::string& name)
 {
     TracyZoneScoped;
+
     CCharEntity* PEntity = nullptr;
     for (const auto& PInstance : m_InstanceList)
     {
@@ -60,6 +61,7 @@ CCharEntity* CZoneInstance::GetCharByName(const std::string& name)
 CCharEntity* CZoneInstance::GetCharByID(uint32 id)
 {
     TracyZoneScoped;
+
     CCharEntity* PEntity = nullptr;
     for (const auto& PInstance : m_InstanceList)
     {
@@ -75,6 +77,7 @@ CCharEntity* CZoneInstance::GetCharByID(uint32 id)
 CBaseEntity* CZoneInstance::GetEntity(uint16 targid, uint8 filter)
 {
     TracyZoneScoped;
+
     CBaseEntity* PEntity = nullptr;
     if (filter & TYPE_PC)
     {
@@ -93,6 +96,7 @@ CBaseEntity* CZoneInstance::GetEntity(uint16 targid, uint8 filter)
 void CZoneInstance::InsertMOB(CBaseEntity* PMob)
 {
     TracyZoneScoped;
+
     if (PMob->PInstance)
     {
         PMob->PInstance->InsertMOB(PMob);
@@ -102,6 +106,7 @@ void CZoneInstance::InsertMOB(CBaseEntity* PMob)
 void CZoneInstance::InsertNPC(CBaseEntity* PNpc)
 {
     TracyZoneScoped;
+
     if (PNpc->PInstance)
     {
         PNpc->PInstance->InsertNPC(PNpc);
@@ -111,6 +116,7 @@ void CZoneInstance::InsertNPC(CBaseEntity* PNpc)
 void CZoneInstance::InsertPET(CBaseEntity* PPet)
 {
     TracyZoneScoped;
+
     if (PPet->PInstance)
     {
         PPet->PInstance->InsertPET(PPet);
@@ -120,6 +126,7 @@ void CZoneInstance::InsertPET(CBaseEntity* PPet)
 void CZoneInstance::InsertTRUST(CBaseEntity* PTrust)
 {
     TracyZoneScoped;
+
     if (PTrust->PInstance)
     {
         PTrust->PInstance->InsertTRUST(PTrust);
@@ -129,6 +136,7 @@ void CZoneInstance::InsertTRUST(CBaseEntity* PTrust)
 void CZoneInstance::FindPartyForMob(CBaseEntity* PEntity)
 {
     TracyZoneScoped;
+
     if (PEntity->PInstance)
     {
         PEntity->PInstance->FindPartyForMob(PEntity);
@@ -138,6 +146,7 @@ void CZoneInstance::FindPartyForMob(CBaseEntity* PEntity)
 void CZoneInstance::TransportDepart(uint16 boundary, uint16 prevZoneId, uint16 transportId)
 {
     TracyZoneScoped;
+
     for (const auto& PInstance : m_InstanceList)
     {
         PInstance->TransportDepart(boundary, prevZoneId, transportId);
@@ -172,6 +181,7 @@ void CZoneInstance::updateCharLevelRestriction(CCharEntity* PChar)
 void CZoneInstance::DecreaseZoneCounter(CCharEntity* PChar)
 {
     TracyZoneScoped;
+
     CInstance* PInstance = PChar->PInstance;
     if (PInstance)
     {
@@ -193,7 +203,7 @@ void CZoneInstance::DecreaseZoneCounter(CCharEntity* PChar)
         PInstance->DecreaseZoneCounter(PChar);
         PInstance->DespawnPC(PChar);
         CharZoneOut(PChar);
-        PChar->StatusEffectContainer->DelStatusEffectSilent(EFFECT_LEVEL_RESTRICTION);
+        PChar->StatusEffectContainer->DelStatusEffectSilent(xi::StatusEffect::LevelRestriction);
         PChar->PInstance = nullptr;
 
         if (PInstance->CharListEmpty())
@@ -209,6 +219,7 @@ void CZoneInstance::DecreaseZoneCounter(CCharEntity* PChar)
 void CZoneInstance::IncreaseZoneCounter(CCharEntity* PChar)
 {
     TracyZoneScoped;
+
     if (PChar == nullptr)
     {
         ShowWarning("PChar is null.");
@@ -261,7 +272,7 @@ void CZoneInstance::IncreaseZoneCounter(CCharEntity* PChar)
 
         if (PChar->PInstance->GetLevelCap() > 0)
         {
-            PChar->StatusEffectContainer->AddStatusEffect(new CStatusEffect(EFFECT_LEVEL_RESTRICTION, EFFECT_LEVEL_RESTRICTION, PChar->PInstance->GetLevelCap(), 0s, 0s));
+            PChar->StatusEffectContainer->AddStatusEffect(new CStatusEffect(xi::StatusEffect::LevelRestriction, static_cast<uint16>(xi::StatusEffect::LevelRestriction), PChar->PInstance->GetLevelCap(), 0s, 0s));
         }
 
         if (PChar->PInstance->CheckFirstEntry(PChar->id))
@@ -309,6 +320,7 @@ void CZoneInstance::IncreaseZoneCounter(CCharEntity* PChar)
 void CZoneInstance::SpawnMOBs(CCharEntity* PChar)
 {
     TracyZoneScoped;
+
     if (PChar->PInstance)
     {
         PChar->PInstance->SpawnMOBs(PChar);
@@ -318,6 +330,7 @@ void CZoneInstance::SpawnMOBs(CCharEntity* PChar)
 void CZoneInstance::SpawnPETs(CCharEntity* PChar)
 {
     TracyZoneScoped;
+
     if (PChar->PInstance)
     {
         PChar->PInstance->SpawnPETs(PChar);
@@ -327,6 +340,7 @@ void CZoneInstance::SpawnPETs(CCharEntity* PChar)
 void CZoneInstance::SpawnTRUSTs(CCharEntity* PChar)
 {
     TracyZoneScoped;
+
     if (PChar->PInstance)
     {
         PChar->PInstance->SpawnTRUSTs(PChar);
@@ -336,6 +350,7 @@ void CZoneInstance::SpawnTRUSTs(CCharEntity* PChar)
 void CZoneInstance::SpawnNPCs(CCharEntity* PChar)
 {
     TracyZoneScoped;
+
     if (PChar->PInstance)
     {
         PChar->PInstance->SpawnNPCs(PChar);
@@ -345,6 +360,7 @@ void CZoneInstance::SpawnNPCs(CCharEntity* PChar)
 void CZoneInstance::SpawnPCs(CCharEntity* PChar)
 {
     TracyZoneScoped;
+
     if (PChar->PInstance)
     {
         PChar->PInstance->SpawnPCs(PChar);
@@ -354,6 +370,7 @@ void CZoneInstance::SpawnPCs(CCharEntity* PChar)
 void CZoneInstance::SpawnConditionalNPCs(CCharEntity* PChar)
 {
     TracyZoneScoped;
+
     if (PChar->PInstance)
     {
         PChar->PInstance->SpawnConditionalNPCs(PChar);
@@ -363,6 +380,7 @@ void CZoneInstance::SpawnConditionalNPCs(CCharEntity* PChar)
 void CZoneInstance::SpawnTransport(CCharEntity* PChar)
 {
     TracyZoneScoped;
+
     if (PChar->PInstance)
     {
         PChar->PInstance->SpawnTransport(PChar);
@@ -372,6 +390,7 @@ void CZoneInstance::SpawnTransport(CCharEntity* PChar)
 void CZoneInstance::TOTDChange(vanadiel_time::TOTD TOTD)
 {
     TracyZoneScoped;
+
     for (const auto& PInstance : m_InstanceList)
     {
         PInstance->TOTDChange(TOTD);

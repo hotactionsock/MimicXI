@@ -415,6 +415,7 @@ void CLatentEffectContainer::CheckLatentsDay()
 void CLatentEffectContainer::CheckLatentsMoonPhase()
 {
     TracyZoneScoped;
+
     ProcessLatentEffects(
         [this](CLatentEffect& latentEffect)
         {
@@ -466,6 +467,7 @@ void CLatentEffectContainer::CheckLatentsWeekDay()
 void CLatentEffectContainer::CheckLatentsHours()
 {
     TracyZoneScoped;
+
     ProcessLatentEffects(
         [this](CLatentEffect& latentEffect)
         {
@@ -731,8 +733,8 @@ void CLatentEffectContainer::CheckLatentsTargetChange()
             {
                 case LATENT::SIGNET_BONUS:
                 case LATENT::VS_ECOSYSTEM:
+                case LATENT::VS_SPECIES:
                 case LATENT::VS_FAMILY:
-                case LATENT::VS_SUPERFAMILY:
                     return ProcessLatentEffect(latentEffect);
                 default:
                     break;
@@ -767,6 +769,7 @@ void CLatentEffectContainer::ProcessLatentEffects(const std::function<bool(CLate
 bool CLatentEffectContainer::ProcessLatentEffect(CLatentEffect& latentEffect, bool isDuringWs)
 {
     TracyZoneScoped;
+
     // Our default case un-finds our latent prevent us from toggling a latent we don't have programmed
     auto expression  = false;
     auto latentFound = true;
@@ -829,9 +832,9 @@ bool CLatentEffectContainer::ProcessLatentEffect(CLatentEffect& latentEffect, bo
         {
             CBattleEntity* PTarget = m_POwner->GetBattleTarget();
             expression             = PTarget != nullptr &&
-                         m_POwner->GetMLevel() >= PTarget->GetMLevel() &&
-                         m_POwner->loc.zone != nullptr &&
-                         m_POwner->loc.zone->GetRegionID() < REGION_TYPE::WEST_AHT_URHGAN;
+                                     m_POwner->GetMLevel() >= PTarget->GetMLevel() &&
+                                     m_POwner->loc.zone != nullptr &&
+                                     m_POwner->loc.zone->GetRegionID() < REGION_TYPE::WEST_AHT_URHGAN;
             break;
         }
         case LATENT::SANCTION_REGEN_BONUS:
@@ -859,10 +862,10 @@ bool CLatentEffectContainer::ProcessLatentEffect(CLatentEffect& latentEffect, bo
                          ((float)m_POwner->health.mp / m_POwner->health.maxmp) * 100 < latentEffect.GetConditionsValue();
             break;
         case LATENT::STATUS_EFFECT_ACTIVE:
-            expression = m_POwner->StatusEffectContainer->HasStatusEffect((EFFECT)latentEffect.GetConditionsValue());
+            expression = m_POwner->StatusEffectContainer->HasStatusEffect(static_cast<xi::StatusEffect>(latentEffect.GetConditionsValue()));
             break;
         case LATENT::NO_FOOD_ACTIVE:
-            expression = !m_POwner->StatusEffectContainer->HasStatusEffect(EFFECT_FOOD);
+            expression = !m_POwner->StatusEffectContainer->HasStatusEffect(xi::StatusEffect::Food);
             break;
         case LATENT::PARTY_MEMBERS:
         {
@@ -970,19 +973,19 @@ bool CLatentEffectContainer::ProcessLatentEffect(CLatentEffect& latentEffect, bo
         case LATENT::SYNTH_TRAINEE:
         {
             expression = (uint16)m_POwner->RealSkills.skill[latentEffect.GetConditionsValue()] / 10 < 40 &&
-                         !m_POwner->StatusEffectContainer->HasStatusEffect(EFFECT_FISHING_IMAGERY) &&
-                         !m_POwner->StatusEffectContainer->HasStatusEffect(EFFECT_WOODWORKING_IMAGERY) &&
-                         !m_POwner->StatusEffectContainer->HasStatusEffect(EFFECT_SMITHING_IMAGERY) &&
-                         !m_POwner->StatusEffectContainer->HasStatusEffect(EFFECT_GOLDSMITHING_IMAGERY) &&
-                         !m_POwner->StatusEffectContainer->HasStatusEffect(EFFECT_CLOTHCRAFT_IMAGERY) &&
-                         !m_POwner->StatusEffectContainer->HasStatusEffect(EFFECT_LEATHERCRAFT_IMAGERY) &&
-                         !m_POwner->StatusEffectContainer->HasStatusEffect(EFFECT_BONECRAFT_IMAGERY) &&
-                         !m_POwner->StatusEffectContainer->HasStatusEffect(EFFECT_ALCHEMY_IMAGERY) &&
-                         !m_POwner->StatusEffectContainer->HasStatusEffect(EFFECT_COOKING_IMAGERY);
+                         !m_POwner->StatusEffectContainer->HasStatusEffect(xi::StatusEffect::FishingImagery) &&
+                         !m_POwner->StatusEffectContainer->HasStatusEffect(xi::StatusEffect::WoodworkingImagery) &&
+                         !m_POwner->StatusEffectContainer->HasStatusEffect(xi::StatusEffect::SmithingImagery) &&
+                         !m_POwner->StatusEffectContainer->HasStatusEffect(xi::StatusEffect::GoldsmithingImagery) &&
+                         !m_POwner->StatusEffectContainer->HasStatusEffect(xi::StatusEffect::ClothcraftImagery) &&
+                         !m_POwner->StatusEffectContainer->HasStatusEffect(xi::StatusEffect::LeathercraftImagery) &&
+                         !m_POwner->StatusEffectContainer->HasStatusEffect(xi::StatusEffect::BonecraftImagery) &&
+                         !m_POwner->StatusEffectContainer->HasStatusEffect(xi::StatusEffect::AlchemyImagery) &&
+                         !m_POwner->StatusEffectContainer->HasStatusEffect(xi::StatusEffect::CookingImagery);
             break;
         }
         case LATENT::SONG_ROLL_ACTIVE:
-            expression = m_POwner->StatusEffectContainer->HasStatusEffectByFlag(EFFECTFLAG_ROLL | EFFECTFLAG_SONG);
+            expression = m_POwner->StatusEffectContainer->HasStatusEffectByFlag(xi::StatusEffectFlag::Roll | xi::StatusEffectFlag::Song);
             break;
         case LATENT::TIME_OF_DAY:
         {
@@ -1128,11 +1131,11 @@ bool CLatentEffectContainer::ProcessLatentEffect(CLatentEffect& latentEffect, bo
             break;
         case LATENT::MP_UNDER_VISIBLE_GEAR:
             // TODO: figure out if this is actually right
-            // CItemEquipment* head = (CItemEquipment*)(m_POwner->getStorage(LOC_INVENTORY)->GetItem(m_POwner->equip[SLOT_HEAD]));
-            // CItemEquipment* body = (CItemEquipment*)(m_POwner->getStorage(LOC_INVENTORY)->GetItem(m_POwner->equip[SLOT_BODY]));
-            // CItemEquipment* hands = (CItemEquipment*)(m_POwner->getStorage(LOC_INVENTORY)->GetItem(m_POwner->equip[SLOT_HANDS]));
-            // CItemEquipment* legs = (CItemEquipment*)(m_POwner->getStorage(LOC_INVENTORY)->GetItem(m_POwner->equip[SLOT_LEGS]));
-            // CItemEquipment* feet = (CItemEquipment*)(m_POwner->getStorage(LOC_INVENTORY)->GetItem(m_POwner->equip[SLOT_FEET]));
+            // CItemEquipment* head = (CItemEquipment*)(m_POwner->getEquip(SLOT_HEAD));
+            // CItemEquipment* body = (CItemEquipment*)(m_POwner->getEquip(SLOT_BODY));
+            // CItemEquipment* hands = (CItemEquipment*)(m_POwner->getEquip(SLOT_HANDS));
+            // CItemEquipment* legs = (CItemEquipment*)(m_POwner->getEquip(SLOT_LEGS));
+            // CItemEquipment* feet = (CItemEquipment*)(m_POwner->getEquip(SLOT_FEET));
 
             // int32 visibleMp = 0;
             // visibleMp += (head ? head->getModifier(Mod::MP) : 0);
@@ -1154,11 +1157,11 @@ bool CLatentEffectContainer::ProcessLatentEffect(CLatentEffect& latentEffect, bo
             break;
         case LATENT::HP_OVER_VISIBLE_GEAR:
             // TODO: figure out if this is actually right
-            // CItemEquipment* head = (CItemEquipment*)(m_POwner->getStorage(LOC_INVENTORY)->GetItem(m_POwner->equip[SLOT_HEAD]));
-            // CItemEquipment* body = (CItemEquipment*)(m_POwner->getStorage(LOC_INVENTORY)->GetItem(m_POwner->equip[SLOT_BODY]));
-            // CItemEquipment* hands = (CItemEquipment*)(m_POwner->getStorage(LOC_INVENTORY)->GetItem(m_POwner->equip[SLOT_HANDS]));
-            // CItemEquipment* legs = (CItemEquipment*)(m_POwner->getStorage(LOC_INVENTORY)->GetItem(m_POwner->equip[SLOT_LEGS]));
-            // CItemEquipment* feet = (CItemEquipment*)(m_POwner->getStorage(LOC_INVENTORY)->GetItem(m_POwner->equip[SLOT_FEET]));
+            // CItemEquipment* head = (CItemEquipment*)(m_POwner->getEquip(SLOT_HEAD));
+            // CItemEquipment* body = (CItemEquipment*)(m_POwner->getEquip(SLOT_BODY));
+            // CItemEquipment* hands = (CItemEquipment*)(m_POwner->getEquip(SLOT_HANDS));
+            // CItemEquipment* legs = (CItemEquipment*)(m_POwner->getEquip(SLOT_LEGS));
+            // CItemEquipment* feet = (CItemEquipment*)(m_POwner->getEquip(SLOT_FEET));
 
             // int32 visibleHp = 0;
             // visibleHp += (head ? head->getModifier(Mod::HP) : 0);
@@ -1205,8 +1208,8 @@ bool CLatentEffectContainer::ProcessLatentEffect(CLatentEffect& latentEffect, bo
             expression = m_POwner->isInGarrison() && m_POwner->GetMLevel() >= latentEffect.GetConditionsValue();
             break;
         case LATENT::FOOD_ACTIVE:
-            expression = m_POwner->StatusEffectContainer->HasStatusEffect(EFFECT_FOOD) &&
-                         m_POwner->StatusEffectContainer->GetStatusEffect(EFFECT_FOOD)->GetSourceTypeParam() == latentEffect.GetConditionsValue();
+            expression = m_POwner->StatusEffectContainer->HasStatusEffect(xi::StatusEffect::Food) &&
+                         m_POwner->StatusEffectContainer->GetStatusEffect(xi::StatusEffect::Food)->GetSourceTypeParam() == latentEffect.GetConditionsValue();
             break;
         case LATENT::JOB_LEVEL_BELOW:
             expression = m_POwner->GetMLevel() < latentEffect.GetConditionsValue();
@@ -1225,9 +1228,9 @@ bool CLatentEffectContainer::ProcessLatentEffect(CLatentEffect& latentEffect, bo
             // playerZoneId represents the player's destination if they're zoning.
             // Otherwise, it represents their current zone.
             auto region                   = zoneutils::GetCurrentRegion(playerZoneID);
-            auto hasSignet                = m_POwner->StatusEffectContainer->HasStatusEffect(EFFECT_SIGNET);
-            auto hasSanction              = m_POwner->StatusEffectContainer->HasStatusEffect(EFFECT_SANCTION);
-            auto hasSigil                 = m_POwner->StatusEffectContainer->HasStatusEffect(EFFECT_SIGIL);
+            auto hasSignet                = m_POwner->StatusEffectContainer->HasStatusEffect(xi::StatusEffect::Signet);
+            auto hasSanction              = m_POwner->StatusEffectContainer->HasStatusEffect(xi::StatusEffect::Sanction);
+            auto hasSigil                 = m_POwner->StatusEffectContainer->HasStatusEffect(xi::StatusEffect::Sigil);
             auto regionAlwaysOutOfControl = zoneutils::IsAlwaysOutOfNationControl(region);
             switch (latentEffect.GetConditionsValue())
             {
@@ -1285,6 +1288,16 @@ bool CLatentEffectContainer::ProcessLatentEffect(CLatentEffect& latentEffect, bo
                 expression = static_cast<uint16>(PTarget->m_EcoSystem) == latentEffect.GetConditionsValue();
             }
             break;
+        case LATENT::VS_SPECIES:
+            if (CBattleEntity* PTarget = m_POwner->GetBattleTarget())
+            {
+                CMobEntity* PMob = dynamic_cast<CMobEntity*>(PTarget);
+                if (PMob)
+                {
+                    expression = PMob->m_Species == latentEffect.GetConditionsValue();
+                }
+            }
+            break;
         case LATENT::VS_FAMILY:
             if (CBattleEntity* PTarget = m_POwner->GetBattleTarget())
             {
@@ -1292,16 +1305,6 @@ bool CLatentEffectContainer::ProcessLatentEffect(CLatentEffect& latentEffect, bo
                 if (PMob)
                 {
                     expression = PMob->m_Family == latentEffect.GetConditionsValue();
-                }
-            }
-            break;
-        case LATENT::VS_SUPERFAMILY:
-            if (CBattleEntity* PTarget = m_POwner->GetBattleTarget())
-            {
-                CMobEntity* PMob = dynamic_cast<CMobEntity*>(PTarget);
-                if (PMob)
-                {
-                    expression = PMob->m_SuperFamily == latentEffect.GetConditionsValue();
                 }
             }
             break;

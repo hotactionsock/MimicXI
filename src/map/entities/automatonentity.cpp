@@ -39,6 +39,7 @@ CAutomatonEntity::CAutomatonEntity()
 : CPetEntity(PET_TYPE::AUTOMATON)
 {
     TracyZoneScoped;
+
     PAI->SetController(nullptr);
 }
 
@@ -95,7 +96,7 @@ void CAutomatonEntity::burdenTick()
     }
 }
 
-auto CAutomatonEntity::getBurden() const -> std::array<uint8, 8>
+auto CAutomatonEntity::getBurden() const -> const std::array<uint8, 8>&
 {
     return m_Burden;
 }

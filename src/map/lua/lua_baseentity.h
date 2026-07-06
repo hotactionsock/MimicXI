@@ -97,6 +97,7 @@ public:
     void entityVisualPacket(const std::string& command, const sol::object& entity) const;
     void entityAnimationPacket(const char* command, const sol::object& target);
     void sendDebugPacket(const sol::table& packetData);
+    void sendLinkshellConcierge(const sol::table& data) const;
 
     void       StartEventHelper(int32 EventID, sol::variadic_args va, EVENT_TYPE eventType);
     EventInfo* ParseEvent(int32 EventID, sol::variadic_args va, EventPrep* eventPreparation, EVENT_TYPE eventType);
@@ -161,6 +162,9 @@ public:
     // int32 LimitDistance(lua_Stat* L);    // limits the current path distance to given max distance
     void setCarefulPathing(bool careful);
 
+    bool canSee(const CLuaBaseEntity* PTarget);
+    bool inWater();
+
     void openDoor(const sol::object& seconds);
     void closeDoor(const sol::object& seconds);
     void setElevator(uint8 id, uint32 lowerDoor, uint32 upperDoor, uint32 elevatorId, bool reversed);
@@ -177,6 +181,9 @@ public:
     void changeMusic(MusicSlot slotId, uint16 trackId) const;                             // Sets the specified music Track for specified music block.
     void sendMenu(uint32 menu);                                                           // Displays a menu (AH,Raise,Tractor,MH etc)
     auto sendGuild(uint16 guildId, uint8 open, uint8 close, uint8 holiday) const -> bool; // Sends guild shop menu
+    auto openGuildShop(CLuaBaseEntity* PNpc, uint8 open, uint8 close) const -> bool;      // Opens a lua guild shop and remembers the NPC the PC opened it with
+    void clearGuildShop() const;                                                          // Clears the PC's open guild shop handle
+    void sendGuildClose(uint8 open, uint8 close) const;                                   // Sends the guild-open packet with a Close status
     void openSendBox() const;                                                             // Opens send box (to deliver items)
     void leaveGame();
     void sendEmote(const CLuaBaseEntity* target, uint8 emID, uint8 emMode, bool othersOnly) const;
@@ -234,6 +241,11 @@ public:
     auto   getTeleportMenu(uint8 type) -> sol::table;
     void   setHomePoint();
 
+    void learnMazeVoucher(uint8 voucherId);
+    auto hasMazeVoucher(uint8 voucherId) -> bool;
+    void learnMazeRune(uint16 runeId);
+    auto hasMazeRune(uint16 runeId) -> bool;
+
     void resetPlayer(const char* charName);
 
     void gotoEntity(uint32 targetID, const sol::object& option);
@@ -259,7 +271,7 @@ public:
     auto   getItems(const sol::object& location) -> sol::table;
 
     void createShop(uint8 size, const sol::object& arg1);
-    void addShopItem(uint16 itemID, double rawPrice, const sol::object& arg2, const sol::object& arg3);
+    void addShopItem(uint16 itemID, double rawPrice, sol::optional<sol::table> requirements) const;
     auto getCurrentGPItem(uint8 guildId) const -> std::tuple<uint16, uint16>;
     bool breakLinkshell(const std::string& lsname);
     bool addLinkpearl(const std::string& lsname, bool equip);
@@ -653,8 +665,8 @@ public:
     bool   isDualWielding();
     bool   isUsingH2H();
     uint16 getBaseWeaponDelay(uint16 slot); // get base delay of weapon
-    uint16 getBaseDelay();                  // get base delay of entity, melee only
-    uint16 getBaseRangedDelay();            // get base delay of entity, ranged only
+    auto   getBaseDelay() -> uint16;        // get base delay of entity, melee only
+    auto   getBaseRangedDelay() -> uint16;  // get base delay of entity, ranged only
 
     float checkLiementAbsorb(uint16 damageType); // return 1.0 if did not absorb, return >= -1.0 if did absorb
 
@@ -676,24 +688,26 @@ public:
     bool  hasClaim(CLuaBaseEntity* PTarget);
     bool  hasEnmity();
     auto  getNotorietyList() -> sol::table;
+    auto  getMasterThreatMob(const sol::object& rangeOverride) -> CBaseEntity*;
     void  clearEnmityForEntity(CLuaBaseEntity* PEntity);
 
     // Status Effects
-    auto  addStatusEffect(EFFECT effectId, sol::table params) const -> bool;
+    auto  addStatusEffect(xi::StatusEffect effectId, sol::table params) const -> bool;
     auto  copyStatusEffect(const CLuaStatusEffect* PStatusEffect) const -> bool;
-    auto  getStatusEffect(uint16 StatusID, const sol::object& SubType, const sol::object& SourceType, const sol::object& SourceTypeParam) -> CStatusEffect*;
-    auto  getStatusEffectBySource(uint16 StatusID, EffectSourceType SourceType, uint16 SourceTypeParam) -> CStatusEffect*;
+    auto  getStatusEffect(xi::StatusEffect StatusID, const sol::object& SubType, const sol::object& SourceType, const sol::object& SourceTypeParam) -> CStatusEffect*;
+    auto  getStatusEffectBySource(xi::StatusEffect StatusID, EffectSourceType SourceType, uint16 SourceTypeParam) -> CStatusEffect*;
     auto  getStatusEffects() -> sol::table;
     int16 getStatusEffectElement(uint16 statusId);
-    bool  canGainStatusEffect(uint16 effect, const sol::object& powerObj);
-    bool  hasStatusEffect(uint16 StatusID, const sol::object& SubType);
+    auto  canGainStatusEffect(xi::StatusEffect effect, const sol::object& powerObj) -> bool;
+    auto  hasStatusEffect(xi::StatusEffect StatusID, const sol::object& SubType) -> bool;
     bool  hasStatusEffectByFlag(uint16 StatusID);
-    uint8 countEffect(uint16 StatusID);     // Gets the number of effects of a specific type on the entity
-    uint8 countEffectWithFlag(uint32 flag); // Gets the number of effects with a flag on the entity
+    auto  countEffect(xi::StatusEffect StatusID) -> uint8; // Gets the number of effects of a specific type on the entity
+    uint8 countEffectWithFlag(uint32 flag);                // Gets the number of effects with a flag on the entity
 
-    bool   delStatusEffect(uint16 StatusID, const sol::object& SubType, const sol::object& SourceType, const sol::object& SourceTypeParam);
+    auto   delStatusEffect(xi::StatusEffect StatusID, const sol::object& SubType, const sol::object& SourceType, const sol::object& SourceTypeParam) -> bool;
     void   delStatusEffectsByFlag(uint32 flag, const sol::object& silent);
-    bool   delStatusEffectSilent(uint16 StatusID); // Removes Status Effect, suppresses message
+    void   delStatusEffectsByType(uint16 type);
+    auto   delStatusEffectSilent(xi::StatusEffect StatusID) -> bool; // Removes Status Effect, suppresses message
     uint16 eraseStatusEffect();
     uint8  eraseAllStatusEffect();
     int32  dispelStatusEffect(const sol::object& flagObj);
@@ -720,7 +734,7 @@ public:
     bool   hasBustEffect(uint16 id); // Checks to see if a character has a specified busted corsair roll
     uint8  numBustEffects();         // Gets the number of bust effects on the player
     uint16 healingWaltz();
-    bool   addBardSong(CLuaBaseEntity* PEntity, uint16 effectID, uint16 power, uint16 tick, uint16 duration, uint16 SubType, uint16 subPower, uint16 tier);
+    auto   addBardSong(CLuaBaseEntity* PEntity, xi::StatusEffect effectID, uint16 power, uint16 tick, uint16 duration, uint16 SubType, uint16 subPower, uint16 tier) -> bool;
 
     void charm(const CLuaBaseEntity* target, const sol::object& p0);
     void uncharm();
@@ -811,6 +825,7 @@ public:
     void delPetMod(uint16 modID, int16 amount);
 
     auto hasAttachment(uint16 itemID) const -> bool;
+    auto hasAttachmentSet(uint16 itemID) const -> bool;
     auto getAutomatonName() const -> std::string;
     auto getAutomatonFrame() const -> Maybe<AutomatonFrame>;
     void setAutomatonFrame(AutomatonFrame frame) const;
@@ -820,7 +835,6 @@ public:
     auto getActiveManeuverCount() const -> uint8;
     void removeOldestManeuver() const;
     void removeAllManeuvers() const;
-    auto getAttachment(uint8 slotId) const -> CItem*;
     auto getAttachments() const -> sol::table;
     void setAttachment(uint8 attachmentItemID, uint8 slotID) const;
     void updateAttachments() const;
@@ -837,9 +851,11 @@ public:
 
     // Mob Entity-Specific
     void   setMobLevel(uint8 level, sol::optional<bool> recover);
+    uint8  getStatRank(uint8 statType);
+    void   setStatRank(uint8 statType, uint8 rank);
     uint8  getEcosystem();
-    uint16 getSuperFamily();
     uint16 getFamily();
+    uint16 getSpecies();
     auto   isMobType(uint8 mobType) const -> bool; // True if mob is of type passed to function
     bool   isUndead();
     bool   isNM();
@@ -853,6 +869,7 @@ public:
     uint32 getMobFlags();
 
     void setNpcFlags(uint32 flags);
+    void setNpcAlwaysRelevant(bool alwaysRelevant);
 
     void spawn(const sol::object& despawnSec, const sol::object& respawnSec);
     bool isSpawned();
@@ -882,6 +899,8 @@ public:
     auto hasSpellList() const -> bool;
     void setSpellList(uint16 spellListId) const;
     void setAutoAttackEnabled(bool state);   // halts/resumes auto attack of entity
+    void setRangedAttackEnabled(bool state); // halts/resumes ranged auto attack of entity
+    bool isRangedAttackEnabled();            // returns whether ranged auto attack is enabled
     void setMagicCastingEnabled(bool state); // halt/resumes casting magic
     void setMobAbilityEnabled(bool state);   // halt/resumes mob skills
     void setMobSkillAttack(int16 listId);    // enable/disable using mobskills as regular attacks
@@ -893,6 +912,7 @@ public:
 
     uint32 getBattleTime();
     auto   getCrystalElement() const -> ELEMENT;
+    void   setCrystalElement(ELEMENT crystalElement);
 
     uint16 getBehavior();
     void   setBehavior(uint16 behavior);
@@ -931,8 +951,8 @@ public:
     uint16 getStealItem();
     uint16 getDespoilItem();                // gets ItemID of droplist despoil item from mob (steal item if no despoil item)
     uint16 getDespoilDebuff(uint16 itemID); // gets the status effect id to apply to the mob on successful despoil
-    bool   itemStolen();                    // sets mob's ItemStolen var = true
-    bool   itemDespoiled();                 // sets mob's ItemDespoiled var = true
+    void   itemStolen(bool stolen);         // sets mob's ItemStolen var
+    void   itemDespoiled(bool despoiled);   // sets mob's ItemDespoiled var
     int16  getTHlevel();                    // Returns the Monster's current Treasure Hunter Tier
     void   setTHlevel(int16 newLevel);      // Sets the Monster's current Treasure Hunter Tier
 

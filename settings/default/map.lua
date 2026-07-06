@@ -17,6 +17,10 @@ xi.settings.map =
 
     MAX_TIME_LASTUPDATE = 60,
 
+    -- Per-zone player cap. 0 disables. GMs reserve the top GM_RESERVED slots.
+    ZONE_PLAYER_CAP         = 700,
+    ZONE_PLAYER_GM_RESERVED = 5,
+
     -- --------------------------------
     -- SQL settings
     -- --------------------------------
@@ -73,12 +77,6 @@ xi.settings.map =
 
     -- Capacity Point Settings
     CAPACITY_RATE = 1.0,
-
-    -- Determines Vana'diel time epoch (886/1/1 Firesday)
-    -- current timestamp - vanadiel_time_epoch = vana'diel time
-    -- 0 defaults to SE epoch 1009810800 (JP midnight 1/1/2002)
-    -- safe range is 1 - current timestamp
-    VANADIEL_TIME_EPOCH = 0,
 
     -- For old fame calculation use .25
     FAME_MULTIPLIER = 1.00,
@@ -212,8 +210,9 @@ xi.settings.map =
     -- Adjust the recast time for abilities. Acts as a multiplier, so default is 1
     ABILITY_RECAST_MULTIPLIER = 1.0,
 
-    -- Maximum spell recast reduction percentage (Fast Cast cap). Retail is 80. Older eras used 50.
+    -- Maximum spell recast reduction percentage. Current retail is 80. Older eras used 50.
     SPELL_RECAST_REDUCTION_CAP = 80,
+
 
     -- Enable/disable shared blood pact timer
     BLOOD_PACT_SHARED_TIMER = false,
@@ -242,9 +241,7 @@ xi.settings.map =
 
     -- Allows parry, block, and guard to skill up regardless of the action occuring.
     -- This did not happen in previous eras
-    PARRY_OLD_SKILLUP_STYLE = false,
-    BLOCK_OLD_SKILLUP_STYLE = false,
-    GUARD_OLD_SKILLUP_STYLE = false,
+    DEFENSIVE_OLD_SKILLUP_STYLE = false,
 
     -- Globally adjusts ALL battlefield level caps by this many levels.
     BATTLE_CAP_TWEAK = 0,

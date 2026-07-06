@@ -1,9 +1,9 @@
 add_subdirectory(action)
 add_subdirectory(ai)
+add_subdirectory(data)
 add_subdirectory(entities)
 add_subdirectory(enums)
 add_subdirectory(items)
-add_subdirectory(los)
 add_subdirectory(lua)
 add_subdirectory(packets)
 add_subdirectory(utils)
@@ -16,10 +16,10 @@ set(SOURCES
     ${COMMON_SOURCES}
     ${ACTION_SOURCES}
     ${AI_SOURCES}
+    ${DATA_SOURCES}
     ${ENTITY_SOURCES}
     ${ENUMS_SOURCES}
     ${ITEM_SOURCES}
-    ${LOS_SOURCES}
     ${LUA_SOURCES}
     ${PACKET_SOURCES}
     ${UTIL_SOURCES}
@@ -103,6 +103,8 @@ set(SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/map_socket.h
     ${CMAKE_CURRENT_SOURCE_DIR}/map_statistics.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/map_statistics.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/maze.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/maze.h
     ${CMAKE_CURRENT_SOURCE_DIR}/merit.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/merit.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mob_modifier.h
@@ -116,11 +118,14 @@ set(SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/modifier.h
     ${CMAKE_CURRENT_SOURCE_DIR}/monstrosity.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/monstrosity.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/navmesh.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/navmesh.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/zone_mesh.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/zone_mesh.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/ximesh.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/navmesh/inavmesh.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/navmesh/navmesh.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/navmesh/navmesh.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/navmesh/navmesh_builder.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/navmesh/navmesh_builder.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/navmesh/navmesh_config.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/nominate_manager.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/nominate_manager.h
     ${CMAKE_CURRENT_SOURCE_DIR}/notoriety_container.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/notoriety_container.h
     ${CMAKE_CURRENT_SOURCE_DIR}/packet_system.cpp
@@ -163,6 +168,11 @@ set(SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/universal_container.h
     ${CMAKE_CURRENT_SOURCE_DIR}/weapon_skill.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/weapon_skill.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/ximesh/transformation_matrix.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/ximesh/vector3.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/ximesh/ximesh_structs.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/ximesh/ximesh.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/ximesh/ximesh.h
     ${CMAKE_CURRENT_SOURCE_DIR}/zone_entities.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/zone_entities.h
     ${CMAKE_CURRENT_SOURCE_DIR}/zone_instance.cpp
@@ -214,6 +224,8 @@ set(MAP_LIB_SOURCES ${SOURCES})
 add_library(xi_map_lib
     STATIC
         ${MAP_LIB_SOURCES})
+
+add_dependencies(xi_map_lib data_codegen)
 
 foreach(entry ${cmakelist_include_paths})
     if (${entry} STREQUAL "")

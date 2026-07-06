@@ -1018,7 +1018,7 @@ xi.fate.zones[xi.zone.SOUTH_GUSTABERG] =
             {
                 {
                     base        = { 107, 13 },
-                    name        = string.char(0xA6) .. "Goblin Thief",
+                    name        = string.char(0xA6) .. "Goblin Straggler",
                     count       = 4,
                     noCount     = true,
                     spawnPoints =

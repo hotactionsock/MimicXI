@@ -36,13 +36,7 @@ xi.fate.zones[xi.zone.ULEGUERAND_RANGE] =
 
             objective = { type = "kill", count = 8 },
 
-            area =
-            {
-                x      = 0,   -- TODO: !pos survey
-                y      = 0,   -- TODO: !pos survey
-                z      = 0,   -- TODO: !pos survey
-                radius = 80,
-            },
+            area = { 0, 0, 0, 80 },
 
             entryPos = { 0, 0, 0, 0 }, -- TODO: !pos survey 5
 
@@ -155,13 +149,7 @@ xi.fate.zones[xi.zone.ULEGUERAND_RANGE] =
                 end
             end,
 
-            area =
-            {
-                x      = 0,   -- TODO: !pos survey
-                y      = 0,   -- TODO: !pos survey
-                z      = 0,   -- TODO: !pos survey
-                radius = 88,
-            },
+            area = { 0, 0, 0, 88 },
 
             entryPos = { 0, 0, 0, 0 }, -- TODO: !pos survey 5
 

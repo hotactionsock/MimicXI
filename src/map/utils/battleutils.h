@@ -178,6 +178,10 @@ int32 GetEnmityModCure(int16 level);
 bool  isValidSelfTargetWeaponskill(int wsid);
 bool  CanUseWeaponskill(CCharEntity* PChar, CWeaponSkill* PSkill);
 int16 CalculateBaseTP(CBattleEntity* PEntity, int32 delay);
+auto  GetBaseDelay(CBattleEntity* PEntity) -> uint16;       // get base delay of entity, melee only
+auto  GetBaseRangedDelay(CBattleEntity* PEntity) -> uint16; // get base delay of entity, ranged only
+auto  CalculateTPFromDamageDealt(CBattleEntity* PAttacker, const bool& isZanshin, const SLOTTYPE& slot) -> int32;
+auto  CalculateTPFromDamageTaken(CBattleEntity* PAttacker, CBattleEntity* PDefender, int32 damage, uint16 delay) -> int32;
 void  GenerateCureEnmity(CBattleEntity* PSource, CBattleEntity* PTarget, int32 amount, int32 fixedCE = 0, int32 fixedVE = 0);
 void  GenerateInRangeEnmity(CBattleEntity* PSource, int32 CE, int32 VE);
 void  handleKillshotEnmity(CBattleEntity* PAttacker, CBattleEntity* PTarget);
@@ -200,7 +204,7 @@ uint16 doConsumeManaEffect(CCharEntity* m_PChar);
 int32  getOverWhelmDamageBonus(CBattleEntity* PAttacker, CBattleEntity* PDefender, int32 damage);
 
 void  TransferEnmity(CBattleEntity* PHateReceiver, CBattleEntity* PHateGiver, CMobEntity* PMob, uint8 percentToTransfer);
-uint8 getBarrageShotCount(CCharEntity* PChar);
+uint8 getBarrageShotCount(CBattleEntity* PBattleEntity);
 uint8 getStoreTPbonusFromMerit(CBattleEntity* PEntity);
 
 void ClaimMob(CBattleEntity* PDefender, CBattleEntity* PAttacker, bool passing = false);
@@ -210,12 +214,11 @@ void RelinquishClaim(CCharEntity* PDefender);
 int32 MagicDmgTaken(CBattleEntity* PDefender, int32 damage, ELEMENT element);
 int32 PhysicalDmgTaken(CBattleEntity* PDefender, int32 damage, DAMAGE_TYPE damageType, bool IsCovered = false);
 int32 RangedDmgTaken(CBattleEntity* PDefender, int32 damage, DAMAGE_TYPE damageType, bool IsCovered = false);
-int32 HandleSteamJacket(CBattleEntity* PDefender, int32 damage, DAMAGE_TYPE damageType);
 int32 CheckAndApplyDamageCap(int32 damage, CBattleEntity* PDefender);
 
 void HandleIssekiganEnmityBonus(CBattleEntity* PDefender, CBattleEntity* PAttacker);
 auto HandleSevereDamage(CBattleEntity* PDefender, int32 damage, bool isPhysical) -> int32;
-auto HandleSevereDamageEffect(CBattleEntity* PDefender, EFFECT effect, int32 damage, bool removeEffect) -> int32;
+auto HandleSevereDamageEffect(CBattleEntity* PDefender, xi::StatusEffect effect, int32 damage, bool removeEffect) -> int32;
 void HandleTacticalParry(CBattleEntity* PEntity);
 void HandleTacticalGuard(CBattleEntity* PEntity);
 
@@ -262,8 +265,8 @@ int32           GetMeritValue(CBattleEntity*, MERIT_TYPE);
 int32       GetScaledItemModifier(CBattleEntity*, CItemEquipment*, Mod);
 auto        GetSpikesDamageType(ActionReactKind spikesType) -> DAMAGE_TYPE;
 DAMAGE_TYPE GetEnspellDamageType(ENSPELL enspellType);
-DAMAGE_TYPE GetRuneEnhancementDamageType(EFFECT runeEffect);
-ELEMENT     GetRuneEnhancementElement(EFFECT runeEffect);
+auto        GetRuneEnhancementDamageType(xi::StatusEffect runeEffect) -> DAMAGE_TYPE;
+auto        GetRuneEnhancementElement(xi::StatusEffect runeEffect) -> ELEMENT;
 
 CBattleEntity* GetCoverAbilityUser(CBattleEntity* PCoverAbilityTarget, CBattleEntity* PMob);
 bool           IsMagicCovered(CCharEntity* PCoverAbilityUser);

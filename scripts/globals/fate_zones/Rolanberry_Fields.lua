@@ -36,13 +36,7 @@ xi.fate.zones[xi.zone.ROLANBERRY_FIELDS] =
 
             objective = { type = "kill", count = 10 },
 
-            area =
-            {
-                x      = 0,   -- TODO: !pos survey
-                y      = 0,   -- TODO: !pos survey
-                z      = 0,   -- TODO: !pos survey
-                radius = 75,
-            },
+            area = { 0, 0, 0, 75 },
 
             entryPos = { 0, 0, 0, 0 }, -- TODO: !pos survey 110
 
@@ -157,13 +151,7 @@ xi.fate.zones[xi.zone.ROLANBERRY_FIELDS] =
                 end
             end,
 
-            area =
-            {
-                x      = 0,   -- TODO: !pos survey
-                y      = 0,   -- TODO: !pos survey
-                z      = 0,   -- TODO: !pos survey
-                radius = 81,
-            },
+            area = { 0, 0, 0, 81 },
 
             entryPos = { 0, 0, 0, 0 }, -- TODO: !pos survey 110
 
@@ -255,13 +243,7 @@ xi.fate.zones[xi.zone.ROLANBERRY_FIELDS] =
 
             objective = { type = "kill", count = 12 },
 
-            area =
-            {
-                x      = 0,   -- TODO: !pos survey
-                y      = 0,   -- TODO: !pos survey
-                z      = 0,   -- TODO: !pos survey
-                radius = 70,
-            },
+            area = { 0, 0, 0, 70 },
 
             entryPos = { 0, 0, 0, 0 }, -- TODO: !pos survey 110
 
@@ -346,13 +328,7 @@ xi.fate.zones[xi.zone.ROLANBERRY_FIELDS] =
 
             objective = { type = "kill", count = 10 },
 
-            area =
-            {
-                x      = 0,   -- TODO: !pos survey
-                y      = 0,   -- TODO: !pos survey
-                z      = 0,   -- TODO: !pos survey
-                radius = 75,
-            },
+            area = { 0, 0, 0, 75 },
 
             entryPos = { 0, 0, 0, 0 }, -- TODO: !pos survey 110
 
@@ -443,13 +419,7 @@ xi.fate.zones[xi.zone.ROLANBERRY_FIELDS] =
 
             objective = { type = "kill", count = 5 },
 
-            area =
-            {
-                x      = 0,   -- TODO: !pos survey
-                y      = 0,   -- TODO: !pos survey
-                z      = 0,   -- TODO: !pos survey
-                radius = 65,
-            },
+            area = { 0, 0, 0, 65 },
 
             entryPos = { 0, 0, 0, 0 }, -- TODO: !pos survey 110
 
@@ -559,13 +529,7 @@ xi.fate.zones[xi.zone.ROLANBERRY_FIELDS] =
                 end
             end,
 
-            area =
-            {
-                x      = 0,   -- TODO: !pos survey
-                y      = 0,   -- TODO: !pos survey
-                z      = 0,   -- TODO: !pos survey
-                radius = 85,
-            },
+            area = { 0, 0, 0, 85 },
 
             entryPos = { 0, 0, 0, 0 }, -- TODO: !pos survey 110
 
@@ -680,13 +644,7 @@ xi.fate.zones[xi.zone.ROLANBERRY_FIELDS] =
                 end
             end,
 
-            area =
-            {
-                x      = 0,   -- TODO: !pos survey
-                y      = 0,   -- TODO: !pos survey
-                z      = 0,   -- TODO: !pos survey
-                radius = 105,
-            },
+            area = { 0, 0, 0, 105 },
 
             entryPos = { 0, 0, 0, 0 }, -- TODO: !pos survey 110
 

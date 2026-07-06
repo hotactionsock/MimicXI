@@ -26,7 +26,7 @@
 #include "common/utils.h"
 #include "entities/charentity.h"
 #include "enums/msg_std.h"
-#include "navmesh.h"
+#include "map/navmesh/navmesh.h"
 #include "packets/s2c/0x053_systemmes.h"
 #include "packets/s2c/0x065_wpos2.h"
 #include "utils/charutils.h"
@@ -138,10 +138,10 @@ void GP_CLI_COMMAND_MAPRECT::process(MapSession* PSession, CCharEntity* PChar) c
             auto destinationRegion            = zoneutils::GetCurrentRegion(destinationZone);
             auto moghouseExitRegions          = { REGION_TYPE::SANDORIA, REGION_TYPE::BASTOK, REGION_TYPE::WINDURST, REGION_TYPE::JEUNO, REGION_TYPE::WEST_AHT_URHGAN, REGION_TYPE::ADOULIN_ISLANDS };
             auto moghouseSameRegion           = std::ranges::any_of(moghouseExitRegions,
-                                                          [&destinationRegion](const REGION_TYPE acceptedReg)
-                                                          {
+                                                                    [&destinationRegion](const REGION_TYPE acceptedReg)
+                                                                    {
                                                               return destinationRegion == acceptedReg;
-                                                          });
+                                                                    });
             auto moghouseQuestComplete        = PChar->profile.mhflag & (this->MyRoomExitBit ? 0x01 << (this->MyRoomExitBit - 1) : 0);
 
             if (startingRegion == REGION_TYPE::ADOULIN_ISLANDS)
@@ -231,6 +231,12 @@ void GP_CLI_COMMAND_MAPRECT::process(MapSession* PSession, CCharEntity* PChar) c
                     return;
                 }
 
+                if (!isMogHouseEntrance && zoneutils::IsZoneAtPlayerCap(PZoneLine->destinationZoneId, PChar->m_GMlevel > 0))
+                {
+                    denyZone(PChar);
+                    return;
+                }
+
                 if (isMogHouseEntrance)
                 {
                     // TODO: for entering another persons mog house, it must be set here
@@ -247,9 +253,9 @@ void GP_CLI_COMMAND_MAPRECT::process(MapSession* PSession, CCharEntity* PChar) c
                     PChar->loc.p           = PZoneLine->nextSpawnPosition();
 
                     // Snap to navmesh for elevation on uneven zonelines
-                    if (PDestination && PDestination->m_navMesh)
+                    if (PDestination)
                     {
-                        PDestination->m_navMesh->snapToValidPosition(PChar->loc.p);
+                        PDestination->navMesh()->snapToValidPosition(PChar->loc.p);
                     }
 
                     charutils::SavePrevZoneLineID(PChar, PZoneLine->zoneLineId);

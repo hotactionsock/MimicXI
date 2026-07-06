@@ -59,6 +59,7 @@ public:
         return { 0, position_t{} };
     }
 
+
     auto raycast(const position_t&, const position_t&) -> bool override
     {
         return true;

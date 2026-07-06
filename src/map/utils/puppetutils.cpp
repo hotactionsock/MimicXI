@@ -224,7 +224,7 @@ void SaveAutomaton(CCharEntity* PChar)
     }
 }
 
-auto UnlockAttachment(CCharEntity* PChar, CItem* PItem) -> bool
+auto UnlockAttachment(CCharEntity* PChar, const CItem* PItem) -> bool
 {
     const uint16 id = PItem->getID();
 
@@ -233,7 +233,7 @@ auto UnlockAttachment(CCharEntity* PChar, CItem* PItem) -> bool
         return false;
     }
 
-    const uint8 slot = static_cast<CItemPuppet*>(PItem)->getEquipSlot();
+    const uint8 slot = static_cast<const CItemPuppet*>(PItem)->getEquipSlot();
     if (slot == ITEM_PUPPET_ATTACHMENT)
     {
         if (addBit(id & 0xFF, reinterpret_cast<uint8*>(PChar->m_unlockedAttachments.attachments), sizeof(PChar->m_unlockedAttachments.attachments)))
@@ -267,7 +267,7 @@ auto UnlockAttachment(CCharEntity* PChar, CItem* PItem) -> bool
     return false;
 }
 
-auto HasAttachment(const CCharEntity* PChar, CItem* PItem) -> bool
+auto HasAttachment(const CCharEntity* PChar, const CItem* PItem) -> bool
 {
     const uint16 id = PItem->getID();
     if (!PItem->isType(ITEM_PUPPET))
@@ -275,7 +275,7 @@ auto HasAttachment(const CCharEntity* PChar, CItem* PItem) -> bool
         return false;
     }
 
-    const uint8 slot = static_cast<CItemPuppet*>(PItem)->getEquipSlot();
+    const uint8 slot = static_cast<const CItemPuppet*>(PItem)->getEquipSlot();
 
     // Note: getEquipSlot() returns ITEM_PUPPET_EQUIPSLOT values (1-based from DB),
     // not AutomatonSlot packet indices (0-based).
@@ -294,7 +294,7 @@ auto HasAttachment(const CCharEntity* PChar, CItem* PItem) -> bool
 
 void setAttachment(CCharEntity* PChar, uint8 slotId, uint8 attachment)
 {
-    auto* PAttachment = static_cast<CItemPuppet*>(itemutils::GetItemPointer(0x2100 + attachment));
+    auto* PAttachment = xi::items::lookup<CItemPuppet>(0x2100 + attachment);
     if (attachment != 0)
     {
         if (PAttachment && !HasAttachment(PChar, PAttachment))
@@ -357,7 +357,7 @@ void setAttachment(CCharEntity* PChar, uint8 slotId, uint8 attachment)
 
         if (attachment != 0)
         {
-            PAttachment = static_cast<CItemPuppet*>(itemutils::GetItemPointer(0x2100 + attachment));
+            PAttachment = xi::items::lookup<CItemPuppet>(0x2100 + attachment);
 
             if (PAttachment && PAttachment->getEquipSlot() == ITEM_PUPPET_ATTACHMENT)
             {
@@ -383,7 +383,7 @@ void setFrame(CCharEntity* PChar, AutomatonFrame frame)
 
     if (static_cast<uint8>(PChar->getAutomatonFrame()) != 0)
     {
-        const auto* POldFrame = static_cast<CItemPuppet*>(itemutils::GetItemPointer(0x2000 + static_cast<uint8>(PChar->getAutomatonFrame())));
+        const auto* POldFrame = xi::items::lookup<CItemPuppet>(0x2000 + static_cast<uint8>(PChar->getAutomatonFrame()));
         if (POldFrame == nullptr || POldFrame->getEquipSlot() != ITEM_PUPPET_FRAME)
         {
             return;
@@ -395,7 +395,7 @@ void setFrame(CCharEntity* PChar, AutomatonFrame frame)
     }
 
     // Check if they actually have the frame
-    auto* PFrame = static_cast<CItemPuppet*>(itemutils::GetItemPointer(0x2000 + static_cast<uint8>(frame)));
+    auto* PFrame = xi::items::lookup<CItemPuppet>(0x2000 + static_cast<uint8>(frame));
     if (PFrame == nullptr || PFrame->getEquipSlot() != ITEM_PUPPET_FRAME || (frame != AutomatonFrame::Harlequin && !HasAttachment(PChar, PFrame)))
     {
         return;
@@ -426,7 +426,7 @@ void setHead(CCharEntity* PChar, AutomatonHead head)
 
     if (static_cast<uint8>(PChar->getAutomatonHead()) != 0)
     {
-        const auto* POldHead = static_cast<CItemPuppet*>(itemutils::GetItemPointer(0x2000 + static_cast<uint8>(PChar->getAutomatonHead())));
+        const auto* POldHead = xi::items::lookup<CItemPuppet>(0x2000 + static_cast<uint8>(PChar->getAutomatonHead()));
         if (POldHead == nullptr || POldHead->getEquipSlot() != ITEM_PUPPET_HEAD)
         {
             return;
@@ -438,7 +438,7 @@ void setHead(CCharEntity* PChar, AutomatonHead head)
     }
 
     // Check if they actually have the head
-    auto* PHead = static_cast<CItemPuppet*>(itemutils::GetItemPointer(0x2000 + static_cast<uint8>(head)));
+    auto* PHead = xi::items::lookup<CItemPuppet>(0x2000 + static_cast<uint8>(head));
     if (PHead == nullptr || PHead->getEquipSlot() != ITEM_PUPPET_HEAD || (head != AutomatonHead::Harlequin && !HasAttachment(PChar, PHead)))
     {
         return;
@@ -466,76 +466,70 @@ auto getSkillCap(const CCharEntity* PChar, const SKILLTYPE skill, const uint8 le
         return 0;
     }
 
-    int8 rank = 0;
     if (skill < SKILL_AUTOMATON_MELEE || skill > SKILL_AUTOMATON_MAGIC)
     {
         return 0;
     }
-    switch (PChar->getAutomatonFrame())
+
+    const auto frame    = static_cast<uint8>(PChar->getAutomatonFrame());
+    const auto head     = static_cast<uint8>(PChar->getAutomatonHead());
+    const auto skillKey = static_cast<uint8>(skill);
+
+    const auto maybeSkillCaps = lua["xi"]["pets"]["automaton"]["skillCaps"].get<sol::optional<sol::table>>();
+    if (!maybeSkillCaps)
     {
-        default: // case Harlequin:
-            rank = 5;
-            break;
-        case AutomatonFrame::Valoredge:
-            if (skill == SKILL_AUTOMATON_MELEE)
-            {
-                rank = 2;
-            }
-            break;
-        case AutomatonFrame::Sharpshot:
-            if (skill == SKILL_AUTOMATON_MELEE)
-            {
-                rank = 6;
-            }
-            else if (skill == SKILL_AUTOMATON_RANGED)
-            {
-                rank = 3;
-            }
-            break;
-        case AutomatonFrame::Stormwaker:
-            if (skill == SKILL_AUTOMATON_MELEE)
-            {
-                rank = 7;
-            }
-            else if (skill == SKILL_AUTOMATON_MAGIC)
-            {
-                rank = 3;
-            }
-            break;
+        ShowError("puppetutils::getSkillCap() - Missing xi.pets.automaton.skillCaps");
+        return 0;
     }
 
-    switch (PChar->getAutomatonHead())
+    const auto& skillCaps = *maybeSkillCaps;
+
+    const auto maybeFrames = skillCaps["frames"].get<sol::optional<sol::table>>();
+    if (!maybeFrames)
     {
-        case AutomatonHead::Valoredge:
-            if (skill == SKILL_AUTOMATON_MELEE)
-            {
-                rank -= 1;
-            }
-            break;
-        case AutomatonHead::Sharpshot:
-            if (skill == SKILL_AUTOMATON_RANGED)
-            {
-                rank -= 1;
-            }
-            break;
-        case AutomatonHead::Stormwaker:
-            if (skill == SKILL_AUTOMATON_MELEE || skill == SKILL_AUTOMATON_MAGIC)
-            {
-                rank -= 1;
-            }
-            break;
-        case AutomatonHead::Soulsoother:
-        case AutomatonHead::Spiritreaver:
-            if (skill == SKILL_AUTOMATON_MAGIC)
-            {
-                rank -= 2;
-            }
-            break;
-        default:
-            break;
+        ShowError("puppetutils::getSkillCap() - Missing xi.pets.automaton.skillCaps.frames");
+        return 0;
     }
 
-    // only happens if a head gives bonus to a rank of 0 - making it G or F rank
+    const auto& frames = *maybeFrames;
+
+    const auto maybeFrameCaps = frames[frame].get<sol::optional<sol::table>>();
+    if (!maybeFrameCaps)
+    {
+        ShowErrorFmt("puppetutils::getSkillCap() - Missing automaton skill caps for frame {}", static_cast<uint16>(frame));
+        return 0;
+    }
+
+    const auto& frameCaps = *maybeFrameCaps;
+
+    // Grab the skill cap for the frame, then apply the bonus from the head if applicable.
+    int8 rank = 0;
+
+    const auto maybeFrameRank = frameCaps[skillKey].get<sol::optional<int8>>();
+    if (maybeFrameRank)
+    {
+        rank = *maybeFrameRank;
+    }
+
+    const auto maybeHeads = skillCaps["heads"].get<sol::optional<sol::table>>();
+    if (maybeHeads)
+    {
+        const auto& heads = *maybeHeads;
+
+        const auto maybeHeadCaps = heads[head].get<sol::optional<sol::table>>();
+        if (maybeHeadCaps)
+        {
+            const auto& headCaps = *maybeHeadCaps;
+
+            const auto maybeHeadRank = headCaps[skillKey].get<sol::optional<int8>>();
+            if (maybeHeadRank)
+            {
+                rank += *maybeHeadRank;
+            }
+        }
+    }
+
+    // Handle automaton frames with no native skill being combined with heads that give a bonus to that rank.
     if (rank < 0)
     {
         rank = 13 + rank;
@@ -654,17 +648,17 @@ void TrySkillUP(CAutomatonEntity* PAutomaton, SKILLTYPE SkillID, uint8 lvl)
     }
 }
 
-void CheckAttachmentsForManeuver(const CCharEntity* PChar, const EFFECT maneuver, const bool gain)
+void CheckAttachmentsForManeuver(const CCharEntity* PChar, const xi::StatusEffect maneuver, const bool gain)
 {
     auto* PAutomaton = dynamic_cast<CAutomatonEntity*>(PChar->PPet);
     if (PAutomaton)
     {
-        uint8 element = maneuver - EFFECT_FIRE_MANEUVER;
+        uint8 element = static_cast<uint8>(static_cast<uint16>(maneuver) - static_cast<uint16>(xi::StatusEffect::FireManeuver));
         for (uint8 i = 0; i < 12; i++)
         {
             if (PAutomaton->getAttachment(i) != 0)
             {
-                auto* PAttachment = static_cast<CItemPuppet*>(itemutils::GetItemPointer(0x2100 + PAutomaton->getAttachment(i)));
+                auto* PAttachment = xi::items::lookup<CItemPuppet>(0x2100 + PAutomaton->getAttachment(i));
 
                 if (PAttachment && (PAttachment->getElementSlots() >> (element * 4)) & 0xF)
                 {
@@ -690,7 +684,7 @@ void EquipAttachments(CAutomatonEntity* PAutomaton)
         {
             if (PAutomaton->getAttachment(i) != 0)
             {
-                auto* PAttachment = static_cast<CItemPuppet*>(itemutils::GetItemPointer(0x2100 + PAutomaton->getAttachment(i)));
+                auto* PAttachment = xi::items::lookup<CItemPuppet>(0x2100 + PAutomaton->getAttachment(i));
                 if (PAttachment)
                 {
                     luautils::OnAttachmentEquip(PAutomaton, PAttachment);
@@ -709,11 +703,11 @@ void UpdateAttachments(const CCharEntity* PChar)
         {
             if (PAutomaton->getAttachment(i) != 0)
             {
-                auto* PAttachment = static_cast<CItemPuppet*>(itemutils::GetItemPointer(0x2100 + PAutomaton->getAttachment(i)));
+                auto* PAttachment = xi::items::lookup<CItemPuppet>(0x2100 + PAutomaton->getAttachment(i));
 
                 if (PAttachment)
                 {
-                    int32 maneuver = EFFECT_FIRE_MANEUVER;
+                    int32 maneuver = static_cast<int32>(xi::StatusEffect::FireManeuver);
                     for (int j = 0; j < 8; j++)
                     {
                         if (PAttachment->getElementSlots() >> (j * 4) & 0xF)
@@ -722,7 +716,7 @@ void UpdateAttachments(const CCharEntity* PChar)
                             break;
                         }
                     }
-                    luautils::OnUpdateAttachment(PAutomaton, PAttachment, PChar->StatusEffectContainer->GetEffectsCount(static_cast<EFFECT>(maneuver)));
+                    luautils::OnUpdateAttachment(PAutomaton, PAttachment, PChar->StatusEffectContainer->GetEffectsCount(static_cast<xi::StatusEffect>(maneuver)));
                 }
             }
         }
@@ -740,7 +734,7 @@ void PreLevelRestriction(const CCharEntity* PChar)
 
             if (attachment != 0)
             {
-                CItemPuppet* PAttachment = dynamic_cast<CItemPuppet*>(itemutils::GetItemPointer(0x2100 + attachment));
+                const auto* PAttachment = xi::items::lookup<CItemPuppet>(0x2100 + attachment);
 
                 if (PAttachment)
                 {
@@ -764,7 +758,7 @@ void PostLevelRestriction(const CCharEntity* PChar)
             const uint8 attachment = PAutomaton->getAttachment(i);
             if (attachment != 0)
             {
-                auto* PAttachment = dynamic_cast<CItemPuppet*>(itemutils::GetItemPointer(0x2100 + attachment));
+                auto* PAttachment = xi::items::lookup<CItemPuppet>(0x2100 + attachment);
                 if (PAttachment)
                 {
                     // Attachment scripts may have custom equip logic that needs to be computed against the LvRestricted puppet stats

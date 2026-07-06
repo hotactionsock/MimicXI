@@ -35,13 +35,7 @@ xi.fate.zones[xi.zone.EAST_SARUTABARUTA] =
 
             objective = { type = "kill", count = 10 },
 
-            area =
-            {
-                x      = -3.6,
-                y      = -0.8,
-                z      = -61,
-                radius = 65,
-            },
+            area = { -3.6, -0.8, -61, 65 },
 
             entryPos = { -3.670, -0.811, -60.948, 249 }, -- !pos -3.670 -0.811 -60.948 116
 
@@ -133,13 +127,7 @@ xi.fate.zones[xi.zone.EAST_SARUTABARUTA] =
 
             objective = { type = "kill", count = 8 },
 
-            area =
-            {
-                x      = 96,
-                y      = -9,
-                z      = 44,
-                radius = 65,
-            },
+            area = { 96, -9, 44, 65 },
 
             entryPos = { 96.256, -9.014, 44.424, 41 }, -- !pos 96.256 -9.014 44.424 116
 
@@ -227,13 +215,7 @@ xi.fate.zones[xi.zone.EAST_SARUTABARUTA] =
 
             objective = { type = "kill", count = 5 },
 
-            area =
-            {
-                x      = -242,
-                y      = 0,
-                z      = -111,
-                radius = 55,
-            },
+            area = { -242, 0, -111, 55 },
 
             entryPos = { -242.535, -0.301, -111.213, 8 }, -- !pos -242.535 -0.301 -111.213 116
 
@@ -349,13 +331,7 @@ xi.fate.zones[xi.zone.EAST_SARUTABARUTA] =
                 end
             end,
 
-            area =
-            {
-                x      = -234,
-                y      = -24,
-                z      = 635,
-                radius = 70,
-            },
+            area = { -234, -24, 635, 70 },
 
             entryPos = { -234.053, -23.910, 635.551, 63 }, -- !pos -234.053 -23.910 635.551 116
 
@@ -448,13 +424,7 @@ xi.fate.zones[xi.zone.EAST_SARUTABARUTA] =
 
             objective = { type = "kill", count = 9 },
 
-            area =
-            {
-                x      = 75,   -- TODO: !pos survey
-                y      = 0,   -- TODO: !pos survey
-                z      = -168,   -- TODO: !pos survey
-                radius = 65,
-            },
+            area = { 75, 0, -168, 65 },
 
             entryPos = { 74.923, 0.256, -168.749, 60 }, -- !pos 74.923 0.256 -168.749 116
 
@@ -544,13 +514,7 @@ xi.fate.zones[xi.zone.EAST_SARUTABARUTA] =
 
             objective = { type = "kill", count = 9 },
 
-            area =
-            {
-                x      = -84,   -- TODO: !pos survey
-                y      = -5,   -- TODO: !pos survey
-                z      = -378,   -- TODO: !pos survey
-                radius = 65,
-            },
+            area = { -84, -5, -378, 65 },
 
             entryPos = { -84.557, -5.169, -378.680, 42 }, -- !pos -84.557 -5.169 -378.680 116
 
@@ -639,13 +603,7 @@ xi.fate.zones[xi.zone.EAST_SARUTABARUTA] =
 
             objective = { type = "kill", count = 5 },
 
-            area =
-            {
-                x      = -47,   -- TODO: !pos survey
-                y      = -4,   -- TODO: !pos survey
-                z      = -201,   -- TODO: !pos survey
-                radius = 55,
-            },
+            area = { -47, -4, -201, 55 },
 
             entryPos = { -47.536, -4.449, -201.267, 63 }, -- !pos -47.536 -4.449 -201.267 116
 
@@ -750,13 +708,7 @@ xi.fate.zones[xi.zone.EAST_SARUTABARUTA] =
                 end
             end,
 
-            area =
-            {
-                x      = -359,   -- TODO: !pos survey
-                y      = -4,   -- TODO: !pos survey
-                z      = -118,   -- TODO: !pos survey
-                radius = 80,
-            },
+            area = { -359, -4, -118, 80 },
 
             entryPos = { -348.867, -1.705, -98.666, 204 }, -- !pos -348.867 -1.705 -98.666 116
 
@@ -875,13 +827,7 @@ xi.fate.zones[xi.zone.EAST_SARUTABARUTA] =
                 end
             end,
 
-            area =
-            {
-                x      = 433,   -- TODO: !pos survey
-                y      = -2.5,   -- TODO: !pos survey
-                z      = 298,   -- TODO: !pos survey
-                radius = 110,
-            },
+            area = { 433, -2.5, 298, 110 },
 
             entryPos = { 412.131, -3.711, 310.072, 128 }, -- !pos 412.131 -3.711 310.072 116
 

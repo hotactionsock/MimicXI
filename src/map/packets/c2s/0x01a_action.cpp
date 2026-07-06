@@ -147,6 +147,8 @@ auto GP_CLI_COMMAND_ACTION::validate(MapSession* PSession, const CCharEntity* PC
 
 void GP_CLI_COMMAND_ACTION::process(MapSession* PSession, CCharEntity* PChar) const
 {
+    LogWith({ "action", { { "type", static_cast<GP_CLI_COMMAND_ACTION_ACTIONID>(this->ActionID) }, { "target_id", this->ActIndex } } });
+
     const auto actionStr = fmt::format("Player Action: {}: {} -> ActIndex: {}", PChar->getName(), actionToStr(static_cast<GP_CLI_COMMAND_ACTION_ACTIONID>(this->ActionID)), this->ActIndex);
     ShowTrace(actionStr);
     DebugActions(actionStr);
@@ -156,7 +158,7 @@ void GP_CLI_COMMAND_ACTION::process(MapSession* PSession, CCharEntity* PChar) co
     {
         for (uint8 equipSlotID = 0; equipSlotID < 16; ++equipSlotID)
         {
-            if (PChar->equip[equipSlotID] != 0)
+            if (PChar->getEquip(static_cast<SLOTTYPE>(equipSlotID)))
             {
                 PChar->PLatentEffectContainer->CheckLatentsEquip(equipSlotID);
             }
@@ -170,13 +172,13 @@ void GP_CLI_COMMAND_ACTION::process(MapSession* PSession, CCharEntity* PChar) co
         {
             // Monstrosity: Can't really do anything while under Gestation until you click it off.
             //            : MONs can trigger doors, so we'll handle that later.
-            if (PChar->StatusEffectContainer->HasStatusEffect(EFFECT_GESTATION))
+            if (PChar->StatusEffectContainer->HasStatusEffect(xi::StatusEffect::Gestation))
             {
                 return;
             }
 
             // Talking to an NPC cancels /heal
-            PChar->StatusEffectContainer->DelStatusEffectSilent(EFFECT_HEALING);
+            PChar->StatusEffectContainer->DelStatusEffectSilent(xi::StatusEffect::Healing);
 
             // Talking to an NPC force disengages
             if (PChar->PAI->IsEngaged())
@@ -202,9 +204,37 @@ void GP_CLI_COMMAND_ACTION::process(MapSession* PSession, CCharEntity* PChar) co
             }
 
             // Releasing a trust
-            if (auto* PTrust = dynamic_cast<CTrustEntity*>(PNpc))
+            if (auto* PTrust = dynamic_cast<CTrustEntity*>(PNpc); PTrust && !PTrust->isReleased)
             {
-                PChar->RemoveTrust(PTrust);
+                uint32_t trustTargId = PTrust->targid;
+
+                PTrust->isReleased = true;
+
+                // Emit despawn message
+                // TODO: probably change off OnMobDespawn to a listener or a trust specific OnPartyLeave callback
+                // note: this will get called a second time later, but PTrust->PMaster is nullptr by the time that happens so the despawn message is never emitted.
+                luautils::OnMobDespawn(PTrust);
+
+                PChar->PAI->QueueAction(
+                    queueAction_t(
+                        2s,
+                        false,
+                        [trustTargId](CBaseEntity* CharEntity)
+                        {
+                            // We can't trust using a pointer here in case somehow the trust has been usurped
+                            // So use the POD of the trusts's targID, look it back up, and check the PChar is still it's master
+                            auto PDelayedTrust = dynamic_cast<CTrustEntity*>(CharEntity->GetEntity(trustTargId, TYPE_TRUST));
+                            auto PDelayedChar  = dynamic_cast<CCharEntity*>(CharEntity);
+
+                            if (PDelayedTrust && PDelayedChar && PDelayedTrust->PMaster == PDelayedChar)
+                            {
+                                // For some reason they use ANIMATION_DEATH to play the special despawn.
+                                PDelayedTrust->animation = ANIMATION_DEATH;
+                                PDelayedTrust->updatemask |= UPDATE_HP;
+
+                                PDelayedChar->RemoveTrust(PDelayedTrust);
+                            }
+                        }));
                 return;
             }
 
@@ -236,7 +266,7 @@ void GP_CLI_COMMAND_ACTION::process(MapSession* PSession, CCharEntity* PChar) co
         {
             if (PChar->isMounted())
             {
-                PChar->StatusEffectContainer->DelStatusEffectSilent(EFFECT_MOUNTED);
+                PChar->StatusEffectContainer->DelStatusEffectSilent(xi::StatusEffect::Mounted);
             }
 
             PChar->PAI->Engage(this->ActIndex);
@@ -426,7 +456,7 @@ void GP_CLI_COMMAND_ACTION::process(MapSession* PSession, CCharEntity* PChar) co
         {
             PChar->animation = ANIMATION_NONE;
             PChar->updatemask |= UPDATE_HP;
-            PChar->StatusEffectContainer->DelStatusEffectSilent(EFFECT_MOUNTED);
+            PChar->StatusEffectContainer->DelStatusEffectSilent(xi::StatusEffect::Mounted);
         }
         break;
         case GP_CLI_COMMAND_ACTION_ACTIONID::TractorMenu:
@@ -466,7 +496,7 @@ void GP_CLI_COMMAND_ACTION::process(MapSession* PSession, CCharEntity* PChar) co
             break;
         case GP_CLI_COMMAND_ACTION_ACTIONID::Blockaid:
         {
-            if (!PChar->StatusEffectContainer->HasStatusEffect(EFFECT_ALLIED_TAGS))
+            if (!PChar->StatusEffectContainer->HasStatusEffect(xi::StatusEffect::AlliedTags))
             {
                 if (this->BlockAid.StatusId == GP_CLI_COMMAND_ACTION_BLOCKAID::Disable && PChar->getBlockingAid())
                 {
@@ -530,8 +560,8 @@ void GP_CLI_COMMAND_ACTION::process(MapSession* PSession, CCharEntity* PChar) co
 
                 PChar->m_mountId = this->Mount.MountId ? this->Mount.MountId + 1 : 0;
                 PChar->StatusEffectContainer->AddStatusEffect(new CStatusEffect(
-                                                                  EFFECT_MOUNTED,
-                                                                  EFFECT_MOUNTED,
+                                                                  xi::StatusEffect::Mounted,
+                                                                  static_cast<uint16>(xi::StatusEffect::Mounted),
                                                                   this->Mount.MountId ? this->Mount.MountId + 1 : 0,
                                                                   0s,
                                                                   30min,

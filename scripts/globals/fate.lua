@@ -53,6 +53,7 @@ xi.fate.collectNPCs = {}
 -- Defense target NPC entity references: [zoneID][eventIdx] = { npc, npc, npc }
 xi.fate.defenseTargetNPCs = {}
 
+
 -----------------------------------
 -- Internal constants
 -----------------------------------
@@ -605,7 +606,7 @@ xi.fate.checkWaveCleared = function(zoneID, eventIdx, waveIdx)
     local entries = xi.fate.mobEntities[zoneID] and xi.fate.mobEntities[zoneID][eventIdx]
     if not entries then return end
     for _, entry in ipairs(entries) do
-        if entry.waveIdx == waveIdx and not entry.isBoss and entry.entity:isAlive() then
+        if entry.waveIdx == waveIdx and not entry.isBoss and entry.entity:isSpawned() then
             return  -- wave still has live mobs
         end
     end
@@ -614,6 +615,7 @@ xi.fate.checkWaveCleared = function(zoneID, eventIdx, waveIdx)
         xi.fate.spawnWave(zoneID, eventIdx, waveIdx + 1)
     end
 end
+
 
 xi.fate.sweepMobs = function(zoneID, eventIdx)
     local mobs = xi.fate.mobEntities[zoneID] and xi.fate.mobEntities[zoneID][eventIdx]
@@ -1212,6 +1214,7 @@ xi.fate.preannounce = function(zone, eventDef, zoneID, eventIdx)
     local warnings = eventDef.bossWarnings or {}
     local msg1 = warnings[1] or (isSuperBoss and "[FATE] ★★★★★ An ancient terror awakens. All adventurers - prepare yourselves." or "[FATE] A powerful creature stirs...")
     broadcastMsg(msg1)
+
 
     local entry = xi.fate.entryNPCs[zoneID] and xi.fate.entryNPCs[zoneID][eventIdx]
     if not entry then

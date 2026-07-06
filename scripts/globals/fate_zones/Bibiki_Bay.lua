@@ -37,13 +37,7 @@ xi.fate.zones[xi.zone.BIBIKI_BAY] =
 
             objective = { type = "kill", count = 9 },
 
-            area =
-            {
-                x      = 0,   -- TODO: !pos survey
-                y      = 0,   -- TODO: !pos survey
-                z      = 0,   -- TODO: !pos survey
-                radius = 75,
-            },
+            area = { 0, 0, 0, 75 },
 
             entryPos = { 0, 0, 0, 0 }, -- TODO: !pos survey 4
 
@@ -132,13 +126,7 @@ xi.fate.zones[xi.zone.BIBIKI_BAY] =
 
             objective = { type = "kill", count = 5 },
 
-            area =
-            {
-                x      = 0,   -- TODO: !pos survey
-                y      = 0,   -- TODO: !pos survey
-                z      = 0,   -- TODO: !pos survey
-                radius = 70,
-            },
+            area = { 0, 0, 0, 70 },
 
             entryPos = { 0, 0, 0, 0 }, -- TODO: !pos survey 4
 
@@ -248,13 +236,7 @@ xi.fate.zones[xi.zone.BIBIKI_BAY] =
                 end
             end,
 
-            area =
-            {
-                x      = 0,   -- TODO: !pos survey
-                y      = 0,   -- TODO: !pos survey
-                z      = 0,   -- TODO: !pos survey
-                radius = 88,
-            },
+            area = { 0, 0, 0, 88 },
 
             entryPos = { 0, 0, 0, 0 }, -- TODO: !pos survey 4
 

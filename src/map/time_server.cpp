@@ -123,6 +123,14 @@ auto time_server(Scheduler& scheduler, MapConfig config) -> Task<void>
                     {
                         PChar->PLatentEffectContainer->CheckLatentsHours();
                         PChar->PLatentEffectContainer->CheckLatentsMoonPhase();
+
+                        if (PChar->guildShopNpc_.id != 0)
+                        {
+                            if (auto* PNpc = zoneutils::GetEntity(PChar->guildShopNpc_.id, TYPE_NPC))
+                            {
+                                luautils::callGlobal<void>("xi.guildShops.onGameHour", PChar, PNpc);
+                            }
+                        }
                     });
             });
 
@@ -151,6 +159,7 @@ auto time_server(Scheduler& scheduler, MapConfig config) -> Task<void>
         {
             // MIDNIGHT -> NEWDAY -> DAWN -> DAY -> DUSK -> EVENING -> NIGHT
             TracyZoneScoped;
+
             zoneutils::TOTDChange(vanaTotd);
             fishingutils::RestockFishingAreas();
 
@@ -173,7 +182,7 @@ auto time_server(Scheduler& scheduler, MapConfig config) -> Task<void>
 
     CTriggerHandler::getInstance()->triggerTimer();
     CTransportHandler::getInstance()->TransportTimer();
-    instanceutils::CheckInstance();
+    co_await instanceutils::CheckInstance(scheduler, config);
     co_await zoneutils::ProcessLoadQueue(scheduler, config);
     luautils::OnTimeServerTick();
     luautils::TryReloadFilewatchList();
