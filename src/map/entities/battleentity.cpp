@@ -3119,6 +3119,11 @@ void CBattleEntity::OnRangedAttack(CRangeState& state, action_t& action)
             PAmmo = nullptr;
         }
     }
+    else if (isTrust)
+    {
+        PItem = static_cast<CItemWeapon*>(m_Weapons[SLOT_RANGED]);
+        PAmmo = static_cast<CItemWeapon*>(m_Weapons[SLOT_AMMO]);
+    }
 
     uint8 shadowsTaken = 0;
     uint8 hitCount     = 1; // 1 hit by default
@@ -3302,7 +3307,7 @@ void CBattleEntity::OnRangedAttack(CRangeState& state, action_t& action)
             actionResult.messageID = MsgBasic::RangedAttackAbsorbs;
         }
 
-        if (isChar)
+        if (isChar || isTrust)
         {
             // add additional effects
             // this should go AFTER damage taken

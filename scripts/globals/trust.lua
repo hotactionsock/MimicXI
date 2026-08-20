@@ -280,6 +280,39 @@ xi.trust.onTradeCipher = function(player, trade, csid, rovCs, arkAngelCs)
     end
 end
 
+-- Shared trust/mimic-trust slot capacity check. Counts the caster's current
+-- party+trust total and trust-only total via getPartyWithTrusts(), applying
+-- the same party-size and ROV Key Item caps that xi.trust.canCast enforces
+-- for real trust spells. Returns ok(boolean), numTrusts(number).
+xi.trust.checkSlotCapacity = function(caster)
+    local numPt     = 0
+    local numTrusts = 0
+    local party     = caster:getPartyWithTrusts()
+
+    for _, member in pairs(party) do
+        if member:getObjType() == xi.objType.TRUST then
+            numTrusts = numTrusts + 1
+        end
+
+        numPt = numPt + 1
+    end
+
+    if numPt >= 6 then
+        caster:messageSystem(xi.msg.system.TRUST_MAXIMUM_NUMBER)
+        return false, numTrusts
+    end
+
+    if numTrusts >= 3 and not caster:hasKeyItem(xi.ki.RHAPSODY_IN_WHITE) then
+        caster:messageSystem(xi.msg.system.TRUST_MAXIMUM_NUMBER)
+        return false, numTrusts
+    elseif numTrusts >= 4 and not caster:hasKeyItem(xi.ki.RHAPSODY_IN_CRIMSON) then
+        caster:messageSystem(xi.msg.system.TRUST_MAXIMUM_NUMBER)
+        return false, numTrusts
+    end
+
+    return true, numTrusts
+end
+
 xi.trust.canCast = function(caster, spell, notAllowedTrustIds)
     -- Trusts must be enabled in settings
     if xi.settings.main.ENABLE_TRUST_CASTING == 0 then

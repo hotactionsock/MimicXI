@@ -458,6 +458,19 @@ void data_session::read_func()
                         }
                     }
 
+                    const auto mimicLockRset = db::preparedStmt("SELECT 1 FROM char_mimic_active WHERE charid = ? LIMIT 1", session.requestedCharacterID);
+                    if (mimicLockRset && mimicLockRset->rowsCount() != 0)
+                    {
+                        // Character is currently summoned as someone's mimic trust - refuse login until it's dismissed.
+                        if (auto viewSession = session.view_session.get())
+                        {
+                            session.incrementKeyValue += 1;
+                            loginHelpers::generateErrorMessage(viewSession->buffer_.data(), loginErrors::errorCode::CHARACTER_ALREADY_LOGGED_IN);
+                            viewSession->do_write(0x24);
+                            return;
+                        }
+                    }
+
                     if (!db::preparedStmt("INSERT INTO accounts_sessions(accid, charid, session_key, server_addr, server_port, client_addr, version_mismatch) "
                                           "VALUES(?, ?, ?, ?, ?, ?, ?)",
                                           session.accountID,

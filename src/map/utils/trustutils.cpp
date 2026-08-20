@@ -38,13 +38,22 @@
 #include "ai/ai_container.h"
 #include "ai/controllers/trust_controller.h"
 #include "ai/helpers/gambits_container.h"
+#include "entities/charentity.h"
+#include "entities/mimictrustentity.h"
 #include "entities/mobentity.h"
 #include "entities/trustentity.h"
+#include "items/item.h"
+#include "items/item_equipment.h"
 #include "items/item_weapon.h"
+#include "lua/luautils.h"
+#include "mimicutils.h"
 #include "mobskill.h"
 #include "status_effect_container.h"
+#include "trait.h"
 #include "weapon_skill.h"
 #include "zone_instance.h"
+
+#include "common/database.h"
 
 //
 // Forward declarations
@@ -790,4 +799,131 @@ void LoadTrustStatsAndSkills(CTrustEntity* PTrust)
             controller->m_GambitsContainer->tp_skills.emplace_back(skill);
         }
     }
+}
+
+auto trustutils::BuildMimicTrust(CCharEntity* PMaster, uint32 altCharId) -> CTrustEntity*
+{
+    auto snapshotOpt = mimicutils::LoadMimicTrustSnapshot(altCharId, PMaster->GetMLevel(), static_cast<uint8>(std::floor(PMaster->GetMLevel() / 2)));
+    if (!snapshotOpt)
+    {
+        ShowWarning("trustutils::BuildMimicTrust: Could not load snapshot for charid %u", altCharId);
+        return nullptr;
+    }
+
+    auto& snapshot = *snapshotOpt;
+
+    auto* PTrust = new CMimicTrustEntity(PMaster);
+
+    PTrust->loc              = PMaster->loc;
+    PTrust->m_OwnerID.id     = PMaster->id;
+    PTrust->m_OwnerID.targid = PMaster->targid;
+    PTrust->loc.p            = nearPosition(PMaster->loc.p, CTrustController::SpawnDistance + (PMaster->PTrusts.size() * CTrustController::SpawnDistance), (float)M_PI);
+
+    PTrust->look = snapshot.look;
+    PTrust->name = snapshot.name;
+
+    PTrust->m_MimicSourceCharId = altCharId;
+    PTrust->status              = STATUS_TYPE::NORMAL;
+
+    PTrust->SetMJob(snapshot.mjob);
+    PTrust->SetSJob(snapshot.sjob);
+    PTrust->SetMLevel(snapshot.mlvl);
+    PTrust->SetSLevel(snapshot.slvl);
+
+    PTrust->stats     = snapshot.stats;
+    PTrust->health.tp = 0;
+    PTrust->health.maxhp = snapshot.maxhp;
+    PTrust->health.maxmp = snapshot.maxmp;
+
+    // Weapon skill / spell skill working values, scaled the same way a normal trust's are.
+    for (int i = SKILL_DIVINE_MAGIC; i <= SKILL_BLUE_MAGIC; i++)
+    {
+        uint16 maxSkill = battleutils::GetMaxSkill((SKILLTYPE)i, snapshot.mjob, snapshot.mlvl > 99 ? 99 : snapshot.mlvl);
+        if (maxSkill != 0)
+        {
+            PTrust->WorkingSkills.skill[i] = maxSkill;
+        }
+        else
+        {
+            uint16 maxSubSkill = battleutils::GetMaxSkill((SKILLTYPE)i, snapshot.sjob, snapshot.mlvl > 99 ? 99 : snapshot.mlvl);
+            if (maxSubSkill != 0)
+            {
+                PTrust->WorkingSkills.skill[i] = maxSubSkill;
+            }
+        }
+    }
+    for (int i = SKILL_HAND_TO_HAND; i <= SKILL_STAFF; i++)
+    {
+        uint16 maxSkill = battleutils::GetMaxSkill((SKILLTYPE)i, snapshot.mlvl > 99 ? 99 : snapshot.mlvl);
+        if (maxSkill != 0)
+        {
+            PTrust->WorkingSkills.skill[i] = maxSkill;
+        }
+    }
+
+    battleutils::AddTraits(PTrust, traits::GetTraits(snapshot.mjob), snapshot.mlvl);
+    battleutils::AddTraits(PTrust, traits::GetTraits(snapshot.sjob), snapshot.slvl);
+
+    // Armor: real gear mods only, baked into the trust's stats at build time -
+    // appearance is driven separately by `look`, so the item objects themselves
+    // don't need to survive past this point.
+    for (uint8 i = 0; i < snapshot.armor.size(); ++i)
+    {
+        if (auto* PEquip = dynamic_cast<CItemEquipment*>(snapshot.armor[i].get()))
+        {
+            uint8 slotId = static_cast<uint8>(SLOT_HEAD + i);
+            PTrust->addEquipModifiers(&PEquip->modList, PEquip->getReqLvl(), slotId);
+        }
+    }
+
+    // Weapons: real, augmented items assigned directly so damage calc and added-effect
+    // procs read them exactly as they would for a live character's equipped weapon.
+    for (uint8 slot = 0; slot < snapshot.weapons.size(); ++slot)
+    {
+        if (snapshot.weapons[slot] != nullptr)
+        {
+            destroy(PTrust->m_Weapons[slot]);
+            PTrust->m_Weapons[slot] = static_cast<CItemEquipment*>(snapshot.weapons[slot].release());
+        }
+    }
+
+    if (PMaster->PParty == nullptr)
+    {
+        PMaster->PParty = new CParty(PMaster);
+    }
+
+    PMaster->PTrusts.insert(PMaster->PTrusts.end(), PTrust);
+    PMaster->StatusEffectContainer->CopyConfrontationEffect(PTrust);
+    PTrust->setBattleID(PMaster->getBattleID());
+
+    if (PMaster->PBattlefield)
+    {
+        PTrust->PBattlefield = PMaster->PBattlefield;
+    }
+
+    if (PMaster->PInstance)
+    {
+        PTrust->PInstance = PMaster->PInstance;
+    }
+
+    PMaster->loc.zone->InsertTRUST(PTrust);
+
+    auto applyGambitsFn = lua["xi"]["mimicTrust"]["applyGenericGambits"];
+    if (applyGambitsFn.valid())
+    {
+        auto result = applyGambitsFn(PTrust, static_cast<uint8>(snapshot.mjob));
+        if (!result.valid())
+        {
+            sol::error err = result;
+            ShowError("trustutils::BuildMimicTrust: %s", err.what());
+        }
+    }
+
+    PTrust->Spawn();
+
+    PMaster->PParty->ReloadParty();
+
+    db::preparedStmt("INSERT INTO char_mimic_active (charid, master_charid) VALUES (?, ?)", altCharId, PMaster->id);
+
+    return PTrust;
 }

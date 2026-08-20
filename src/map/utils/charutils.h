@@ -91,6 +91,7 @@ void SendExtendedJobPackets(CCharEntity* PChar);
 void SendLocalPlayerPackets(CCharEntity* PChar);
 
 void CalculateStats(CCharEntity* PChar);
+auto CalculateStatsFromRaceJobLevel(uint8 race, JOBTYPE mjob, JOBTYPE sjob, uint8 mlvl, uint8 slvl, int16& maxhp, int16& maxmp) -> stats_t;
 void UpdateSubJob(CCharEntity* PChar);
 
 void SetLevelRestriction(CCharEntity* PChar, uint8 lvl);

@@ -790,6 +790,7 @@ public:
     void setJugRemainingTime(uint32 remainingSeconds);
 
     auto   spawnTrust(uint16 trustId) -> CBaseEntity*;
+    auto   spawnMimicTrust(std::string const& altCharName) -> CBaseEntity*;
     void   clearTrusts();
     uint32 getTrustID();
     void   trustPartyMessage(uint32 message_id) const;

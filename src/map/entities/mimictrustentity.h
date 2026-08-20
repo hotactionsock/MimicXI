@@ -1,7 +1,7 @@
 /*
 ===========================================================================
 
-  Copyright (c) 2024 LandSandBoat Dev Teams
+  Copyright (c) 2018 Darkstar Dev Teams
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -18,25 +18,25 @@
 
 ===========================================================================
 */
-#pragma once
 
-#include "common/cbasetypes.h"
-#include "common/mmo.h"
+#ifndef _CMIMICTRUSTENTITY_H
+#define _CMIMICTRUSTENTITY_H
 
-class CBattleEntity;
+#include "trustentity.h"
+
 class CCharEntity;
-class CTrustEntity;
+class CDespawnState;
 
-namespace trustutils
+// A trust built from the real look/stats/gear of one of the summoner's own
+// offline alt characters, rather than from mob_pools data.
+class CMimicTrustEntity : public CTrustEntity
 {
+public:
+    explicit CMimicTrustEntity(CCharEntity*);
 
-// We cache all of this so we don't have to hit the database every time a trust is spawned
-void LoadTrustList();
-auto SpawnTrust(CCharEntity* PMaster, uint32 TrustID) -> CTrustEntity*;
+    void OnDespawn(CDespawnState&) override;
 
-// Builds a trust from the real look/stats/gear of one of the master's own offline
-// alt characters, rather than from mob_pools data. Returns nullptr (with a system
-// message already sent to PMaster) if the summon is not currently allowed.
-auto BuildMimicTrust(CCharEntity* PMaster, uint32 altCharId) -> CTrustEntity*;
+    uint32 m_MimicSourceCharId{};
+};
 
-}; // namespace trustutils
+#endif
