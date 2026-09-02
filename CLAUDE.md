@@ -332,7 +332,7 @@ player:addItem(rollLoot(pools[instance:getLocalVar('difficulty')]))
 
 An account-wide item bank: unlike every other container (`CItemContainer` / `LOC_*`, all `charid`-keyed with a fixed slot count and per-item stack cap), the bank is keyed by **account ID** (`accid`), shared by every character on the account, and has **no slot limit and no per-item stack cap**. It is *not* a `CItemContainer` and has no `CONTAINER_ID` — see `src/map/utils/bankutils.h` for why.
 
-There is no in-world NPC for this feature. Every action is a chat command, and a companion Ashita v4 addon (`tools/ashita-addons/mimicxi_bank/`) is the intended UI — it just fires the same commands from a window instead of the command line.
+There is no in-world NPC for this feature. Every action is a chat command, and a companion Ashita v4 addon (`tools/ashita-addons/mimicxi_bank/`) is the intended UI — it just fires the same commands from a window instead of the command line. The addon reads the player's live inventory client-side (`GetMemoryManager():GetInventory():GetContainerItem(0, slot)`) to list what's depositable by name and quantity; it does not pre-filter for bankability (see Scope below) — clicking Deposit on an ineligible item just surfaces the server's normal rejection message.
 
 ### Scope (v1)
 
