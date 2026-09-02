@@ -187,6 +187,10 @@ xi.shop.generalGuildStock =
         { xi.item.COOKING_KIT_40,             4150, xi.craftRank.AMATEUR    },
         { xi.item.COOKING_KIT_45,             5300, xi.craftRank.AMATEUR    },
         { xi.item.COOKING_KIT_50,             7600, xi.craftRank.AMATEUR    },
+        { xi.item.COOKING_KIT_55,            10050, xi.craftRank.AMATEUR    },
+        { xi.item.COOKING_KIT_60,            12650, xi.craftRank.AMATEUR    },
+        { xi.item.COOKING_KIT_65,            15400, xi.craftRank.AMATEUR    },
+        { xi.item.COOKING_KIT_70,            18300, xi.craftRank.AMATEUR    },
     },
 
     [xi.skill.CLOTHCRAFT] =
@@ -212,6 +216,10 @@ xi.shop.generalGuildStock =
         { xi.item.CLOTHCRAFT_KIT_40,          4150, xi.craftRank.AMATEUR    },
         { xi.item.CLOTHCRAFT_KIT_45,          5300, xi.craftRank.AMATEUR    },
         { xi.item.CLOTHCRAFT_KIT_50,          7600, xi.craftRank.AMATEUR    },
+        { xi.item.CLOTHCRAFT_KIT_55,         10050, xi.craftRank.AMATEUR    },
+        { xi.item.CLOTHCRAFT_KIT_60,         12650, xi.craftRank.AMATEUR    },
+        { xi.item.CLOTHCRAFT_KIT_64,         15400, xi.craftRank.AMATEUR    },
+        { xi.item.CLOTHCRAFT_KIT_70,         18300, xi.craftRank.AMATEUR    },
         { xi.item.SPOOL_OF_KHOMA_THREAD,   1126125, xi.craftRank.AMATEUR    },
     },
 
@@ -259,6 +267,10 @@ xi.shop.generalGuildStock =
         { xi.item.GOLDSMITHING_KIT_40,       4150, xi.craftRank.AMATEUR    },
         { xi.item.GOLDSMITHING_KIT_45,       5300, xi.craftRank.AMATEUR    },
         { xi.item.GOLDSMITHING_KIT_50,       7600, xi.craftRank.AMATEUR    },
+        { xi.item.GOLDSMITHING_KIT_55,      10050, xi.craftRank.AMATEUR    },
+        { xi.item.GOLDSMITHING_KIT_60,      12650, xi.craftRank.AMATEUR    },
+        { xi.item.GOLDSMITHING_KIT_65,      15400, xi.craftRank.AMATEUR    },
+        { xi.item.GOLDSMITHING_KIT_70,      18300, xi.craftRank.AMATEUR    },
         { xi.item.CHUNK_OF_RUTHENIUM_ORE, 1126125, xi.craftRank.AMATEUR    },
     },
 
@@ -290,6 +302,9 @@ xi.shop.generalGuildStock =
         { xi.item.WOODWORKING_KIT_40,         4150, xi.craftRank.AMATEUR    },
         { xi.item.WOODWORKING_KIT_45,         5300, xi.craftRank.AMATEUR    },
         { xi.item.WOODWORKING_KIT_50,         7600, xi.craftRank.AMATEUR    },
+        { xi.item.WOODWORKING_KIT_55,        10050, xi.craftRank.AMATEUR    },
+        { xi.item.WOODWORKING_KIT_60,        12650, xi.craftRank.AMATEUR    },
+        { xi.item.WOODWORKING_KIT_65,        15400, xi.craftRank.AMATEUR    },
         { xi.item.CYPRESS_LOG,             1126125, xi.craftRank.AMATEUR    },
     },
 
@@ -323,6 +338,10 @@ xi.shop.generalGuildStock =
         { xi.item.ALCHEMY_KIT_40,               4150, xi.craftRank.AMATEUR    },
         { xi.item.ALCHEMY_KIT_45,               5300, xi.craftRank.AMATEUR    },
         { xi.item.ALCHEMY_KIT_50,               7600, xi.craftRank.AMATEUR    },
+        { xi.item.ALCHEMY_KIT_55,              10050, xi.craftRank.AMATEUR    },
+        { xi.item.ALCHEMY_KIT_60,              12650, xi.craftRank.AMATEUR    },
+        { xi.item.ALCHEMY_KIT_65,              15400, xi.craftRank.AMATEUR    },
+        { xi.item.ALCHEMY_KIT_70,              18300, xi.craftRank.AMATEUR    },
         { xi.item.AZURE_LEAF,                1126125, xi.craftRank.AMATEUR    },
     },
 
@@ -353,6 +372,10 @@ xi.shop.generalGuildStock =
         { xi.item.BONECRAFT_KIT_40,          4150, xi.craftRank.AMATEUR    },
         { xi.item.BONECRAFT_KIT_45,          5300, xi.craftRank.AMATEUR    },
         { xi.item.BONECRAFT_KIT_50,          7600, xi.craftRank.AMATEUR    },
+        { xi.item.BONECRAFT_KIT_55,         10050, xi.craftRank.AMATEUR    },
+        { xi.item.BONECRAFT_KIT_60,         12650, xi.craftRank.AMATEUR    },
+        { xi.item.BONECRAFT_KIT_65,         15400, xi.craftRank.AMATEUR    },
+        { xi.item.BONECRAFT_KIT_70,         18300, xi.craftRank.AMATEUR    },
         { xi.item.FRAGMENT_OF_CYAN_CORAL, 1126125, xi.craftRank.AMATEUR    },
     },
 
@@ -382,6 +405,10 @@ xi.shop.generalGuildStock =
         { xi.item.LEATHERCRAFT_KIT_40,                    4150, xi.craftRank.AMATEUR    },
         { xi.item.LEATHERCRAFT_KIT_45,                    5300, xi.craftRank.AMATEUR    },
         { xi.item.LEATHERCRAFT_KIT_50,                    7600, xi.craftRank.AMATEUR    },
+        { xi.item.LEATHERCRAFT_KIT_55,                   10050, xi.craftRank.AMATEUR    },
+        { xi.item.LEATHERCRAFT_KIT_60,                   12650, xi.craftRank.AMATEUR    },
+        { xi.item.LEATHERCRAFT_KIT_66,                   15400, xi.craftRank.AMATEUR    },
+        { xi.item.LEATHERCRAFT_KIT_70,                   18300, xi.craftRank.AMATEUR    },
         { xi.item.SQUARE_OF_SYNTHETIC_FAULPIE_LEATHER, 1126125, xi.craftRank.AMATEUR    },
     },
 
@@ -415,6 +442,10 @@ xi.shop.generalGuildStock =
         { xi.item.SMITHING_KIT_40,              4150, xi.craftRank.AMATEUR    },
         { xi.item.SMITHING_KIT_45,              5300, xi.craftRank.AMATEUR    },
         { xi.item.SMITHING_KIT_50,              7600, xi.craftRank.AMATEUR    },
+        { xi.item.SMITHING_KIT_55,             10050, xi.craftRank.AMATEUR    },
+        { xi.item.SMITHING_KIT_60,             12650, xi.craftRank.AMATEUR    },
+        { xi.item.SMITHING_KIT_65,             15400, xi.craftRank.AMATEUR    },
+        { xi.item.SMITHING_KIT_70,             18300, xi.craftRank.AMATEUR    },
         { xi.item.NIOBIUM_ORE,               1126125, xi.craftRank.AMATEUR    },
     }
 }
