@@ -305,6 +305,7 @@ xi.shop.generalGuildStock =
         { xi.item.WOODWORKING_KIT_55,        10050, xi.craftRank.AMATEUR    },
         { xi.item.WOODWORKING_KIT_60,        12650, xi.craftRank.AMATEUR    },
         { xi.item.WOODWORKING_KIT_65,        15400, xi.craftRank.AMATEUR    },
+        { xi.item.WOODWORKING_KIT_71,        18300, xi.craftRank.AMATEUR    },
         { xi.item.CYPRESS_LOG,             1126125, xi.craftRank.AMATEUR    },
     },
 

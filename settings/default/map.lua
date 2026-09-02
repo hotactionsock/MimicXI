@@ -149,8 +149,10 @@ xi.settings.map =
     -- Craft level limit from witch specialization points beginning to count. (Retail = 700; Level 75 era:600)
     CRAFT_COMMON_CAP = 700,
 
-    -- Amount of points allowed in crafts over the level defined above. Points are shared across all crafting skills. (Retail = 400; All skills can go to max = 3200)
-    CRAFT_SPECIALIZATION_POINTS = 400,
+    -- Amount of points allowed in crafts over the level defined above. Points are shared across all crafting skills.
+    -- MimicXI: sized so 3 crafts can be specialized up to level 110 (Expert rank) each -- (110 - 70) * 10 * 3 = 1200 --
+    -- while every other craft stays capped at the CRAFT_COMMON_CAP level. (Retail = 400; All skills can go to max = 3200)
+    CRAFT_SPECIALIZATION_POINTS = 1200,
 
     -- Multiplier applied to high quality chance
     CRAFT_HQ_CHANCE_MULTIPLIER = 1.0,

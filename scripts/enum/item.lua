@@ -3997,6 +3997,7 @@ xi.item =
     WOODWORKING_KIT_55                  = 8815,
     WOODWORKING_KIT_60                  = 8816,
     WOODWORKING_KIT_65                  = 8817,
+    WOODWORKING_KIT_71                  = 8818,
     SMITHING_KIT_5                      = 8819,
     SMITHING_KIT_10                     = 8820,
     SMITHING_KIT_15                     = 8821,
