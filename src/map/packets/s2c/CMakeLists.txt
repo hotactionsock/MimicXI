@@ -292,5 +292,7 @@ set(PACKET_S2C_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/0x11d_partyreq.h
     ${CMAKE_CURRENT_SOURCE_DIR}/0x11e_jump.h
     ${CMAKE_CURRENT_SOURCE_DIR}/0x11e_jump.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/0x1f0_bank_list.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/0x1f0_bank_list.cpp
     PARENT_SCOPE
 )

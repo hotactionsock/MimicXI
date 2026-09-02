@@ -177,11 +177,19 @@ enum class PacketS2C : uint16_t
     GP_SERV_COMMAND_EMOTE_LIST        = 0x11A,
     GP_SERV_COMMAND_PARTYREQ          = 0x11D,
     GP_SERV_COMMAND_JUMP              = 0x11E,
+
+    // Non-retail, MimicXI-specific packets. The client has no native handler for these --
+    // they exist only for our companion Ashita v4 addons (see tools/ashita-addons) to
+    // intercept via packet_in and block before the game engine ever sees them. Chosen
+    // well clear of every opcode this fork currently sends (highest in-use is 0x11E) to
+    // avoid colliding with our own traffic; if a future core update starts using this ID
+    // for something real, bump it.
+    GP_SERV_COMMAND_BANK_LIST = 0x1F0,
 };
 
 template <>
 struct magic_enum::customize::enum_range<PacketS2C>
 {
     static constexpr int min = 0;
-    static constexpr int max = 300;
+    static constexpr int max = 511; // id field is 9 bits (see GP_SERV_HEADER in packets/s2c/base.h)
 };

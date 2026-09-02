@@ -163,6 +163,7 @@
 #include "packets/s2c/0x0f9_res.h"
 #include "packets/s2c/0x119_abil_recast.h"
 
+#include "utils/bankutils.h"
 #include "utils/battleutils.h"
 #include "utils/blueutils.h"
 #include "utils/charutils.h"
@@ -4952,6 +4953,160 @@ auto CLuaBaseEntity::getItems(const sol::object& location) -> sol::table
     }
 
     return table;
+}
+
+/************************************************************************
+ *  Function: getAccountID()
+ *  Purpose : Returns the account ID this character belongs to
+ *  Example : local accId = player:getAccountID()
+ *  Notes   : Used to key the account-wide bank (see utils/bankutils.h)
+ ************************************************************************/
+
+uint32 CLuaBaseEntity::getAccountID() const
+{
+    auto* PChar = dynamic_cast<CCharEntity*>(m_PBaseEntity);
+    if (!PChar)
+    {
+        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->getName());
+        return 0;
+    }
+
+    return PChar->accid;
+}
+
+/************************************************************************
+ *  Function: depositToBank()
+ *  Purpose : Moves quantity of itemID from the player's inventory into their account-wide bank
+ *  Example : player:depositToBank(4096, 12)
+ ************************************************************************/
+
+bool CLuaBaseEntity::depositToBank(uint16 itemID, uint32 quantity)
+{
+    auto* PChar = dynamic_cast<CCharEntity*>(m_PBaseEntity);
+    if (!PChar)
+    {
+        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->getName());
+        return false;
+    }
+
+    const auto result = bankutils::DepositItem(PChar, itemID, quantity);
+    bankutils::SendBankList(PChar);
+
+    return result;
+}
+
+/************************************************************************
+ *  Function: depositAllToBank()
+ *  Purpose : Moves every eligible item from the player's inventory into their account-wide bank
+ *  Example : local deposited = player:depositAllToBank()
+ ************************************************************************/
+
+auto CLuaBaseEntity::depositAllToBank() -> sol::table
+{
+    auto table  = lua.create_table();
+    auto* PChar = dynamic_cast<CCharEntity*>(m_PBaseEntity);
+    if (!PChar)
+    {
+        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->getName());
+        return table;
+    }
+
+    for (const auto& item : bankutils::DepositAll(PChar))
+    {
+        auto entry       = lua.create_table();
+        entry["id"]       = item.itemId;
+        entry["quantity"] = item.quantity;
+        table.add(entry);
+    }
+
+    bankutils::SendBankList(PChar);
+
+    return table;
+}
+
+/************************************************************************
+ *  Function: withdrawFromBank()
+ *  Purpose : Moves quantity of itemID from the player's account-wide bank into their inventory
+ *  Example : player:withdrawFromBank(4096, 12)
+ ************************************************************************/
+
+bool CLuaBaseEntity::withdrawFromBank(uint16 itemID, uint32 quantity)
+{
+    auto* PChar = dynamic_cast<CCharEntity*>(m_PBaseEntity);
+    if (!PChar)
+    {
+        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->getName());
+        return false;
+    }
+
+    const auto result = bankutils::WithdrawItem(PChar, itemID, quantity);
+    bankutils::SendBankList(PChar);
+
+    return result;
+}
+
+/************************************************************************
+ *  Function: getBankItems()
+ *  Purpose : Returns every item currently in the player's account-wide bank
+ *  Example : local items = player:getBankItems()
+ ************************************************************************/
+
+auto CLuaBaseEntity::getBankItems() -> sol::table
+{
+    auto table  = lua.create_table();
+    auto* PChar = dynamic_cast<CCharEntity*>(m_PBaseEntity);
+    if (!PChar)
+    {
+        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->getName());
+        return table;
+    }
+
+    for (const auto& item : bankutils::GetItems(PChar->accid))
+    {
+        auto entry       = lua.create_table();
+        entry["id"]       = item.itemId;
+        entry["quantity"] = item.quantity;
+        table.add(entry);
+    }
+
+    return table;
+}
+
+/************************************************************************
+ *  Function: getBankItemCount()
+ *  Purpose : Returns how many of itemID are in the player's account-wide bank
+ *  Example : local count = player:getBankItemCount(4096)
+ ************************************************************************/
+
+uint32 CLuaBaseEntity::getBankItemCount(uint16 itemID)
+{
+    auto* PChar = dynamic_cast<CCharEntity*>(m_PBaseEntity);
+    if (!PChar)
+    {
+        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->getName());
+        return 0;
+    }
+
+    return bankutils::GetItemQuantity(PChar->accid, itemID);
+}
+
+/************************************************************************
+ *  Function: sendBankList()
+ *  Purpose : Pushes the player's current bank contents to their client for the
+ *          : companion Ashita addon (tools/ashita-addons/mimicxi_bank) to render
+ *  Example : player:sendBankList()
+ ************************************************************************/
+
+void CLuaBaseEntity::sendBankList() const
+{
+    auto* PChar = dynamic_cast<CCharEntity*>(m_PBaseEntity);
+    if (!PChar)
+    {
+        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->getName());
+        return;
+    }
+
+    bankutils::SendBankList(PChar);
 }
 
 /************************************************************************
@@ -20430,6 +20585,15 @@ void CLuaBaseEntity::Register()
     SOL_REGISTER("findItem", CLuaBaseEntity::findItem);
     SOL_REGISTER("findItems", CLuaBaseEntity::findItems);
     SOL_REGISTER("getItems", CLuaBaseEntity::getItems);
+
+    // Account-wide bank
+    SOL_REGISTER("getAccountID", CLuaBaseEntity::getAccountID);
+    SOL_REGISTER("depositToBank", CLuaBaseEntity::depositToBank);
+    SOL_REGISTER("depositAllToBank", CLuaBaseEntity::depositAllToBank);
+    SOL_REGISTER("withdrawFromBank", CLuaBaseEntity::withdrawFromBank);
+    SOL_REGISTER("getBankItems", CLuaBaseEntity::getBankItems);
+    SOL_REGISTER("getBankItemCount", CLuaBaseEntity::getBankItemCount);
+    SOL_REGISTER("sendBankList", CLuaBaseEntity::sendBankList);
 
     SOL_REGISTER("createShop", CLuaBaseEntity::createShop);
     SOL_REGISTER("addShopItem", CLuaBaseEntity::addShopItem);

@@ -3,6 +3,8 @@ set(UTIL_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/attackutils.h
     ${CMAKE_CURRENT_SOURCE_DIR}/auctionutils.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/auctionutils.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/bankutils.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/bankutils.h
     ${CMAKE_CURRENT_SOURCE_DIR}/battleutils.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/battleutils.h
     ${CMAKE_CURRENT_SOURCE_DIR}/blacklistutils.cpp

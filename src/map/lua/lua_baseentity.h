@@ -269,6 +269,16 @@ public:
     auto   findItems(uint16 itemID, const sol::object& location) -> sol::table;
     auto   getItems(const sol::object& location) -> sol::table;
 
+    // Account-wide bank (see utils/bankutils.h). Unlike the containers above, this is
+    // shared by every character on the account and has no slot limit or stack cap.
+    uint32 getAccountID() const;
+    bool   depositToBank(uint16 itemID, uint32 quantity);
+    auto   depositAllToBank() -> sol::table; // returns { { id = itemID, quantity = quantity }, ... } of what was moved
+    bool   withdrawFromBank(uint16 itemID, uint32 quantity);
+    auto   getBankItems() -> sol::table; // returns { { id = itemID, quantity = quantity }, ... }
+    uint32 getBankItemCount(uint16 itemID);
+    void   sendBankList() const; // pushes GP_SERV_COMMAND_BANK_LIST for the Ashita addon
+
     void createShop(uint8 size, const sol::object& arg1);
     void addShopItem(uint16 itemID, double rawPrice, sol::optional<sol::table> requirements) const;
     auto getCurrentGPItem(uint8 guildId) const -> std::tuple<uint16, uint16>;

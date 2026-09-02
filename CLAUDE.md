@@ -1,6 +1,6 @@
 # MimicXI — Claude Instructions
 
-MimicXI is a custom FFXI server emulator based on LandSandBoat. The codebase is C++20 (server engine) with Lua/LuaJIT scripting for all game content. MariaDB is used for data storage. This file covers the instanced fight system and how to build content on top of it.
+MimicXI is a custom FFXI server emulator based on LandSandBoat. The codebase is C++20 (server engine) with Lua/LuaJIT scripting for all game content. MariaDB is used for data storage. This file covers the instanced fight system and the account bank system, and how to build content on top of them.
 
 ---
 
@@ -325,3 +325,47 @@ player:addItem(rollLoot(pools[instance:getLocalVar('difficulty')]))
 - Players who exit a locked instance cannot return — `instance:hasExited(player)` lets you check this from Lua
 - The capacity cap (3 concurrent instances) is enforced engine-side — handle the `onInstanceCapacityReached` callback to notify the player
 - Ejection is always done in Lua — set a local var for the eject timestamp in `onInstanceComplete` and check it in `onInstanceTimeUpdate`
+
+---
+
+## Account Bank System
+
+An account-wide item bank: unlike every other container (`CItemContainer` / `LOC_*`, all `charid`-keyed with a fixed slot count and per-item stack cap), the bank is keyed by **account ID** (`accid`), shared by every character on the account, and has **no slot limit and no per-item stack cap**. It is *not* a `CItemContainer` and has no `CONTAINER_ID` — see `src/map/utils/bankutils.h` for why.
+
+There is no in-world NPC for this feature. Every action is a chat command, and a companion Ashita v4 addon (`tools/ashita-addons/mimicxi_bank/`) is the intended UI — it just fires the same commands from a window instead of the command line.
+
+### Scope (v1)
+
+Only plain stackable, non-equipment items are bankable (`bankutils::IsBankable`). Equipment/weapons — augmented gear especially — are rejected: the bank table merges rows on `(accid, itemid)` alone, and a unique augmented item can't merge with another. Supporting equipment would mean keying rows on their augment data too (the `extra` blob), which is intentionally left as a future extension.
+
+### Relevant files
+
+| File | Purpose |
+|------|---------|
+| `sql/account_bank.sql` | `account_bank` table — `(accid, itemid)` → `quantity`, uncapped |
+| `src/map/utils/bankutils.h` / `.cpp` | Core logic: deposit/withdraw/list, bankable-type checks |
+| `src/map/packets/s2c/0x1f0_bank_list.h` / `.cpp` | Non-retail `GP_SERV_COMMAND_BANK_LIST` packet (opcode `0x1F0`) pushed to the client after every bank action, for the Ashita addon |
+| `src/map/lua/lua_baseentity.cpp` | Lua bindings: `getAccountID`, `depositToBank`, `depositAllToBank`, `withdrawFromBank`, `getBankItems`, `getBankItemCount`, `sendBankList` |
+| `scripts/commands/bankdeposit.lua`, `bankdepositall.lua`, `bankwithdraw.lua`, `banklist.lua` | Player-usable (`permission = 0`) chat commands (`!bankdeposit`, `!bankdepositall`, `!bankwithdraw`, `!banklist`) |
+| `tools/ashita-addons/mimicxi_bank/mimicxi_bank.lua` | Client-side Ashita v4 addon UI (`/mimicxibank` to toggle) |
+
+### The non-retail packet
+
+`GP_SERV_COMMAND_BANK_LIST` (opcode `0x1F0`) exists purely for the addon — the retail client has no handler for it. It is safe **only because** the addon's `packet_in` hook intercepts and blocks it (`e.blocked = true`) before the game engine ever sees it. The opcode was chosen well clear of every opcode this fork currently sends (highest in use is `0x11E`); if a future core update starts using `0x1F0` for something real, bump it in both `src/map/enums/packet_s2c.h` and the addon.
+
+The payload is a fixed-size array of `GP_SERV_COMMAND_BANK_LIST::MAX_ENTRIES` (currently 24) `{itemId, category, quantity}` entries — not paginated. `truncated` is set if the bank holds more distinct items than that. The addon's byte-offset parsing must be kept in sync with the C++ struct by hand; there's no shared schema between the two languages. **This wire format has not been verified against a live client** — if the addon shows blank or garbled data, check the offsets in `mimicxi_bank.lua` against `0x1f0_bank_list.h` first.
+
+### Categories
+
+Categories are computed server-side from the existing `ITEM_TYPE` bitmask (`src/map/items/item.h`) — there's no separate classification table:
+
+```
+1 = General   (ITEM_GENERAL)
+2 = Usable    (ITEM_USABLE)
+3 = Currency  (ITEM_CURRENCY)
+4 = Other     (anything else bankable)
+```
+
+### Adding a new bank command
+
+Follow the pattern in `scripts/commands/bankwithdraw.lua`: `permission = 0` (player-usable), call the relevant `CLuaBaseEntity` binding, then call `player:sendBankList()` so the addon's view stays in sync (the existing deposit/withdraw bindings already do this internally).
