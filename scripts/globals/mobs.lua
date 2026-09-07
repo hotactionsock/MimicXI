@@ -16,6 +16,15 @@ end
 -- placeholder / lottery NMs
 -----------------------------------
 
+-- When true, every lottery NM is guaranteed to pop off a single placeholder kill
+-- (the per-call `chance` argument is ignored), and the post-death cooldown before
+-- it can pop again is a random 15-30 minutes (the per-call `cooldown` argument and
+-- the NM_LOTTERY_COOLDOWN setting multiplier are ignored).
+-- Flip to false to revert to the original chance/cooldown-driven lottery behavior.
+local GUARANTEED_LOTTERY_POP      = true
+local GUARANTEED_POP_COOLDOWN_MIN = 15 * 60
+local GUARANTEED_POP_COOLDOWN_MAX = 30 * 60
+
 -- is a lottery NM in the table already spawned or primed to pop?
 local function lotteryPrimed(phList)
     local nm = nil
@@ -173,17 +182,24 @@ xi.mob.phOnDespawn = function(ph, phNmId, chance, cooldown, params)
         end
     end
 
-    if xi.settings.main.NM_LOTTERY_CHANCE then
-        chance = xi.settings.main.NM_LOTTERY_CHANCE >= 0 and (chance * xi.settings.main.NM_LOTTERY_CHANCE) or 100
-    end
+    if not GUARANTEED_LOTTERY_POP then
+        if xi.settings.main.NM_LOTTERY_CHANCE then
+            chance = xi.settings.main.NM_LOTTERY_CHANCE >= 0 and (chance * xi.settings.main.NM_LOTTERY_CHANCE) or 100
+        end
 
-    if xi.settings.main.NM_LOTTERY_COOLDOWN then
-        cooldown = xi.settings.main.NM_LOTTERY_COOLDOWN >= 0 and (cooldown * xi.settings.main.NM_LOTTERY_COOLDOWN) or cooldown
+        if xi.settings.main.NM_LOTTERY_COOLDOWN then
+            cooldown = xi.settings.main.NM_LOTTERY_COOLDOWN >= 0 and (cooldown * xi.settings.main.NM_LOTTERY_COOLDOWN) or cooldown
+        end
     end
 
     local pop = nm:getLocalVar('pop')
 
-    chance = math.ceil(chance * 10) -- chance / 1000.
+    if GUARANTEED_LOTTERY_POP then
+        chance   = 1000
+        cooldown = math.random(GUARANTEED_POP_COOLDOWN_MIN, GUARANTEED_POP_COOLDOWN_MAX)
+    else
+        chance = math.ceil(chance * 10) -- chance / 1000.
+    end
 
     if
         GetSystemTime() <= pop or
