@@ -9,8 +9,7 @@
 *
 *     FJOIN|<eventID>       - xi.fate.announceJoin(), on successful registration
 *     FCOMPLETE|<eventID>   - xi.fate.announceComplete(), on victory (participants only)
-*
-* (A third marker for failure is planned but not sent by the server yet.)
+*     FFAIL|<eventID>       - xi.fate.announceFailure(), on failure (participants only)
 *
 * This addon watches incoming chat text, blocks any line starting with a
 * known marker prefix so it never reaches the player's chat log, and pops
@@ -37,12 +36,12 @@
 *      installed addon that renders a custom image for the exact working
 *      call and swap it in here if this one errors.
 *
-*   3. Sound playback (VERIFY #3) - plays resources/level_up.wav via the
+*   3. Sound playback (VERIFY #3) - plays resources/level_up.wav (on
+*      completion) or resources/fate_failed.wav (on failure) via the
 *      standard Windows winmm PlaySoundA API, which is independent of
 *      Ashita's own API surface and should be reliable, but has not been
-*      tested here. You must supply resources/level_up.wav yourself (a
-*      short clip of the game's own level-up jingle, or any placeholder) -
-*      it isn't something that can be extracted/shipped from this repo.
+*      tested here. You must supply both .wav files yourself - audio assets
+*      aren't something that can be extracted/shipped from this repo.
 --]]
 
 addon.name    = 'fatepopup';
@@ -70,8 +69,7 @@ local settings =
     fade_out = 0.60,  -- seconds
 };
 
--- One entry per marker prefix the server can send. Add FFAIL here once the
--- server grows a failure marker (xi.fate.announceFailure()).
+-- One entry per marker prefix the server can send.
 local POPUP_TYPES =
 {
     FJOIN =
@@ -83,6 +81,11 @@ local POPUP_TYPES =
     {
         image_path = string.format('%s\\resources\\fate_complete.png', addon.path),
         sound_path = string.format('%s\\resources\\level_up.wav', addon.path),
+    },
+    FFAIL =
+    {
+        image_path = string.format('%s\\resources\\fate_failed.png', addon.path),
+        sound_path = string.format('%s\\resources\\fate_failed.wav', addon.path),
     },
 };
 

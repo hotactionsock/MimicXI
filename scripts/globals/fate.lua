@@ -231,10 +231,16 @@ end
 -- Hidden marker, same pattern as FJOIN above. Sent once per registered
 -- participant when their FATE resolves in victory (see xi.fate.resolve()) —
 -- the FatePopup addon intercepts it, blocks it from chat, and plays a
--- completion banner + sound instead. Failure gets its own marker later;
--- this only fires on victory for now.
+-- completion banner + sound instead.
 xi.fate.announceComplete = function(player, def)
     player:printToPlayer(string.format('FCOMPLETE|%s', def.id), xi.msg.channel.SYSTEM_3)
+end
+
+-- Wire format: FFAIL|eventID
+-- Hidden marker, same pattern as FCOMPLETE above. Sent once per registered
+-- participant when their FATE resolves in failure.
+xi.fate.announceFailure = function(player, def)
+    player:printToPlayer(string.format('FFAIL|%s', def.id), xi.msg.channel.SYSTEM_3)
 end
 
 xi.fate.register = function(player, zoneID, eventIdx)
@@ -1009,8 +1015,9 @@ xi.fate.resolve = function(zoneID, eventIdx, victory, silent)
                 xi.fate.removeSync(player)
                 if victory then
                     xi.fate.announceComplete(player, def)
+                else
+                    xi.fate.announceFailure(player, def)
                 end
-                -- TODO: xi.fate.announceFailure(player, def) once the failure popup is built.
             end
         end
         assignBandsAndRewards(zoneID, eventIdx, def, victory)

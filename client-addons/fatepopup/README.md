@@ -1,43 +1,45 @@
 # FatePopup — handoff plan
 
 This folder is a starting point for an Ashita v4 addon that pops a banner
-image (and, for completion, a sound) on screen for MimicXI FATE milestones.
-It was built remotely (no local Ashita install to test against), so it needs
-a verification pass on the real client before it's usable. This doc is
-written for whoever (Claude or otherwise) picks this up on the local
+image (with sound, for completion and failure) on screen for MimicXI FATE
+milestones. It was built remotely (no local Ashita install to test against),
+so it needs a verification pass on the real client before it's usable. This
+doc is written for whoever (Claude or otherwise) picks this up on the local
 machine.
 
 ## What already works (server side, already committed on this branch)
 
-`scripts/globals/fate.lua` sends hidden markers over `SYSTEM_3` chat at two
+`scripts/globals/fate.lua` sends hidden markers over `SYSTEM_3` chat at three
 points:
 
 ```
 FJOIN|<eventID>       -- xi.fate.announceJoin(), on successful xi.fate.register()
 FCOMPLETE|<eventID>   -- xi.fate.announceComplete(), on victory, registered participants only
+FFAIL|<eventID>       -- xi.fate.announceFailure(), on failure, registered participants only
 ```
 
 `<eventID>` is the event def's string `id` field (e.g. `VD_LIZARD_01`).
-`FCOMPLETE` fires from inside `xi.fate.resolve()`, once per participant, only
-when `victory` is true — a failure marker (`FFAIL`) is planned but not sent
-yet (there's a `-- TODO` marking the spot in `fate.lua`). Nothing else needs
-to change server-side for these two banners to work; plain readable messages
-are still sent on the same channel for players without the addon.
+`FCOMPLETE`/`FFAIL` both fire from inside `xi.fate.resolve()`, once per
+participant, on the matching outcome. Nothing else needs to change
+server-side for these three banners to work; plain readable messages are
+still sent on the same channel for players without the addon.
 
 ## What's in this folder
 
 - `fatepopup.lua` — addon: listens for any known marker prefix, blocks it
   from chat, and renders the matching banner with a fade-in/hold/fade-out.
-  `FCOMPLETE` additionally plays a sound. The popup types (image + optional
-  sound per marker) are defined in the `POPUP_TYPES` table near the top —
-  add an `FFAIL` entry there later, same shape as `FCOMPLETE`.
+  `FCOMPLETE` and `FFAIL` additionally play a sound. The popup types (image +
+  optional sound per marker) are defined in the `POPUP_TYPES` table near the
+  top.
 - `resources/fate_joined.png` — join banner art (1280x360, provided by the user).
 - `resources/fate_complete.png` — completion banner art (1280x360, provided by the user).
-- `resources/level_up.wav` — **not included**. You need to supply this
-  yourself (a short clip of the game's own level-up jingle, or any
-  placeholder .wav) — audio assets aren't something this repo can source or
-  ship. `fatepopup.lua` will simply log a texture-load-style path and no-op
-  the sound if the file isn't there; the banner itself doesn't depend on it.
+- `resources/fate_failed.png` — failure banner art (1280x360, provided by the user).
+- `resources/level_up.wav`, `resources/fate_failed.wav` — **not included**.
+  You need to supply both yourself (short clips — the game's own level-up
+  jingle for completion, something suitably negative for failure, or
+  placeholders) — audio assets aren't something this repo can source or
+  ship. `fatepopup.lua` no-ops the sound if a file isn't there; the banner
+  itself doesn't depend on it.
 
 ## What needs verifying before this works
 
@@ -60,7 +62,8 @@ version/build-sensitive and marked `VERIFY #1` / `#2` / `#3` in the code:
    addon that displays a custom image and copy its texture-loading call
    instead.
 
-3. **Sound playback.** Plays `resources/level_up.wav` via the raw Windows
+3. **Sound playback.** Plays `resources/level_up.wav` (on completion) or
+   `resources/fate_failed.wav` (on failure) via the raw Windows
    `winmm.PlaySoundA` API (`ffi.load('winmm')`), which is independent of
    Ashita's own API surface and should be reliable, but is untested here.
    If it doesn't fire, check that the .wav path resolves and is a plain PCM
@@ -75,7 +78,7 @@ should need no changes beyond cosmetic tuning.
 ## Install & test steps
 
 1. Copy this whole `fatepopup` folder into `<Ashita4 install>/addons/`.
-2. Drop your own `level_up.wav` into `fatepopup/resources/`.
+2. Drop your own `level_up.wav` and `fate_failed.wav` into `fatepopup/resources/`.
 3. `/addon load fatepopup` in-game (or add `fatepopup` to your
    `scripts/default.txt` autoload list once it's confirmed working).
 4. Trigger a FATE join in-game (talk to a FATE herald NPC and register) and
@@ -89,24 +92,24 @@ should need no changes beyond cosmetic tuning.
    - The completion banner renders (different art from the join banner).
    - `level_up.wav` plays alongside it (confirms `VERIFY #3`).
    - The raw `FCOMPLETE|<eventID>` line does not appear in chat.
-6. Tune to taste in `fatepopup.lua`'s `settings` table:
+6. Let a FATE time out or wipe and confirm:
+   - The failure banner renders (different art again).
+   - `fate_failed.wav` plays alongside it.
+   - The raw `FFAIL|<eventID>` line does not appear in chat.
+7. Tune to taste in `fatepopup.lua`'s `settings` table:
    - `scale` — displayed size relative to the native 1280x360 art (shared by
-     both banners).
+     all three banners).
    - `top_pct` — vertical position as a fraction of screen height.
-   - `fade_in` / `hold` / `fade_out` — timing in seconds (shared by both).
-7. The `screen_w`/`screen_h` values used to center the banner are hardcoded
+   - `fade_in` / `hold` / `fade_out` — timing in seconds (shared by all three).
+8. The `screen_w`/`screen_h` values used to center the banner are hardcoded
    placeholders — pull the real back-buffer size from the d3d8 device's
    presentation parameters if you run at a non-standard resolution or want
    the banner to reposition correctly on resize.
 
 ## Possible follow-ups (not built yet)
 
-- Wire up the failure banner: add `xi.fate.announceFailure()` server-side
-  (mirroring `announceComplete`, sent where the `-- TODO` comment sits in
-  `xi.fate.resolve()`), send `FFAIL|<eventID>`, and add an `FFAIL` entry to
-  `POPUP_TYPES` with its own art/sound.
 - Overlay the FATE's actual name/difficulty as text on top of the banner
   (the marker already carries `eventID`, so the addon has enough info to
   look up a display name from a local table if you want that).
-- Per-type timing/position overrides if join and completion should behave
-  differently (currently both share the same `settings` table).
+- Per-type timing/position overrides if the three banners should behave
+  differently (currently all share the same `settings` table).
