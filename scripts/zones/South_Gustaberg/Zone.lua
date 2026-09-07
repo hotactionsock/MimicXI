@@ -35,10 +35,6 @@ end
 
 zoneObject.onConquestUpdate = function(zone, updatetype, influence, owner, ranking, isConquestAlliance)
     xi.conquest.onConquestUpdate(zone, updatetype, influence, owner, ranking, isConquestAlliance)
-    -- updatetype 1 = TALLY_END (Sunday midnight JST weekly reset). Reset vendor stock.
-    if updatetype == 1 then
-        xi.fate.vendor.onWeeklyReset()
-    end
 end
 
 zoneObject.onZoneTick = function(zone)
