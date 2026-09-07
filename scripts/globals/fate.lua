@@ -214,6 +214,19 @@ end
 -----------------------------------
 -- Registration
 -----------------------------------
+-- Wire format: FJOIN|eventID
+-- Sent once, right after a successful registration. This is a hidden marker,
+-- not a chat message for players to read — the FatePopup Ashita4 addon
+-- intercepts and blocks it before it reaches the chat log, then renders a
+-- custom banner. Players without the addon will simply see this raw line in
+-- their SYSTEM_3 chat, same tradeoff as the existing FSYNC marker below.
+xi.fate.announceJoin = function(player, zoneID, eventIdx)
+    local def = xi.fate.getEventDef(zoneID, eventIdx)
+    if not def then return end
+    player:printToPlayer(string.format("[FATE] You have joined %s!", def.name), xi.msg.channel.SYSTEM_3)
+    player:printToPlayer(string.format('FJOIN|%s', def.id), xi.msg.channel.SYSTEM_3)
+end
+
 xi.fate.register = function(player, zoneID, eventIdx)
     if player:getCharVar(regKey(zoneID, eventIdx)) == 1 then return false end
     player:setCharVar(regKey(zoneID, eventIdx), 1)
@@ -230,6 +243,7 @@ xi.fate.register = function(player, zoneID, eventIdx)
 
     xi.fate.applySync(player, zoneID, eventIdx)
     xi.fate.sendEventSync(player, zoneID, eventIdx)
+    xi.fate.announceJoin(player, zoneID, eventIdx)
     return true
 end
 
