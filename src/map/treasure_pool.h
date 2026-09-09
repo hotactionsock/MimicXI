@@ -23,6 +23,7 @@
 #define _CTREASUREPOOL_H
 
 #include "common/cbasetypes.h"
+#include "common/types/maybe.h"
 
 #include <utility>
 #include <vector>
@@ -57,9 +58,9 @@ struct LotInfo
 
 struct TreasurePoolItem
 {
-    uint16            ID;
-    uint8             SlotID;
-    timer::time_point TimeStamp;
+    uint16                   ID;
+    uint8                    SlotID;
+    Maybe<timer::time_point> TimeStamp; // unset is treated as infinitely old, so the next check drops the item
 
     std::vector<LotInfo>              Lotters;
     std::vector<std::pair<uint16, uint8>> Augments; // augment id + value pairs (max 5), set for mimic loot

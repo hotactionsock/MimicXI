@@ -20,19 +20,22 @@
 */
 
 #include "0x0fb_myroom_bankin.h"
+#include "enums/item_state.h"
+#include "items/item_access.h"
 
-#include "entities/charentity.h"
+#include "entities/char_entity.h"
 #include "enums/item_lockflg.h"
 #include "items/exdata/mannequin.h"
+#include "items/item_flowerpot.h"
 #include "items/item_furnishing.h"
 #include "lua/luautils.h"
-#include "packets/char_status.h"
 #include "packets/s2c/0x01c_item_max.h"
 #include "packets/s2c/0x01d_item_same.h"
 #include "packets/s2c/0x01f_item_list.h"
 #include "packets/s2c/0x020_item_attr.h"
 #include "packets/s2c/0x026_item_subcontainer.h"
 #include "utils/charutils.h"
+
 namespace
 {
 
@@ -85,13 +88,23 @@ void GP_CLI_COMMAND_MYROOM_BANKIN::process(MapSession* PSession, CCharEntity* PC
         return;
     }
 
+    if (!xi::items::mark(PFurnishing, ItemState::Free))
+    {
+        ShowWarningFmt("GP_CLI_COMMAND_MYROOM_BANKIN: could not release furnishing {}", PFurnishing->getID());
+        return;
+    }
+
     PFurnishing->setInstalled(false);
     PFurnishing->setCol(0);
     PFurnishing->setRow(0);
     PFurnishing->setLevel(0);
     PFurnishing->setRotation(0);
 
-    PFurnishing->setSubType(ITEM_UNLOCKED);
+    // If this furniture is a flowerpot, destroy anything planted in it.
+    if (auto* PPotItem = dynamic_cast<CItemFlowerpot*>(PFurnishing))
+    {
+        PPotItem->cleanPot();
+    }
 
     // If this furniture is a mannequin, clear its appearance and unlock all items that were on it!
     if (PFurnishing->isMannequin())

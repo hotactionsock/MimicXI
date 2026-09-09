@@ -10,6 +10,8 @@ zoneObject.onInitialize = function(zone)
     xi.conquest.setRegionalConquestOverseers(zone:getRegionID())
     xi.voidwalker.zoneOnInit(zone)
     xi.fate.onZoneInitialize(zone, zone:getID())
+
+    xi.expeditionaryForce.initZone(zone)
 end
 
 zoneObject.onZoneIn = function(player, prevZone)

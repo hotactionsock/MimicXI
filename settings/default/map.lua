@@ -68,24 +68,18 @@ xi.settings.map =
     -- Misc EXP related settings
     EXP_RATE                = 1.0,
     EXP_LOSS_RATE           = 1.0,
-    EXP_PARTY_GAP_PENALTIES = true,
-
-    -- A party member's experience points are nullified if the level difference with the highest-level party member exceeds this value.
-    -- When set to 0, there is no nullification of EXP regardless of how wide the gap is between party members.
-    -- When set to 10, if you are level 65 or below in a party with a level 75, you will receive no EXP.
-    EXP_PARTY_GAP_NO_EXP = 0,
 
     -- Capacity Point Settings
     CAPACITY_RATE = 1.0,
-
-    -- For old fame calculation use .25
-    FAME_MULTIPLIER = 1.00,
 
     -- Percentage of experience normally lost to keep upon death. 0 means full loss, where 1 means no loss.
     EXP_RETAIN = 0,
 
     -- Minimum level at which experience points can be lost
     EXP_LOSS_LEVEL = 31,
+
+    -- Enable/Disable pre-Abyssea experience point loss tiers. set true with EXP_LOSS_LEVEL = 4, for pre-Abyssea experience point loss behavior. https://wiki.ffo.jp/html/15196.html
+    USE_PRE_ABYSSEA_EXP_LOSS_TIERS = false,
 
     -- Minimum level at which regional influence is lost in conquest when a player dies
     -- Level 5 and below don't lose influence: http://wiki.ffo.jp/html/498.html
@@ -134,8 +128,7 @@ xi.settings.map =
     CRAFT_CHANCE_MULTIPLIER   = 1.0,
 
     -- Multiplier for skillup amounts. Using anything above 1 will break the 0.5 cap, the cap will become 0.9 (For maximum, set to 5)
-    SKILLUP_AMOUNT_MULTIPLIER = 1,
-    CRAFT_AMOUNT_MULTIPLIER   = 1,
+    SKILLUP_AMOUNT_MULTIPLIER = 1, -- This is for combat skills, not synthesis.
 
     -- Gardening Factors. DO NOT change defaults without verifiable proof that your change IS how retail does it. Myths need to be optional.
     GARDEN_DAY_MATTERS       = false,
@@ -264,6 +257,10 @@ xi.settings.map =
 
     -- Prevent players from performing WS while unengaged using packet injection.
     PREVENT_UNENGAGED_WS = false,
+
+    -- Don't leak the target of non PCs readying items/casting spells/using mobskills. Essentially, server side kills the info the targetlines addon uses.
+    -- This will also make battlemod/simplelog show self target on spells
+    HIDE_READIES_TARGET = false,
 
     -- Command Audit [logging] commands with lower permission than this will not be logged.
     -- Zero for no logging at all. Commands given to non GMs are not logged.

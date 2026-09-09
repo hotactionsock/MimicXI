@@ -22,19 +22,25 @@
 #include "0x0d2_trophy_list.h"
 
 #include "common/timer.h"
-#include "entities/baseentity.h"
+#include "entities/base_entity.h"
 #include "treasure_pool.h"
 
 GP_SERV_COMMAND_TROPHY_LIST::GP_SERV_COMMAND_TROPHY_LIST(const TreasurePoolItem* PItem, const CBaseEntity* PEntity, const bool isOldItem)
 {
     auto& packet = this->data();
 
+    uint32_t startTime = 0;
+    if (PItem->TimeStamp.has_value())
+    {
+        startTime = static_cast<uint32_t>(timer::count_milliseconds(*PItem->TimeStamp - timer::start_time));
+    }
+
     packet.TrophyItemNum   = 1;                 // Item Quantity
     packet.Gold            = 0;                 // TODO: Gil Found
     packet.TrophyItemNo    = PItem->ID;         // Item ID
     packet.TrophyItemIndex = PItem->SlotID;     // Treasure Pool Slot
     packet.Entry           = isOldItem ? 1 : 0; // Old Item
-    packet.StartTime       = static_cast<uint32_t>(timer::count_milliseconds(PItem->TimeStamp - timer::start_time));
+    packet.StartTime       = startTime;
 
     if (PEntity != nullptr)
     {

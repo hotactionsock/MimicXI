@@ -5,6 +5,14 @@
 ---@type TMobEntity
 local entity = {}
 
+-- Kreutzet Stormwind Chain fTP (3.00 -> 3.25 -> 3.60)
+local stormwindFTP =
+{
+    [1] = 3.00,
+    [2] = 3.25,
+    [3] = 3.60,
+}
+
 entity.spawnPoints =
 {
     { x = 207.000, y = 8.000, z =  1.000 },
@@ -60,59 +68,77 @@ entity.spawnPoints =
 }
 
 entity.onMobInitialize = function(mob)
+    xi.mob.updateNMSpawnPoint(mob)
+
+    mob:setRespawnTime(math.randomInt(32400, 43200)) -- 9 to 12 hours
+    DisallowRespawn(mob:getID(), true) -- prevents accidental 'pop' during no wind weather and immediate despawn
+
     mob:addImmunity(xi.immunity.DARK_SLEEP)
     mob:addImmunity(xi.immunity.TERROR)
-    xi.mob.updateNMSpawnPoint(mob)
-    mob:setRespawnTime(math.random(32400, 43200)) -- 9 to 12 hours
-    DisallowRespawn(mob:getID(), true) -- prevents accidental 'pop' during no wind weather and immediate despawn
+
+    mob:addListener('WEATHER_CHANGE', 'KREUTZET_WEATHER_CHANGE', function(mobArg, weather, element)
+        if not mobArg:isSpawned() then
+            return
+        end
+
+        if mobArg:isEngaged() then
+            return
+        end
+
+        if element ~= xi.element.WIND then
+            DespawnMob(mobArg:getID())
+        end
+    end)
 end
 
 entity.onMobSpawn = function(mob)
     mob:setMobMod(xi.mobMod.BASE_DAMAGE_MULTIPLIER, 150)
-end
-
-entity.onMobRoam = function(mob)
-    local weather = mob:getWeather()
-    if
-        weather ~= xi.weather.WIND and
-        weather ~= xi.weather.GALES
-    then
-        DespawnMob(mob:getID())
-    end
+    mob:setLocalVar('stormwindCounter', 0)
+    mob:setfTPModifierOverride(xi.mobSkill.STORMWIND, stormwindFTP[1], stormwindFTP[1], stormwindFTP[1])
 end
 
 entity.onMobFight = function(mob, target)
+    if xi.combat.behavior.isEntityBusy(mob) then
+        return
+    end
+
     local stormwindCounter = mob:getLocalVar('stormwindCounter')
-    if mob:canUseAbilities() then
-        if stormwindCounter == 3 then
-            mob:setLocalVar('stormwindCounter', 0)
-        elseif
-            stormwindCounter >= 1 and
-            mob:checkDistance(target) <= 15
-        then
-            stormwindCounter = stormwindCounter + 1
-            mob:setLocalVar('stormwindCounter', stormwindCounter)
-            mob:setLocalVar('stormwindDamage', stormwindCounter) -- extra var for dmg calculation (in stormwind.lua)
-            mob:useMobAbility(926)
-        end
+    if stormwindCounter == 3 then
+        mob:setLocalVar('stormwindCounter', 0)
+        mob:setfTPModifierOverride(xi.mobSkill.STORMWIND, stormwindFTP[1], stormwindFTP[1], stormwindFTP[1])
+    elseif
+        stormwindCounter >= 1 and
+        mob:checkDistance(target) <= 15
+    then
+        stormwindCounter = stormwindCounter + 1
+        mob:setLocalVar('stormwindCounter', stormwindCounter)
+
+        local ftp = stormwindFTP[stormwindCounter]
+        mob:setfTPModifierOverride(xi.mobSkill.STORMWIND, ftp, ftp, ftp)
+        mob:useMobAbility(xi.mobSkill.STORMWIND)
     end
 end
 
 entity.onMobWeaponSkill = function(mob, target, skill, action)
     local stormwindCounter = mob:getLocalVar('stormwindCounter')
     if
-        skill:getID() == 926 and
+        skill:getID() == xi.mobSkill.STORMWIND and
         stormwindCounter == 0
     then
         mob:setLocalVar('stormwindCounter', 1)
-        mob:setLocalVar('stormwindDamage', 1)
+    end
+end
+
+entity.onMobDisengage = function(mob)
+    if xi.data.element.getWeatherElement(mob:getWeather()) ~= xi.element.WIND then
+        DespawnMob(mob:getID())
     end
 end
 
 entity.onMobDespawn = function(mob)
     -- Set Kruetzet's spawnpoint and respawn time (9-12 hours)
     xi.mob.updateNMSpawnPoint(mob)
-    mob:setRespawnTime(math.random(32400, 43200))
+    mob:setRespawnTime(math.randomInt(32400, 43200))
     DisallowRespawn(mob:getID(), true) -- prevents accidental 'pop' during no wind weather and immediate despawn
 end
 

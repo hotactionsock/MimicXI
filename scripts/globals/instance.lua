@@ -485,7 +485,6 @@ xi.instance.onInstanceCreatedCallback = function(player, instance, entryInfo)
         end
 
         -- finally, send commander in
-        player:startEvent(unpack(entryInfo.memberEvent or entryInfo[4])) -- will fail if previous event is working as it should, otherwise catches secondary event to enter
         local npc = player:getEventTarget()
         if npc ~= nil then
             player:instanceEntry(npc, 4)
@@ -554,12 +553,12 @@ end
 
 xi.instance.updateInstanceTime = function(instance, elapsed, text)
     local players            = instance:getChars()
-    local remainingTimeLimit = instance:getTimeLimit() * 60 - (elapsed / 1000)
+    local remainingTimeLimit = instance:getTimeLimit() - elapsed
     local wipeTime           = instance:getWipeTime()
 
     if
         remainingTimeLimit < 0 or
-        (wipeTime ~= 0 and (elapsed - wipeTime) / 1000 > 180
+        (wipeTime ~= 0 and elapsed - wipeTime > 180
         )
     then
         instance:fail()

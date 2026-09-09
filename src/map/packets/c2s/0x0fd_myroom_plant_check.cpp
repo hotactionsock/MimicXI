@@ -21,11 +21,10 @@
 
 #include "0x0fd_myroom_plant_check.h"
 
-#include "entities/charentity.h"
+#include "entities/char_entity.h"
 #include "items/item_flowerpot.h"
 #include "packets/s2c/0x029_battle_message.h"
 #include "packets/s2c/0x0fa_myroom_operation.h"
-#include "utils/charutils.h"
 
 namespace
 {
@@ -65,6 +64,12 @@ void GP_CLI_COMMAND_MYROOM_PLANT_CHECK::process(MapSession* PSession, CCharEntit
                                     this->MyroomPlantCategory,
                                     this->MyroomPlantItemIndex));
         }
+        return;
+    }
+
+    if (!PPotItem->isInstalled())
+    {
+        ShowWarningFmt("GP_CLI_COMMAND_MYROOM_PLANT_CHECK: {} tried to interact with an uninstalled flowerpot", PChar->getName());
         return;
     }
 

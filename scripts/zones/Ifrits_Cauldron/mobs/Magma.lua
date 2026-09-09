@@ -29,11 +29,11 @@ entity.onMobMobskillChoose = function(mob, target, skillId)
         xi.mobSkill.BERSERK_BOMB,
     }
 
-    if mob:getHPP() < 10 then
+    if mob:getHPP() <= 10 then
         table.insert(skillList, xi.mobSkill.SELF_DESTRUCT_BOMB)
     end
 
-    return skillList[math.random(1, #skillList)]
+    return skillList[math.randomInt(1, #skillList)]
 end
 
 return entity

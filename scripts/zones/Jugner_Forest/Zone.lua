@@ -15,6 +15,8 @@ zoneObject.onInitialize = function(zone)
 
     xi.voidwalker.zoneOnInit(zone)
     xi.fate.onZoneInitialize(zone, zone:getID())
+
+    xi.expeditionaryForce.initZone(zone)
 end
 
 zoneObject.onZoneIn = function(player, prevZone)
@@ -73,6 +75,10 @@ zoneObject.onEventFinish = function(player, csid, option, npc)
     if csid == 14 then
         player:setCharVar('UnderOathCS', 8) -- Quest: Under Oath - PLD AF3
     end
+end
+
+zoneObject.onZoneOut = function(player)
+    xi.helm.onZoneOut(player)
 end
 
 return zoneObject

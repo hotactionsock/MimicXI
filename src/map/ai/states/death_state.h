@@ -19,46 +19,42 @@
 ===========================================================================
 */
 
-#ifndef _CDEATH_STATE_H
-#define _CDEATH_STATE_H
+#pragma once
 
 #include "state.h"
+
+// Circumstances of a death, decided by whatever caused it and carried for as long as the death lasts.
+struct DeathParams
+{
+    bool losesExp{ true };
+    bool mijin{ false }; // Mijin Gakure: no weakness, half HP back on raise
+};
 
 class CDeathState : public CState
 {
 public:
-    CDeathState(CBattleEntity* PEntity, timer::duration death_time);
+    CDeathState(xi::Badge<CState>, CBattleEntity* PEntity, timer::duration death_time, DeathParams params = {});
 
-    // state logic done per tick - returns whether to exit the state or not
-    virtual bool Update(timer::time_point tick) override;
+    auto init() -> StateErrorOr<void> override;
 
-    virtual void Cleanup(timer::time_point tick) override
-    {
-    }
-    // whether the state can be changed by normal means
-    virtual bool CanChangeState() override
-    {
-        return false;
-    }
-    virtual bool CanFollowPath() override
-    {
-        return false;
-    }
-    virtual bool CanInterrupt() override
-    {
-        return false;
-    }
-
+    auto Update(timer::time_point tick) -> bool override;
+    void Cleanup(timer::time_point tick) override;
+    auto CanChangeState() -> bool override;
+    auto CanFollowPath() -> bool override;
+    auto CanInterrupt() -> bool override;
     void allowSendRaise();
     void acceptRaise();
 
-private:
-    CBattleEntity* const m_PEntity;
-    timer::duration      m_deathTime;
-    bool                 m_raiseSent{ false };
-    bool                 m_raiseAccepted{ false };
-    timer::time_point    m_raiseTime;
-    timer::time_point    m_raiseAcceptedTime;
-};
+    auto params() const -> const DeathParams&;
 
-#endif
+private:
+    // Shadows CState::m_PEntity
+    CBattleEntity* const m_PEntity;
+
+    DeathParams       params_;
+    timer::duration   m_deathTime;
+    bool              m_raiseSent{ false };
+    bool              m_raiseAccepted{ false };
+    timer::time_point m_raiseTime;
+    timer::time_point m_raiseAcceptedTime;
+};

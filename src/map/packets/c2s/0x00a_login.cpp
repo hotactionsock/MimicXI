@@ -24,8 +24,8 @@
 
 #include "ai/ai_container.h"
 #include "ai/helpers/action_queue.h"
-#include "entities/charentity.h"
-#include "packets/s2c/0x008_enterzone.h"
+#include "entities/char_entity.h"
+#include "lua/luautils.h"
 #include "packets/s2c/0x01c_item_max.h"
 #include "packets/s2c/0x04f_equip_clear.h"
 #include "packets/s2c/0x050_equip_list.h"
@@ -38,7 +38,7 @@ auto GP_CLI_COMMAND_LOGIN::validate(MapSession* PSession, const CCharEntity* PCh
 {
     return PacketValidator(PChar)
         .mustEqual(PChar->id, this->UniqueNo, "Player ID mismatch")
-        .mustNotEqual(PSession->blowfish.status == BLOWFISH_ACCEPTED && PChar->status == STATUS_TYPE::NORMAL, true, "Player already logged in.");
+        .mustNotEqual(PSession->blowfish.status == BLOWFISH_ACCEPTED && PChar->status == xi::Status::Normal && PSession->hasDecryptedPacket, true, "Player already logged in.");
 }
 
 void GP_CLI_COMMAND_LOGIN::process(MapSession* PSession, CCharEntity* PChar) const
@@ -78,15 +78,15 @@ void GP_CLI_COMMAND_LOGIN::process(MapSession* PSession, CCharEntity* PChar) con
 
         PSession->shuttingDown = 0;
 
-        const uint16 destination = PChar->loc.destination;
-        CZone*       destZone    = zoneutils::GetZone(destination);
+        const auto destination = PChar->loc.destination;
+        CZone*     destZone    = zoneutils::GetZone(destination);
 
-        if (destination >= MAX_ZONEID || destZone == nullptr)
+        if (static_cast<uint16>(destination) >= MAX_ZONEID || destZone == nullptr)
         {
             // TODO: work out how to drop player in moghouse that exits them to the zone they were in before this happened, like we used to.
             ShowWarning("GP_CLI_COMMAND_LOGIN: player tried to enter zone that was invalid or out of range");
             ShowWarning("GP_CLI_COMMAND_LOGIN: dumping player `%s` to homepoint!", PChar->getName());
-            PChar->requestedWarp = true; // Not a "request" but a demand
+            PChar->requestedWarp = WarpRequest::HomePoint; // Not a "request" but a demand
 
             // Save pet if any
             if (PChar->shouldPetPersistThroughZoning())
@@ -97,6 +97,15 @@ void GP_CLI_COMMAND_LOGIN::process(MapSession* PSession, CCharEntity* PChar) con
         }
 
         destZone->IncreaseZoneCounter(PChar);
+
+        if (PChar->loc.zone == nullptr)
+        {
+            ShowErrorFmt("GP_CLI_COMMAND_LOGIN: {} was not placed in zone {}", PChar->getName(), destination);
+            return;
+        }
+
+        luautils::OnZoneIn(PChar);
+        luautils::OnGameIn(PChar, PChar->arrivedByZoning);
 
         // Current zone could either be current zone or destination
         CZone* currentZone = zoneutils::GetZone(PChar->getZone());
@@ -139,7 +148,7 @@ void GP_CLI_COMMAND_LOGIN::process(MapSession* PSession, CCharEntity* PChar) con
                 PChar->pushPacket<GP_SERV_COMMAND_EQUIP_LIST>(*eloc, static_cast<SLOTTYPE>(i));
             }
         }
-        PChar->status = STATUS_TYPE::NORMAL;
+        PChar->status = xi::Status::Normal;
         PChar->PAI->QueueAction(queueAction_t(4000ms, false, zoneutils::AfterZoneIn));
     }
 }

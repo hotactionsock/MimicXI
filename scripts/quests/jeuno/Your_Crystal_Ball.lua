@@ -12,8 +12,6 @@ local quest = Quest:new(xi.questLog.JEUNO, xi.quest.id.jeuno.YOUR_CRYSTAL_BALL)
 
 quest.reward =
 {
-    fame     = 30,
-    fameArea = xi.fameArea.JEUNO,
     title    = xi.title.FORTUNE_TELLER_IN_TRAINING,
 }
 
@@ -67,6 +65,9 @@ quest.sections =
             {
                 [196] = function(player, csid, option, npc)
                     if quest:complete(player) then
+                        player:addFame(xi.fameArea.SANDORIA, 16)
+                        player:addFame(xi.fameArea.BASTOK, 16)
+                        player:addFame(xi.fameArea.WINDURST, 16)
                         player:confirmTrade()
                     end
                 end,
@@ -79,7 +80,7 @@ quest.sections =
             {
                 onTrigger = function(player, npc)
                     if quest:getVar(player, 'Prog') == 1 then
-                        if GetSystemTime() >= quest:getVar(player, 'Wait') + 60 then -- 1 minute wait time
+                        if GetSystemTime() >= quest:getVar(player, 'Wait') then
                             return quest:progressEvent(52)
                         else
                             return quest:messageSpecial(mazeID.text.WAIT_A_BIT_LONGER, 0, xi.item.DIVINATION_SPHERE)
@@ -93,7 +94,7 @@ quest.sections =
                         if progress == 0 then
                             player:confirmTrade()
                             quest:setVar(player, 'Prog', 1)
-                            quest:setVar(player, 'Wait', GetSystemTime() + 60)
+                            quest:setVar(player, 'Wait', GetSystemTime() + 60) -- 1 minute wait time
                             return quest:messageSpecial(mazeID.text.SUBMERGED_ITEM, xi.item.AHRIMAN_LENS)
                         elseif progress == 1 then
                             return quest:messageSpecial(mazeID.text.MORE_THAN_ONE, xi.item.AHRIMAN_LENS)

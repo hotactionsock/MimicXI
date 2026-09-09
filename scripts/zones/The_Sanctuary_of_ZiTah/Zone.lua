@@ -9,6 +9,8 @@ local zoneObject = {}
 zoneObject.onInitialize = function(zone)
     xi.conquest.setRegionalConquestOverseers(zone:getRegionID())
     xi.fate.onZoneInitialize(zone, zone:getID())
+
+    xi.expeditionaryForce.initZone(zone)
 end
 
 zoneObject.onConquestUpdate = function(zone, updatetype, influence, owner, ranking, isConquestAlliance)

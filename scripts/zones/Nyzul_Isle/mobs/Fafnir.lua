@@ -27,9 +27,6 @@ entity.onMobSpawn = function(mob)
     mob:setMobMod(xi.mobMod.ROAM_DISTANCE, 15)
 end
 
-entity.onMobFight = function(mob, target)
-end
-
 entity.onMobDeath = function(mob, player, optParams)
     if optParams.isKiller or optParams.noKiller then
         xi.nyzul.enemyLeaderKill(mob)

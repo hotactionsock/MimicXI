@@ -1,7 +1,6 @@
 -----------------------------------
 -- Area: The Shrine of Ru'Avitau
 --  Mob: Faust
--- TODO: Faust should WS ~3 times in a row each time.
 -----------------------------------
 ---@type TMobEntity
 local entity = {}
@@ -11,7 +10,7 @@ local north = 192
 local home = { 740, -0.463, -99 }
 
 local setFaustNextTurnTime = function(faust)
-    faust:setLocalVar('NextTurnTime', GetSystemTime() + math.random(45, 75))
+    faust:setLocalVar('NextTurnTime', GetSystemTime() + math.randomInt(45, 75))
 end
 
 local faustNextTurnTime = function(faust)
@@ -45,6 +44,7 @@ entity.onMobInitialize = function(mob)
     mob:setMobMod(xi.mobMod.GIL_MIN, 18000)
     mob:setMobMod(xi.mobMod.GIL_MAX, 18000)
     mob:setMobMod(xi.mobMod.SIGHT_RANGE, 30)
+    mob:setMobMod(xi.mobMod.DETECTION, bit.bor(xi.detects.MAGIC, xi.detects.SIGHT)) -- Aggros to magic and sight (30 yalms).
     mob:setMobMod(xi.mobMod.ALWAYS_AGGRO, 1)
     mob:addImmunity(xi.immunity.DARK_SLEEP)
     mob:addImmunity(xi.immunity.ELEGY)
@@ -52,6 +52,7 @@ entity.onMobInitialize = function(mob)
     mob:addImmunity(xi.immunity.SLOW)
     mob:addImmunity(xi.immunity.TERROR)
     mob:addImmunity(xi.immunity.PLAGUE)
+    mob:addImmunity(xi.immunity.PETRIFY)
     mob:setMobMod(xi.mobMod.BASE_DAMAGE_MULTIPLIER, 150)
 end
 
@@ -69,10 +70,23 @@ entity.onMobRoam = function(mob)
 end
 
 entity.onMobFight = function(mob, target)
+    if xi.combat.behavior.isEntityBusy(mob) then
+        return
+    end
+
     -- Nearly always uses Typhoon below 50% HP
     if mob:getHPP() <= 50 and mob:getLocalVar('RegainBoosted') == 0 then
         mob:setMod(xi.mod.REGAIN, 1000)
         mob:setLocalVar('RegainBoosted', 1)
+    end
+
+    -- Follow-up Typhoons wait until the target is back in range
+    if
+        mob:getLocalVar('TyphoonFollowUp') == 1 and
+        mob:checkDistance(target) < 5
+    then
+        mob:setLocalVar('TyphoonFollowUp', 0)
+        mob:useMobAbility(xi.mobSkill.TYPHOON)
     end
 end
 
@@ -82,18 +96,15 @@ entity.onMobWeaponSkill = function(mob, target, skill, action)
     local maxTyphoons = mob:getHPP() < 50 and 2 or 1
 
     if typhoonCount < maxTyphoons then
-        mob:useMobAbility(xi.mobSkill.TYPHOON)
+        mob:setLocalVar('TyphoonFollowUp', 1)
         mob:setLocalVar('TyphoonCount', typhoonCount + 1)
     else
         mob:setLocalVar('TyphoonCount', 0)
     end
 end
 
-entity.onMobDeath = function(mob, player, optParams)
-end
-
 entity.onMobDespawn = function(mob)
-    mob:setRespawnTime(math.random(10800, 21600)) -- respawn 3-6 hrs
+    mob:setRespawnTime(math.randomInt(10800, 21600)) -- 3 to 6 hours.
 end
 
 return entity

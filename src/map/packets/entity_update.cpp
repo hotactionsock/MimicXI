@@ -19,19 +19,15 @@
 ===========================================================================
 */
 
-#include "common/timer.h"
 #include "common/utils.h"
-#include "common/vana_time.h"
 
 #include <cstring>
 
 #include "entity_update.h"
 
-#include "entities/baseentity.h"
-#include "entities/mobentity.h"
-#include "entities/npcentity.h"
-#include "entities/petentity.h"
-#include "entities/trustentity.h"
+#include "entities/base_entity.h"
+#include "entities/mob_entity.h"
+#include "entities/npc_entity.h"
 #include "status_effect_container.h"
 #include "zone.h"
 
@@ -233,14 +229,27 @@ std::string getTransportNPCName(CBaseEntity* PEntity)
     auto strSize    = isElevator ? 10 : 8;
 
     std::string str(strSize, '\0');
-    std::memcpy(str.data() + 0, PEntity->name.data(), PEntity->name.size());
+
+    // Data-loaded entities state this id outright.
+    // SQL path still smuggles it through the name.
+    const auto* PTransport = dynamic_cast<CNpcEntity*>(PEntity);
+    if (PTransport && PTransport->door_id)
+    {
+        const auto doorId = *PTransport->door_id;
+        std::memcpy(str.data() + 0, &doorId, 4);
+    }
+    else
+    {
+        std::memcpy(str.data() + 0, PEntity->name.data(), std::min<size_t>(PEntity->name.size(), 4));
+    }
 
     auto timestamp = PEntity->GetLocalVar("TransportTimestamp");
     std::memcpy(str.data() + 4, &timestamp, 4);
 
     if (isElevator)
     {
-        std::memset(str.data() + 8, 8, 1);
+        // How long the client spends animating the platform between floors.
+        std::memset(str.data() + 8, static_cast<uint8>(PEntity->GetLocalVar("TransportTravel")), 1);
     }
 
     return str;
@@ -298,7 +307,7 @@ void CEntityUpdatePacket::updateWith(CBaseEntity* PEntity, ENTITYUPDATE type, ui
             {
                 ref<uint8>(0x2A) = 4;
             }
-            if (PEntity->spawnAnimation == SPAWN_ANIMATION::SPECIAL)
+            if (PEntity->spawnAnimation == xi::SpawnAnimation::Special)
             {
                 ref<uint8>(0x28) |= 0x04;
             }
@@ -323,9 +332,9 @@ void CEntityUpdatePacket::updateWith(CBaseEntity* PEntity, ENTITYUPDATE type, ui
         ref<uint8>(0x1D)  = PEntity->animationSpeed;
     }
 
-    if (PEntity->allegiance == ALLEGIANCE_TYPE::PLAYER && PEntity->status == STATUS_TYPE::UPDATE)
+    if (PEntity->allegiance == xi::Allegiance::Player && PEntity->status == xi::Status::Update)
     {
-        ref<uint8>(0x20) = static_cast<uint8>(STATUS_TYPE::NORMAL);
+        ref<uint8>(0x20) = static_cast<uint8>(xi::Status::Normal);
     }
     else
     {
@@ -342,29 +351,36 @@ void CEntityUpdatePacket::updateWith(CBaseEntity* PEntity, ENTITYUPDATE type, ui
             if (updatemask & UPDATE_HP)
             {
                 ref<uint8>(0x1E) = 0x64; // HPP: 100
-                ref<uint8>(0x1F) = PEntity->animation;
+                ref<uint8>(0x1F) = static_cast<uint8>(PEntity->animation);
                 ref<uint8>(0x2A) |= PEntity->animationsub;
 
-                ref<uint32>(0x21) = PNpc->m_flags;
+                ref<uint32>(0x21) = static_cast<uint32>(PNpc->m_flags);
                 ref<uint8>(0x27)  = PNpc->name_prefix; // gender and something else
 
-                if (PNpc->IsTriggerable())
+                if (PNpc->triggerable())
                 {
                     ref<uint8>(0x28) |= 0x40;
                 }
 
                 ref<uint8>(0x29) = static_cast<uint8>(PEntity->allegiance);
-                ref<uint8>(0x2B) = PEntity->namevis;
+                ref<uint8>(0x2B) = static_cast<uint8>(PEntity->namevis);
             }
 
             // TODO: Unify name logic
-            if (updatemask & UPDATE_NAME)
+            // A ship or lift puts its door id and phase stamp where a plain NPC puts its name, but retail sends them with no name bit set.
+            // Skip them and the client knows which animation to play but not when it started.
+            const auto isTransport = PNpc->look.size == MODEL_ELEVATOR || PNpc->look.size == MODEL_SHIP;
+            if (updatemask & UPDATE_NAME || isTransport)
             {
-                auto name = PNpc->getName();
-                if (PNpc->look.size == MODEL_ELEVATOR || PNpc->look.size == MODEL_SHIP)
+                const auto name = [&]() -> std::string
                 {
-                    name = getTransportNPCName(PNpc);
-                }
+                    if (isTransport)
+                    {
+                        return getTransportNPCName(PNpc);
+                    }
+
+                    return PNpc->getName();
+                }();
 
                 auto packetSize = std::max<size_t>(0x40, (0x34 + name.size() + 8) & ~3);
                 this->setSize(packetSize);
@@ -381,10 +397,10 @@ void CEntityUpdatePacket::updateWith(CBaseEntity* PEntity, ENTITYUPDATE type, ui
             if (updatemask & UPDATE_HP)
             {
                 ref<uint8>(0x1E) = PMob->GetHPP();
-                ref<uint8>(0x1F) = PEntity->animation;
+                ref<uint8>(0x1F) = static_cast<uint8>(PEntity->animation);
                 ref<uint8>(0x2A) |= PEntity->animationsub;
 
-                ref<uint32>(0x21) = PMob->m_flags;
+                ref<uint32>(0x21) = static_cast<uint32>(PMob->m_flags);
                 ref<uint8>(0x25)  = PMob->health.hp > 0 ? 0x08 : 0;
                 ref<uint8>(0x27)  = PMob->m_name_prefix;
                 if (PMob->PMaster != nullptr && PMob->PMaster->objtype == TYPE_PC)
@@ -396,16 +412,16 @@ void CEntityUpdatePacket::updateWith(CBaseEntity* PEntity, ENTITYUPDATE type, ui
                 // Giga hack -- mobs in Pso'Xja for some reason are less "visible"
                 // Set CliPriorityFlag to force them to render on the client if they receive 0x00Es
                 // TODO: make this a MOBMOD or some other way to set this flag without hardcoding.
-                if (PMob->getZone() == ZONEID::ZONE_PSOXJA)
+                if (PMob->getZone() == xi::ZoneId::Psoxja)
                 {
                     // Enable CliPriorityFlag
                     ref<uint8>(0x28) |= 0x20;
                 }
 
-                ref<uint8>(0x28) |= PMob->health.hp > 0 && PMob->animation == ANIMATION_DEATH ? 0x08 : 0;
-                ref<uint8>(0x28) |= PMob->status == STATUS_TYPE::NORMAL && PMob->objtype == TYPE_MOB ? 0x40 : 0; // Make the entity triggerable if a mob and normal status
+                ref<uint8>(0x28) |= PMob->health.hp > 0 && PMob->animation == xi::Animation::Death ? 0x08 : 0;
+                ref<uint8>(0x28) |= PMob->status == xi::Status::Normal && PMob->objtype == TYPE_MOB ? 0x40 : 0; // Make the entity triggerable if a mob and normal status
                 ref<uint8>(0x29) = static_cast<uint8>(PEntity->allegiance);
-                ref<uint8>(0x2B) = PEntity->namevis;
+                ref<uint8>(0x2B) = static_cast<uint8>(PEntity->namevis);
             }
 
             // TODO: make flags struct for 0x00E when it's decompped
@@ -417,15 +433,30 @@ void CEntityUpdatePacket::updateWith(CBaseEntity* PEntity, ENTITYUPDATE type, ui
 
             if (updatemask & UPDATE_STATUS)
             {
-                ref<uint32>(0x2C) = PMob->m_OwnerID.id;
+                ref<uint32>(0x2C) = PMob->m_OwnerID.UniqueNo;
             }
 
             if (updatemask & UPDATE_NAME)
             {
-                const auto& name    = PMob->packetName.empty() ? PEntity->getName() : PMob->packetName;
+                const auto& name       = PMob->packetName.empty() ? PEntity->getName() : PMob->packetName;
                 auto        packetSize = std::max<size_t>(0x40, (0x34 + name.size() + 8) & ~3);
                 this->setSize(packetSize);
-                std::memcpy(buffer_.data() + 0x34, name.c_str(), name.size());
+
+                if (PMob->packetName.empty())
+                {
+                    if (const auto* PDoor = dynamic_cast<CNpcEntity*>(PEntity); PDoor && PDoor->door_id)
+                    {
+                        ref<uint32>(0x34) = *PDoor->door_id;
+                    }
+                    else
+                    {
+                        std::memcpy(buffer_.data() + 0x34, PEntity->getName().c_str(), PEntity->getName().size());
+                    }
+                }
+                else
+                {
+                    std::memcpy(buffer_.data() + 0x34, PMob->packetName.c_str(), PMob->packetName.size());
+                }
             }
         }
         break;
@@ -463,7 +494,14 @@ void CEntityUpdatePacket::updateWith(CBaseEntity* PEntity, ENTITYUPDATE type, ui
         {
             this->setSize(0x48);
             ref<uint16>(0x30) = PEntity->look.size;
-            std::memcpy(buffer_.data() + 0x34, PEntity->getName().c_str(), (PEntity->getName().size() > 12 ? 12 : PEntity->getName().size()));
+            if (const auto* PDoor = dynamic_cast<CNpcEntity*>(PEntity); PDoor && PDoor->door_id)
+            {
+                ref<uint32>(0x34) = *PDoor->door_id;
+            }
+            else
+            {
+                std::memcpy(buffer_.data() + 0x34, PEntity->getName().c_str(), std::min<size_t>(PEntity->getName().size(), PacketNameLength));
+            }
         }
         break;
         case MODEL_SHIP:
@@ -584,5 +622,9 @@ void CEntityUpdatePacket::updateWith(CBaseEntity* PEntity, ENTITYUPDATE type, ui
         packet->Flags1.GraphSize = PEntity->modelSize;
         // For some reason, SE reused a player struct where this "g" value is the hitbox size.
         packet->Flags2.g = static_cast<uint8_t>(PEntity->modelHitboxSize * 10);
+
+        // Fenced content ID
+        const uint8 gateId = static_cast<CBattleEntity*>(PEntity)->StatusEffectContainer->GetConfrontationSubPower() & 0x0F;
+        packet->Flags2.b   = (packet->Flags2.b & 0x0F) | (gateId << 4);
     }
 }

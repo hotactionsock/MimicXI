@@ -21,27 +21,28 @@
 
 #include "instanceutils.h"
 
-#include <filesystem>
-
-#include "common/database.h"
 #include "common/logging.h"
+
+#include <common/types/hash_map.h>
 
 #include "lua/luautils.h"
 
 #include "instance_loader.h"
-#include "map_engine.h"
 #include "zone_instance.h"
 #include "zoneutils.h"
 
 #include <coroutine>
+#include <filesystem>
 #include <queue>
+
+#include <fmt/ranges.h>
 
 namespace instanceutils
 {
 
-std::unordered_map<uint16, InstanceData_t> InstanceData;
-std::queue<std::pair<uint32, uint16>>      LoadQueue; // player id, instance id
-detail::LazyLoadState                      lazyLoad;
+HashMap<uint16, InstanceData_t>       InstanceData;
+std::queue<std::pair<uint32, uint16>> LoadQueue; // player id, instance id
+detail::LazyLoadState                 lazyLoad;
 
 namespace
 {
@@ -88,7 +89,7 @@ auto LoadInstances(const std::vector<uint16>& instanceIds) -> void
         // Main data
         data.id            = rset->get<uint16>("instanceid");
         data.instance_name = rset->get<std::string>("instance_name");
-        data.instance_zone = rset->get<uint16>("instance_zone");
+        data.instance_zone = rset->get<xi::ZoneId>("instance_zone");
         data.entrance_zone = rset->get<uint16>("entrance_zone");
         data.time_limit    = rset->get<uint16>("time_limit");
         data.start_x       = rset->get<float>("start_x");
@@ -123,14 +124,14 @@ auto LoadInstances(const std::vector<uint16>& instanceIds) -> void
         data.filename = fmt::format("./scripts/assaults/{}/{}.lua", data.instance_zone_name, data.instance_name);
         if (std::filesystem::exists(data.filename))
         {
-            luautils::CacheLuaObjectFromFile(data.filename, true);
+            luautils::LoadLuaObjectFromFile(data.filename, true);
         }
 
         // If not, fall back to regular instance path
         else
         {
             data.filename = fmt::format("./scripts/zones/{}/instances/{}.lua", data.instance_zone_name, data.instance_name);
-            luautils::CacheLuaObjectFromFile(data.filename);
+            luautils::LoadLuaObjectFromFile(data.filename);
         }
 
         // Add to data cache

@@ -11,13 +11,13 @@ zoneObject.onZoneIn = function(player, prevZone)
     local cs = -1
 
     if player:getXPos() == 0 or player:getYPos() == 0 or player:getZPos() == 0 then
-        player:setPos(math.random(-4, 4), 1, math.random(-23, -12))
+        player:setPos(math.randomInt(-4, 4), 1, math.randomInt(-23, -12))
     end
 
     return cs
 end
 
-zoneObject.onTransportEvent = function(player, prevZoneId, transportId)
+zoneObject.onTransportEvent = function(player, prevZoneId, transportName)
     player:startEvent(100)
 end
 
@@ -26,11 +26,9 @@ end
 
 zoneObject.onEventFinish = function(player, csid, option, npc)
     if csid == 100 then
-        local prevzone = player:getPreviousZone()
-
-        if prevzone == xi.zone.PORT_JEUNO then
+        if player:getPreviousZone() == xi.zone.PORT_JEUNO then
             player:setPos(0, 0, 0, 0, xi.zone.PORT_BASTOK)
-        elseif prevzone == xi.zone.PORT_BASTOK then
+        else
             player:setPos(0, 0, 0, 0, xi.zone.PORT_JEUNO)
         end
     end

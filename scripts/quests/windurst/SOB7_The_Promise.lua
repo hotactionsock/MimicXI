@@ -27,7 +27,7 @@ end
 
 quest.reward =
 {
-    fame     = 10,
+    fame     = 60,
     fameArea = xi.fameArea.WINDURST,
     item     = xi.item.PROMISE_BADGE,
 }
@@ -171,18 +171,21 @@ quest.sections =
             {
                 [522] = function(player, csid, option, npc)
                     if quest:complete(player) then
+                        player:delKeyItem(xi.ki.INVISIBLE_MAN_STICKER)
                         player:setCharVar('SOBfinalEvent', 1)
                     end
                 end,
 
                 [534] = function(player, csid, option, npc)
                     if quest:complete(player) then
+                        player:delKeyItem(xi.ki.INVISIBLE_MAN_STICKER)
                         player:setCharVar('SOBfinalEvent', 1)
                     end
                 end,
 
                 [542] = function(player, csid, option, npc)
                     if quest:complete(player) then
+                        player:delKeyItem(xi.ki.INVISIBLE_MAN_STICKER)
                         player:setCharVar('SOBfinalEvent', 1)
                     end
                 end,
@@ -253,7 +256,7 @@ quest.sections =
                             return quest:event(528)
                         end
                     else
-                        local random = math.random(0, 1)
+                        local random = math.randomInt(0, 1)
                         if random == 0 then
                             return quest:event(544)
                         else

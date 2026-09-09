@@ -35,16 +35,16 @@ zoneObject.onZoneIn = function(player, prevZone)
         zoredonite:setLocalVar('zoneWindow', GetSystemTime() + 20) -- Block multiple spawn chance rolls per boat ride.
         if
             zoredoniteRespawn and
-            math.random(1, 100) <= 30
+            math.randomInt(1, 100) <= 30
         then
-            zoredonite:setRespawnTime(math.random(120, 480))
+            zoredonite:setRespawnTime(math.randomInt(120, 480))
         end
     end
 
     return cs
 end
 
-zoneObject.onTransportEvent = function(player, prevZoneId, transportId)
+zoneObject.onTransportEvent = function(player, prevZoneId, transportName)
     player:startEvent(100)
 end
 

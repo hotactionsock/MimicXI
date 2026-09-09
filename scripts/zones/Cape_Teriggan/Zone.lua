@@ -9,6 +9,8 @@ local zoneObject = {}
 zoneObject.onInitialize = function(zone)
     xi.conquest.setRegionalConquestOverseers(zone:getRegionID())
     xi.fate.onZoneInitialize(zone, zone:getID())
+
+    xi.expeditionaryForce.initZone(zone)
 end
 
 zoneObject.onConquestUpdate = function(zone, updatetype, influence, owner, ranking, isConquestAlliance)
@@ -64,7 +66,7 @@ zoneObject.onZoneWeatherChange = function(weather)
                 not kreutzet:isSpawned() and
                 kreutzet:getRespawnTime() == 0
             then
-                kreutzet:setRespawnTime(math.random(30, 150)) -- pop 30-150 sec after wind weather starts
+                kreutzet:setRespawnTime(math.randomInt(30, 150)) -- pop 30-150 sec after wind weather starts
             end
         else
             DisallowRespawn(ID.mob.KREUTZET, true) -- Disallow respawn.

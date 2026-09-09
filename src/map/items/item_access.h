@@ -33,6 +33,7 @@ class Transaction;
 
 namespace xi::items::detail
 {
+
 struct ItemAccess
 {
     // Privileged InTransaction transitions, only callable from Transaction subclasses.
@@ -61,6 +62,15 @@ struct ItemAccess
         if (item == nullptr)
         {
             ShowErrorFmt("ItemAccess::exitTransaction: null item");
+            return;
+        }
+
+        // only InTransaction is released here. Equipped, Bazaar and PlacedFurniture have their own paths
+        if (item->state() != ItemState::InTransaction)
+        {
+            ShowErrorFmt("ItemAccess::exitTransaction: item {} is not claimed (current={})",
+                         item->getID(),
+                         magic_enum::enum_name(item->state()));
             return;
         }
 
@@ -107,12 +117,15 @@ struct ItemAccess
         return true;
     }
 };
+
 } // namespace xi::items::detail
 
 namespace xi::items
 {
+
 [[nodiscard]] inline auto mark(CItem* item, const ItemState target) -> bool
 {
     return detail::ItemAccess::mark(item, target);
 }
+
 } // namespace xi::items

@@ -21,7 +21,7 @@
 
 #include "0x05d_motion.h"
 
-#include "entities/charentity.h"
+#include "entities/char_entity.h"
 #include "items.h"
 #include "lua/luautils.h"
 #include "packets/s2c/0x029_battle_message.h"
@@ -86,9 +86,14 @@ void GP_CLI_COMMAND_MOTION::process(MapSession* PSession, CCharEntity* PChar) co
         }
     }
     // Attempting to use locked job emote.
-    else if (static_cast<Emote>(this->Number) == Emote::Job && this->Param && !(PChar->jobs.unlocked & (1 << (this->Param - 0x1E))))
+    else if (static_cast<Emote>(this->Number) == Emote::Job && this->Param)
     {
-        return;
+        const uint8 jobIndex = this->Param - 0x1E;
+
+        if (this->Param < 0x1E || jobIndex >= MAX_JOBTYPE || !(PChar->jobs.unlocked & (1 << jobIndex)))
+        {
+            return;
+        }
     }
 
     PChar->loc.zone->PushPacket(PChar, CHAR_INRANGE_SELF, std::make_unique<GP_SERV_COMMAND_MOTIONMES>(PChar, this->UniqueNo, this->ActIndex, static_cast<Emote>(this->Number), static_cast<EmoteMode>(this->Mode), this->Param));
