@@ -182,14 +182,14 @@ void CZoneInstance::updateCharLevelRestriction(CCharEntity* PChar)
     if (PChar->PInstance && PChar->PInstance->GetLevelCap() > 0)
     {
         auto cap     = PChar->PInstance->GetLevelCap();
-        auto* effect = PChar->StatusEffectContainer->GetStatusEffect(EFFECT_LEVEL_RESTRICTION);
+        auto* effect = PChar->StatusEffectContainer->GetStatusEffect(xi::StatusEffect::LevelRestriction);
         if (effect && effect->GetPower() == cap)
         {
             return; // already correct, nothing to do
         }
-        PChar->StatusEffectContainer->DelStatusEffectSilent(EFFECT_LEVEL_RESTRICTION);
+        PChar->StatusEffectContainer->DelStatusEffectSilent(xi::StatusEffect::LevelRestriction);
         PChar->StatusEffectContainer->AddStatusEffect(
-            new CStatusEffect(EFFECT_LEVEL_RESTRICTION, EFFECT_LEVEL_RESTRICTION, cap, 0s, 0s));
+            new CStatusEffect(xi::StatusEffect::LevelRestriction, static_cast<uint16>(xi::StatusEffect::LevelRestriction), cap, 0s, 0s));
         return;
     }
 

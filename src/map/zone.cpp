@@ -52,6 +52,7 @@ using ZoneSettingsDataset = xi::data::datasets::zones::settings::Dataset;
 
 #include <filesystem>
 
+#include "ai/ai_container.h"
 #include "battlefield.h"
 #include "enums/loot_recast.h"
 #include "ipc_client.h"
@@ -936,7 +937,7 @@ void CZone::DecreaseZoneCounter(CCharEntity* PChar)
         PInstance->DecreaseZoneCounter(PChar);
         PInstance->DespawnPC(PChar);
         PChar->PInstance = nullptr;
-        PChar->StatusEffectContainer->DelStatusEffectSilent(EFFECT_LEVEL_RESTRICTION);
+        PChar->StatusEffectContainer->DelStatusEffectSilent(xi::StatusEffect::LevelRestriction);
 
         if (PInstance->CharListEmpty() && !(PInstance->Failed() || PInstance->Completed()))
         {
@@ -1093,6 +1094,34 @@ CBaseEntity* CZone::GetEntity(uint16 targid, uint8 filter)
         }
     }
     return nullptr;
+}
+
+/************************************************************************
+ *                                                                       *
+ *  Checks whether every mob in the zone is home and fully healed, so    *
+ *  the zone-empty timer teardown doesn't fire mid-reset.                *
+ *                                                                       *
+ ************************************************************************/
+
+bool CZone::CheckMobsPathedBack()
+{
+    bool allMobsHomeAndHealed = true;
+    if (m_zoneEntities && m_zoneEntities->GetMobList().size() > 0)
+    {
+        auto mobListMap = m_zoneEntities->GetMobList();
+        for (const auto& pair : mobListMap)
+        {
+            CMobEntity* mob = dynamic_cast<CMobEntity*>(pair.second);
+            // if the mob is (not dead/despawned AND it is not fully healed) OR it is pathing home
+            if (mob && ((!mob->isDead() && !mob->isFullyHealed()) || mob->m_IsPathingHome))
+            {
+                // at least one mob is away from home or not fully healed
+                allMobsHomeAndHealed = false;
+                break;
+            }
+        }
+    }
+    return allMobsHomeAndHealed;
 }
 
 /************************************************************************
@@ -1772,7 +1801,7 @@ void CZone::EnterInstanceLayer(CCharEntity* PChar)
     if (PInstance->GetLevelCap() > 0)
     {
         PChar->StatusEffectContainer->AddStatusEffect(
-            new CStatusEffect(EFFECT_LEVEL_RESTRICTION, EFFECT_LEVEL_RESTRICTION, PInstance->GetLevelCap(), 0s, 0s));
+            new CStatusEffect(xi::StatusEffect::LevelRestriction, static_cast<uint16>(xi::StatusEffect::LevelRestriction), PInstance->GetLevelCap(), 0s, 0s));
     }
 
     if (PInstance->CheckFirstEntry(PChar->id))
@@ -1797,7 +1826,7 @@ void CZone::LeaveInstanceLayer(CCharEntity* PChar)
 
     PInstance->DespawnPC(PChar);
     PInstance->EraseChar(PChar);
-    PChar->StatusEffectContainer->DelStatusEffectSilent(EFFECT_LEVEL_RESTRICTION);
+    PChar->StatusEffectContainer->DelStatusEffectSilent(xi::StatusEffect::LevelRestriction);
     PChar->PInstance = nullptr;
 
     PChar->targid = m_zoneEntities->GetNewCharTargID();

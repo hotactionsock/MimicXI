@@ -376,6 +376,8 @@ private:
     void LoadZoneLines(const std::optional<xi::data::ZoneSettings>& settings);
     void LoadZoneWeather();
 
+    bool CheckMobsPathedBack();
+
     std::unique_ptr<NavMesh> navMesh_;
     std::unique_ptr<XiMesh>  xiMesh_;
 
