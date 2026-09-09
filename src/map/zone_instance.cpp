@@ -189,7 +189,7 @@ void CZoneInstance::updateCharLevelRestriction(CCharEntity* PChar)
         }
         PChar->StatusEffectContainer->DelStatusEffectSilent(xi::StatusEffect::LevelRestriction);
         PChar->StatusEffectContainer->AddStatusEffect(
-            new CStatusEffect(xi::StatusEffect::LevelRestriction, static_cast<uint16>(xi::StatusEffect::LevelRestriction), cap, 0s, 0s));
+            xi::StatusEffect::LevelRestriction, static_cast<uint16>(xi::StatusEffect::LevelRestriction), cap, 0s, 0s);
         return;
     }
 

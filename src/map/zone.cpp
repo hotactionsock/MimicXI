@@ -1801,7 +1801,7 @@ void CZone::EnterInstanceLayer(CCharEntity* PChar)
     if (PInstance->GetLevelCap() > 0)
     {
         PChar->StatusEffectContainer->AddStatusEffect(
-            new CStatusEffect(xi::StatusEffect::LevelRestriction, static_cast<uint16>(xi::StatusEffect::LevelRestriction), PInstance->GetLevelCap(), 0s, 0s));
+            xi::StatusEffect::LevelRestriction, static_cast<uint16>(xi::StatusEffect::LevelRestriction), PInstance->GetLevelCap(), 0s, 0s);
     }
 
     if (PInstance->CheckFirstEntry(PChar->id))
