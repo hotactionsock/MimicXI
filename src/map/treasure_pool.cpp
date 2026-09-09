@@ -508,14 +508,20 @@ void CTreasurePool::checkTreasureItem(timer::time_point tick, uint8 SlotID)
         // Award the item to a recipient, applying pre-rolled augments if present.
         auto awardItem = [this, SlotID](CCharEntity* recipient) -> bool
         {
+            auto transaction = ItemClaimTransaction::start(recipient);
+            if (!transaction)
+            {
+                return false;
+            }
+
             if (!m_PoolItems[SlotID].Augments.empty())
             {
-                CItem* PItem = itemutils::GetItem(m_PoolItems[SlotID].ID);
+                auto PItem = xi::items::spawn(m_PoolItems[SlotID].ID);
                 if (!PItem)
                 {
                     return false;
                 }
-                auto& aug        = PItem->exdata<Exdata::AugmentStandard>();
+                auto& aug          = PItem->exdata<Exdata::AugmentStandard>();
                 aug.AugmentKind    = Exdata::AugmentKindFlags::HasAugments;
                 aug.AugmentSubKind = Exdata::AugmentSubKindFlags::Standard;
                 const auto& srcAugs = m_PoolItems[SlotID].Augments;
@@ -524,9 +530,9 @@ void CTreasurePool::checkTreasureItem(timer::time_point tick, uint8 SlotID)
                     aug.Augments[i].Id    = srcAugs[i].first;
                     aug.Augments[i].Value = srcAugs[i].second;
                 }
-                return charutils::AddItem(recipient, LOC_INVENTORY, PItem, true) != ERROR_SLOTID;
+                return transaction->give(LOC_INVENTORY, std::move(PItem), Silence::Yes).has_value() && transaction->commit();
             }
-            return charutils::AddItem(recipient, LOC_INVENTORY, m_PoolItems[SlotID].ID, 1, true) != ERROR_SLOTID;
+            return transaction->give(LOC_INVENTORY, m_PoolItems[SlotID].ID, 1, Silence::Yes).has_value() && transaction->commit();
         };
 
         // Find item's highest lotter
