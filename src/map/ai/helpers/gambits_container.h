@@ -140,6 +140,7 @@ enum class G_SELECT : uint16
     DEF_BAR_ELEMENT     = 17,
     RUNE_DAY            = 18,
     RANDOM_ANIMATION    = 19,
+    SPECIAL_MATSUI_P    = 20,
 };
 
 enum class G_TP_TRIGGER : uint16

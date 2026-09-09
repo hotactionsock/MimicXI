@@ -1605,7 +1605,7 @@ bool CGambitsContainer::TryTrustSkill()
             case G_TP_TRIGGER::OPENER_AND_CLOSER_UNTIL_TP:
             {
                 // Priority 1: Close an open skillchain if one is available.
-                auto* PSCEffect = target->StatusEffectContainer->GetStatusEffect(EFFECT_SKILLCHAIN);
+                auto* PSCEffect = target->StatusEffectContainer->GetStatusEffect(xi::StatusEffect::Skillchain);
                 if (PSCEffect && PSCEffect->GetStartTime() + 3s < timer::now() && PSCEffect->GetTier() == 0)
                 {
                     return true;
@@ -1834,13 +1834,13 @@ bool CGambitsContainer::TryTrustSkill()
             case G_SELECT::SPECIAL_MATSUI_P:
             {
                 // Shadow gate: do not fire without Utsusemi shadows.
-                if (!POwner->StatusEffectContainer->HasStatusEffect(EFFECT_COPY_IMAGE))
+                if (!POwner->StatusEffectContainer->HasStatusEffect(xi::StatusEffect::CopyImage))
                 {
                     break;
                 }
 
                 // Closer: if a SC is open on the target, try to close it.
-                auto* PSCEffect = target->StatusEffectContainer->GetStatusEffect(EFFECT_SKILLCHAIN);
+                auto* PSCEffect = target->StatusEffectContainer->GetStatusEffect(xi::StatusEffect::Skillchain);
                 if (PSCEffect)
                 {
                     std::list<SKILLCHAIN_ELEMENT> resonanceProperties;
