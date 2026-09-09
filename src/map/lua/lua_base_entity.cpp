@@ -61,6 +61,7 @@
 #include "status_effect_container.h"
 #include "timetriggers.h"
 #include "trade_container.h"
+#include "treasure_pool.h"
 #include "weapon_skill.h"
 #include "zone.h"
 
