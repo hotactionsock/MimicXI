@@ -44,7 +44,7 @@ entity.onMobFight = function(mob, target)
 
     local drewIn = false
     for _, member in ipairs(allianceTarget:getAlliance()) do
-        local randomPos = drawInPositions[math.random(#drawInPositions)]
+        local randomPos = drawInPositions[math.randomInt(1, #drawInPositions)]
         randomPos.rot = member:getRotPos()
 
         if utils.drawIn(member, { conditions = { member:getZPos() < 290 }, position = randomPos }) then
@@ -56,6 +56,20 @@ entity.onMobFight = function(mob, target)
     if drewIn then
         mob:useMobAbility()
     end
+end
+
+entity.onMobMobskillChoose = function(mob, target, skillId)
+    local tpTable =
+    {
+        xi.mobSkill.TRICLIP_1,
+        xi.mobSkill.BACK_SWISH_1,
+        xi.mobSkill.MOW_1,
+        xi.mobSkill.FRIGHTFUL_ROAR_1,
+        xi.mobSkill.UNBLESSED_ARMOR,
+        xi.mobSkill.MORTAL_RAY_MINOTAUR,
+    }
+
+    return tpTable[math.randomInt(1, #tpTable)]
 end
 
 return entity

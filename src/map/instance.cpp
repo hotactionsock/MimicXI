@@ -19,13 +19,14 @@
 ===========================================================================
 */
 
+#include <atomic>
 #include <filesystem>
 #include <thread>
 
 #include "instance.h"
 
 #include "ai/ai_container.h"
-#include "entities/charentity.h"
+#include "entities/char_entity.h"
 #include "lua/luautils.h"
 #include "zone.h"
 
@@ -38,6 +39,10 @@ CInstance::CInstance(Scheduler& scheduler, MapConfig config, CZone* zone, uint32
 , m_startTime(timer::now())
 {
     TracyZoneScoped;
+
+    static std::atomic<uint32> nextRunId{ 1 };
+
+    runId_ = nextRunId.fetch_add(1, std::memory_order_relaxed);
 
     m_wipeTimer     = m_startTime;
     m_lastTimeCheck = m_startTime;
@@ -53,6 +58,11 @@ CInstance::~CInstance()
 uint16 CInstance::GetID() const
 {
     return m_instanceid;
+}
+
+auto CInstance::runId() const -> uint32
+{
+    return runId_;
 }
 
 uint32 CInstance::GetProgress() const
@@ -116,11 +126,11 @@ void CInstance::LoadInstance()
         const auto assaultPath = fmt::format("./scripts/assaults/{}/{}.lua", zone, name);
         if (std::filesystem::exists(assaultPath))
         {
-            luautils::CacheLuaObjectFromFile(assaultPath, true);
+            luautils::LoadLuaObjectFromFile(assaultPath, true);
         }
         else
         {
-            luautils::CacheLuaObjectFromFile(fmt::format("./scripts/zones/{}/instances/{}.lua", zone, name));
+            luautils::LoadLuaObjectFromFile(fmt::format("./scripts/zones/{}/instances/{}.lua", zone, name));
         }
     }
     else
@@ -249,9 +259,9 @@ void CInstance::CheckTime(timer::time_point tick)
     }
     if (m_lastTimeCheck + checkFrequency <= tick && !Failed())
     {
-        auto elapsedMs = static_cast<uint32>(timer::count_milliseconds(GetElapsedTime(tick)));
-        ShowDebug("CheckTime: firing OnInstanceTimeUpdate instanceid=%u elapsed=%u", m_instanceid, elapsedMs);
-        luautils::OnInstanceTimeUpdate(GetZone(), this, elapsedMs);
+        auto elapsedSeconds = static_cast<uint32>(timer::count_seconds(GetElapsedTime(tick)));
+        ShowDebug("CheckTime: firing OnInstanceTimeUpdate instanceid=%u elapsed=%u", m_instanceid, elapsedSeconds);
+        luautils::OnInstanceTimeUpdate(GetZone(), this, elapsedSeconds);
         ShowDebug("CheckTime: OnInstanceTimeUpdate complete instanceid=%u", m_instanceid);
         m_lastTimeCheck = tick;
     }

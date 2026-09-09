@@ -66,9 +66,7 @@ local function addGearPenalty(mob)
 
     -- Time penalty.
     if penalty == xi.nyzul.penalty.TIME then
-        local timeLimit = instance:getTimeLimit() * 60
-
-        instance:setTimeLimit(timeLimit - 60)
+        instance:setTimeLimit(instance:getTimeLimit() - 60)
 
         for _, players in pairs(chars) do
             players:messageSpecial(ID.text.MALFUNCTION)
@@ -101,7 +99,7 @@ local function addGearPenalty(mob)
 
         -- Pick a random pathos to apply from the available pathos table.
         if #availablePathos > 0 then -- Failsafe in case all 17 are applied. Unlikely, but just in case.
-            local randomEffect = availablePathos[math.random(1, #availablePathos)]
+            local randomEffect = availablePathos[math.randomInt(1, #availablePathos)]
 
             instance:setLocalVar('floorPathos', utils.mask.setBit(pathos, randomEffect, true))
             pathos = xi.nyzul.pathos[randomEffect]

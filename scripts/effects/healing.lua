@@ -2,6 +2,9 @@
 -- xi.effect.HEALING
 -- Activated through the /heal command
 -----------------------------------
+require('scripts/quests/adoulin/Dances_with_Luopans')
+-----------------------------------
+
 ---@type TEffect
 local effectObject = {}
 
@@ -53,10 +56,24 @@ effectObject.onEffectTick = function(target, effect)
             not target:hasStatusEffect(xi.effect.PLAGUE) and
             not target:hasStatusEffect(xi.effect.CURSE_II)
         then
+            local region = target:getCurrentRegion()
             local healHP = 0
-            if
-                target:getContinentID() == 1 and
-                target:hasStatusEffect(xi.effect.SIGNET)
+            local healMP = 12 + ((healtime - 2) * (1 + target:getMod(xi.mod.CLEAR_MIND))) + target:getMod(xi.mod.MPHEAL)
+
+            if target:isAutomaton() then
+                -- TODO: Check lower level Automatons
+                local mainLevel = target:getMainLvl()
+                local hpBase    = 10 + 3 * math.floor((mainLevel - 1) / 10)
+                local mpBase    = math.min(33, 9 + 3 * math.floor(mainLevel / 10))
+                local hpRate    = math.min(5, 1 + math.floor(target:getMaxHP() / 300))
+                local mpRate    = math.min(4, 1 + math.floor(target:getMaxMP() / 300))
+
+                target:addTP(xi.settings.main.HEALING_TP_CHANGE)
+                healHP = hpBase + (healtime - 2) * hpRate
+                healMP = mpBase + (healtime - 2) * mpRate
+            elseif
+                (region <= xi.region.LIMBUS and target:hasStatusEffect(xi.effect.SIGNET)) or
+                (region >= xi.region.RONFAURE_FRONT and region <= xi.region.VALDEAUNIA_FRONT and target:hasStatusEffect(xi.effect.SIGIL))
             then
                 healHP = 10 + (3 * math.floor(target:getMainLvl() / 10)) +
                     (healtime - 2) * (1 + math.floor(target:getMaxHP() / 300)) + target:getMod(xi.mod.HPHEAL)
@@ -77,7 +94,7 @@ effectObject.onEffectTick = function(target, effect)
 
             target:addHPLeaveSleeping(healHP)
             target:updateEnmityFromCure(target, healHP)
-            target:addMP(12 + ((healtime - 2) * (1 + target:getMod(xi.mod.CLEAR_MIND))) + target:getMod(xi.mod.MPHEAL))
+            target:addMP(healMP)
         end
     end
 end

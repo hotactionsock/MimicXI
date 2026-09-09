@@ -9,6 +9,8 @@ local zoneObject = {}
 zoneObject.onInitialize = function(zone)
     xi.conquest.setRegionalConquestOverseers(zone:getRegionID())
     xi.fate.onZoneInitialize(zone, zone:getID())
+
+    xi.expeditionaryForce.initZone(zone)
 end
 
 zoneObject.onConquestUpdate = function(zone, updatetype, influence, owner, ranking, isConquestAlliance)
@@ -53,29 +55,23 @@ zoneObject.onEventFinish = function(player, csid, option, npc)
 end
 
 zoneObject.onZoneWeatherChange = function(weather)
-    -- NM Dosetsu Tree only spawns during thunder weather
+    -- NM Dosetsu Tree spawn logic.
     local dosetsuTree = GetMobByID(ID.mob.DOSETSU_TREE)
-
     if not dosetsuTree then
         return
     end
 
-    if weather == xi.weather.THUNDER or weather == xi.weather.THUNDERSTORMS then
-        -- Spawn if respawn is up
-        if
-            not dosetsuTree:isSpawned() and
-            GetSystemTime() > dosetsuTree:getLocalVar('respawn')
-        then
-            xi.mob.updateNMSpawnPoint(dosetsuTree)
-            SpawnMob(ID.mob.DOSETSU_TREE)
-        end
-    else
-        if
-            dosetsuTree:isSpawned() and
-            not dosetsuTree:isEngaged()
-        then
-            DespawnMob(ID.mob.DOSETSU_TREE)
-        end
+    if dosetsuTree:isSpawned() then
+        return
+    end
+
+    if GetSystemTime() < dosetsuTree:getLocalVar('respawn') then
+        return
+    end
+
+    if xi.data.element.getWeatherElement(weather) == xi.element.THUNDER then
+        xi.mob.updateNMSpawnPoint(dosetsuTree)
+        SpawnMob(ID.mob.DOSETSU_TREE)
     end
 end
 

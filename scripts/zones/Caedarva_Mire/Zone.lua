@@ -7,7 +7,7 @@ local ID = zones[xi.zone.CAEDARVA_MIRE]
 local zoneObject = {}
 
 zoneObject.onInitialize = function(zone)
-    GetMobByID(ID.mob.KHIMAIRA):setRespawnTime(math.random(12, 36) * 3600) -- 12 to 36 hours after maintenance, in 1-hour increments
+    GetMobByID(ID.mob.KHIMAIRA):setRespawnTime(math.randomInt(12, 36) * 3600) -- 12 to 36 hours after maintenance, in 1-hour increments
 
     xi.helm.initZone(zone, xi.helmType.LOGGING)
     xi.darkRider.addHoofprints(zone)
@@ -92,10 +92,10 @@ zoneObject.onTriggerAreaEnter = function(player, triggerArea)
             not player:hasStatusEffect(xi.effect.MOUNTED) and
             not player:hasStatusEffect(xi.effect.WEIGHT)
         then
-            local random = math.random(1000)
+            local random = math.randomInt(1, 1000)
             for i = 1, 6 do
                 if random <= effectTable[i][1] then
-                    player:addStatusEffect(effectTable[i][2], { power = effectTable[i][3], duration = math.random(effectTable[i][4], effectTable[i][5]), origin = player })
+                    player:addStatusEffect(effectTable[i][2], { power = effectTable[i][3], duration = math.randomInt(effectTable[i][4], effectTable[i][5]), origin = player })
                     player:messageSpecial(effectTable[i][6])
                     break
                 end
@@ -137,6 +137,10 @@ zoneObject.onEventFinish = function(player, csid, option, npc)
     elseif csid == 130 then
         player:setPos(0, 0, 0, 0, 69)
     end
+end
+
+zoneObject.onZoneOut = function(player)
+    xi.helm.onZoneOut(player)
 end
 
 return zoneObject

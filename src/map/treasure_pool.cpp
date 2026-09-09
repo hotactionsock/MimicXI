@@ -29,7 +29,7 @@
 #include "packets/s2c/0x0d3_trophy_solution.h"
 
 #include "item_container.h"
-#include "recast_container.h"
+#include "items/transactions/item_claim.h"
 #include "treasure_pool.h"
 #include "utils/charutils.h"
 #include "utils/itemutils.h"
@@ -167,10 +167,10 @@ void CTreasurePool::delMember(CCharEntity* PChar)
 
 uint8 CTreasurePool::addItem(uint16 ItemID, CBaseEntity* PEntity, std::vector<std::pair<uint16, uint8>> augments)
 {
-    uint8             SlotID     = 0;
-    uint8             FreeSlotID = -1;
-    timer::time_point oldest     = timer::time_point::max();
-    const CItem*      PNewItem   = xi::items::lookup(ItemID);
+    uint8                    SlotID     = 0;
+    uint8                    FreeSlotID = -1;
+    Maybe<timer::time_point> oldest     = timer::time_point::max();
+    const CItem*             PNewItem   = xi::items::lookup(ItemID);
 
     if (!PNewItem)
     {
@@ -259,7 +259,7 @@ uint8 CTreasurePool::addItem(uint16 ItemID, CBaseEntity* PEntity, std::vector<st
 
     if (SlotID == 10)
     {
-        m_PoolItems[FreeSlotID].TimeStamp = timer::start_time;
+        m_PoolItems[FreeSlotID].TimeStamp = std::nullopt;
         checkTreasureItem(timer::now(), FreeSlotID);
     }
 
@@ -291,7 +291,7 @@ void CTreasurePool::updatePool(CCharEntity* PChar)
         return;
     }
 
-    if (PChar->status != STATUS_TYPE::DISAPPEAR)
+    if (PChar->status != xi::Status::Disappear)
     {
         for (auto& m_PoolItem : m_PoolItems)
         {
@@ -502,21 +502,27 @@ void CTreasurePool::checkTreasureItem(timer::time_point tick, uint8 SlotID)
         return;
     }
 
-    if ((tick - m_PoolItems[SlotID].TimeStamp) > treasure_livetime ||
+    if (!m_PoolItems[SlotID].TimeStamp.has_value() || (tick - *m_PoolItems[SlotID].TimeStamp) > treasure_livetime ||
         (memberCount() == 1 && m_Members[0]->getStorage(LOC_INVENTORY)->GetFreeSlotsCount() != 0) ||
         m_PoolItems[SlotID].Lotters.size() == memberCount())
     {
         // Award the item to a recipient, applying pre-rolled augments if present.
         auto awardItem = [this, SlotID](CCharEntity* recipient) -> bool
         {
+            auto transaction = ItemClaimTransaction::start(recipient);
+            if (!transaction)
+            {
+                return false;
+            }
+
             if (!m_PoolItems[SlotID].Augments.empty())
             {
-                CItem* PItem = itemutils::GetItem(m_PoolItems[SlotID].ID);
+                auto PItem = xi::items::spawn(m_PoolItems[SlotID].ID);
                 if (!PItem)
                 {
                     return false;
                 }
-                auto& aug        = PItem->exdata<Exdata::AugmentStandard>();
+                auto& aug          = PItem->exdata<Exdata::AugmentStandard>();
                 aug.AugmentKind    = Exdata::AugmentKindFlags::HasAugments;
                 aug.AugmentSubKind = Exdata::AugmentSubKindFlags::Standard;
                 const auto& srcAugs = m_PoolItems[SlotID].Augments;
@@ -525,9 +531,9 @@ void CTreasurePool::checkTreasureItem(timer::time_point tick, uint8 SlotID)
                     aug.Augments[i].Id    = srcAugs[i].first;
                     aug.Augments[i].Value = srcAugs[i].second;
                 }
-                return charutils::AddItem(recipient, LOC_INVENTORY, PItem, true) != ERROR_SLOTID;
+                return transaction->give(LOC_INVENTORY, std::move(PItem), Silence::Yes).has_value() && transaction->commit();
             }
-            return charutils::AddItem(recipient, LOC_INVENTORY, m_PoolItems[SlotID].ID, 1, true) != ERROR_SLOTID;
+            return transaction->give(LOC_INVENTORY, m_PoolItems[SlotID].ID, 1, Silence::Yes).has_value() && transaction->commit();
         };
 
         // Find item's highest lotter
@@ -608,7 +614,7 @@ void CTreasurePool::treasureWon(CCharEntity* winner, uint8 SlotID)
         return;
     }
 
-    m_PoolItems[SlotID].TimeStamp = timer::start_time;
+    m_PoolItems[SlotID].TimeStamp = std::nullopt;
 
     for (const auto& member : m_Members)
     {
@@ -629,7 +635,7 @@ void CTreasurePool::treasureError(CCharEntity* winner, uint8 SlotID)
         return;
     }
 
-    m_PoolItems[SlotID].TimeStamp = timer::start_time;
+    m_PoolItems[SlotID].TimeStamp = std::nullopt;
 
     for (const auto& member : m_Members)
     {
@@ -650,7 +656,7 @@ void CTreasurePool::treasureLost(uint8 SlotID)
         return;
     }
 
-    m_PoolItems[SlotID].TimeStamp = timer::start_time;
+    m_PoolItems[SlotID].TimeStamp = std::nullopt;
 
     for (const auto& member : m_Members)
     {

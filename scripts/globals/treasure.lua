@@ -425,20 +425,16 @@ local posTable =
     {
         [treasureType.COFFER] =
         {
-            {   28.477,  6.335,  145.925,  95 },
-            {  -62.707,  8.787,   80.017, 120 },
-            { -100.194,  7.716,   71.802,   5 },
-            {   26.121,  6.102,   95.937,  27 },
-            {   68.144,  6.428,   54.531, 180 },
-            {  108.235,  7.085,   26.143, 234 },
-            {  136.094, 10.600,   26.152, 139 },
-            {  176.461,  8.172,   65.105,  81 },
-            {  184.816,  5.867,  -52.454, 200 },
-            {  201.244,  8.791, -163.229,   0 },
-            {  260.650,  8.445,  -73.685,  66 },
-            {  215.152,  8.210,   16.315,  18 },
-            {  251.260,  5.078,   24.927,  42 },
-            {  251.809,  6.141,  -18.487,  12 },
+            { -105.721,  6.744,  100.482, 223 },
+            {  136.706, 10.572,   26.312, 128 },
+            {  260.714,  8.024,  -71.444,  63 },
+            {  251.268,  5.083,   24.970,  36 },
+            {  170.432,  8.381,   64.677, 180 },
+            {  -54.426,  6.755,  100.306, 158 },
+            {   28.477,  6.369,  145.925,  95 },
+            {   60.403,  6.748,   54.406, 224 },
+            {  200.186,  8.916, -161.830,  27 },
+            {  183.775,  5.902,  -52.989, 224 },
         },
     },
 
@@ -1244,8 +1240,8 @@ local lootTable =
     {
         [treasureType.CHEST] =
         {
-            { xi.item.NONE,         720 }, -- Gil
-            { xi.item.PHALANX_RING, 220 }, -- Item
+            { xi.item.NONE,         540 }, -- Gil
+            { xi.item.PHALANX_RING, 400 }, -- Item
             { xi.item.AMETRINE,      10 },
             { xi.item.GARNET,        10 },
             { xi.item.GOSHENITE,     10 },
@@ -1255,8 +1251,8 @@ local lootTable =
         },
         [treasureType.COFFER] =
         {
-            { xi.item.NONE,                      710 }, -- Gil
-            { xi.item.SCROLL_OF_MAGES_BALLAD_II, 210 }, -- Item
+            { xi.item.NONE,                      770 }, -- Gil
+            { xi.item.SCROLL_OF_MAGES_BALLAD_II, 150 }, -- Item
             { xi.item.AQUAMARINE,                 10 },
             { xi.item.CHRYSOBERYL,                10 },
             { xi.item.FLUORITE,                   10 },
@@ -1272,8 +1268,8 @@ local lootTable =
     {
         [treasureType.CHEST] =
         {
-            { xi.item.NONE,         720 }, -- Gil
-            { xi.item.PHALANX_RING, 220 }, -- Item
+            { xi.item.NONE,         540 }, -- Gil
+            { xi.item.PHALANX_RING, 400 }, -- Item
             { xi.item.GARNET,        10 },
             { xi.item.GOSHENITE,     10 },
             { xi.item.LIGHT_OPAL,    10 },
@@ -1455,8 +1451,9 @@ local lootTable =
     {
         [treasureType.CHEST] =
         {
-            { xi.item.NONE,         715 }, -- Gil
-            { xi.item.REPLICA_MAUL, 215 }, -- Item
+            { xi.item.NONE,         430 }, -- Gil
+            { xi.item.FROST_SHIELD, 400 }, -- Item
+            { xi.item.REPLICA_MAUL, 100 }, -- Item
             { xi.item.AMBER_STONE,   10 },
             { xi.item.AMETHYST,      10 },
             { xi.item.CLEAR_TOPAZ,   10 },
@@ -1471,8 +1468,8 @@ local lootTable =
     {
         [treasureType.CHEST] =
         {
-            { xi.item.NONE,       710 }, -- Gil
-            { xi.item.GIGANT_AXE, 210 }, -- Item
+            { xi.item.NONE,       520 }, -- Gil
+            { xi.item.GIGANT_AXE, 400 }, -- Item
             { xi.item.AMETRINE,    10 },
             { xi.item.GARNET,      10 },
             { xi.item.GOSHENITE,   10 },
@@ -1541,8 +1538,8 @@ local lootTable =
     {
         [treasureType.CHEST] =
         {
-            { xi.item.NONE,       710 }, -- Gil
-            { xi.item.LIFE_BELT,  210 }, -- Item
+            { xi.item.NONE,       420 }, -- Gil
+            { xi.item.LIFE_BELT,  500 }, -- Item
             { xi.item.AMETRINE,    10 },
             { xi.item.GARNET,      10 },
             { xi.item.GOSHENITE,   10 },
@@ -1616,7 +1613,7 @@ local function moveTreasure(npc, respawnTime)
     local zoneId         = npc:getZoneID()
     local containerType  = npcTable[npc:getName()]
     local positions      = posTable[zoneId][containerType]
-    local chosenPosition = positions[math.random(1, #positions)]
+    local chosenPosition = positions[math.randomInt(1, #positions)]
     local hideTime       = respawnTime or 1800
 
     npc:setLocalVar('opened', 1)
@@ -1666,7 +1663,7 @@ local function handleGilDistribution(player, treasureLevel)
     -- Calculate gil.
     local gilPerEntity = 0
     if #playersInZoneTable > 0 then
-        gilPerEntity = membersInZoneNumber * treasureLevel ^ 2 + membersInZoneNumber * treasureLevel * math.random(0, treasureLevel)
+        gilPerEntity = membersInZoneNumber * treasureLevel ^ 2 + membersInZoneNumber * treasureLevel * math.randomInt(0, treasureLevel)
         gilPerEntity = math.floor(gilPerEntity / #playersInZoneTable)
     end
 
@@ -1814,7 +1811,7 @@ xi.treasure.onTrade = function(player, npc, trade, bypassType, bypassReward)
     for i = 1, 4 do
         outcomeRate = outcomeRate + rateTable[i]
 
-        if math.random(1, 100) <= outcomeRate then
+        if math.randomInt(1, 100) <= outcomeRate then
             outcome = i
             break
         end
@@ -1955,7 +1952,7 @@ xi.treasure.onTrade = function(player, npc, trade, bypassType, bypassReward)
     -----------------------------------
     -- Handle regular loot.
     -----------------------------------
-    local roll   = math.random(1, 1000)
+    local roll   = math.randomInt(1, 1000)
     local itemId = xi.item.NONE
     local weight = 0
     for i = 1, #itemTable do
@@ -2006,9 +2003,9 @@ xi.treasure.onTrade = function(player, npc, trade, bypassType, bypassReward)
 
     -- Handle illusion timers.
     if containerType == treasureType.CHEST then
-        npc:setLocalVar('illusionCooldown', GetSystemTime() + math.random(xi.settings.main.CHEST_MIN_ILLUSION_TIME, xi.settings.main.CHEST_MAX_ILLUSION_TIME))
+        npc:setLocalVar('illusionCooldown', GetSystemTime() + math.randomInt(xi.settings.main.CHEST_MIN_ILLUSION_TIME, xi.settings.main.CHEST_MAX_ILLUSION_TIME))
     else
-        npc:setLocalVar('illusionCooldown', GetSystemTime() + math.random(xi.settings.main.COFFER_MIN_ILLUSION_TIME, xi.settings.main.COFFER_MAX_ILLUSION_TIME))
+        npc:setLocalVar('illusionCooldown', GetSystemTime() + math.randomInt(xi.settings.main.COFFER_MIN_ILLUSION_TIME, xi.settings.main.COFFER_MAX_ILLUSION_TIME))
     end
 
     return reward

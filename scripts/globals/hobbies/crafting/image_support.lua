@@ -70,7 +70,7 @@ local function advancedImageSupport(player, effectId)
     if effectId == xi.effect.FISHING_IMAGERY then
         player:addStatusEffect(effectId, { power = 2, duration = 7200, origin = player })
     else
-        player:addStatusEffect(effectId, { power = 3, duration = 480, origin = player, subType = 10 })
+        player:addStatusEffect(effectId, { power = 3, duration = 480, origin = player, subPower = 10 })
     end
 end
 
@@ -98,7 +98,7 @@ xi.crafting.oldImageSupportOnTrigger = function(player, npc)
 
     -- Calculate effect Duration.
     if player:hasStatusEffect(effectId) then
-        imageDuration = player:getStatusEffect(effectId):getDuration()
+        imageDuration = math.floor(player:getStatusEffect(effectId):getDuration() / 1000)
     end
 
     -- Event handles everything with correct params.
@@ -201,7 +201,7 @@ xi.crafting.ahtUhrganImageSupportOnTrigger = function(player, npc)
 
     -- Calculate image support duration.
     if player:hasStatusEffect(effectId) then
-        imageDuration = player:getStatusEffect(effectId):getDuration()
+        imageDuration = math.floor(player:getStatusEffect(effectId):getDuration() / 1000)
     end
 
     -- Event handles everything with correct params.

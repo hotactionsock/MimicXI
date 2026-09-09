@@ -21,29 +21,28 @@
 
 #pragma once
 
-#include "cbasetypes.h"
-#include "logging_context.h"
-#include "macros.h"
-#include "tracy.h"
+#include <common/tracy.h>
 
+#include <cstdint>
+#include <iterator>
 #include <string>
 #include <string_view>
+#include <vector>
 
-#include <fmt/args.h>
-#include <fmt/chrono.h>
-#include <fmt/core.h>
 #include <fmt/format.h>
 #include <fmt/printf.h>
-#include <fmt/ranges.h>
 
 #include <spdlog/spdlog.h>
 
+//
 // Forward declaration
+//
+
 namespace settings
 {
 
 template <typename T>
-T get(std::string);
+T get(std::string_view);
 
 } // namespace settings
 
@@ -55,8 +54,51 @@ void ShutDown();
 
 void SetPattern(const std::string& str);
 
-void AddBacktrace(const std::string& str);
+// One breadcrumb slot; `file` points at a __FILE__ literal, so it is stored rather than copied.
+struct BacktraceEntry
+{
+    const char*   file{ nullptr };
+    int           line{ 0 };
+    std::uint64_t sequence{ 0 };
+    std::string   message;
+};
+
+namespace detail
+{
+
+// Separate rings, so a busy tick cannot evict the warnings and errors you want after a crash.
+void pushTraceEntry(const char* file, int line, const char* message, std::size_t length);
+void pushEventEntry(const char* file, int line, const char* message, std::size_t length);
+
+// Reused across calls so formatting a breadcrumb does not allocate.
+auto scratchBuffer() -> fmt::memory_buffer&;
+
+} // namespace detail
+
+template <typename... Args>
+void AddTrace(const char* file, int line, fmt::format_string<Args...> formatStr, Args&&... args)
+{
+    auto& scratch = detail::scratchBuffer();
+    scratch.clear();
+    fmt::format_to(std::back_inserter(scratch), formatStr, std::forward<Args>(args)...);
+    detail::pushTraceEntry(file, line, scratch.data(), scratch.size());
+}
+
+void AddTraceString(const char* file, int line, std::string_view message);
+void AddBacktrace(const char* file, int line, std::string_view message);
+
+// Both rings merged into sequence order, oldest first, rendered as "file:line: message".
 auto GetBacktrace() -> std::vector<std::string>;
+
+// Returns the logger registered under `name` ("debug", "info", "error", ...).
+// Resolved during InitializeLog and read lock-free afterward, so emit paths avoid
+// spdlog's registry mutex on every log call. Non-owning; valid until the next refresh.
+auto loggerFor(std::string_view name) -> spdlog::logger*;
+
+// Re-resolves the lock-free loggerFor cache from the spdlog registry. MUST be called after
+// anything that drops/re-registers loggers (e.g. spdlog::shutdown + re-register), otherwise
+// loggerFor would return dangling pointers. Call when no other thread is logging.
+void RefreshLoggerCache();
 
 void tapWarningOrError();
 
@@ -114,7 +156,7 @@ std::string asStringFromUntrustedSource(const T* ptr, size_t max_size)
 #define DECLARE_FORMAT_AS_UNDERLYING(type) \
 inline auto format_as(type v) \
 { \
-    return fmt::underlying(v); \
+    return std::to_underlying(v); \
 }
 
 #define STATEMENT_CLOSE \
@@ -146,32 +188,32 @@ inline auto format_as(type v) \
 #define LOGGER_EMIT(LOG_TYPE_MACRO, LogStringName, File, Line, MsgVar)                                  \
     if (!::logging::detail::gJsonMode)                                                                  \
     {                                                                                                   \
-        LOG_TYPE_MACRO(spdlog::get(LogStringName), MsgVar);                                             \
+        LOG_TYPE_MACRO(::logging::loggerFor(LogStringName), MsgVar);                                    \
     }                                                                                                   \
     else                                                                                                \
     {                                                                                                   \
         fmt::memory_buffer _jbuf;                                                                       \
         ::logging::detail::renderJsonLine(_jbuf, { LogStringName, File, Line, __FUNCTION__, MsgVar }); \
-        LOG_TYPE_MACRO(spdlog::get(LogStringName), std::string_view{ _jbuf.data(), _jbuf.size() });     \
+        LOG_TYPE_MACRO(::logging::loggerFor(LogStringName), std::string_view{ _jbuf.data(), _jbuf.size() }); \
     }                                                                                                   \
     STATEMENT_CLOSE
 
 #define LOGGER_BODY(LOG_TYPE_MACRO, LogStringName, File, Line, ...) \
-    BEGIN_CATCH_HANDLER const auto _msgStr = fmt::sprintf(__VA_ARGS__); TracyZoneScoped; TracyMessageStr(_msgStr); logging::AddBacktrace(_msgStr); LOGGER_EMIT(LOG_TYPE_MACRO, LogStringName, File, Line, _msgStr); END_CATCH_HANDLER(File, Line)
+    BEGIN_CATCH_HANDLER const auto _msgStr = fmt::sprintf(__VA_ARGS__); TracyZoneScoped; TracyMessageStr(_msgStr); logging::AddBacktrace(File, Line, _msgStr); LOGGER_EMIT(LOG_TYPE_MACRO, LogStringName, File, Line, _msgStr); END_CATCH_HANDLER(File, Line)
 
 #define LOGGER_BODY_CONDITIONAL(LOG_TYPE_MACRO, LogStringName, LogConditionStr, File, Line, ...) \
-    BEGIN_CATCH_HANDLER const auto _msgStr = fmt::sprintf(__VA_ARGS__); TracyZoneScoped; TracyMessageStr(_msgStr); logging::AddBacktrace(_msgStr); if (settings::get<bool>(LogConditionStr)) { LOGGER_EMIT(LOG_TYPE_MACRO, LogStringName, File, Line, _msgStr); } END_CATCH_HANDLER(File, Line)
+    BEGIN_CATCH_HANDLER if (settings::get<bool>(LogConditionStr)) { const auto _msgStr = fmt::sprintf(__VA_ARGS__); TracyZoneScoped; TracyMessageStr(_msgStr); logging::AddBacktrace(File, Line, _msgStr); LOGGER_EMIT(LOG_TYPE_MACRO, LogStringName, File, Line, _msgStr); } END_CATCH_HANDLER(File, Line)
 
 #define LOGGER_BODY_FMT(LOG_TYPE_MACRO, LogStringName, File, Line, ...) \
-    BEGIN_CATCH_HANDLER const auto _msgStr = fmt::format(__VA_ARGS__); TracyZoneScoped; TracyMessageStr(_msgStr); logging::AddBacktrace(_msgStr); LOGGER_EMIT(LOG_TYPE_MACRO, LogStringName, File, Line, _msgStr); END_CATCH_HANDLER(File, Line)
+    BEGIN_CATCH_HANDLER const auto _msgStr = fmt::format(__VA_ARGS__); TracyZoneScoped; TracyMessageStr(_msgStr); logging::AddBacktrace(File, Line, _msgStr); LOGGER_EMIT(LOG_TYPE_MACRO, LogStringName, File, Line, _msgStr); END_CATCH_HANDLER(File, Line)
 
 #define LOGGER_BODY_CONDITIONAL_FMT(LOG_TYPE_MACRO, LogStringName, LogConditionStr, File, Line, ...) \
-    BEGIN_CATCH_HANDLER const auto _msgStr = fmt::format(__VA_ARGS__); TracyZoneScoped; TracyMessageStr(_msgStr); logging::AddBacktrace(_msgStr); if (settings::get<bool>(LogConditionStr)) { LOGGER_EMIT(LOG_TYPE_MACRO, LogStringName, File, Line, _msgStr); } END_CATCH_HANDLER(File, Line)
+    BEGIN_CATCH_HANDLER if (settings::get<bool>(LogConditionStr)) { const auto _msgStr = fmt::format(__VA_ARGS__); TracyZoneScoped; TracyMessageStr(_msgStr); logging::AddBacktrace(File, Line, _msgStr); LOGGER_EMIT(LOG_TYPE_MACRO, LogStringName, File, Line, _msgStr); } END_CATCH_HANDLER(File, Line)
 
 // Regular Loggers
 // NOTE 1: Trace is not for logging to screen or file; it's for filling the backtrace buffer and reporting to Tracy.
 // NOTE 2: It isn't possible (or a good idea) to allow the user to disable TRACE, ERROR, or CRITICAL logging.
-#define ShowTrace(...)    logging::AddBacktrace(fmt::format("{}:{}: {}", __FILE__, __LINE__, fmt::sprintf(__VA_ARGS__)))
+#define ShowTrace(...)    logging::AddTraceString(__FILE__, __LINE__, fmt::sprintf(__VA_ARGS__))
 #define ShowDebug(...)    LOGGER_BODY_CONDITIONAL(SPDLOG_LOGGER_DEBUG, "debug", "logging.LOG_DEBUG", __FILE__, __LINE__, __VA_ARGS__)
 #define ShowInfo(...)     LOGGER_BODY_CONDITIONAL(SPDLOG_LOGGER_INFO, "info", "logging.LOG_INFO", __FILE__, __LINE__, __VA_ARGS__)
 #define ShowWarning(...)  LOGGER_BODY_CONDITIONAL(SPDLOG_LOGGER_WARN, "warn", "logging.LOG_WARNING", __FILE__, __LINE__, __VA_ARGS__); logging::tapWarningOrError()
@@ -180,7 +222,7 @@ inline auto format_as(type v) \
 #define ShowCritical(...) LOGGER_BODY(SPDLOG_LOGGER_CRITICAL, "critical", __FILE__, __LINE__, __VA_ARGS__); logging::tapWarningOrError()
 
 // Regular Loggers fmt variants
-#define ShowTraceFmt(...)    logging::AddBacktrace(fmt::format("{}:{}: {}", __FILE__, __LINE__, fmt::format(__VA_ARGS__)))
+#define ShowTraceFmt(...)    logging::AddTrace(__FILE__, __LINE__, __VA_ARGS__)
 #define ShowDebugFmt(...)    LOGGER_BODY_CONDITIONAL_FMT(SPDLOG_LOGGER_DEBUG, "debug", "logging.LOG_DEBUG", __FILE__, __LINE__, __VA_ARGS__)
 #define ShowInfoFmt(...)     LOGGER_BODY_CONDITIONAL_FMT(SPDLOG_LOGGER_INFO, "info", "logging.LOG_INFO", __FILE__, __LINE__, __VA_ARGS__)
 #define ShowWarningFmt(...)  LOGGER_BODY_CONDITIONAL_FMT(SPDLOG_LOGGER_WARN, "warn", "logging.LOG_WARNING", __FILE__, __LINE__, __VA_ARGS__); logging::tapWarningOrError()

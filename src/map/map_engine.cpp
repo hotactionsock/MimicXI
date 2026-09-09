@@ -21,13 +21,9 @@
 
 #include "map_engine.h"
 
-#include "common/blowfish.h"
-#include "common/console_service.h"
-#include "common/database.h"
 #include "common/debug.h"
 #include "common/ipp.h"
 #include "common/logging.h"
-#include "common/macros.h"
 #include "common/settings.h"
 #include "common/timer.h"
 #include "common/utils.h"
@@ -39,16 +35,17 @@
 #include "daily_system.h"
 #include "ipc_client.h"
 #include "job_points.h"
-#include "latent_effect_container.h"
 #include "map_networking.h"
 #include "map_statistics.h"
 #include "mob_spell_list.h"
 #include "monstrosity.h"
+#include "persist_batch.h"
 #include "roe.h"
 #include "spell.h"
 #include "status_effect_container.h"
 #include "time_server.h"
-#include "transport.h"
+#include "transports/elevator_handler.h"
+#include "transports/ship_handler.h"
 #include "zone.h"
 #include "zone_entities.h"
 
@@ -74,9 +71,7 @@
 #include "utils/trustutils.h"
 #include "utils/zoneutils.h"
 
-#include <cstdio>
 #include <cstdlib>
-#include <cstring>
 #include <thread>
 
 #ifdef _WIN32
@@ -199,13 +194,13 @@ auto MapEngine::init() -> Task<void>
     charutils::LoadExpTable();
     traits::LoadTraitsList();
     effects::LoadEffectsParameters();
+    mobutils::LoadSpeciesData();
     battleutils::LoadSkillTable();
     meritNameSpace::LoadMeritsList();
     ability::LoadAbilitiesList();
     battleutils::LoadWeaponSkillsList();
     battleutils::LoadMobSkillsList();
     battleutils::LoadPetSkillsList();
-    battleutils::LoadSkillChainDamageModifiers();
     petutils::LoadPetList();
     trustutils::LoadTrustList();
     mobutils::LoadSqlModifiers();
@@ -221,7 +216,7 @@ auto MapEngine::init() -> Task<void>
 
     if (!config_.lazyZones)
     {
-        CTransportHandler::getInstance()->InitializeTransport(mapIPP);
+        ShipHandler::getInstance()->InitializeShips();
     }
 
     fishingutils::InitializeFishingSystem();
@@ -260,9 +255,24 @@ auto MapEngine::init() -> Task<void>
                 }
             });
 
+        transportToken_ = scheduler_.intervalOnMainThread(
+            kTransportTickInterval,
+            []()
+            {
+                ShipHandler::getInstance()->tick();
+                ElevatorHandler::getInstance()->tick();
+            });
+
         persistVolatileServerVarsToken_ = scheduler_.intervalOnMainThread(kPersistVolatileServerVarsInterval, serverutils::PersistVolatileServerVars);
         pumpIPCToken_                   = scheduler_.intervalOnMainThread(kIPCPumpInterval, message::handle_incoming);
         flushStatisticsToken_           = scheduler_.intervalOnMainThread(kTimeServerTickInterval, std::bind(&MapNetworking::flushStatistics, networking_.get()));
+
+        persistSweepToken_ = scheduler_.intervalOnMainThread(
+            kPersistSweepInterval,
+            [this]() -> Task<void>
+            {
+                co_await persistSweep();
+            });
     }
 
     zoneutils::TOTDChange(vanadiel_time::get_totd()); // This tells the zones to spawn stuff based on time of day conditions (such as undead at night)
@@ -291,6 +301,14 @@ auto MapEngine::init() -> Task<void>
     {
         scheduler_.postToMainThread(watchdogUpdater());
         scheduler_.postToWorkerThread(watchdogWatcher());
+    }
+
+    // If this was a "--rebuild-navmeshes" run, we're using xi_map more like a tool. So, bail
+    // out now.
+    if (config_.rebuildNavmeshes)
+    {
+        ShowInfo("Navmeshes rebuilt, exiting...");
+        std::exit(0);
     }
 
 #ifdef TRACY_ENABLE
@@ -341,32 +359,22 @@ auto MapEngine::watchdogWatcher() -> Task<void>
         {
             if (debug::isRunningUnderDebugger())
             {
-                ShowCritical("!!! INACTIVITY WATCHDOG HAS TRIGGERED !!!");
+                ShowCriticalFmt("!!! INACTIVITY WATCHDOG HAS TRIGGERED !!!");
                 ShowCriticalFmt("Process main tick has taken {}ms or more.", period);
-                ShowCritical("Detaching watchdog thread, it will not fire again until restart.");
+                ShowCriticalFmt("Detaching watchdog thread, it will not fire again until restart.");
                 break;
             }
             else if (!settings::get<bool>("main.DISABLE_INACTIVITY_WATCHDOG"))
             {
-                std::string outputStr = "!!! INACTIVITY WATCHDOG HAS TRIGGERED !!!\n\n";
-
-                outputStr += fmt::format("Process main tick has taken {}ms or more.\n", period);
-                outputStr += fmt::format("Backtrace Messages:\n\n");
-
-                const auto backtrace = logging::GetBacktrace();
-                for (const auto& line : backtrace)
-                {
-                    outputStr += fmt::format("    {}\n", line);
-                }
-
-                outputStr += "\nKilling Process!!!\n";
-
-                ShowCritical(outputStr);
+                ShowCriticalFmt("!!! INACTIVITY WATCHDOG HAS TRIGGERED !!!");
+                ShowCriticalFmt("Process main tick has taken {}ms or more.", period);
+                ShowCriticalFmt("Killing Process!!!");
 
                 // Allow some time for logging to flush
                 std::this_thread::sleep_for(200ms);
 
-                throw std::runtime_error("Watchdog thread time exceeded. Killing process.");
+                // Terminate directly rather than throwing.
+                crash();
             }
         }
 
@@ -392,6 +400,35 @@ void MapEngine::garbageCollect() const
     TracyZoneScoped;
 
     luautils::garbageCollectFull();
+}
+
+auto MapEngine::persistSweep() -> Task<void>
+{
+    TracyZoneScoped;
+
+    PersistBatch batch;
+
+    zoneutils::ForEachZone(
+        [&](CZone* PZone)
+        {
+            PZone->ForEachChar(
+                [&](CCharEntity* PChar)
+                {
+                    // mid-teardown characters are written by persist::flush instead
+                    if (PChar->status == xi::Status::Disappear || PChar->status == xi::Status::Shutdown)
+                    {
+                        return;
+                    }
+
+                    batch.add(PChar);
+                });
+        });
+
+    co_await scheduler_.spawnOnWorkerThread(
+        [batch = std::move(batch)]() mutable
+        {
+            batch.write();
+        });
 }
 
 void MapEngine::onStats(std::vector<std::string>& inputs) const
@@ -450,7 +487,7 @@ auto MapEngine::statistics() const -> MapStatistics&
     return *mapStatistics_;
 }
 
-auto MapEngine::zones() const -> std::map<uint16, CZone*>&
+auto MapEngine::zones() const -> std::map<xi::ZoneId, CZone*>&
 {
     return g_PZoneList;
 }

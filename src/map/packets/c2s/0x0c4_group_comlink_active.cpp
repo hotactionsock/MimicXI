@@ -21,7 +21,7 @@
 
 #include "0x0c4_group_comlink_active.h"
 
-#include "entities/charentity.h"
+#include "entities/char_entity.h"
 #include "enums/item_lockflg.h"
 #include "enums/msg_std.h"
 #include "item_container.h"
@@ -134,18 +134,15 @@ const auto equipLinkshell = [](CCharEntity* PChar, CItemLinkshell* PItemLinkshel
         {
             linkshell::DelOnlineMember(PChar, POldItemLinkshell);
 
-            POldItemLinkshell->setSubType(ITEM_UNLOCKED);
             PChar->pushPacket<GP_SERV_COMMAND_ITEM_LIST>(POldItemLinkshell, ItemLockFlg::Normal);
         }
     }
 
     // Now equip the new linkshell
     linkshell::AddOnlineMember(PChar, PItemLinkshell, data.LinkshellId);
-    PItemLinkshell->setSubType(ITEM_LOCKED);
     if (!PChar->bindEquip(SLOT_BACK + data.LinkshellId, PItemLinkshell))
     {
         linkshell::DelOnlineMember(PChar, PItemLinkshell);
-        PItemLinkshell->setSubType(ITEM_UNLOCKED);
         return;
     }
 
@@ -165,7 +162,6 @@ const auto equipLinkshell = [](CCharEntity* PChar, CItemLinkshell* PItemLinkshel
 const auto unequipLinkshell = [](CCharEntity* PChar, CItemLinkshell* PItemLinkshell, const GP_CLI_COMMAND_GROUP_COMLINK_ACTIVE& data)
 {
     linkshell::DelOnlineMember(PChar, PItemLinkshell);
-    PItemLinkshell->setSubType(ITEM_UNLOCKED);
     PChar->clearEquip(SLOT_BACK + data.LinkshellId);
     if (data.LinkshellId == 1)
     {
@@ -191,7 +187,8 @@ auto GP_CLI_COMMAND_GROUP_COMLINK_ACTIVE::validate(MapSession* PSession, const C
         .range("b", this->b, 0, 15)
         .mustEqual(this->a, 15, "a not 15")
         .oneOf<GP_CLI_COMMAND_GROUP_COMLINK_ACTIVE_ACTIVEFLG>(this->ActiveFlg)
-        .oneOf<GP_CLI_COMMAND_GROUP_COMLINK_ACTIVE_LINKSHELLID>(this->LinkshellId);
+        .oneOf<GP_CLI_COMMAND_GROUP_COMLINK_ACTIVE_LINKSHELLID>(this->LinkshellId)
+        .isValidContainer("Category", this->Category);
 }
 
 void GP_CLI_COMMAND_GROUP_COMLINK_ACTIVE::process(MapSession* PSession, CCharEntity* PChar) const

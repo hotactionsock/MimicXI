@@ -81,7 +81,7 @@ zoneObject.onTriggerAreaEnter = function(player, triggerArea)
             gasponia:openDoor(3)
 
             if not player:hasStatusEffect(xi.effect.POISON) then
-                player:addStatusEffect(xi.effect.POISON, { power = 15, duration = math.random(30, 60), origin = player })
+                player:addStatusEffect(xi.effect.POISON, { power = 15, duration = math.randomInt(30, 60), origin = player })
                 player:messageSpecial(ID.text.GASPONIA_POISON)
             end
         end
@@ -95,13 +95,6 @@ zoneObject.onTriggerAreaLeave = function(player, triggerArea)
 end
 
 zoneObject.onGameHour = function()
-    -- Citipati is a night-only lottery NM (20:00-04:00); block its spawn during the day.
-    if VanadielHour() >= 4 and VanadielHour() < 20 then
-        DisallowRespawn(ID.mob.CITIPATI, true)
-    else
-        DisallowRespawn(ID.mob.CITIPATI, false)
-    end
-
     --[[
         the hard-coded id that was here was wrong. there are 22 miasmas in attohwa chasm
         starting at ID.npc.MIASMA_OFFSET. some are supposed to toggle open, but need retail test
@@ -113,6 +106,10 @@ zoneObject.onEventUpdate = function(player, csid, option, npc)
 end
 
 zoneObject.onEventFinish = function(player, csid, option, npc)
+end
+
+zoneObject.onZoneOut = function(player)
+    xi.helm.onZoneOut(player)
 end
 
 return zoneObject

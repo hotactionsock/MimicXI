@@ -92,13 +92,7 @@ local function handleAssaultFinish(player, currentAssault)
         player:messageText(player, ID.text.NYZUL_FAIL)
         player:delAssault(currentAssault)
 
-    -- Players still receive 100 consolation assault points on fail
     else
-        local area = xi.assault.missionToArea[currentAssault]
-        if area then
-            player:addAssaultPoint(area, 100)
-        end
-
         player:messageText(player, ID.text.ASSAULT_FAILED)
         player:delAssault(currentAssault)
     end
@@ -110,6 +104,7 @@ local function handleAssaultFinish(player, currentAssault)
     end
 
     player:setCharVar('AssaultComplete', 0)
+    player:setCharVar('AssaultFailed', 0)
     player:setCharVar('assaultEntered', 0)
     player:setCharVar('Assault_Armband', 0)
 
@@ -193,8 +188,7 @@ local function replenishFromTimer(player, tagStock, maxTagStock, idTagPeriod)
         player:setCharVar('tagDrawTime', 0)
     end
 
-    local vanaEpoch     = 1009810800 -- Vanadiel epoch time base for restock timer
-    local allTagsTimeCS = tagDrawTime > 0 and (tagDrawTime - vanaEpoch) or 0 -- Timestamp passed to event to display the restock timer
+    local allTagsTimeCS = tagDrawTime > 0 and (tagDrawTime - xi.time.VANADIEL_EPOCH) or 0 -- Timestamp passed to event to display the restock timer
 
     return tagStock, allTagsTimeCS
 end
@@ -225,7 +219,8 @@ xi.assault.onRytaalTrigger = function(player, npc)
     if
         currentAssault ~= 0 and
         (player:getCharVar('assaultEntered') ~= 0 or
-        player:getCharVar('AssaultComplete') == 1)
+        player:getCharVar('AssaultComplete') == 1 or
+        player:getCharVar('AssaultFailed') == 1)
     then
         handleAssaultFinish(player, currentAssault)
 

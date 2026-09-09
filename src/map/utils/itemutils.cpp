@@ -23,17 +23,17 @@
 
 #include "map_engine.h"
 
-#include <algorithm>
-#include <array>
-#include <cstring>
-#include <map>
-#include <unordered_map>
-
 #include "common/database.h"
 #include "common/logging.h"
 #include "common/sjis.h"
 
-#include "entities/battleentity.h"
+#include <common/types/hash_map.h>
+
+#include <algorithm>
+#include <array>
+#include <map>
+
+#include "entities/battle_entity.h"
 #include "enums/item_types.h"
 #include "items/item_flowerpot.h"
 #include "items/item_furnishing.h"
@@ -45,16 +45,18 @@
 
 namespace
 {
+
 std::array<std::unique_ptr<CItem>, MAX_ITEMID> itemTemplates;
 std::unique_ptr<CItemWeapon>                   unarmedItem;
 std::unique_ptr<CItemWeapon>                   unarmedH2HItem;
+
 } // namespace
 
 std::array<DropList_t*, MAX_DROPID> g_pDropList; // global array of monster droplist items
 std::array<LootList_t*, MAX_LOOTID> g_pLootList; // global array of BCNM lootlist items
 
 // Translation lookup: language -> (name -> {item id, translated name})
-std::map<GP_CLI_COMMAND_TRANSLATE_INDEX, std::unordered_map<std::string, std::pair<uint16, std::string>>> g_TranslateMap;
+std::map<GP_CLI_COMMAND_TRANSLATE_INDEX, HashMap<std::string, std::pair<uint16, std::string>>> g_TranslateMap;
 
 DropItem_t::DropItem_t(uint8 DropType, uint16 ItemID, uint16 DropRate)
 : DropType(DropType)
@@ -84,12 +86,12 @@ DropGroup_t::DropGroup_t(uint16 GroupRate, bool hasFixedRate)
 {
 }
 
-LootContainer::LootContainer(DropList_t* dropList)
+LootContainer::LootContainer(const DropList_t* dropList)
 : dropList(dropList)
 {
 }
 
-void LootContainer::ForEachGroup(const std::function<void(const DropGroup_t&)>& func)
+void LootContainer::ForEachGroup(FnRef<void(const DropGroup_t&)> func)
 {
     for (const auto& group : dropList->Groups)
     {
@@ -102,7 +104,7 @@ void LootContainer::ForEachGroup(const std::function<void(const DropGroup_t&)>& 
     }
 }
 
-void LootContainer::ForEachItem(const std::function<void(const DropItem_t&)>& func)
+void LootContainer::ForEachItem(FnRef<void(const DropItem_t&)> func)
 {
     for (const auto& item : dropList->Items)
     {
@@ -117,6 +119,39 @@ void LootContainer::ForEachItem(const std::function<void(const DropItem_t&)>& fu
 
 namespace xi::items
 {
+
+// Built on first use from the loaded templates.
+auto lookupIdByName(const std::string_view name) -> Maybe<uint16>
+{
+    static const auto byName = []
+    {
+        HashMap<std::string, uint16> names;
+        for (const auto& item : itemTemplates)
+        {
+            if (!item)
+            {
+                continue;
+            }
+
+            const auto [entry, inserted] = names.try_emplace(item->getName(), item->getID());
+            if (!inserted)
+            {
+                // Some items have duplicate names (PUP attachments)
+                // This gets the lowest ID until the names get properly sorted
+                entry->second = std::min(entry->second, item->getID());
+            }
+        }
+        return names;
+    }();
+
+    const auto entry = byName.find(std::string{ name });
+    if (entry == byName.end())
+    {
+        return std::nullopt;
+    }
+
+    return entry->second;
+}
 
 auto lookup(const uint16 itemId) -> const CItem*
 {
@@ -323,7 +358,7 @@ void LoadItemList()
 
                 // If this is a PUP attachment, load the appropriate script as well
                 auto attachmentFile = fmt::format("./scripts/actions/abilities/pets/attachments/{}.lua", PItem->getName());
-                luautils::CacheLuaObjectFromFile(attachmentFile);
+                luautils::LoadLuaObjectFromFile(attachmentFile);
             }
 
             if (PItem->isType(ITEM_EQUIPMENT))
@@ -347,7 +382,7 @@ void LoadItemList()
 
             if (PItem->isType(ITEM_WEAPON))
             {
-                static_cast<CItemWeapon*>(PItem)->setSkillType(rset->get<uint8>("skill"));
+                static_cast<CItemWeapon*>(PItem)->setSkillType(rset->get<xi::SkillType>("skill"));
                 static_cast<CItemWeapon*>(PItem)->setSubSkillType(rset->get<uint8>("subskill"));
                 static_cast<CItemWeapon*>(PItem)->setILvlSkill(rset->get<uint16>("ilvl_skill"));
                 static_cast<CItemWeapon*>(PItem)->setILvlParry(rset->get<uint16>("ilvl_parry"));
@@ -355,13 +390,13 @@ void LoadItemList()
                 static_cast<CItemWeapon*>(PItem)->setBaseDelay(rset->get<uint16>("delay"));
                 static_cast<CItemWeapon*>(PItem)->setDelay(rset->get<uint16>("delay"));
                 static_cast<CItemWeapon*>(PItem)->setDamage(rset->get<uint16>("dmg"));
-                static_cast<CItemWeapon*>(PItem)->setDmgType(rset->get<DAMAGE_TYPE>("dmgType"));
+                static_cast<CItemWeapon*>(PItem)->setDmgType(rset->get<xi::DamageType>("dmgType"));
                 static_cast<CItemWeapon*>(PItem)->setMaxHit(rset->get<uint8>("hit"));
                 static_cast<CItemWeapon*>(PItem)->setTotalUnlockPointsNeeded(rset->get<uint16>("unlock_points"));
 
                 int        dmg   = rset->get<uint16>("dmg");
                 int        delay = rset->get<uint16>("delay");
-                const bool isH2H = static_cast<CItemWeapon*>(PItem)->getSkillType() == SKILL_HAND_TO_HAND;
+                const bool isH2H = static_cast<CItemWeapon*>(PItem)->getSkillType() == xi::SkillType::HandToHand;
 
                 if ((dmg > 0 || isH2H) && delay > 0) // avoid division by zero for items not yet implemented. Zero dmg h2h weapons don't actually have zero dmg for the purposes of DPS.
                 {
@@ -418,7 +453,7 @@ void LoadItemList()
             }
 
             auto filename = fmt::format("./scripts/items/{}.lua", PItem->getName());
-            luautils::CacheLuaObjectFromFile(filename);
+            luautils::LoadLuaObjectFromFile(filename);
         }
     }
 
@@ -429,7 +464,7 @@ void LoadItemList()
     FOR_DB_MULTIPLE_RESULTS(rset)
     {
         const auto ItemID = rset->get<uint16>("itemId");
-        const auto modID  = rset->get<Mod>("modId");
+        const auto modID  = rset->get<xi::Mod>("modId");
         const auto value  = rset->get<int16>("value");
 
         if (auto* tpl = itemTemplates[ItemID].get(); tpl != nullptr && tpl->isType(ITEM_EQUIPMENT))
@@ -445,7 +480,7 @@ void LoadItemList()
     FOR_DB_MULTIPLE_RESULTS(rset)
     {
         const auto ItemID  = rset->get<uint16>("itemId");
-        const auto modID   = rset->get<Mod>("modId");
+        const auto modID   = rset->get<xi::Mod>("modId");
         const auto value   = rset->get<int16>("value");
         const auto petType = rset->get<PetModType>("petType");
 
@@ -462,9 +497,9 @@ void LoadItemList()
     FOR_DB_MULTIPLE_RESULTS(rset)
     {
         const auto ItemID      = rset->get<uint16>("itemId");
-        const auto modID       = rset->get<Mod>("modId");
+        const auto modID       = rset->get<xi::Mod>("modId");
         const auto value       = rset->get<int16>("value");
-        const auto latentId    = rset->get<LATENT>("latentId");
+        const auto latentId    = rset->get<xi::Latent>("latentId");
         const auto latentParam = rset->get<uint16>("latentParam");
 
         if (auto* tpl = itemTemplates[ItemID].get(); tpl != nullptr && tpl->isType(ITEM_EQUIPMENT))
@@ -535,13 +570,13 @@ void Initialize()
     LoadDropList();
 
     unarmedItem = std::make_unique<CItemWeapon>(0);
-    unarmedItem->setDmgType(DAMAGE_TYPE::NONE);
-    unarmedItem->setSkillType(SKILL_NONE);
+    unarmedItem->setDmgType(xi::DamageType::None);
+    unarmedItem->setSkillType(xi::SkillType::None);
     unarmedItem->setDamage(3);
 
     unarmedH2HItem = std::make_unique<CItemWeapon>(0);
-    unarmedH2HItem->setDmgType(DAMAGE_TYPE::HTH);
-    unarmedH2HItem->setSkillType(SKILL_HAND_TO_HAND);
+    unarmedH2HItem->setDmgType(xi::DamageType::HandToHand);
+    unarmedH2HItem->setSkillType(xi::SkillType::HandToHand);
     unarmedH2HItem->setDamage(0);
 
     // load magian trial data AFTER items
@@ -578,7 +613,7 @@ void FreeItemList()
 }
 
 auto TranslateItemName(GP_CLI_COMMAND_TRANSLATE_INDEX fromLang, GP_CLI_COMMAND_TRANSLATE_INDEX toLang, const std::string& name)
-    -> std::optional<std::pair<uint16, std::string>>
+    -> Maybe<std::pair<uint16, std::string>>
 {
     std::ignore = toLang; // With only EN/JP, the "from" map already stores the other language's translation.
 

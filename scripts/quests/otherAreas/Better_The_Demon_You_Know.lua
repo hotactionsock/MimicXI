@@ -12,7 +12,8 @@ local quest = Quest:new(xi.questLog.OTHER_AREAS, xi.quest.id.otherAreas.BETTER_T
 
 quest.reward =
 {
-    item = xi.item.GOBLIN_GRENADE,
+    item  = xi.item.GOBLIN_GRENADE,
+    title = xi.title.APOSTATE_FOR_HIRE,
 }
 
 quest.sections =
@@ -53,11 +54,11 @@ quest.sections =
                     if progress == 0 then
                         return quest:event(21, 0, xi.item.DEMON_PEN):setPriority(101) -- Reminder to get Demon Pen
                     elseif progress == 1 then
-                            if GetSystemTime() >= waitTime + 60 then
-                                return quest:progressCutscene(24) -- Go to Castle Zvahl Baileys
-                            else
-                                return quest:event(23):setPriority(101) -- Wait Longer
-                            end
+                        if GetSystemTime() >= waitTime then
+                            return quest:progressCutscene(24) -- Go to Castle Zvahl Baileys
+                        else
+                            return quest:event(23):setPriority(101) -- Wait Longer
+                        end
                     elseif progress == 2 then
                         return quest:event(25):setPriority(101) -- Reminder to go to castle Zvahl Baileys
                     elseif progress == 3 then

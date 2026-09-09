@@ -21,29 +21,26 @@
 
 #include "lua_simulation.h"
 
-#include "common/lua.h"
+#include "common/settings.h"
+#include "common/utils.h"
 #include "common/vana_time.h"
-#include "enums/packet_c2s.h"
 #include "enums/tick_type.h"
 #include "helpers/lua_client_entity_pair_packets.h"
-#include "in_memory_sink.h"
 #include "lua_client_entity_pair.h"
-#include "lua_spy.h"
 #include "lua_test_entity.h"
 #include "map/ai/ai_container.h"
 #include "map/conquest_data.h"
 #include "map/conquest_system.h"
-#include "map/entities/baseentity.h"
-#include "map/entities/mobentity.h"
-#include "map/lua/lua_baseentity.h"
+#include "map/entities/base_entity.h"
+#include "map/entities/char_entity.h"
+#include "map/entities/mob_entity.h"
+#include "map/lua/lua_base_entity.h"
 #include "map/lua/luautils.h"
 #include "map/map_constants.h"
 #include "map/map_engine.h"
 #include "map/map_networking.h"
-#include "map/packets/c2s/0x00a_login.h"
 #include "map/spawn_slot.h"
 #include "map/time_server.h"
-#include "map/utils/charutils.h"
 #include "map/utils/zoneutils.h"
 #include "map/zone.h"
 #include "map/zone_entities.h"
@@ -52,11 +49,22 @@
 #include "test_common.h"
 
 #include <algorithm>
-#include <array>
 #include <ranges>
 
 namespace
 {
+
+// settings::set only writes the C++ map, while Lua reads xi.settings directly, so both have to move together
+void applySetting(const std::string& key, const settings::SettingsVariant& value)
+{
+    value.visit([&](const auto& held)
+                {
+                    settings::set(key, held);
+
+                    const auto parts                                              = split(key, ".");
+                    lua["xi"]["settings"][to_lower(parts[0])][to_upper(parts[1])] = held;
+                });
+}
 
 auto durationToVanaTime = [](const uint8 vanaHour, const uint8 vanaMinute) -> earth_time::duration
 {
@@ -140,6 +148,78 @@ void CLuaSimulation::skipTime(uint32 seconds) const
 }
 
 /************************************************************************
+ *  Function: getSetting()
+ *  Purpose : Reads a server setting by its fully qualified key.
+ *  Example : local retain = sim:getSetting('map.EXP_RETAIN')
+ ************************************************************************/
+
+auto CLuaSimulation::getSetting(const std::string& key) const -> sol::object
+{
+    const auto entry = settings::settingsMap.find(key);
+    if (entry == settings::settingsMap.end())
+    {
+        TestError("Unknown setting: {}", key);
+        return sol::lua_nil;
+    }
+
+    sol::object out = sol::lua_nil;
+    entry->second.visit([&](const auto& held)
+                        {
+                            out = sol::make_object(lua, held);
+                        });
+
+    return out;
+}
+
+/************************************************************************
+ *  Function: setSetting()
+ *  Purpose : Overrides a server setting for the duration of the test.
+ *  Example : sim:setSetting('map.EXP_RETAIN', 0)
+ *  Notes   : The engine puts the original value back after each test, the
+ *            same way it restores stubs and spies.
+ ************************************************************************/
+
+void CLuaSimulation::setSetting(const std::string& key, const sol::object& value)
+{
+    const auto entry = settings::settingsMap.find(key);
+    if (entry == settings::settingsMap.end())
+    {
+        TestError("Unknown setting: {}", key);
+        return;
+    }
+
+    // Only the first override of a test records the value to go back to
+    settingOverrides_.try_emplace(key, entry->second);
+
+    if (value.is<bool>())
+    {
+        applySetting(key, value.as<bool>());
+    }
+    else if (value.is<double>())
+    {
+        applySetting(key, value.as<double>());
+    }
+    else if (value.is<std::string>())
+    {
+        applySetting(key, value.as<std::string>());
+    }
+    else
+    {
+        TestError("Unsupported value type for setting: {}", key);
+    }
+}
+
+void CLuaSimulation::restoreSettings()
+{
+    for (const auto& [key, value] : settingOverrides_)
+    {
+        applySetting(key, value);
+    }
+
+    settingOverrides_.clear();
+}
+
+/************************************************************************
  *  Function: setVanaTime()
  *  Purpose : Sets to specific Vana'diel time.
  *  Example : sim:setVanaTime(6, 0) -- set to 6:00am
@@ -206,6 +286,20 @@ void CLuaSimulation::skipToNextVanaDay() const
 }
 
 /************************************************************************
+ *  Function: skipVanaDays()
+ *  Purpose : Advances Vana'diel time by whole days.
+ *  Example : sim:skipVanaDays(30)
+ *  Notes   : Vana'diel time only (like setVanaTime); does not tick.
+ ************************************************************************/
+
+void CLuaSimulation::skipVanaDays(const uint32 days) const
+{
+    ShowInfoFmt("Skipping {} Vana'diel days", days);
+
+    earth_time::add_offset(std::chrono::duration_cast<earth_time::duration>(xi::vanadiel_clock::days(days)));
+}
+
+/************************************************************************
  *  Function: setRegionOwner()
  *  Purpose : Sets a specific region to be controlled by given nation.
  *  Example : sim:setRegionOwner(xi.region.XXX, xi.nation.YYY)
@@ -266,6 +360,23 @@ void CLuaSimulation::setSeed(const uint64 seed) const
 void CLuaSimulation::seed() const
 {
     xirand::seed();
+}
+
+/************************************************************************
+ *  Function: resetWeather()
+ *  Purpose : Clears weather set by a previous test.
+ *  Notes   : Zone weather is global and automated weather is disabled under
+ *            test, so without this a setWeather() call leaks into every
+ *            later test in that zone.
+ ************************************************************************/
+
+void CLuaSimulation::resetWeather() const
+{
+    zoneutils::ForEachZone(
+        [](CZone* PZone)
+        {
+            PZone->SetWeather(xi::Weather::None);
+        });
 }
 
 // Moves all clients session clock and process pending packets
@@ -460,7 +571,7 @@ void CLuaSimulation::tick(const Maybe<TickType> boundary) const
             const auto timePoint = timer::now();
             for (const auto* PZone : g_PZoneList | std::views::values)
             {
-                PZone->spawnHandler()->Tick(timePoint);
+                PZone->spawnHandler().Tick(timePoint);
             }
         }
         break;
@@ -480,7 +591,8 @@ auto CLuaSimulation::spawnPlayer(sol::optional<sol::table> params) -> CLuaClient
 {
     TracyZoneScoped;
 
-    uint16               zoneId = ZONE_GM_HOME;
+    auto                 zoneId = xi::ZoneId::GmHome;
+    auto                 race   = CharRace::HumeMale;
     sol::optional<uint8> job;
     sol::optional<uint8> level;
     bool                 isNewPlayer = false;
@@ -489,7 +601,8 @@ auto CLuaSimulation::spawnPlayer(sol::optional<sol::table> params) -> CLuaClient
     {
         const sol::table& paramTable = params.value();
 
-        zoneId      = paramTable.get_or("zone", ZONE_GM_HOME);
+        zoneId      = static_cast<xi::ZoneId>(paramTable.get_or("zone", static_cast<uint16>(xi::ZoneId::GmHome)));
+        race        = static_cast<CharRace>(paramTable.get_or("race", static_cast<uint8>(CharRace::HumeMale)));
         job         = paramTable.get<sol::optional<uint8>>("job");
         level       = paramTable.get<sol::optional<uint8>>("level");
         isNewPlayer = paramTable.get_or("new", false);
@@ -497,7 +610,7 @@ auto CLuaSimulation::spawnPlayer(sol::optional<sol::table> params) -> CLuaClient
 
     ShowInfoFmt("Spawning player in zone: {}", zoneId);
 
-    auto testChar = TestChar::create(zoneId);
+    auto testChar = TestChar::create(zoneId, race);
 
     if (!testChar)
     {
@@ -573,7 +686,7 @@ void CLuaSimulation::setSetupContext(const bool inSetup)
  *  Notes   : Throws an error if slot not found.
  ************************************************************************/
 
-auto CLuaSimulation::getSpawnSlot(const ZONEID zoneId, const uint32 slotId) const -> sol::table
+auto CLuaSimulation::getSpawnSlot(const xi::ZoneId zoneId, const uint32 slotId) const -> sol::table
 {
     auto result = lua.create_table();
 
@@ -584,14 +697,14 @@ auto CLuaSimulation::getSpawnSlot(const ZONEID zoneId, const uint32 slotId) cons
         return result;
     }
 
-    const auto slotIt = PZone->m_spawnSlots.find(slotId);
-    if (slotIt == PZone->m_spawnSlots.end() || !slotIt->second)
+    const auto* slot = PZone->spawnHandler().getSpawnSlot(slotId);
+    if (!slot)
     {
         TestError("Spawn slot {} not found in zone {}", slotId, static_cast<uint16_t>(zoneId));
         return result;
     }
 
-    const auto& entries = slotIt->second->GetEntries();
+    const auto& entries = slot->GetEntries();
     auto        i       = 1;
     for (const auto& [mob, spawnChance] : entries)
     {
@@ -615,8 +728,11 @@ void CLuaSimulation::Register()
     SOL_REGISTER("setVanaTime", CLuaSimulation::setVanaTime);
     SOL_REGISTER("setVanaDay", CLuaSimulation::setVanaDay);
     SOL_REGISTER("skipToNextVanaDay", CLuaSimulation::skipToNextVanaDay);
+    SOL_REGISTER("skipVanaDays", CLuaSimulation::skipVanaDays);
     SOL_REGISTER("setRegionOwner", CLuaSimulation::setRegionOwner);
     SOL_REGISTER("setSeed", CLuaSimulation::setSeed);
+    SOL_REGISTER("getSetting", CLuaSimulation::getSetting);
+    SOL_REGISTER("setSetting", CLuaSimulation::setSetting);
     SOL_REGISTER("seed", CLuaSimulation::seed);
     SOL_REGISTER("spawnPlayer", CLuaSimulation::spawnPlayer);
     SOL_REGISTER("getSpawnSlot", CLuaSimulation::getSpawnSlot);

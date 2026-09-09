@@ -23,11 +23,10 @@
 
 #include "gardenutils.h"
 
-#include "common/database.h"
 #include "common/logging.h"
 #include "common/vana_time.h"
 
-#include "entities/charentity.h"
+#include "entities/char_entity.h"
 #include "item_container.h"
 #include "items/item_flowerpot.h"
 #include "packets/s2c/0x020_item_attr.h"
@@ -42,6 +41,7 @@ constexpr uint32 VANATIME_FOR_WILT_STAGE    = 65535 * VANADAY_SECONDS;
 std::map<uint32, GardenResultList_t> g_pGardenResultMap; // global map of gardening results
 
 GardenResult_t::GardenResult_t() = default;
+
 GardenResult_t::GardenResult_t(uint16 ItemID, uint8 MinQuantity, uint8 MaxQuantity, uint8 Weight)
 : ItemID(ItemID)
 , MinQuantity(MinQuantity)
@@ -102,7 +102,7 @@ void UpdateGardening(CCharEntity* PChar, SendPacket sendPacket)
                 {
                     uint32 stageDuration        = GetStageDuration(PPotItem);
                     uint32 daysSinceStageChange = std::floor<uint32>(std::max<float>(0.f, static_cast<float>(vanatime - PPotItem->getStageTimestamp()) / static_cast<float>(VANADAY_SECONDS)));
-                    uint32 wiltTime             = VANADAYS_TO_WILT + PChar->getMod(Mod::GARDENING_WILT_BONUS);
+                    uint32 wiltTime             = VANADAYS_TO_WILT + PChar->getMod(xi::Mod::GARDENING_WILT_BONUS);
                     bool   wasExamined          = PPotItem->wasExamined();
                     if ((!wasExamined && (stageDuration > wiltTime || (stageDuration + daysSinceStageChange > wiltTime))) ||
                         daysSinceStageChange > VANADAYS_TO_GUARANTEE_WILT + wiltTime)

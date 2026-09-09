@@ -17,7 +17,7 @@ entity.onMobInitialize = function(mob)
     mob:setMobMod(xi.mobMod.IDLE_DESPAWN, 300)
     mob:setMobMod(xi.mobMod.GIL_MIN, 18000)
     mob:setMobMod(xi.mobMod.GIL_MAX, 18000)
-    mob:setMobMod(xi.mobMod.WEAPON_BONUS, 8)
+    mob:setMobMod(xi.mobMod.BASE_DAMAGE_MODIFIER, 8)
     mob:setMod(xi.mod.SILENCE_RES_RANK, 11)
     mob:setMod(xi.mod.DOUBLE_ATTACK, 10)
     mob:setMod(xi.mod.COUNTER, 20)
@@ -26,9 +26,16 @@ entity.onMobInitialize = function(mob)
 end
 
 entity.onMobSpawn = function(mob)
-    mob:messageText(mob, ID.text.SKY_GOD_OFFSET + 5) -- Spawn message
-    GetNPCByID(ID.npc.PORTAL_OFFSET + 5):setAnimation(xi.anim.CLOSE_DOOR)
+    mob:setBaseSpeed(27)
+    GetNPCByID(ID.npc.PORTAL_OFFSET + 5):setAnimation(xi.animation.CLOSE_DOOR)
     mob:setLocalVar('defaultATT', mob:getMod(xi.mod.ATT))
+
+    -- Add slight delay to allow Genbu to load in before the message is sent
+    mob:timer(300, function(mobArg)
+        if mobArg then
+            mobArg:messageText(mobArg, ID.text.SKY_GOD_OFFSET + 5)
+        end
+    end)
 end
 
 entity.onMobFight = function(mob, target)
@@ -64,7 +71,7 @@ entity.onMobDeath = function(mob, player, optParams)
 end
 
 entity.onMobDespawn = function(mob)
-    GetNPCByID(ID.npc.PORTAL_OFFSET + 5):setAnimation(xi.anim.OPEN_DOOR)
+    GetNPCByID(ID.npc.PORTAL_OFFSET + 5):setAnimation(xi.animation.OPEN_DOOR)
 end
 
 return entity

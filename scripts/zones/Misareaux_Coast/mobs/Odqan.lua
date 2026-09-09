@@ -7,10 +7,24 @@ local ID = zones[xi.zone.MISAREAUX_COAST]
 ---@type TMobEntity
 local entity = {}
 
-entity.onMobRoam = function(mob)
-    local weather = mob:getWeather()
+entity.onMobInitialize = function(mob)
+    mob:addListener('WEATHER_CHANGE', 'ODQAN_WEATHER_CHANGE', function(mobArg, weather, element)
+        if not mobArg:isSpawned() then
+            return
+        end
 
-    if weather ~= xi.weather.FOG then
+        if mobArg:isEngaged() then
+            return
+        end
+
+        if weather ~= xi.weather.FOG then
+            DespawnMob(mobArg:getID())
+        end
+    end)
+end
+
+entity.onMobDisengage = function(mob)
+    if mob:getWeather() ~= xi.weather.FOG then
         DespawnMob(mob:getID())
     end
 end
@@ -24,9 +38,9 @@ entity.onMobDespawn = function(mob)
     local odqan2 = GetMobByID(ID.mob.ODQAN[2])
 
     if odqan1 and odqan2 then
-        local respawnTime = math.random(7200, 18000) -- 2 to 5 hours
+        local respawnTime = math.randomInt(7200, 18000) -- 2 to 5 hours
 
-        if math.random(1, 2) == 1 then
+        if math.randomInt(1, 2) == 1 then
             odqan1:setLocalVar('canSpawn', 0)
             odqan2:setLocalVar('canSpawn', 1)
             odqan2:setRespawnTime(respawnTime)

@@ -21,107 +21,182 @@
 
 #pragma once
 
+#include <cstddef>
 #include <memory>
 #include <mutex>
+#include <stdexcept>
+#include <utility>
+#include <vector>
 
 // https://gist.github.com/edwintcloud/d547a4f9ccaf7245b06f0e8782acefaa
+//
+// Fixed-capacity, thread-safe ring buffer. Capacity must be a power of two so the
+// hot enqueue path can wrap indices with a cheap mask instead of a modulo.
 template <class T>
 class CircularBuffer final
 {
-private:
-    std::unique_ptr<T[]> buffer;
-
-    std::size_t head = 0;
-    std::size_t tail = 0;
-    std::size_t max_size;
-    bool        full = false;
-    T           empty_item;
-
-    std::recursive_mutex mutex;
-
 public:
-    CircularBuffer(std::size_t max_size)
-    : buffer(std::unique_ptr<T[]>(new T[max_size]))
-    , max_size(max_size)
-    {
-    }
+    explicit CircularBuffer(std::size_t capacity);
 
-    void enqueue(const T& item)
-    {
-        std::lock_guard lock(mutex);
+    auto enqueue(const T& item) -> void;
+    auto enqueue(T&& item) -> void;
 
-        buffer[tail] = item;
+    // Writes in place, so each slot keeps its capacity; assigning over it would free that.
+    template <class WriteFn>
+    auto emplace(WriteFn&& write) -> void;
 
-        if (full)
-        {
-            head = (head + 1) % max_size;
-        }
+    // Oldest first. Non-destructive, so the slots keep their capacity.
+    auto snapshot() -> std::vector<T>;
 
-        tail = (tail + 1) % max_size;
+    auto isEmpty() -> bool;
+    auto isFull() -> bool;
+    auto size() -> std::size_t;
 
-        full = tail == head;
-    }
+private:
+    // Unlocked; callers must already hold `mutex_`.
+    auto isEmptyUnlocked() const -> bool;
+    auto sizeUnlocked() const -> std::size_t;
 
-    T dequeue()
-    {
-        std::lock_guard lock(mutex);
+    // Capacity is a power of two, so wrapping is a single AND rather than a modulo.
+    auto advance(std::size_t index) const -> std::size_t;
 
-        if (is_empty())
-        {
-            throw std::runtime_error("buffer is empty");
-        }
+    // Unlocked; callers must already hold `mutex_`. Marks the slot at tail_ as written.
+    auto commitUnlocked() -> void;
 
-        T item = buffer[head];
+    std::unique_ptr<T[]> buffer_;
 
-        buffer[head] = empty_item;
+    std::size_t head_{ 0 };
+    std::size_t tail_{ 0 };
+    std::size_t capacity_{ 0 };
+    std::size_t mask_{ 0 };
+    bool        full_{ false };
 
-        head = (head + 1) % max_size;
-
-        full = false;
-
-        return item;
-    }
-
-    T front()
-    {
-        std::lock_guard lock(mutex);
-
-        if (is_empty())
-        {
-            throw std::runtime_error("buffer is empty");
-        }
-
-        return buffer[head];
-    }
-
-    bool is_empty()
-    {
-        std::lock_guard lock(mutex);
-
-        return (!full && (head == tail));
-    }
-
-    bool is_full()
-    {
-        std::lock_guard lock(mutex);
-
-        return full;
-    }
-
-    std::size_t size()
-    {
-        std::lock_guard lock(mutex);
-
-        if (full)
-        {
-            return max_size;
-        }
-
-        if (tail >= head)
-        {
-            return tail - head;
-        }
-
-        return max_size - head + tail;
-    }
+    std::mutex mutex_;
 };
+
+template <class T>
+CircularBuffer<T>::CircularBuffer(std::size_t capacity)
+: buffer_(std::make_unique<T[]>(capacity))
+, capacity_(capacity)
+, mask_(capacity - 1)
+{
+    if (capacity == 0 || (capacity & (capacity - 1)) != 0)
+    {
+        throw std::invalid_argument("CircularBuffer capacity must be a power of two");
+    }
+}
+
+template <class T>
+auto CircularBuffer<T>::isEmptyUnlocked() const -> bool
+{
+    return !full_ && head_ == tail_;
+}
+
+template <class T>
+auto CircularBuffer<T>::sizeUnlocked() const -> std::size_t
+{
+    if (full_)
+    {
+        return capacity_;
+    }
+
+    if (tail_ >= head_)
+    {
+        return tail_ - head_;
+    }
+
+    return capacity_ - head_ + tail_;
+}
+
+template <class T>
+auto CircularBuffer<T>::advance(std::size_t index) const -> std::size_t
+{
+    return (index + 1) & mask_;
+}
+
+template <class T>
+auto CircularBuffer<T>::commitUnlocked() -> void
+{
+    if (full_)
+    {
+        head_ = advance(head_);
+    }
+
+    tail_ = advance(tail_);
+    full_ = tail_ == head_;
+}
+
+template <class T>
+auto CircularBuffer<T>::enqueue(const T& item) -> void
+{
+    const std::lock_guard lock(mutex_);
+
+    buffer_[tail_] = item;
+    commitUnlocked();
+}
+
+template <class T>
+auto CircularBuffer<T>::enqueue(T&& item) -> void
+{
+    const std::lock_guard lock(mutex_);
+
+    buffer_[tail_] = std::move(item);
+    commitUnlocked();
+}
+
+template <class T>
+template <class WriteFn>
+auto CircularBuffer<T>::emplace(WriteFn&& write) -> void
+{
+    const std::lock_guard lock(mutex_);
+
+    write(buffer_[tail_]);
+    commitUnlocked();
+}
+
+template <class T>
+auto CircularBuffer<T>::snapshot() -> std::vector<T>
+{
+    const std::lock_guard lock(mutex_);
+
+    std::vector<T> items;
+    if (isEmptyUnlocked())
+    {
+        return items;
+    }
+
+    items.reserve(sizeUnlocked());
+
+    std::size_t index = head_;
+    do
+    {
+        items.push_back(buffer_[index]);
+        index = advance(index);
+    } while (index != tail_);
+
+    return items;
+}
+
+template <class T>
+auto CircularBuffer<T>::isEmpty() -> bool
+{
+    const std::lock_guard lock(mutex_);
+
+    return isEmptyUnlocked();
+}
+
+template <class T>
+auto CircularBuffer<T>::isFull() -> bool
+{
+    const std::lock_guard lock(mutex_);
+
+    return full_;
+}
+
+template <class T>
+auto CircularBuffer<T>::size() -> std::size_t
+{
+    const std::lock_guard lock(mutex_);
+
+    return sizeUnlocked();
+}

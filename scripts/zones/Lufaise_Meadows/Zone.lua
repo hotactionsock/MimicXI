@@ -9,7 +9,7 @@ local zoneObject = {}
 zoneObject.onInitialize = function(zone)
     zone:registerCuboidTriggerArea(1, 179, -26, 327, 219, -18, 347)
 
-    SetServerVariable('realPadfoot', math.random(1, 5))
+    SetServerVariable('realPadfoot', math.randomInt(1, 5))
     for _, v in pairs(ID.mob.PADFOOT) do
         SpawnMob(v)
     end
@@ -58,6 +58,10 @@ zoneObject.onEventUpdate = function(player, csid, option, npc)
 end
 
 zoneObject.onEventFinish = function(player, csid, option, npc)
+end
+
+zoneObject.onZoneOut = function(player)
+    xi.helm.onZoneOut(player)
 end
 
 return zoneObject

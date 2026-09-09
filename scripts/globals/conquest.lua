@@ -22,32 +22,208 @@ local conquestConstants =
 }
 
 -----------------------------------
--- (LOCAL) expeditionary forces
--- TODO: implement this menu
+-- (GLOBAL) Signet
 -----------------------------------
---[[
-local exForceMenuData =
-{
-    0x20006, ZULK_EF, 103, 0x000040, 20, xi.ki.ZULKHEIM_EF_INSIGNIA,
-    0x20007, NORV_EF, 104, 0x000080, 25, xi.ki.NORVALLEN_EF_INSIGNIA,
-    0x20009, DERF_EF, 109, 0x000200, 25, xi.ki.DERFLAND_EF_INSIGNIA,
-    0x2000B, KOLS_EF, 118, 0x000800, 20, xi.ki.KOLSHUSHU_EF_INSIGNIA,
-    0x2000C, ARAG_EF, 119, 0x001000, 25, xi.ki.ARAGONEU_EF_INSIGNIA,
-    0x2000D, FAUR_EF, 111, 0x002000, 35, xi.ki.FAUREGANDI_EF_INSIGNIA,
-    0x2000E, VALD_EF, 112, 0x004000, 40, xi.ki.VALDEAUNIA_EF_INSIGNIA,
-    0x2000F, QUFI_EF, 126, 0x008000, 25, xi.ki.QUFIM_EF_INSIGNIA,
-    0x20010, LITE_EF, 121, 0x010000, 35, xi.ki.LITELOR_EF_INSIGNIA,
-    0x20011, KUZO_EF, 114, 0x020000, 40, xi.ki.KUZOTZ_EF_INSIGNIA,
-    0x20012, VOLL_EF, 113, 0x040000, 65, xi.ki.VOLLBOW_EF_INSIGNIA,
-    0x20013, ELLO_EF, 123, 0x080000, 35, xi.ki.ELSHIMO_LOWLANDS_EF_INSIGNIA,
-    0x20014, ELUP_EF, 124, 0x100000, 45, xi.ki.ELSHIMO_UPLANDS_EF_INSIGNIA
-}
-]]--
-local function getExForceAvailable(player, guardNation)
-    return 0
+
+-- Bestow the nation's Signet.
+xi.conquest.bestowSignet = function(player, pNation, pRank, mOffset)
+    local duration = (pRank + GetNationRank(pNation) + 3) * 3600
+
+    player:delStatusEffectsByFlag(xi.effectFlag.INFLUENCE, true)
+    player:addStatusEffect(xi.effect.SIGNET, { duration = duration, origin = player })
+    player:messageSpecial(mOffset + 1) -- 'You've received your nation's Signet!'
+
+    if player:getEminenceProgress(3367) then
+        xi.roe.onRecordTrigger(player, 3367) -- Complete Weekly Signet, brb objective.  This might be able to move to a status effect trigger
+    end
 end
 
+-----------------------------------
+-- (LOCAL) Expeditionary Forces
+-----------------------------------
+
+-- Keep in this order as it is necessary to mimic retail during the removal of the key items.
+local exForceMenuData =
+{
+    [xi.region.ZULKHEIM        ] = { option = 0x20006, zone = xi.zone.VALKURM_DUNES,          menuBit = 0x000040, lvl = 20, ki = xi.ki.ZULKHEIM_EF_INSIGNIA         },
+    [xi.region.NORVALLEN       ] = { option = 0x20007, zone = xi.zone.JUGNER_FOREST,          menuBit = 0x000080, lvl = 25, ki = xi.ki.NORVALLEN_EF_INSIGNIA        },
+    [xi.region.DERFLAND        ] = { option = 0x20009, zone = xi.zone.PASHHOW_MARSHLANDS,     menuBit = 0x000200, lvl = 25, ki = xi.ki.DERFLAND_EF_INSIGNIA         },
+    [xi.region.KOLSHUSHU       ] = { option = 0x2000B, zone = xi.zone.BUBURIMU_PENINSULA,     menuBit = 0x000800, lvl = 20, ki = xi.ki.KOLSHUSHU_EF_INSIGNIA        },
+    [xi.region.ARAGONEU        ] = { option = 0x2000C, zone = xi.zone.MERIPHATAUD_MOUNTAINS,  menuBit = 0x001000, lvl = 25, ki = xi.ki.ARAGONEU_EF_INSIGNIA         },
+    [xi.region.FAUREGANDI      ] = { option = 0x2000D, zone = xi.zone.BEAUCEDINE_GLACIER,     menuBit = 0x002000, lvl = 35, ki = xi.ki.FAUREGANDI_EF_INSIGNIA       },
+    [xi.region.VALDEAUNIA      ] = { option = 0x2000E, zone = xi.zone.XARCABARD,              menuBit = 0x004000, lvl = 40, ki = xi.ki.VALDEAUNIA_EF_INSIGNIA       },
+    [xi.region.QUFIMISLAND     ] = { option = 0x2000F, zone = xi.zone.QUFIM_ISLAND,           menuBit = 0x008000, lvl = 25, ki = xi.ki.QUFIM_EF_INSIGNIA            },
+    [xi.region.LITELOR         ] = { option = 0x20010, zone = xi.zone.THE_SANCTUARY_OF_ZITAH, menuBit = 0x010000, lvl = 35, ki = xi.ki.LITELOR_EF_INSIGNIA          },
+    [xi.region.KUZOTZ          ] = { option = 0x20011, zone = xi.zone.EASTERN_ALTEPA_DESERT,  menuBit = 0x020000, lvl = 40, ki = xi.ki.KUZOTZ_EF_INSIGNIA           },
+    [xi.region.VOLLBOW         ] = { option = 0x20012, zone = xi.zone.CAPE_TERIGGAN,          menuBit = 0x040000, lvl = 65, ki = xi.ki.VOLLBOW_EF_INSIGNIA          },
+    [xi.region.ELSHIMO_LOWLANDS] = { option = 0x20013, zone = xi.zone.YUHTUNGA_JUNGLE,        menuBit = 0x080000, lvl = 35, ki = xi.ki.ELSHIMO_LOWLANDS_EF_INSIGNIA },
+    [xi.region.ELSHIMO_UPLANDS ] = { option = 0x20014, zone = xi.zone.YHOATOR_JUNGLE,         menuBit = 0x100000, lvl = 45, ki = xi.ki.ELSHIMO_UPLANDS_EF_INSIGNIA  },
+}
+
+local exForceGateGlyphTable =
+{
+    -- [overseerNpcName] = glyphItemId
+    ['Crying_Wind_IM'  ] = xi.item.BASTOK_MINES_GLYPH,
+    ['Rabid_Wolf_IM'   ] = xi.item.BASTOK_MARKETS_GLYPH,
+    ['Flying_Axe_IM'   ] = xi.item.PORT_BASTOK_GLYPH,
+    ['Achantere_TK'    ] = xi.item.NORTH_SANDORIA_GLYPH,
+    ['Aravoge_TK'      ] = xi.item.WEST_SANDORIA_GLYPH,
+    ['Arpevion_TK'     ] = xi.item.EAST_SANDORIA_GLYPH,
+    ['Harara_WW'       ] = xi.item.WINDURST_WOODS_GLYPH,
+    ['Milma-Hapilma_WW'] = xi.item.PORT_WINDURST_GLYPH,
+    ['Puroiko-Maiko_WW'] = xi.item.WINDURST_WATERS_GLYPH,
+}
+
+local exForceCityGlyphTable =
+{
+    -- [nation] = that nation's three glyphs
+    [xi.nation.SANDORIA] = { xi.item.NORTH_SANDORIA_GLYPH, xi.item.WEST_SANDORIA_GLYPH,  xi.item.EAST_SANDORIA_GLYPH   },
+    [xi.nation.BASTOK  ] = { xi.item.BASTOK_MINES_GLYPH,   xi.item.BASTOK_MARKETS_GLYPH, xi.item.PORT_BASTOK_GLYPH     },
+    [xi.nation.WINDURST] = { xi.item.WINDURST_WOODS_GLYPH, xi.item.PORT_WINDURST_GLYPH,  xi.item.WINDURST_WATERS_GLYPH },
+}
+
+local exForceNumberRequiredTable =
+{
+    -- [Standing] = partySize
+    [0] = 4, -- No standing
+    [1] = 6,
+    [2] = 5,
+    [3] = 4,
+}
+
+-- CP awarded on collection, by count of participated regions the nation controls.
+-- When looking at the wiki, the data appears to follow a cubic. Extrapolating that would put 13 to be 27,175 CP. This seems unrealistic.
+-- Instead the data from https://ffxiclopedia.fandom.com/wiki/Talk:Expeditionary_Force is used as it is more conservative.
+local exForceCPRewardTable =
+{
+    -- [regionsControlled] = cp
+    [ 0] =    0,
+    [ 1] = 3000, -- Verified in capture
+    [ 2] = 4200, -- Verified in capture
+    [ 3] = 4680, -- +480 per region
+    [ 4] = 5160,
+    [ 5] = 5640,
+    [ 6] = 6120,
+    [ 7] = 6600,
+    [ 8] = 7080,
+    [ 9] = 7560,
+    [10] = 8040,
+    [11] = 8520,
+    [12] = 9000,
+    [13] = 9480,
+}
+
+-- Helper to parse region out of the exForceMenu data
+local function getExForceRegion(option)
+    for regionId, data in pairs(exForceMenuData) do
+        if data.option == option then
+            return regionId
+        end
+    end
+end
+
+-- Bitmask of every region this player can sign up for. 0 = the EF menu does not appear.
+local function getExForceAvailable(player, npc, guardNation)
+    -- Only one of the nine gate guards can trigger this
+    if
+        exForceGateGlyphTable[npc:getName()] == nil or
+        player:getNation() ~= guardNation
+    then
+        return 0
+    end
+
+    local mask = 0
+
+    -- Setup the bit mask for all the available regions
+    -- The bit masks are stored in the exForceMenuData.
+    for regionId, data in pairs(exForceMenuData) do
+        local owner = GetRegionOwner(regionId)
+
+        -- Region is available if:
+        --  The player's nation does not own the region.
+        --  The player's ally does not own the region.
+        --  The player has visited the region's outpost.
+        if
+            owner ~= guardNation and
+            not xi.conquest.areAllies(guardNation, owner) and
+            player:hasVisitedZone(data.zone)
+        then
+            mask = bit.bor(mask, data.menuBit)
+        end
+    end
+
+    return mask
+end
+
+-- This is to display the warp information after getting the badge, quitting EF, or giving the CP reward.
 local function getExForceReward(player, guardNation)
+    -- This is to catch instances where the player gets the badge and goes to a guard at another nation's embassy.
+    if player:getNation() ~= guardNation then
+        return 0
+    end
+
+    -- Only show menu if the player has the EF badge
+    local badge = player:getStatusEffect(xi.effect.EF_BADGE)
+    if badge == nil then
+        -- A paid reward is stashed and waiting
+        if player:getCharVar('[ExpForce]AwardCP') > 0 then
+            return 0x400
+        end
+
+        return 0
+    end
+
+    local region = exForceMenuData[badge:getPower()]
+    -- This is a guard. The starter regions exist in the client but were removed from Retail.
+    if region == nil then
+        return 0
+    end
+
+    -- regionRow 6-20 = eventOption (0x20006-0x20014) minus the 0x20000 base.
+    local regionRow = region.option - 0x20000
+    return 0x80000000 + bit.lshift(regionRow, 5)
+end
+
+-- Validate the sign-up party.
+-- Returns the overseer result code for the first failed check (1-4), or 0 if every check passes.
+local function exForceValidateSignup(player, guardNation, minLevel, numRequired)
+    -- Get all party members currently in zone for the check
+    local zoneId = player:getZoneID()
+    local inZone = {}
+    for _, member in pairs(player:getParty()) do
+        if member:getZoneID() == zoneId then
+            table.insert(inZone, member)
+        end
+    end
+
+    -- The checks are in this order and not grouped by party member to match the order of how retail checks
+
+    -- 1: not enough members present in the overseer's zone
+    if #inZone < numRequired then
+        return 1
+    end
+
+    -- 2: a party member is not a citizen of the overseer's nation
+    for _, member in ipairs(inZone) do
+        if member:getNation() ~= guardNation then
+            return 2
+        end
+    end
+
+    -- 3: a member is below the Conquest rank requirement
+    for _, member in ipairs(inZone) do
+        if member:getRank(guardNation) < 3 then
+            return 3
+        end
+    end
+
+    -- 4: a member is below the region's minimum level
+    for _, member in ipairs(inZone) do
+        if member:getMainLvl() < minLevel then
+            return 4
+        end
+    end
+
     return 0
 end
 
@@ -105,7 +281,7 @@ local function setHomepointFee(player, guardNation)
         if rank <= 5 then
             fee = 100 * math.pow(2, rank - 1)
         else
-            fee = (800 * rank) - 2400
+            fee = 800 * rank - 2400
         end
     end
 
@@ -254,13 +430,13 @@ local overseerOffsets =
         { offset =  1, nation = xi.nation.BASTOK   }, -- Tsunashige, I.M.
         { offset =  8, nation = xi.nation.BASTOK   }, -- Fighting Ant, I.M.
         { offset =  4, nation = xi.nation.BASTOK   }, -- flag
-        { offset = 13, nation = xi.nation.BASTOK   }, -- flag
+        { offset = 12, nation = xi.nation.BASTOK   }, -- flag
         { offset =  2, nation = xi.nation.WINDURST }, -- Nyata-Mobuta, W.W.
         { offset =  9, nation = xi.nation.WINDURST }, -- Tebubu, W.W.
         { offset =  5, nation = xi.nation.WINDURST }, -- flag
-        { offset = 14, nation = xi.nation.WINDURST }, -- flag
+        { offset = 13, nation = xi.nation.WINDURST }, -- flag
         { offset =  6, nation = xi.nation.BEASTMEN }, -- flag
-        { offset = 15, nation = xi.nation.BEASTMEN }, -- flag
+        { offset = 14, nation = xi.nation.BEASTMEN }, -- flag
         { offset = 10, nation = xi.nation.OTHER    }, -- Medicine Axe
     },
     [xi.region.NORVALLEN] =
@@ -528,6 +704,7 @@ local overseerOffsets =
         { offset =  1, nation = xi.nation.BASTOK   }, -- flag
         { offset =  2, nation = xi.nation.WINDURST }, -- flag
         { offset =  3, nation = xi.nation.BEASTMEN }, -- flag
+        { offset =  4, nation = xi.nation.OTHER    }, -- Bartabaq
     },
     [xi.region.TAVNAZIANARCH] =
     {
@@ -551,22 +728,22 @@ local overseerOffsets =
 
 local crystals =
 {
-    [xi.item.FIRE_CRYSTAL]      = 12,
-    [xi.item.ICE_CRYSTAL]       = 12,
-    [xi.item.WIND_CRYSTAL]      = 12,
-    [xi.item.EARTH_CRYSTAL]     = 12,
+    [xi.item.FIRE_CRYSTAL     ] = 12,
+    [xi.item.ICE_CRYSTAL      ] = 12,
+    [xi.item.WIND_CRYSTAL     ] = 12,
+    [xi.item.EARTH_CRYSTAL    ] = 12,
     [xi.item.LIGHTNING_CRYSTAL] = 12,
-    [xi.item.WATER_CRYSTAL]     = 12,
-    [xi.item.LIGHT_CRYSTAL]     = 16,
-    [xi.item.DARK_CRYSTAL]      = 16,
-    [xi.item.INFERNO_CRYSTAL]   = 12,
-    [xi.item.GLACIER_CRYSTAL]   = 12,
-    [xi.item.CYCLONE_CRYSTAL]   = 12,
-    [xi.item.TERRA_CRYSTAL]     = 12,
-    [xi.item.PLASMA_CRYSTAL]    = 12,
-    [xi.item.TORRENT_CRYSTAL]   = 12,
-    [xi.item.AURORA_CRYSTAL]    = 16,
-    [xi.item.TWILIGHT_CRYSTAL]  = 16,
+    [xi.item.WATER_CRYSTAL    ] = 12,
+    [xi.item.LIGHT_CRYSTAL    ] = 16,
+    [xi.item.DARK_CRYSTAL     ] = 16,
+    [xi.item.INFERNO_CRYSTAL  ] = 12,
+    [xi.item.GLACIER_CRYSTAL  ] = 12,
+    [xi.item.CYCLONE_CRYSTAL  ] = 12,
+    [xi.item.TERRA_CRYSTAL    ] = 12,
+    [xi.item.PLASMA_CRYSTAL   ] = 12,
+    [xi.item.TORRENT_CRYSTAL  ] = 12,
+    [xi.item.AURORA_CRYSTAL   ] = 16,
+    [xi.item.TWILIGHT_CRYSTAL ] = 16,
 }
 
 local expRings =
@@ -575,11 +752,6 @@ local expRings =
     [xi.item.EMPRESS_BAND] = { chargesWhenFull = 7, costPerCharge = 100 },
     [xi.item.EMPEROR_BAND] = { chargesWhenFull = 3, costPerCharge = 200 },
 }
-
-local function conquestRanking()
-    -- computes part of argument 3 for gate guard events. represents the conquest standing of the 3 nations. Verified.
-    return GetNationRank(xi.nation.SANDORIA) + 4 * GetNationRank(xi.nation.BASTOK) + 16 * GetNationRank(xi.nation.WINDURST)
-end
 
 xi.conquest.toggleRegionalNPCs = function(zone)
     -- Show/Hide regional NPCs
@@ -654,6 +826,7 @@ local function getArg1(player, guardNation, guardType)
     local signet  = 0
     local cipher  = xi.extravaganza.campaignActive() * 20 * 65536
     local voucher = player:hasKeyItem(xi.ki.CONQUEST_PROMOTION_VOUCHER) and 0x20000 or 0
+    local zilart  = xi.settings.main.ENABLE_ROTZ == 1 and 0x10000 or 0
 
     if guardNation == xi.nation.WINDURST then
         output = 33
@@ -673,13 +846,13 @@ local function getArg1(player, guardNation, guardType)
     end
 
     if guardNation == xi.nation.OTHER then
-        output = (pNation * 16) + (3 * 256) + 65537
+        output = (pNation * 16) + (3 * 256) + 1
     else
         output = output + 256 * signet
     end
 
     if guardType == xi.conquest.guard.CITY then
-        output = output + voucher
+        output = output + voucher + zilart
     end
 
     if guardType >= xi.conquest.guard.OUTPOST then
@@ -1061,10 +1234,10 @@ xi.conquest.setRegionalConquestOverseers = function(region)
                     end
 
                     if v.nation == xi.nation.OTHER then
-                        if owner ~= xi.nation.BEASTMEN then
-                            npc:setStatus(xi.status.NORMAL)
-                        else
+                        if owner == xi.nation.BEASTMEN or owner == xi.nation.NEUTRAL then
                             npc:setStatus(xi.status.DISAPPEAR)
+                        else
+                            npc:setStatus(xi.status.NORMAL)
                         end
                     end
                 end
@@ -1112,7 +1285,7 @@ xi.conquest.overseerOnTrade = function(player, npc, trade, guardNation, guardTyp
             if addPoints > 0 and pRank ~= 1 and pRankPoints < 4000 then
                 if pRankPoints + addPoints >= 4000 then
                     player:setRankPoints(4000)
-                    player:addCP(pRankPoints + addPoints - 4000)
+                    player:addCP(utils.clamp(pRankPoints + addPoints - 4000, 0, 1000))
                     player:showText(npc, mOffset + 44) -- 'Your rank points are full. We've added the excess to your conquest points.'
                 else
                     player:addRankPoints(addPoints)
@@ -1183,23 +1356,58 @@ xi.conquest.overseerOnTrigger = function(player, npc, guardNation, guardType, gu
         return
     end
 
+    -- EXPEDITIONARY FORCE: Collect expired insignia and give awards
+    -- Any of the 3 gate guards or the embassy guards for the player's nation.
+    if
+        pNation == guardNation and
+        guardType <= xi.conquest.guard.FOREIGN
+    then
+        local stamp = player:getCharVar('[ExpForce]NextConquestTally')
+        if stamp ~= 0 and stamp < NextConquestTally() then
+            -- Dispose of every expired insignia on the way in (paid and unpaid both do this).
+            local mOffset = zones[player:getZoneID()].text.CONQUEST
+            for _, data in pairs(exForceMenuData) do
+                if player:hasKeyItem(data.ki) then
+                    player:messageSpecial(mOffset + 121, data.ki)
+                    player:delKeyItem(data.ki)
+                end
+            end
+
+            -- Calculate the CP reward
+            local participation = player:getCharVar('[ExpForce]Participation')
+            local controlled    = 0
+            for regionId in pairs(exForceMenuData) do
+                if
+                    bit.band(participation, bit.lshift(1, regionId)) ~= 0 and
+                    GetRegionOwner(regionId) == player:getNation()
+                then
+                    controlled = controlled + 1
+                end
+            end
+
+            player:setCharVar('[ExpForce]AwardCP', exForceCPRewardTable[controlled])
+            player:setCharVar('[ExpForce]Participation', 0)
+            player:setCharVar('[ExpForce]NextConquestTally', 0)
+        end
+    end
+
     -- SUPPLY RUNS
     if
         pNation == guardNation and
         areSuppliesRotten(player, npc, guardType)
     then
-        -- do nothing else
+        return
     elseif
         pNation == guardNation and
         guardType >= xi.conquest.guard.OUTPOST and
         canDeliverSupplies(player, guardNation, guardEvent, guardRegion)
     then
-        -- do nothing else
+        return
 
     -- JEUNO OVERSEERS
     elseif guardType == xi.conquest.guard.CITY and guardNation == xi.nation.OTHER then
         local a1 = getArg1(player, guardNation, guardType)
-        local a3 = conquestRanking()
+        local a3 = GetConquestBalance()
         local a6 = getArg6(player)
         local a7 = player:getCP()
 
@@ -1208,8 +1416,8 @@ xi.conquest.overseerOnTrigger = function(player, npc, guardNation, guardType, gu
     -- CITY AND FOREIGN OVERSEERS
     elseif guardType <= xi.conquest.guard.FOREIGN then
         local a1 = getArg1(player, guardNation, guardType)
-        local a2 = getExForceAvailable(player, guardNation)
-        local a3 = conquestRanking()
+        local a2 = getExForceAvailable(player, npc, guardNation)
+        local a3 = GetConquestBalance()
         local a4 = suppliesAvailableBitmask(player, guardNation)
         local a5 = player:getTeleport(guardNation)
         local a6 = getArg6(player)
@@ -1238,7 +1446,30 @@ xi.conquest.overseerOnEventUpdate = function(player, csid, option, guardNation)
 
     local stock = getStock(player, guardNation, option)
 
-    if stock ~= nil then
+    -- EXPEDITIONARY FORCE - Region select
+    if
+        option >= 131078 and
+        option <= 131092
+    then
+        local regionId       = getExForceRegion(option)
+        local numberRequired = exForceNumberRequiredTable[GetNationRank(guardNation)]
+        local minLevel       = exForceMenuData[regionId].lvl
+        local failCode       = exForceValidateSignup(player, guardNation, minLevel, numberRequired)
+
+        -- One or more party members are below the minimum required level
+        if failCode == 4 then
+            player:updateEvent(4, 0, 0, 0, 0, 0, minLevel)
+
+        -- All other fail codes
+        elseif failCode ~= 0 then
+            player:updateEvent(failCode)
+
+        -- Badge granted in overseerOnEventFinish
+        else
+            player:updateEvent(5)
+        end
+
+    elseif stock ~= nil then
         local pRank = GetNationRank(pNation)
         local u1    = 2 -- default: player is correct job and level to equip item
         local u2    = 0 -- default: player has enough CP for item
@@ -1287,33 +1518,35 @@ xi.conquest.overseerOnEventUpdate = function(player, csid, option, guardNation)
     end
 end
 
--- Additional checks to ensure that the player can actually purchase the item requested from the overseer.
--- Returns price of the item if valid, -1 if invalid.
-local function canPurchaseItem(player, stock, pRank, guardNation, mOffset, option)
-    -- Validate stock
-    if stock == nil then
-        return -1
+-- Handle item purchuase.
+local function handlePurchuase(player, option, pNation, pRank, guardNation, mOffset)
+    local stock = getStock(player, guardNation, option)
+    if not stock then
+        return
     end
 
-    -- validate localVar (cheat protection)
     local boughtItem = player:getLocalVar('boughtItemCP')
     player:setLocalVar('boughtItemCP', 0)
 
     if stock.item ~= boughtItem then
         player:messageSpecial(mOffset + 61, stock.item) -- 'Your rank is too low to purchase the <item>.'
-        return -1
+        return
     end
 
     -- validate rank
     if stock.rank and pRank < stock.rank then
         player:messageSpecial(mOffset + 61, stock.item) -- 'Your rank is too low to purchase the <item>.'
-        return -1
+        return
     end
 
-    -- validate price
+    local isEXPRing = option >= 32933 and option <= 32935
+    if isEXPRing and not canBuyExpRing(player, stock.item) then
+        return
+    end
+
     local price = stock.cp
     if
-        stock.rank ~= nil and
+        stock.rank and
         player:getNation() ~= guardNation and
         guardNation ~= xi.nation.OTHER
     then
@@ -1324,71 +1557,61 @@ local function canPurchaseItem(player, stock, pRank, guardNation, mOffset, optio
         end
     end
 
-    if player:getCP() < price then
-        if
-            option <= 32933 and
-            option >= 32935 and
-            not player:hasKeyItem(xi.ki.CONQUEST_PROMOTION_VOUCHER)
-        then
-            player:messageSpecial(mOffset + 62, 0, 0, stock.item) -- 'You do not have enough conquest points to purchase the <item>.'
-            return -1
+    if player:getCP() >= price then
+        if npcUtil.giveItem(player, stock.item) then
+            player:delCP(price)
         end
+    elseif isEXPRing and player:hasKeyItem(xi.ki.CONQUEST_PROMOTION_VOUCHER) then
+        if npcUtil.giveItem(player, stock.item) then
+            player:delKeyItem(xi.ki.CONQUEST_PROMOTION_VOUCHER)
+            player:setCharVar('CONQUEST_RING_RECHARGE', 1, NextConquestTally())
+        end
+    else
+        player:messageSpecial(mOffset + 62, 0, 0, stock.item) -- 'You do not have enough conquest points to purchase the <item>.'
+        return
     end
 
-    return price
+    if stock.rank then
+        player:setTitle(titlesGranted[pNation][stock.rank])
+    end
 end
 
 xi.conquest.overseerOnEventFinish = function(player, csid, option, guardNation, guardType, guardRegion)
     local pNation  = player:getNation()
     local pRank    = player:getRank(pNation)
-    local sRegion  = player:getCharVar('supplyQuest_region')
-    local sOutpost = outposts[sRegion]
     local mOffset  = zones[player:getZoneID()].text.CONQUEST
 
     if xi.garrison.onEventFinish(player, csid, option, guardNation, guardType, guardRegion) then
         return
     end
 
-    -- SIGNET
+    -- Signet -> Grant.
     if option == 1 then
-        local duration = (pRank + GetNationRank(pNation) + 3) * 3600
-        player:delStatusEffectsByFlag(xi.effectFlag.INFLUENCE, true)
-        player:addStatusEffect(xi.effect.SIGNET, { duration = duration, origin = player })
-        player:messageSpecial(mOffset + 1) -- 'You've received your nation's Signet!'
+        xi.conquest.bestowSignet(player, pNation, pRank, mOffset)
 
-        if player:getEminenceProgress(3367) then
-            xi.roe.onRecordTrigger(player, 3367) -- Complete Weekly Signet, brb objective.  This might be able to move to a status effect trigger
+    -- Supply Run -> Finish.
+    elseif option == 2 then
+        if guardNation ~= pNation then
+            return
         end
 
-    -- BEGIN SUPPLY RUN
-    elseif
-        option >= 65541 and
-        option <= 65565 and
-        guardType <= xi.conquest.guard.FOREIGN
-    then
-        local region  = option - 65541
-        local outpost = outposts[region]
-
-        if outpost ~= nil then
-            npcUtil.giveKeyItem(player, outpost.ki)
-            player:setCharVar('supplyQuest_started', VanadielUniqueDay())
-            player:setCharVar('supplyQuest_region', region)
-            player:setCharVar('supplyQuest_fresh', NextConquestTally())
+        if guardType < xi.conquest.guard.OUTPOST then
+            return
         end
 
-    -- FINISH SUPPLY RUN
-    elseif
-        option == 2 and
-        guardType >= xi.conquest.guard.OUTPOST and
-        sRegion == guardRegion and
-        sOutpost ~= nil and
-        player:hasKeyItem(sOutpost.ki) and
-        guardNation == pNation
-    then
+        local sRegion  = player:getCharVar('supplyQuest_region')
+        if sRegion ~= guardRegion then
+            return
+        end
+
+        local sOutpost = outposts[sRegion]
+        if not player:hasKeyItem(sOutpost.ki) then
+            return
+        end
+
         player:delKeyItem(sOutpost.ki)
         player:addCP(sOutpost.cp)
         player:messageSpecial(mOffset) -- 'You've earned conquest points!'
-        player:setCharVar('supplyQuest_started', 0)
         player:setCharVar('supplyQuest_region', 0)
         player:setCharVar('supplyQuest_fresh', 0)
 
@@ -1396,7 +1619,7 @@ xi.conquest.overseerOnEventFinish = function(player, csid, option, guardNation, 
             player:addTeleport(guardNation, sRegion + 5)
         end
 
-    -- SET HOMEPOINT
+    -- Homepoint -> Set.
     elseif option == 4 then
         if player:delGil(setHomepointFee(player, guardNation)) then
             player:setHomePoint()
@@ -1405,41 +1628,83 @@ xi.conquest.overseerOnEventFinish = function(player, csid, option, guardNation, 
             player:messageSpecial(mOffset + 95) -- 'You do not have enough gil to set your home point here.'
         end
 
+    -- Expeditionary Force -> Teleport. Order is: Signet, Remove badge, Obtain KI, obtain Glyph.
+    elseif option == 5 then
+        local badge    = player:getStatusEffect(xi.effect.EF_BADGE)
+        local regionId = badge:getPower()
+        local overseer = player:getEventTarget()
+
+        -- Only stamp when starting a fresh batch in case of a tally that lands mid-menu.
+        if player:getCharVar('[ExpForce]NextConquestTally') == 0 then
+            -- Needed to know when the key item expires. Okay to overwrite as cleanup occurs when initiating conversation.
+            player:setCharVar('[ExpForce]NextConquestTally', NextConquestTally())
+        end
+
+        xi.conquest.bestowSignet(player, pNation, pRank, mOffset)
+
+        -- Replace badge with key item
+        player:delStatusEffect(xi.effect.EF_BADGE)
+        npcUtil.giveKeyItem(player, exForceMenuData[regionId].ki)
+
+        -- If you have a glyph from the city, you cannot get a second one.
+        local cityGlyphs = exForceCityGlyphTable[pNation]
+        if
+            not player:hasItem(cityGlyphs[1]) and
+            not player:hasItem(cityGlyphs[2]) and
+            not player:hasItem(cityGlyphs[3])
+        then
+            npcUtil.giveItem(player, exForceGateGlyphTable[overseer:getName()])
+        end
+
+        -- Outpost warp player
+        player:addStatusEffect(xi.effect.TELEPORT, {
+            power    = xi.teleport.id.OUTPOST,
+            duration = 1,
+            origin   = player,
+            icon     = 0,
+            subPower = regionId,
+        })
+
+    -- Expeditionary Force -> Grant CP.
+    elseif option == 7 then
+        local cp = player:getCharVar('[ExpForce]AwardCP')
+        player:addCP(cp)
+        player:messageSpecial(mOffset + 124, 0, cp) -- "You received x conquest points!"
+        player:messageSpecial(mOffset + 122)        -- "Your invalid insignias have been disposed of.""
+        player:setCharVar('[ExpForce]AwardCP', 0)
+
+    -- Expeditionary Force -> Quit.
+    elseif option == 8 then
+        player:delStatusEffect(xi.effect.EF_BADGE)
+
     -- PURCHASE CP ITEM
     elseif option >= 32768 and option <= 32944 then
-        local stock = getStock(player, guardNation, option)
-        local price = canPurchaseItem(player, stock, pRank, guardNation, mOffset, option) -- Validation included.
+        handlePurchuase(player, option, pNation, pRank, guardNation, mOffset)
 
-        if price < 0 then
-            return
+    -- Supply Run -> Begin.
+    elseif
+        option >= 65541 and
+        option <= 65565 and
+        guardType <= xi.conquest.guard.FOREIGN
+    then
+        local region  = option - 65541
+        local outpost = outposts[region]
+
+        if outpost then
+            npcUtil.giveKeyItem(player, outpost.ki)
+            player:setCharVar('supplyQuest_started', VanadielUniqueDay())
+            player:setCharVar('supplyQuest_region', region)
+            player:setCharVar('supplyQuest_fresh', NextConquestTally())
         end
 
-        -- validate exp rings
-        if
-            option >= 32933 and
-            option <= 32935 and
-            not canBuyExpRing(player, stock.item)
-        then
-            return
-        end
-
-        -- make sale
-        if npcUtil.giveItem(player, stock.item) then
-            if option >= 32933 and option <= 32935 then
-                player:setCharVar('CONQUEST_RING_RECHARGE', 1, NextConquestTally())
-
-                if player:hasKeyItem(xi.ki.CONQUEST_PROMOTION_VOUCHER) then
-                    player:delKeyItem(xi.ki.CONQUEST_PROMOTION_VOUCHER)
-
-                    return
-                end
-            end
-
-            player:delCP(price)
-            if stock.rank ~= nil then
-                player:setTitle(titlesGranted[pNation][stock.rank])
-            end
-        end
+    -- Expeditionary Force -> Region Selected.
+    elseif
+        option >= 131078 and
+        option <= 131092
+    then
+        local regionId = getExForceRegion(option)
+        player:delStatusEffect(xi.effect.EF_BADGE) -- We can get here if we already have the badge. No need for check as delStatusEffect covers it.
+        player:addStatusEffect(xi.effect.EF_BADGE, { power = regionId, origin = player, flag = xi.effectFlag.ON_ZONE })
     end
 end
 
@@ -1458,13 +1723,13 @@ xi.conquest.vendorOnTrigger = function(player, vendorRegion, vendorEvent)
         nation = 2
     end
 
-    player:startEvent(vendorEvent, nation, fee, 0, fee, player:getCP(), 0, 0, 0)
+    player:startEvent(vendorEvent, nation, fee, 0, fee / 10, player:getCP(), 0, 0, 0)
 end
 
 xi.conquest.vendorOnEventUpdate = function(player, vendorRegion)
     local fee = xi.conquest.outpostFee(player, vendorRegion)
 
-    player:updateEvent(player:getGil(), fee, 0, fee, player:getCP())
+    player:updateEvent(player:getGil(), fee, 0, fee / 10, player:getCP())
 end
 
 xi.conquest.vendorOnEventFinish = function(player, option, vendorRegion)
@@ -1477,8 +1742,12 @@ xi.conquest.vendorOnEventFinish = function(player, option, vendorRegion)
             player:addStatusEffect(xi.effect.TELEPORT, { power = xi.teleport.id.HOME_NATION, duration = 1, origin = player, icon = 0, subPower = vendorRegion })
         end
     elseif option == 6 then
-        player:delCP(fee)
-        player:addStatusEffect(xi.effect.TELEPORT, { power = xi.teleport.id.HOME_NATION, duration = 1, origin = player, icon = 0, subPower = vendorRegion })
+        local cpFee = fee / 10
+
+        if player:getCP() >= cpFee then
+            player:delCP(cpFee)
+            player:addStatusEffect(xi.effect.TELEPORT, { power = xi.teleport.id.HOME_NATION, duration = 1, origin = player, icon = 0, subPower = vendorRegion })
+        end
     end
 end
 
@@ -1557,10 +1826,10 @@ xi.conquest.sendConquestTallyEndMessage = function(player, messageBase, owner, r
     -- Tallying conquest results...
     player:messageText(player, messageBase + 1, 5)
 
-    if owner <= 3 then
-        player:messageText(player, messageBase + 2 + owner, 5) -- This region is currently under <nation> control.
+    if owner == xi.nation.NEUTRAL then
+        player:messageText(player, messageBase + 6, 5) -- This region is currently neutral.
     else
-        player:messageText(player, messageBase + 6, 5) -- This region is currently under beastman control.
+        player:messageText(player, messageBase + 2 + owner, 5) -- This region is currently under <nation> control.
     end
 
     -- Global balance of power message
@@ -1570,64 +1839,78 @@ end
 -- Helper method for sendConquestTallyUpdateMessage and sendConquestTallyEndMessage
 xi.conquest.sendBalanceOfPowerMessage = function(player, messageBase, ranking, isConquestAlliance)
     local offset = 0
-    if bit.band(ranking, 0x03) == 0x01 then
-        offset = offset + 7 -- 7
-        if bit.band(ranking, 0x30) == 0x10 then
-            offset = offset + 1 -- 8
-            if bit.band(ranking, 0x0C) == 0x0C then
-                offset = offset + 1 -- 9
+
+    -- Get specific nation masks, which translates to the concrete nation ranking.
+    local rankingSandoria = bit.rshift(bit.band(ranking, 0x03), 0) -- Bits 1 and 2.
+    local rankingBastok   = bit.rshift(bit.band(ranking, 0x0C), 2) -- Bits 3 and 4.
+    local rankingWindurst = bit.rshift(bit.band(ranking, 0x30), 4) -- Bits 5 and 6.
+
+    -- Sandoria in first place.
+    if rankingSandoria == 1 then
+        offset = offset + 7         -- Global balance of power: 1st: San d'Oria 2nd: Windurst 3rd: Bastok
+
+        -- Windurst also in 1st place.
+        if rankingWindurst == 1 then
+            offset = offset + 1     -- All three nations are tied for first place.
+            if rankingBastok == 3 then
+                offset = offset + 1 -- Global balance of power: 1st: San d'Oria and Windurst (tie) 3rd: Bastok
             end
-        elseif bit.band(ranking, 0x0C) == 0x08 then
-            offset = offset + 3 -- 10
-            if bit.band(ranking, 0x30) == 0x30 then
-                offset = offset + 1 -- 11
+        -- Bastok in 2nd place.
+        elseif rankingBastok == 2 then
+            offset = offset + 3     -- Global balance of power: 1st: San d'Oria 2nd: Bastok and Windurst (tie)
+            if rankingWindurst == 3 then
+                offset = offset + 1 -- Global balance of power: 1st: San d'Oria 2nd: Bastok 3rd: Windurst
             end
-        elseif bit.band(ranking, 0x0C) == 0x04 then
-            offset = offset + 6 -- 13
+        -- Bastok also in 1st place.
+        elseif rankingBastok == 1 then
+            offset = offset + 6     -- Global balance of power: 1st: San d'Oria and Bastok (tie) 3rd: Windurst
         end
-    elseif bit.band(ranking, 0x0C) == 0x04 then
-        offset = offset + 15 -- 15
-        if bit.band(ranking, 0x30) == 0x02 then
-            offset = offset + 3 -- 18
-            if bit.band(ranking, 0x03) == 0x03 then
-                offset = offset + 1 -- 19
+
+    -- Bastok in first place.
+    elseif rankingBastok == 1 then
+        offset = offset + 15        -- Global balance of power: 1st: Bastok 2nd: San d'Oria 3rd: Windurst
+        -- Windurst in 2nd place.
+        if rankingWindurst == 2 then
+            offset = offset + 3     -- Global balance of power: 1st: Bastok 2nd: San d'Oria and Windurst (tie)
+            if rankingSandoria == 3 then
+                offset = offset + 1 -- Global balance of power: 1st: Bastok 2nd: Windurst 3rd: San d'Oria
             end
-        elseif bit.band(ranking, 0x30) == 0x10 then
-            offset = offset + 6 -- 21
+        -- Windurst also in 1st place.
+        elseif rankingWindurst == 1 then
+            offset = offset + 6     -- Global balance of power: 1st: Bastok and Windurst (tie) 3rd: San d'Oria
         end
-    elseif bit.band(ranking, 0x30) == 0x10 then
-        offset = offset + 23 -- 23
-        if bit.band(ranking, 0x0C) == 0x08 then
-            offset = offset + 3 -- 26
-            if bit.band(ranking, 0x30) == 0x30 then
-                offset = offset + 1 -- 27
+
+    -- Windurst in first place.
+    elseif rankingWindurst == 1 then
+        offset = offset + 23        -- Global balance of power: 1st: Windurst 2nd: San d'Oria 3rd: Bastok
+        -- Bastok in 2nd place.
+        if rankingBastok == 2 then
+            offset = offset + 3     -- Global balance of power: 1st: Windurst 2nd: San d'Oria and Bastok (tie)
+            if rankingSandoria == 3 then
+                offset = offset + 1 -- Global balance of power: 1st: Windurst 2nd: Bastok 3rd: San d'Oria
             end
         end
     end
 
     player:messageText(player, messageBase + offset, 5) -- Global balance of power:
 
+    -- If theres an alliance, it's between the 2 last nations. We use the nation in first place to determine it.
     if isConquestAlliance then
-        if bit.band(ranking, 0x03) == 0x01 then
+        if rankingSandoria == 1 then
             player:messageText(player, messageBase + 50, 5) -- Bastok and Windurst have formed an alliance.
-        elseif bit.band(ranking, 0x0C) == 0x04 then
+        elseif rankingBastok == 1 then
             player:messageText(player, messageBase + 51, 5) -- San d'Oria and Windurst have formed an alliance.
-        elseif bit.band(ranking, 0x30) == 0x10 then
+        elseif rankingWindurst == 1 then
             player:messageText(player, messageBase + 52, 5) -- San d'Oria and Bastok have formed an alliance.
         end
     end
 end
 
 xi.conquest.sendConquestTallyUpdateMessage = function(player, messageBase, owner, ranking, influence, isConquestAlliance)
-    -- don't send regional influence for city zones -- nobody can gain influence here.
-    if owner == 255 then
-        return
-    end
-
-    if owner <= 3 then
-        player:messageText(player, messageBase + 32 + owner, 5) -- This region is currently under <nation> control.
+    if owner == xi.nation.NEUTRAL then
+        player:messageText(player, messageBase + 31, 5) -- Conquest update: This region is currently neutral.
     else
-        player:messageText(player, messageBase + 31, 5) -- This region is currently under beastman control.
+        player:messageText(player, messageBase + 32 + owner, 5) -- Conquest update: This region is currently under <nation> control.
     end
 
     if influence >= 64 then

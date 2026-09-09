@@ -27,6 +27,7 @@
 
 enum class ItemState : uint8;
 class CItem;
+
 class CLuaItem
 {
     const CItem* m_readItem;  // observer; always set
@@ -61,9 +62,7 @@ public:
     void setSubType(uint8 subtype); // set the item's sub type
     bool isSubType(uint8 subtype);  // check the item's sub type
 
-    auto  state() const -> ItemState;       // current ItemState (xi.itemState.*)
-    void  setReservedValue(uint8 reserved); // set the item's reserved value
-    uint8 getReservedValue();               // get the item's reserved value
+    auto state() const -> ItemState; // current ItemState (xi.itemState.*)
 
     auto   getName() -> std::string; // get the item's name
     uint16 getILvl();                // get the item's ilvl

@@ -27,7 +27,7 @@
 #include "lua/lua_client_entity_pair.h"
 #include "lua/lua_simulation.h"
 #include "map/battlefield.h"
-#include "map/entities/mobentity.h"
+#include "map/entities/mob_entity.h"
 #include "map/map_engine.h"
 #include "test_char.h"
 #include "test_common.h"
@@ -109,7 +109,7 @@ void CLuaClientEntityPairBCNM::expectWin(sol::optional<sol::table> params) const
 
 void CLuaClientEntityPairBCNM::enter(const sol::object& npcQuery, const uint16 bcnmId, sol::optional<sol::table> items) const
 {
-    const uint16 zoneId = parent_->getZoneID();
+    const auto zoneId = parent_->getZoneID();
 
     sol::table                contentsByZone = lua["xi"]["battlefield"]["contentsByZone"];
     sol::optional<sol::table> zoneContent    = contentsByZone[zoneId];

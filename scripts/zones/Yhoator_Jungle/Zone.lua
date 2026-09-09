@@ -16,6 +16,8 @@ zoneObject.onInitialize = function(zone)
 
     xi.beastmenTreasure.updatePeddlestox(xi.zone.YUHTUNGA_JUNGLE, ID.npc.PEDDLESTOX)
     xi.fate.onZoneInitialize(zone, zone:getID())
+
+    xi.expeditionaryForce.initZone(zone)
 end
 
 zoneObject.onGameDay = function()
@@ -72,6 +74,10 @@ end
 zoneObject.onZoneWeatherChange = function(weather)
     -- Harvesting points only appear during rainy weather
     xi.helm.weatherChange(weather, { xi.weather.RAIN, xi.weather.SQUALL }, ID.npc.HARVESTING)
+end
+
+zoneObject.onZoneOut = function(player)
+    xi.helm.onZoneOut(player)
 end
 
 return zoneObject

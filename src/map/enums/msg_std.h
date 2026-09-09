@@ -50,6 +50,7 @@ enum class MsgStd : uint16_t
     PollProposalParty            = 101, // Player Name's proposal to the party (cast vote with command: "/vote ?"):
     PollProposalLinkshell        = 102, // Player Name's proposal to the linkshell group (cast vote with command: "/vote ?"):
     PollProposalSystem           = 103, // Player Name's proposal to everyone (cast vote with command: "/vote ?"):
+    TradeCanceled                = 107, // Trade canceled. Either your or your target's inventory is full, or an error occurred during the transaction.
     LinkshellEquipBeforeUsing    = 108, // Equip a linkshell, pearlsack, or linkpearl before using that command.
     LinkshellKicked              = 109, // You have been kicked out of the linkshell group.
     LinkshellNoLongerExists      = 110, // That linkshell group no longer exists. This item is unusable.
@@ -60,7 +61,7 @@ enum class MsgStd : uint16_t
     MoogleDriesPlant             = 133, // Your moogle dries the plant in the <item>.
     MoogleUsesItemOnPLant        = 136, // Your moogle uses the <item> on the plant.
     MoghouseCantPickUp           = 137, // Kupo... I can't pick anything right now, kupo.
-    ChocoboRefusedToEnte         = 138, // The chocobo refused to enter the next area.
+    CannotEnterAreaWhileMounted  = 138, // You cannot enter the next area while mounted.
     CurrentPollResultsSystem     = 140, // Player Name's proposal - Current poll results:
     FinalPollResultsSystem       = 141, // Player Name's proposal - Final poll results:
     CannotUseCommandAtTheMoment  = 142, // You cannot use that command at the moment. Please try again later.
@@ -93,10 +94,11 @@ enum class MsgStd : uint16_t
     CannotPerformNoPetra         = 210, // You cannot perform that action without a Petra.
     LostYourPetras               = 211, // You lost your Petras.
     GateBreachDisengaged         = 212, // Gate Breach status has been disengaged.
+    RecoveryInSeconds            = 213, // Recovery in 0 seconds.
     ReturningToBattle            = 214, // Returning to battle.
     ReturningToCamp              = 215, // Returning to camp.
-    CannotPerformInConflict      = 216, // This action cannot be performed while participating in Conflict.
-    CannotPerformPreparingBattle = 216, // This action cannot be performed while preparing for battle.
+    CannotPerformInConflict      = 216, // That action cannot be performed while participating in Conflict.
+    CannotPerformPreparingBattle = 217, // That action cannot be performed while preparing for battle.
     ChevronsEarned               = 219, // Chevrons earned: Gold: 0 Mythril: 0 Silver: 0 Bronze: 0 Job: 0
     ItemEx                       = 220, // You cannot possess more than one of that item.
     BlockaidActivated            = 221, // Blockaid activated. Magical assistance, trades, party invites etc. from non-party/alliance characters will be blocked. This effect will continue until changing areas, or executing the "/blockaid off" command.

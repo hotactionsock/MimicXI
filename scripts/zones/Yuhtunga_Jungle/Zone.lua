@@ -18,6 +18,8 @@ zoneObject.onInitialize = function(zone)
 
     xi.beastmenTreasure.updatePeddlestox(xi.zone.YUHTUNGA_JUNGLE, ID.npc.PEDDLESTOX)
     xi.fate.onZoneInitialize(zone, zone:getID())
+
+    xi.expeditionaryForce.initZone(zone)
 end
 
 zoneObject.onGameDay = function()
@@ -99,6 +101,10 @@ zoneObject.onZoneWeatherChange = function(weather)
             DisallowRespawn(bayawak:getID(), true)
         end
     end
+end
+
+zoneObject.onZoneOut = function(player)
+    xi.helm.onZoneOut(player)
 end
 
 return zoneObject

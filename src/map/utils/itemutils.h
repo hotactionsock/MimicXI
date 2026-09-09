@@ -21,8 +21,10 @@
 
 #pragma once
 
+#include <common/types/fn.h>
+#include <common/types/maybe.h>
+
 #include <memory>
-#include <optional>
 #include <type_traits>
 #include <vector>
 
@@ -35,6 +37,9 @@ namespace xi::items
 {
 
 auto lookup(uint16 itemId) -> const CItem*;
+
+// Reverse of lookup(), for data that names items instead of numbering them. Names are not unique yet, so a shared one resolves to the lower id.
+auto lookupIdByName(std::string_view name) -> Maybe<uint16>;
 
 template <typename T>
 auto lookup(const uint16 itemId) -> const T*
@@ -101,14 +106,14 @@ typedef std::vector<LootItem_t> LootList_t;
 
 struct LootContainer
 {
-    LootContainer(DropList_t* dropList);
+    LootContainer(const DropList_t* dropList);
     DropList_t drops;
 
-    void ForEachGroup(const std::function<void(const DropGroup_t&)>& func);
-    void ForEachItem(const std::function<void(const DropItem_t&)>& func);
+    void ForEachGroup(FnRef<void(const DropGroup_t&)> func);
+    void ForEachItem(FnRef<void(const DropItem_t&)> func);
 
 private:
-    DropList_t* dropList;
+    const DropList_t* dropList;
 };
 
 /************************************************************************
@@ -125,6 +130,6 @@ void FreeItemList();
 
 DropList_t* GetDropList(uint16 DropID);
 
-auto TranslateItemName(GP_CLI_COMMAND_TRANSLATE_INDEX fromLang, GP_CLI_COMMAND_TRANSLATE_INDEX toLang, const std::string& name) -> std::optional<std::pair<uint16, std::string>>;
+auto TranslateItemName(GP_CLI_COMMAND_TRANSLATE_INDEX fromLang, GP_CLI_COMMAND_TRANSLATE_INDEX toLang, const std::string& name) -> Maybe<std::pair<uint16, std::string>>;
 
 }; // namespace itemutils

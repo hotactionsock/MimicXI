@@ -19,6 +19,7 @@ apt-get update && apt-get install --assume-yes --no-install-recommends --quiet \
     binutils \
     ca-certificates \
     git \
+    libdwarf1 \
     libzmq5 \
     lua5.1 \
     luajit \
@@ -74,12 +75,14 @@ apt-get update && apt-get install --assume-yes --no-install-recommends --quiet \
     ccache \
     cmake \
     g++-$GCC_VERSION \
+    libdwarf-dev \
     libluajit-5.1-dev \
     libmariadb-dev-compat \
     libssl-dev \
     libzmq3-dev \
     make \
     ninja-build \
+    pkg-config \
     python3-dev \
     python3-venv \
     zlib1g-dev \
@@ -159,9 +162,19 @@ ARG TRACY_ENABLE=OFF
 ARG PCH_ENABLE=ON
 ARG WARNINGS_AS_ERRORS=TRUE
 
+# A toolchain or base image bump must change this id, or the new compiler reuses old objects.
+# BASE_TAG is a pre-FROM global, so it needs re-declaring to be in scope here.
+ARG BASE_TAG
+ARG BUILD_CACHE_ID=$BASE_TAG-$COMPILER$GCC_VERSION$LLVM_VERSION-$CMAKE_BUILD_TYPE-tracy$TRACY_ENABLE-pch$PCH_ENABLE
+
 ENV CCACHE_DIR=/xiadmin/.ccache
-RUN --mount=type=cache,target=/xiadmin/build,uid=$UID,gid=$GID,id=build-ubuntu-$COMPILER-$CMAKE_BUILD_TYPE-tracy$TRACY_ENABLE-pch$PCH_ENABLE \
-    --mount=type=cache,target=/xiadmin/.ccache,uid=$UID,gid=$GID,id=ccache-ubuntu-$COMPILER-$CMAKE_BUILD_TYPE-tracy$TRACY_ENABLE-pch$PCH_ENABLE \
+ENV CCACHE_MAXSIZE=2G
+# mtime+size is the default, and a same-size toolchain swap defeats it.
+ENV CCACHE_COMPILERCHECK=content
+# Without this ccache reports every PCH compilation as uncacheable.
+ENV CCACHE_SLOPPINESS=pch_defines,time_macros
+RUN --mount=type=cache,target=/xiadmin/build,uid=$UID,gid=$GID,id=build-ubuntu-$BUILD_CACHE_ID \
+    --mount=type=cache,target=/xiadmin/.ccache,uid=$UID,gid=$GID,id=ccache-ubuntu-$BUILD_CACHE_ID \
     --mount=type=bind,source=.git,target=/server/.git \
     --mount=type=bind,source=sql,target=/server/sql <<EOF
 set -eo pipefail

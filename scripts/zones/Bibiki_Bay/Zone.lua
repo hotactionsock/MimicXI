@@ -11,21 +11,27 @@ zoneObject.onInitialize = function(zone)
 end
 
 zoneObject.onZoneIn = function(player, prevZone)
-    local cs = -1
-
     if
         player:getXPos() == 0 and
         player:getYPos() == 0 and
         player:getZPos() == 0
     then
-        cs = xi.manaclipper.onZoneIn(player, prevZone)
+        local cs = xi.manaclipper.onZoneIn(player, prevZone)
 
         if cs == -1 then
             player:setPos(669.917, -23.138, 911.655, 111)
         end
+
+        return cs
     end
 
-    return cs
+    return -1
+end
+
+zoneObject.onZoneOut = function(player)
+    if player:getStatus() ~= xi.status.SHUTDOWN then
+        xi.clamming.removeKit(player)
+    end
 end
 
 zoneObject.onConquestUpdate = function(zone, updatetype, influence, owner, ranking, isConquestAlliance)
@@ -54,8 +60,8 @@ zoneObject.onTriggerAreaLeave = function(player, triggerArea)
     xi.fate.onAreaLeave(player, triggerArea, player:getZoneID())
 end
 
-zoneObject.onTransportEvent = function(player, prevZoneId, transportId)
-    xi.manaclipper.onTransportEvent(player, prevZoneId, transportId)
+zoneObject.onTransportEvent = function(player, prevZoneId, transportName)
+    xi.manaclipper.onTransportEvent(player, prevZoneId, transportName)
 end
 
 zoneObject.onEventUpdate = function(player, csid, option, npc)
@@ -63,9 +69,15 @@ end
 
 zoneObject.onEventFinish = function(player, csid, option, npc)
     if csid == 12 then
-        player:startEvent(10) -- arrive at Sunset Docks CS
+        player:startEvent(10, {
+            isHidden = true,
+            flags    = bit.bor(xi.cutsceneFlag.RESET_CAMERA, xi.cutsceneFlag.NO_PCS),
+        }) -- arrive at Sunset Docks CS
     elseif csid == 13 then
-        player:startEvent(11) -- arrive at Purgonorgo Isle CS
+        player:startEvent(11, {
+            isHidden = true,
+            flags    = bit.bor(xi.cutsceneFlag.RESET_CAMERA, xi.cutsceneFlag.NO_PCS),
+        }) -- arrive at Purgonorgo Isle CS
     elseif csid == 14 or csid == 16 then
         player:setPos(0, 0, 0, 0, xi.zone.MANACLIPPER)
     end
