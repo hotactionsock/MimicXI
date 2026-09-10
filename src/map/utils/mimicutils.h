@@ -91,4 +91,11 @@ auto LoadMimicTrustSnapshot(uint32 charId, uint8 levelCap) -> std::optional<Mimi
 // live mimic-trust entity (level, HP/MP, party frame) plus a level-up message.
 void AwardMimicExp(CCharEntity* PMaster, CTrustEntity* PMimic, uint32 gainedExp);
 
+// Rebuilds PMimic->SpellContainer from the source character's learned spells
+// (char_spells), keeping only those its current main/sub job + level can cast.
+// spell::CanUseSpell's TYPE_TRUST path does not consult a trust's spell list, so
+// this is the only thing that lets a mimic caster act. Safe to call repeatedly
+// (it clears first); call it on summon and on every level-up.
+void LoadTrustSpells(CTrustEntity* PMimic, uint32 altCharId, xi::Job mjob, xi::Job sjob, uint8 mlvl, uint8 slvl);
+
 }; // namespace mimicutils

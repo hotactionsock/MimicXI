@@ -906,6 +906,11 @@ auto trustutils::BuildMimicTrust(CCharEntity* PMaster, uint32 altCharId) -> CTru
     battleutils::AddTraits(PTrust, traits::GetTraits(snapshot.mjob), snapshot.mlvl);
     battleutils::AddTraits(PTrust, traits::GetTraits(snapshot.sjob), snapshot.slvl);
 
+    // Castable spells: the source character's learned spells that this job/level
+    // can use. Without this a mimic caster's SpellContainer is empty and the
+    // gambit healer AI never fires.
+    mimicutils::LoadTrustSpells(PTrust, altCharId, snapshot.mjob, snapshot.sjob, snapshot.mlvl, snapshot.slvl);
+
     // Armor: real gear mods only, baked into the trust's stats at build time -
     // appearance is driven separately by `look`, so the item objects themselves
     // don't need to survive past this point.

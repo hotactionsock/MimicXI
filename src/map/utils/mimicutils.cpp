@@ -38,7 +38,9 @@
 #include "packets/s2c/0x02d_battle_message2.h"
 #include "packets/s2c/0x038_schedulor.h"
 #include "enums/msg_basic.h"
+#include "mob_spell_container.h"
 #include "party.h"
+#include "spell.h"
 #include "trait.h"
 #include "zone.h"
 #include "utils/battleutils.h"
@@ -421,6 +423,9 @@ void AwardMimicExp(CCharEntity* PMaster, CTrustEntity* PMimic, uint32 gainedExp)
             battleutils::AddTraits(PMimic, sTraits, PMimic->GetSLevel());
         }
 
+        // Newly reachable spells become castable the same ding as the trait ones.
+        LoadTrustSpells(PMimic, altId, job, PMimic->GetSJob(), PMimic->GetMLevel(), PMimic->GetSLevel());
+
         const uint8   race = RaceIndexFromLook(PMimic->look.race);
         const xi::Job sjob = PMimic->GetSJob();
 
@@ -451,6 +456,44 @@ void AwardMimicExp(CCharEntity* PMaster, CTrustEntity* PMimic, uint32 gainedExp)
         if (PMaster->PParty != nullptr)
         {
             PMaster->PParty->ReloadParty();
+        }
+    }
+}
+
+void LoadTrustSpells(CTrustEntity* PMimic, uint32 altCharId, xi::Job mjob, xi::Job sjob, uint8 mlvl, uint8 slvl)
+{
+    if (PMimic == nullptr || PMimic->SpellContainer == nullptr)
+    {
+        return;
+    }
+
+    PMimic->SpellContainer->ClearSpells();
+
+    const auto rset = db::preparedStmt("SELECT spellid FROM char_spells WHERE charid = ?", altCharId);
+    if (!rset)
+    {
+        return;
+    }
+
+    while (rset->next())
+    {
+        const uint16 spellId = rset->get<uint16>("spellid");
+        auto*        PSpell  = spell::GetSpell(static_cast<SpellID>(spellId));
+        if (PSpell == nullptr)
+        {
+            continue;
+        }
+
+        // Castable if the trust's main job (at its level) or sub job (at half)
+        // learns it - the same job/level gate spell::CanUseSpell applies to PCs.
+        const uint8 mNeed = PSpell->getJob(mjob);
+        const uint8 sNeed = PSpell->getJob(sjob);
+        const bool  viaMain = mNeed > 0 && mlvl >= mNeed;
+        const bool  viaSub  = sNeed > 0 && slvl >= sNeed;
+
+        if (viaMain || viaSub)
+        {
+            PMimic->SpellContainer->AddSpell(static_cast<SpellID>(spellId));
         }
     }
 }

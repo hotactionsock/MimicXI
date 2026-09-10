@@ -796,8 +796,11 @@ bool CanUseSpell(CBattleEntity* PCaster, CSpell* spell)
                 return true;
             }
 
-            // Ensure pet or trust is level appropriate
-            if (PCaster->GetMLevel() < static_cast<CMobEntity*>(PCaster)->m_SpellListContainer->GetSpellMinLevel(spell->getID()))
+            // Ensure pet or trust is level appropriate. Mimic trusts carry no
+            // CMobSpellList (their castable set is filtered into SpellContainer at
+            // build time / on level-up); only gate here when a list exists.
+            if (auto* PSpellList = static_cast<CMobEntity*>(PCaster)->m_SpellListContainer;
+                PSpellList != nullptr && PCaster->GetMLevel() < PSpellList->GetSpellMinLevel(spell->getID()))
             {
                 return false;
             }
