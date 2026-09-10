@@ -778,7 +778,9 @@ void LoadTrustStatsAndSkills(CTrustEntity* PTrust)
 
 auto trustutils::BuildMimicTrust(CCharEntity* PMaster, uint32 altCharId) -> CTrustEntity*
 {
-    auto snapshotOpt = mimicutils::LoadMimicTrustSnapshot(altCharId, PMaster->GetMLevel(), static_cast<uint8>(std::floor(PMaster->GetMLevel() / 2)));
+    // Cap only - the mimic spawns at the alt's own real level for its main job, never
+    // synced up to the summoner's.
+    auto snapshotOpt = mimicutils::LoadMimicTrustSnapshot(altCharId, PMaster->GetMLevel());
     if (!snapshotOpt)
     {
         ShowWarning("trustutils::BuildMimicTrust: Could not load snapshot for charid %u", altCharId);

@@ -32,6 +32,7 @@
 
 class CCharEntity;
 class CItem;
+class CTrustEntity;
 
 namespace mimicutils
 {
@@ -76,10 +77,18 @@ struct MimicTrustSnapshot
     std::array<std::unique_ptr<CItem>, 12> armor;
 };
 
-// Reads the alt's real char_look/char_stats/char_equip/char_inventory rows and
-// builds real (augmented) item objects for its equipped gear. mlvl/slvl are the
-// already-decided (possibly master-synced) level to store on the snapshot; they
-// do not affect which gear/stats are read, only what's recorded for later use.
-auto LoadMimicTrustSnapshot(uint32 charId, uint8 mlvl, uint8 slvl) -> std::optional<MimicTrustSnapshot>;
+// Reads the alt's real char_look / char_stats / char_jobs / char_exp / char_equip /
+// char_inventory rows and builds real (augmented) item objects for its equipped gear.
+// The mimic's level is the alt's *own* real level for its current main job, capped at
+// levelCap (the summoner's main level) - it never syncs up to the summoner. Sub level
+// is the alt's real sub-job level, capped at half the resolved main level.
+auto LoadMimicTrustSnapshot(uint32 charId, uint8 levelCap) -> std::optional<MimicTrustSnapshot>;
+
+// Credits an offline alt character with gainedExp toward its current main job (1:1
+// with what the summoner earned). Handles level-ups against the real FFXI exp table,
+// writes char_jobs / char_exp / char_stats directly (the alt cannot be online while
+// mimicked), stops at levelCap = the summoner's current main level, and refreshes the
+// live mimic-trust entity (level, HP/MP, party frame) plus a level-up message.
+void AwardMimicExp(CCharEntity* PMaster, CTrustEntity* PMimic, uint32 gainedExp);
 
 }; // namespace mimicutils

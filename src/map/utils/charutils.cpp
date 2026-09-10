@@ -99,10 +99,12 @@
 #include "entities/char_entity.h"
 #include "entities/mob_entity.h"
 #include "entities/pet_entity.h"
+#include "entities/trust_entity.h"
 
 #include "battleutils.h"
 #include "blueutils.h"
 #include "charutils.h"
+#include "mimicutils.h"
 #include "enums/item_lockflg.h"
 #include "items/transactions/player_trade.h"
 #include "items/transactions/synth.h"
@@ -4593,6 +4595,15 @@ void DistributeExperiencePoints(CCharEntity* PChar, CMobEntity* PMob)
             }
 
             charutils::AddExperiencePoints(false, true, false, PMember, PMob, exp, mobCheck, wasChained);
+
+            // Mimic trusts progress the real alt character 1:1 with what the summoner earned.
+            for (auto* PTrust : PMember->PTrusts)
+            {
+                if (PTrust != nullptr && PTrust->m_MimicSourceCharId != 0)
+                {
+                    mimicutils::AwardMimicExp(PMember, PTrust, exp);
+                }
+            }
         });
     // clang-format on
 }
