@@ -39,7 +39,9 @@
 #include "packets/s2c/0x038_schedulor.h"
 #include "enums/msg_basic.h"
 #include "party.h"
+#include "trait.h"
 #include "zone.h"
+#include "utils/battleutils.h"
 #include "utils/charutils.h"
 #include "utils/itemutils.h"
 
@@ -398,13 +400,26 @@ void AwardMimicExp(CCharEntity* PMaster, CTrustEntity* PMimic, uint32 gainedExp)
 
     // Advance the live entity only when it is NOT level-synced below the new level;
     // a synced-down trust keeps fighting at the summoner's level. Weapon-skill ATT/
-    // ACC and job traits fully refresh on the next summon - here we keep level, base
-    // stats and the HP/MP pool climbing so damage scales with it.
+    // ACC still fully refresh on the next summon - here we keep level, base stats,
+    // the HP/MP pool and job traits climbing so it plays like the summoner levelling.
     const uint8 syncLevel = std::min<uint8>(level, PMaster->GetMLevel());
     if (syncLevel > PMimic->GetMLevel())
     {
         PMimic->SetMLevel(syncLevel);
         PMimic->SetSLevel(static_cast<uint8>(syncLevel / 2));
+
+        // Re-resolve job traits at the new (synced) level. AddTraits is incremental:
+        // it adds thresholds just crossed (Counter at 10, Subtle Blow at 20, ...) and
+        // upgrades ranks in place, skipping anything already held - so calling it
+        // again per ding costs nothing for traits the trust already has.
+        if (auto* mTraits = traits::GetTraits(job))
+        {
+            battleutils::AddTraits(PMimic, mTraits, PMimic->GetMLevel());
+        }
+        if (auto* sTraits = traits::GetTraits(PMimic->GetSJob()))
+        {
+            battleutils::AddTraits(PMimic, sTraits, PMimic->GetSLevel());
+        }
 
         const uint8   race = RaceIndexFromLook(PMimic->look.race);
         const xi::Job sjob = PMimic->GetSJob();
