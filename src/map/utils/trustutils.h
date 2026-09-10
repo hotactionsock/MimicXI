@@ -32,4 +32,9 @@ namespace trustutils
 void LoadTrustList();
 auto SpawnTrust(CCharEntity* PMaster, uint32 TrustID) -> CTrustEntity*;
 
+// Builds a trust from the real look/stats/gear of one of the master's own offline
+// alt characters, rather than from mob_pools data. Returns nullptr (with a system
+// message already sent to PMaster) if the summon is not currently allowed.
+auto BuildMimicTrust(CCharEntity* PMaster, uint32 altCharId) -> CTrustEntity*;
+
 }; // namespace trustutils

@@ -61,6 +61,11 @@ public:
 
     bool GetUntargetable() const override;
 
+    // Non-zero when this trust is a "mimic" built from an offline alt character
+    // (see trustutils::BuildMimicTrust). Holds that alt's charid so the
+    // char_mimic_active lock row can be cleared when the trust despawns.
+    uint32 m_MimicSourceCharId{ 0 };
+
 private:
     uint32         trustID_{};
     bool           released_{};

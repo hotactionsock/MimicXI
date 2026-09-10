@@ -30,6 +30,8 @@ set(UTIL_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/jailutils.h
     ${CMAKE_CURRENT_SOURCE_DIR}/messageutils.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/messageutils.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/mimicutils.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/mimicutils.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mobutils.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/mobutils.h
     ${CMAKE_CURRENT_SOURCE_DIR}/moduleutils.cpp

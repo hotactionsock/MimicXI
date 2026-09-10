@@ -166,6 +166,7 @@
 #include "utils/mountutils.h"
 #include "utils/petutils.h"
 #include "utils/puppetutils.h"
+#include "utils/mimicutils.h"
 #include "utils/trustutils.h"
 #include "utils/zoneutils.h"
 
@@ -16281,6 +16282,33 @@ auto CLuaBaseEntity::spawnTrust(uint16 trustId) -> CBaseEntity*
 }
 
 /************************************************************************
+ *  Function: spawnMimicTrust()
+ *  Purpose : Summons one of the caster's own offline alt characters as a
+ *            trust-like ally, mirroring that character's real look/stats/gear.
+ *  Example : caster:spawnMimicTrust("AltCharName")
+ ************************************************************************/
+
+auto CLuaBaseEntity::spawnMimicTrust(std::string const& altCharName) -> CBaseEntity*
+{
+    if (m_PBaseEntity->objtype != TYPE_PC)
+    {
+        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->getName());
+        return nullptr;
+    }
+
+    auto* PChar = static_cast<CCharEntity*>(m_PBaseEntity);
+
+    auto candidate = mimicutils::CheckMimicEligibility(PChar, altCharName);
+    if (candidate.eligibility != mimicutils::MimicEligibility::Ok)
+    {
+        PChar->pushPacket<GP_SERV_COMMAND_SYSTEMMES>(0, 0, MsgStd::CannotBeProcessed);
+        return nullptr;
+    }
+
+    return trustutils::BuildMimicTrust(PChar, candidate.charId);
+}
+
+/************************************************************************
  *  Function: clearTrusts()
  *  Purpose :
  *  Example : caster:clearTrusts()
@@ -21367,6 +21395,7 @@ void CLuaBaseEntity::Register()
 
     // Trust related
     SOL_REGISTER("spawnTrust", CLuaBaseEntity::spawnTrust);
+    SOL_REGISTER("spawnMimicTrust", CLuaBaseEntity::spawnMimicTrust);
     SOL_REGISTER("clearTrusts", CLuaBaseEntity::clearTrusts);
     SOL_REGISTER("getTrustID", CLuaBaseEntity::getTrustID);
     SOL_REGISTER("trustPartyMessage", CLuaBaseEntity::trustPartyMessage);

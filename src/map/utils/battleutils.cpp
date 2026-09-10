@@ -1360,7 +1360,7 @@ void HandleEnspell(CBattleEntity* PAttacker, CBattleEntity* PDefender, action_re
 
     auto checkWeaponAdditionalEffect = [&]() -> bool
     {
-        if (PAttacker->objtype == TYPE_PC)
+        if (PAttacker->objtype == TYPE_PC || PAttacker->objtype == TYPE_TRUST)
         {
             bool hasGlobalAdditionalEffect     = battleutils::GetScaledItemModifier(PAttacker, weapon, xi::Mod::ITEM_ADDEFFECT_TYPE) > 0;     // additional_effect.lua
             bool hasItemScriptAdditionalEffect = battleutils::GetScaledItemModifier(PAttacker, weapon, xi::Mod::ITEM_ADDEFFECT_SCRIPTED) > 0; // scripts/items/{}.lua
@@ -1395,7 +1395,7 @@ void HandleEnspell(CBattleEntity* PAttacker, CBattleEntity* PDefender, action_re
     bool checkedPriorityWeaponAddEffect = false;
 
     // TODO: grip priority too?
-    if (PAttacker->objtype == TYPE_PC && battleutils::GetScaledItemModifier(PAttacker, weapon, xi::Mod::ITEM_ADDEFFECT_PRIORITY) > 0)
+    if ((PAttacker->objtype == TYPE_PC || PAttacker->objtype == TYPE_TRUST) && battleutils::GetScaledItemModifier(PAttacker, weapon, xi::Mod::ITEM_ADDEFFECT_PRIORITY) > 0)
     {
         if (checkWeaponAdditionalEffect())
         {

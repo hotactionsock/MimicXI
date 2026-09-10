@@ -37,6 +37,8 @@
 #include "status_effect_container.h"
 #include "utils/battleutils.h"
 
+#include "common/database.h"
+
 namespace
 {
 
@@ -202,6 +204,14 @@ void CTrustEntity::OnDespawn(CDespawnState& /*unused*/)
         // Don't call this when despawning after being killed
         luautils::OnMobDespawn(this);
     }
+
+    if (m_MimicSourceCharId != 0)
+    {
+        // Release the mimicked alt so it can be logged into / mimicked again.
+        db::preparedStmt("DELETE FROM char_mimic_active WHERE charid = ?", m_MimicSourceCharId);
+        m_MimicSourceCharId = 0;
+    }
+
     FadeOut();
     PAI->EventHandler.triggerListener("DESPAWN", this);
 }
