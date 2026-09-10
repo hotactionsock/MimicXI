@@ -29,6 +29,7 @@
 #include "items/item.h"
 #include "items/item_equipment.h"
 #include "items/item_weapon.h"
+#include "packets/entity_update.h"
 #include "utils/itemutils.h"
 
 namespace mimicutils
@@ -189,16 +190,20 @@ auto LoadMimicTrustSnapshot(uint32 charId, uint8 mlvl, uint8 slvl) -> std::optio
     snapshot.sjob = static_cast<xi::Job>(statsRset->get<uint8>("sjob"));
 
     const auto lookRset = db::preparedStmt(
-        "SELECT face, race, size, head, body, hands, legs, feet, main, sub, ranged FROM char_look WHERE charid = ? LIMIT 1",
+        "SELECT face, race, head, body, hands, legs, feet, main, sub, ranged FROM char_look WHERE charid = ? LIMIT 1",
         charId);
     if (!lookRset || lookRset->rowsCount() == 0 || !lookRset->next())
     {
         return std::nullopt;
     }
 
+    // MODEL_EQUIPPED tells the entity-update packet to send the full look_t (race +
+    // per-slot equipment model IDs) so the trust renders as a geared humanoid, exactly
+    // like the source character. char_look.size is the racial body size, not a
+    // look_t.size model-type value, so it must not be copied here.
+    snapshot.look.size   = MODEL_EQUIPPED;
     snapshot.look.face   = lookRset->get<uint8>("face");
     snapshot.look.race   = lookRset->get<uint8>("race");
-    snapshot.look.size   = lookRset->get<uint8>("size");
     snapshot.look.head   = lookRset->get<uint16>("head");
     snapshot.look.body   = lookRset->get<uint16>("body");
     snapshot.look.hands  = lookRset->get<uint16>("hands");

@@ -795,9 +795,17 @@ auto trustutils::BuildMimicTrust(CCharEntity* PMaster, uint32 altCharId) -> CTru
 
     PTrust->look = snapshot.look;
     PTrust->name = snapshot.name;
+    // packetName drives the party-list row and the entity name field; if left empty
+    // GP_SERV_COMMAND_GROUP_LIST copies garbage and the client drops the trust row.
+    PTrust->packetName = snapshot.name;
+    // Dynamically-named MODEL_EQUIPPED entity on a dynamic targid: the entity-update
+    // packet only sends the custom name alongside the equipped model when isRenamed
+    // is set (same path every Lua-spawned dynamic entity uses).
+    PTrust->isRenamed = true;
 
     PTrust->m_MimicSourceCharId = altCharId;
     PTrust->status              = xi::Status::Normal;
+    PTrust->m_EcoSystem         = xi::Ecosystem::Humanoid;
 
     PTrust->SetMJob(static_cast<uint8>(snapshot.mjob));
     PTrust->SetSJob(static_cast<uint8>(snapshot.sjob));
@@ -860,6 +868,32 @@ auto trustutils::BuildMimicTrust(CCharEntity* PMaster, uint32 altCharId) -> CTru
             PTrust->m_Weapons[slot] = static_cast<CItemEquipment*>(snapshot.weapons[slot].release());
         }
     }
+
+    // Baseline combat mods. Mobs/trusts derive melee ATT/ACC/DEF/EVA from rank-scaled
+    // skill, not from WorkingSkills like a PC does, so without this a mimic trust has
+    // only whatever its gear grants and whiffs almost everything at high level.
+    // Ranks: B attack/accuracy, C defence/evasion (a competent adventurer, not an NM).
+    const auto skillMult = settings::get<float>("map.ALTER_EGO_SKILL_MULTIPLIER");
+    PTrust->attRank = 2;
+    PTrust->accRank = 2;
+    PTrust->defRank = 3;
+    PTrust->evaRank = 3;
+    PTrust->addModifier(xi::Mod::ATT,  static_cast<int16>(mobutils::GetBaseSkill(PTrust, PTrust->attRank) * skillMult));
+    PTrust->addModifier(xi::Mod::ACC,  static_cast<int16>(mobutils::GetBaseSkill(PTrust, PTrust->accRank) * skillMult));
+    PTrust->addModifier(xi::Mod::RATT, static_cast<int16>(mobutils::GetBaseSkill(PTrust, PTrust->attRank) * skillMult));
+    PTrust->addModifier(xi::Mod::RACC, static_cast<int16>(mobutils::GetBaseSkill(PTrust, PTrust->accRank) * skillMult));
+    PTrust->addModifier(xi::Mod::DEF,  static_cast<int16>(mobutils::GetBaseSkill(PTrust, PTrust->defRank) * skillMult));
+    PTrust->addModifier(xi::Mod::EVA,  static_cast<int16>(mobutils::GetBaseSkill(PTrust, PTrust->evaRank) * skillMult));
+    PTrust->addModifier(xi::Mod::MEVA, mobutils::GetMagicEvasion(PTrust));
+
+    // Job-specific mob behaviour tuning (magic cadence, special-move cooldowns, etc.).
+    mobutils::SetupJob(PTrust);
+
+    ShowInfo("BuildMimicTrust: %s Lv%u/%u job %u/%u hp=%d mp=%d STR=%u look(size=%u race=%u face=%u)",
+             snapshot.name, snapshot.mlvl, snapshot.slvl,
+             static_cast<uint32>(snapshot.mjob), static_cast<uint32>(snapshot.sjob),
+             snapshot.maxhp, snapshot.maxmp, snapshot.stats.STR,
+             snapshot.look.size, snapshot.look.race, snapshot.look.face);
 
     if (PMaster->PParty == nullptr)
     {
