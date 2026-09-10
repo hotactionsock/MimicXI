@@ -800,6 +800,11 @@ public:
     auto   spawnTrust(uint16 trustId) -> CBaseEntity*;
     auto   spawnMimicTrust(std::string const& altCharName) -> CBaseEntity*;
     void   clearTrusts();
+    void   clearMimicTrusts();
+    uint32 getAccountID();
+    auto   getSquadRoster() -> sol::table;
+    void   setSquadSlot(uint8 slot, uint32 charId);
+    auto   getAccountCharacters() -> sol::table;
     uint32 getTrustID();
     void   trustPartyMessage(uint32 message_id) const;
     auto   addGambit(uint16 targ, const sol::table& predicates, const sol::table& reactions, const sol::object& retry) -> std::string;

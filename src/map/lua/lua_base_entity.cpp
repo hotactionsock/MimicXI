@@ -167,6 +167,7 @@
 #include "utils/petutils.h"
 #include "utils/puppetutils.h"
 #include "utils/mimicutils.h"
+#include "utils/squadutils.h"
 #include "utils/trustutils.h"
 #include "utils/zoneutils.h"
 
@@ -16326,6 +16327,142 @@ void CLuaBaseEntity::clearTrusts()
 }
 
 /************************************************************************
+ *  Function: clearMimicTrusts()
+ *  Purpose : Dismisses only this player's mimic trusts, leaving real trusts.
+ *  Example : player:clearMimicTrusts()
+ ************************************************************************/
+
+void CLuaBaseEntity::clearMimicTrusts()
+{
+    if (m_PBaseEntity->objtype != TYPE_PC)
+    {
+        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->getName());
+        return;
+    }
+
+    auto* PChar = static_cast<CCharEntity*>(m_PBaseEntity);
+
+    std::vector<CTrustEntity*> mimics;
+    for (auto* PTrust : PChar->PTrusts)
+    {
+        if (PTrust != nullptr && PTrust->m_MimicSourceCharId != 0)
+        {
+            mimics.push_back(PTrust);
+        }
+    }
+
+    for (auto* PTrust : mimics)
+    {
+        PChar->RemoveTrust(PTrust);
+    }
+}
+
+/************************************************************************
+ *  Function: getAccountID()
+ *  Purpose : Returns the account id this character belongs to.
+ *  Example : local accid = player:getAccountID()
+ ************************************************************************/
+
+uint32 CLuaBaseEntity::getAccountID()
+{
+    if (m_PBaseEntity->objtype != TYPE_PC)
+    {
+        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->getName());
+        return 0;
+    }
+
+    return static_cast<CCharEntity*>(m_PBaseEntity)->accid;
+}
+
+/************************************************************************
+ *  Function: getSquadRoster()
+ *  Purpose : Returns the account's mimic-trust squad as an array of charids
+ *            (index 1..SquadSlots). 0 means the slot is empty.
+ *  Example : for slot, charid in ipairs(player:getSquadRoster()) do ... end
+ ************************************************************************/
+
+auto CLuaBaseEntity::getSquadRoster() -> sol::table
+{
+    if (m_PBaseEntity->objtype != TYPE_PC)
+    {
+        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->getName());
+        return sol::lua_nil;
+    }
+
+    const auto squad = squadutils::GetSquad(static_cast<CCharEntity*>(m_PBaseEntity)->accid);
+
+    auto table = lua.create_table();
+    for (uint8 i = 0; i < squadutils::SquadSlots; ++i)
+    {
+        table[i + 1] = squad[i];
+    }
+
+    return table;
+}
+
+/************************************************************************
+ *  Function: setSquadSlot(slot, charid)
+ *  Purpose : Assigns (or clears, with charid 0) one squad slot. Rejects a
+ *            charid that is not one of this account's own characters.
+ *  Example : player:setSquadSlot(2, altCharId)
+ ************************************************************************/
+
+void CLuaBaseEntity::setSquadSlot(uint8 slot, uint32 charId)
+{
+    if (m_PBaseEntity->objtype != TYPE_PC)
+    {
+        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->getName());
+        return;
+    }
+
+    if (slot < 1 || slot > squadutils::SquadSlots)
+    {
+        return;
+    }
+
+    auto* PChar = static_cast<CCharEntity*>(m_PBaseEntity);
+
+    if (charId != 0 && (!squadutils::IsOwnedByAccount(PChar->accid, charId) || charId == PChar->id))
+    {
+        return;
+    }
+
+    squadutils::SetSquadSlot(PChar->accid, slot, charId);
+}
+
+/************************************************************************
+ *  Function: getAccountCharacters()
+ *  Purpose : Every character on this account, for squad pickers. Each entry is
+ *            { charid, name, mainJob, mainLvl }. The calling character is
+ *            included; filter it in Lua if unwanted.
+ *  Example : for _, c in ipairs(player:getAccountCharacters()) do ... end
+ ************************************************************************/
+
+auto CLuaBaseEntity::getAccountCharacters() -> sol::table
+{
+    if (m_PBaseEntity->objtype != TYPE_PC)
+    {
+        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->getName());
+        return sol::lua_nil;
+    }
+
+    const auto chars = squadutils::ListAccountChars(static_cast<CCharEntity*>(m_PBaseEntity)->accid);
+
+    auto table = lua.create_table();
+    for (const auto& entry : chars)
+    {
+        auto row       = lua.create_table();
+        row["charid"]  = entry.charId;
+        row["name"]    = entry.name;
+        row["mainJob"] = entry.mainJob;
+        row["mainLvl"] = entry.mainLvl;
+        table.add(row);
+    }
+
+    return table;
+}
+
+/************************************************************************
  *  Function: getTrustID()
  *  Purpose :
  *  Example : trust:getTrustID()
@@ -21397,6 +21534,11 @@ void CLuaBaseEntity::Register()
     SOL_REGISTER("spawnTrust", CLuaBaseEntity::spawnTrust);
     SOL_REGISTER("spawnMimicTrust", CLuaBaseEntity::spawnMimicTrust);
     SOL_REGISTER("clearTrusts", CLuaBaseEntity::clearTrusts);
+    SOL_REGISTER("clearMimicTrusts", CLuaBaseEntity::clearMimicTrusts);
+    SOL_REGISTER("getAccountID", CLuaBaseEntity::getAccountID);
+    SOL_REGISTER("getSquadRoster", CLuaBaseEntity::getSquadRoster);
+    SOL_REGISTER("setSquadSlot", CLuaBaseEntity::setSquadSlot);
+    SOL_REGISTER("getAccountCharacters", CLuaBaseEntity::getAccountCharacters);
     SOL_REGISTER("getTrustID", CLuaBaseEntity::getTrustID);
     SOL_REGISTER("trustPartyMessage", CLuaBaseEntity::trustPartyMessage);
     SOL_REGISTER("addGambit", CLuaBaseEntity::addGambit);
