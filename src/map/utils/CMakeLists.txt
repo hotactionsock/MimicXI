@@ -52,6 +52,8 @@ set(UTIL_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/synthutils.h
     ${CMAKE_CURRENT_SOURCE_DIR}/trustutils.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/trustutils.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/warehouseutils.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/warehouseutils.h
     ${CMAKE_CURRENT_SOURCE_DIR}/zoneutils.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/zoneutils.h
     PARENT_SCOPE

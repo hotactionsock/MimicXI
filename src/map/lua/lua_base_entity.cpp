@@ -168,6 +168,7 @@
 #include "utils/puppetutils.h"
 #include "utils/mimicutils.h"
 #include "utils/squadutils.h"
+#include "utils/warehouseutils.h"
 #include "utils/trustutils.h"
 #include "utils/zoneutils.h"
 
@@ -17295,6 +17296,313 @@ uint8 CLuaBaseEntity::squadLearnScroll(uint32 srcCharId, uint8 srcContainerId, u
 }
 
 /************************************************************************
+ *  mwarehouse - an account-wide, effectively unlimited item stash.
+ *
+ *  warehouseInfo()          -> { generation, used, cap, pageSize, pages }
+ *  warehousePage(n)         -> array of { rowid, itemId, quantity, aug }
+ *  warehousePut(cont, slot, itemId, qty)  -> uint8 result
+ *  warehouseTake(rowid, qty)              -> uint8 result
+ *  warehouseTrash(rowid)                  -> uint8 result
+ *  warehouseStashAll(cont)  -> { deposited, generation }
+ *
+ *  Result: 0 ok, 1 no item / stale, 2 stash full, 3 bad row, 4 inventory full,
+ *          5 db error, 6 bad quantity.
+ ************************************************************************/
+
+namespace
+{
+    // Core deposit of one live-inventory slot into the account warehouse. On Ok
+    // the caller bumps the generation (once for a batch). Does NOT bump it here.
+    auto warehouseDepositSlot(CCharEntity* PChar, uint8 containerId, uint8 slot, uint16 expectItemId, uint32 wantQty) -> uint8
+    {
+        auto tx = ItemClaimTransaction::start(PChar);
+        if (!tx)
+        {
+            return 5;
+        }
+
+        CItem* PSrc = tx->claimSlot(containerId, slot);
+        if (PSrc == nullptr || PSrc->getID() == 0 || PSrc->getID() == 65535)
+        {
+            return 1;
+        }
+        if (expectItemId != 0 && PSrc->getID() != expectItemId)
+        {
+            return 1; // the client's slot read is stale
+        }
+
+        const uint16 itemId = PSrc->getID();
+        const uint32 have   = PSrc->getQuantity();
+        const uint32 qty    = wantQty == 0 ? have : wantQty;
+        if (qty == 0 || qty > have)
+        {
+            return 6;
+        }
+
+        // Merge eligibility: a plain, unsigned, un-augmented, stackable item.
+        bool mergeable = PSrc->getStackSize() > 1 && PSrc->getSignature().empty();
+        if (mergeable)
+        {
+            for (uint8 i = 0; i < sizeof(PSrc->m_extra); ++i)
+            {
+                if (PSrc->m_extra[i] != 0)
+                {
+                    mergeable = false;
+                    break;
+                }
+            }
+        }
+
+        const uint32 accId = PChar->accid;
+
+        uint32 mergeRow = mergeable ? warehouseutils::FindMergeRow(accId, itemId) : 0;
+        if (mergeRow == 0 && warehouseutils::RowCount(accId) >= warehouseutils::SoftRowCap)
+        {
+            return 2;
+        }
+
+        std::string signature = PSrc->getSignature();
+        uint8       extra[24];
+        std::memcpy(extra, PSrc->m_extra, sizeof(extra));
+
+        if (!tx->take(containerId, slot, qty))
+        {
+            return 5;
+        }
+
+        bool wrote = false;
+        if (mergeRow != 0)
+        {
+            wrote = warehouseutils::AddQuantity(accId, mergeRow, qty);
+        }
+        else
+        {
+            mergeRow = warehouseutils::InsertRow(accId, itemId, qty, signature, extra);
+            wrote    = mergeRow != 0;
+        }
+        if (!wrote)
+        {
+            return 5; // tx rolls back on scope exit -> item restored
+        }
+
+        if (!tx->commit())
+        {
+            // undo the DB side
+            warehouseutils::TakeQuantity(accId, mergeRow, qty);
+            return 5;
+        }
+
+        return 0;
+    }
+} // namespace
+
+auto CLuaBaseEntity::warehouseInfo() -> sol::table
+{
+    auto table = lua.create_table();
+    if (m_PBaseEntity->objtype != TYPE_PC)
+    {
+        return table;
+    }
+
+    const uint32 accId = static_cast<CCharEntity*>(m_PBaseEntity)->accid;
+    table["generation"] = warehouseutils::Generation(accId);
+    table["used"]       = warehouseutils::RowCount(accId);
+    table["cap"]        = warehouseutils::SoftRowCap;
+    table["pageSize"]   = warehouseutils::PageSize;
+    table["pages"]      = warehouseutils::PageCount(accId);
+    return table;
+}
+
+auto CLuaBaseEntity::warehousePage(uint32 page) -> sol::table
+{
+    auto table = lua.create_table();
+    if (m_PBaseEntity->objtype != TYPE_PC)
+    {
+        return table;
+    }
+
+    const uint32 accId = static_cast<CCharEntity*>(m_PBaseEntity)->accid;
+    for (const auto& row : warehouseutils::ListPage(accId, page))
+    {
+        auto r        = lua.create_table();
+        r["rowid"]    = row.rowid;
+        r["itemId"]   = row.itemId;
+        r["quantity"] = row.quantity;
+        r["aug"]      = row.aug;
+        table.add(r);
+    }
+    return table;
+}
+
+uint8 CLuaBaseEntity::warehousePut(uint8 srcContainerId, uint8 srcSlot, uint16 itemId, uint32 quantity)
+{
+    if (m_PBaseEntity->objtype != TYPE_PC)
+    {
+        return 5;
+    }
+    auto* PChar = static_cast<CCharEntity*>(m_PBaseEntity);
+
+    const uint8 res = warehouseDepositSlot(PChar, srcContainerId, srcSlot, itemId, quantity);
+    if (res == 0)
+    {
+        warehouseutils::BumpGeneration(PChar->accid);
+    }
+    return res;
+}
+
+uint8 CLuaBaseEntity::warehouseTake(uint32 rowid, uint32 quantity)
+{
+    if (m_PBaseEntity->objtype != TYPE_PC)
+    {
+        return 5;
+    }
+    auto* PChar = static_cast<CCharEntity*>(m_PBaseEntity);
+    const uint32 accId = PChar->accid;
+
+    warehouseutils::WarehouseRow row;
+    if (!warehouseutils::ReadRow(accId, rowid, row))
+    {
+        return 3;
+    }
+
+    const uint32 qty = quantity == 0 ? row.quantity : quantity;
+    if (qty == 0 || qty > row.quantity)
+    {
+        return 6;
+    }
+
+    auto PItem = xi::items::spawn(row.itemId);
+    if (!PItem)
+    {
+        return 3;
+    }
+    if (qty < row.quantity && PItem->getStackSize() <= 1)
+    {
+        return 6;
+    }
+    PItem->setQuantity(qty);
+    PItem->setSignature(row.signature);
+    std::memcpy(PItem->m_extra, row.extra, sizeof(PItem->m_extra));
+    if (auto* PEquip = dynamic_cast<CItemEquipment*>(PItem.get()))
+    {
+        for (uint8 augSlot = 0; augSlot < 4; ++augSlot)
+        {
+            if (PEquip->getAugment(augSlot) != 0)
+            {
+                PEquip->ApplyAugment(augSlot);
+            }
+        }
+    }
+
+    if (PChar->getStorage(LOC_INVENTORY)->GetFreeSlotsCount() == 0)
+    {
+        return 4;
+    }
+
+    auto tx = ItemClaimTransaction::start(PChar);
+    if (!tx)
+    {
+        return 5;
+    }
+    if (tx->give(LOC_INVENTORY, std::move(PItem)).value_or(ERROR_SLOTID) == ERROR_SLOTID)
+    {
+        return 4;
+    }
+    if (!warehouseutils::TakeQuantity(accId, rowid, qty))
+    {
+        return 5; // tx rolls back
+    }
+    if (!tx->commit())
+    {
+        // best-effort: put the quantity back
+        warehouseutils::AddQuantity(accId, rowid, qty);
+        return 5;
+    }
+
+    warehouseutils::BumpGeneration(accId);
+    return 0;
+}
+
+uint8 CLuaBaseEntity::warehouseTrash(uint32 rowid)
+{
+    if (m_PBaseEntity->objtype != TYPE_PC)
+    {
+        return 5;
+    }
+    auto* PChar = static_cast<CCharEntity*>(m_PBaseEntity);
+    const uint32 accId = PChar->accid;
+
+    warehouseutils::WarehouseRow row;
+    if (!warehouseutils::ReadRow(accId, rowid, row))
+    {
+        return 3;
+    }
+    if (!warehouseutils::DeleteRow(accId, rowid))
+    {
+        return 5;
+    }
+
+    warehouseutils::BumpGeneration(accId);
+    return 0;
+}
+
+auto CLuaBaseEntity::warehouseStashAll(uint8 srcContainerId) -> sol::table
+{
+    auto table = lua.create_table();
+    table["deposited"] = 0;
+
+    if (m_PBaseEntity->objtype != TYPE_PC)
+    {
+        return table;
+    }
+    auto* PChar    = static_cast<CCharEntity*>(m_PBaseEntity);
+    auto* PStorage = PChar->getStorage(srcContainerId);
+    if (PStorage == nullptr)
+    {
+        table["generation"] = warehouseutils::Generation(PChar->accid);
+        return table;
+    }
+
+    uint32 deposited = 0;
+    // Slot order can shift as items leave, so re-scan from the top after each move.
+    bool moved = true;
+    while (moved)
+    {
+        moved = false;
+        for (uint8 slot = 1; slot <= PStorage->GetSize(); ++slot)
+        {
+            auto* PItem = PStorage->GetItem(slot);
+            if (PItem == nullptr || PItem->getID() == 0 || PItem->getID() == 65535)
+            {
+                continue;
+            }
+
+            // claimSlot() inside warehouseDepositSlot refuses busy items
+            // (equipped, in a trade, bazaar), so those simply don't count.
+            if (warehouseDepositSlot(PChar, srcContainerId, slot, PItem->getID(), 0) == 0)
+            {
+                ++deposited;
+                moved = true;
+                break; // container changed under us; restart the scan
+            }
+        }
+        if (deposited >= warehouseutils::SoftRowCap)
+        {
+            break;
+        }
+    }
+
+    if (deposited > 0)
+    {
+        warehouseutils::BumpGeneration(PChar->accid);
+    }
+
+    table["deposited"]  = deposited;
+    table["generation"] = warehouseutils::Generation(PChar->accid);
+    return table;
+}
+
+/************************************************************************
  *  Function: getTrustID()
  *  Purpose :
  *  Example : trust:getTrustID()
@@ -22384,6 +22692,12 @@ void CLuaBaseEntity::Register()
     SOL_REGISTER("squadEquip", CLuaBaseEntity::squadEquip);
     SOL_REGISTER("squadUnequip", CLuaBaseEntity::squadUnequip);
     SOL_REGISTER("squadLearnScroll", CLuaBaseEntity::squadLearnScroll);
+    SOL_REGISTER("warehouseInfo", CLuaBaseEntity::warehouseInfo);
+    SOL_REGISTER("warehousePage", CLuaBaseEntity::warehousePage);
+    SOL_REGISTER("warehousePut", CLuaBaseEntity::warehousePut);
+    SOL_REGISTER("warehouseTake", CLuaBaseEntity::warehouseTake);
+    SOL_REGISTER("warehouseTrash", CLuaBaseEntity::warehouseTrash);
+    SOL_REGISTER("warehouseStashAll", CLuaBaseEntity::warehouseStashAll);
     SOL_REGISTER("getTrustID", CLuaBaseEntity::getTrustID);
     SOL_REGISTER("trustPartyMessage", CLuaBaseEntity::trustPartyMessage);
     SOL_REGISTER("addGambit", CLuaBaseEntity::addGambit);
