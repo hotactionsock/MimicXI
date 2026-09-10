@@ -163,4 +163,70 @@ auto BagTakeRow(uint32 charId, uint8 containerId, uint8 slot, uint32 quantity) -
 // whether a partial move is legal.
 auto ItemStackSize(uint16 itemId) -> uint16;
 
+// --- gear (equip an offline alt, i.e. a trust) ---
+//
+// A mimic trust reads its look/stats/weapons from the source character's real
+// char_equip / char_look at summon time. Equipping a trust therefore rewrites
+// that offline character's equipment (it persists), then the caller rebuilds the
+// live trust. Candidate items are filtered by the alt's *real* main-job level,
+// its main job, and its race - and pulled from every account character's
+// inventory + wardrobes, equipped pieces included (taking one force-unequips the
+// other, offline, character).
+
+// One of the 16 equipment slots (SLOT_MAIN..SLOT_BACK) and what the alt wears there.
+struct GearSlot
+{
+    uint8  equipSlotId{};
+    uint16 itemId{};   // 0 = empty
+    bool   aug{};
+};
+auto ListAltGear(uint32 charId) -> std::array<GearSlot, 16>;
+
+struct GearCandidate
+{
+    uint32 srcCharId{};
+    uint8  srcCharSelf{};    // 1 if this is the account's summoner (online)
+    uint8  srcContainer{};
+    uint8  srcSlot{};
+    uint16 itemId{};
+    uint8  aug{};
+    uint8  equippedElsewhere{}; // currently sitting in some char's char_equip
+};
+// Everything on the account that altCharId can wear in equipSlotId right now.
+auto ListGearCandidates(uint32 accId, uint32 altCharId, uint8 equipSlotId) -> std::vector<GearCandidate>;
+
+enum class GearResult : uint8
+{
+    Ok,           // char_equip / char_look written; caller resummons if appropriate
+    NotOwned,     // altCharId or srcCharId not on the account
+    Online,       // altCharId is logged in
+    BadSlot,      // equipSlotId out of 0..15, or the item does not fit it
+    NoItem,       // the source slot is empty / vanished
+    NotEquippable,// job / level / race check failed for this alt
+    NeedsLiveMove,// the source is the online summoner - the binding must move it
+    DbError,
+};
+
+// Look-column name for an equip slot (main/sub/ranged/head/body/hands/legs/feet),
+// or nullptr for slots with no visible model.
+auto GearLookColumn(uint8 equipSlotId) -> const char*;
+
+// item_equipment.MId (model id) for an item, 0 if none.
+auto ItemModelId(uint16 itemId) -> uint16;
+
+// Validate + relocate a purely-offline source item into altCharId's inventory,
+// then set char_equip + char_look for equipSlotId (clearing sub for 2H/H2H).
+// Returns NeedsLiveMove if srcCharId is the online summoner - the lua binding
+// handles that side with an item transaction and then calls FinishAltEquip.
+auto EquipAltItem(uint32 accId, uint32 altCharId, uint8 equipSlotId,
+                  uint32 srcCharId, uint8 srcContainer, uint8 srcSlot) -> GearResult;
+
+// Second half of an equip whose item was placed into altCharId's inventory by
+// the caller (used when the source was the online summoner). invSlot is where it
+// landed. Sets char_equip + char_look, clears sub for 2H/H2H.
+auto FinishAltEquip(uint32 altCharId, uint8 equipSlotId, uint8 invSlot, uint16 itemId) -> GearResult;
+
+// Clear one equip slot; the item stays in the alt's inventory.
+auto UnequipAltItem(uint32 accId, uint32 altCharId, uint8 equipSlotId) -> GearResult;
+
 }; // namespace squadutils

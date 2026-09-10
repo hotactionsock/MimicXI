@@ -16961,6 +16961,213 @@ uint8 CLuaBaseEntity::squadBagMove(uint32 srcCharId, uint8 srcContainerId, uint8
 }
 
 /************************************************************************
+ *  Function: getSquadGear(charId)
+ *  Purpose : The 16 equipment slots of an account character and what it wears.
+ *            Row: { equipSlot, itemId, aug }.  itemId 0 = empty.
+ ************************************************************************/
+
+auto CLuaBaseEntity::getSquadGear(uint32 charId) -> sol::table
+{
+    auto table = lua.create_table();
+    if (m_PBaseEntity->objtype != TYPE_PC)
+    {
+        return table;
+    }
+
+    auto* PChar = static_cast<CCharEntity*>(m_PBaseEntity);
+    if (!squadutils::IsOwnedByAccount(PChar->accid, charId))
+    {
+        return table;
+    }
+
+    for (const auto& g : squadutils::ListAltGear(charId))
+    {
+        auto row         = lua.create_table();
+        row["equipSlot"] = g.equipSlotId;
+        row["itemId"]    = g.itemId;
+        row["aug"]       = g.aug;
+        table.add(row);
+    }
+    return table;
+}
+
+/************************************************************************
+ *  Function: getSquadGearCandidates(charId, equipSlotId)
+ *  Purpose : Every item on the account that charId's real main job / level /
+ *            race can wear in equipSlotId, from any character's inventory or
+ *            wardrobes (equipped pieces included).
+ *            Row: { srcChar, srcSelf, srcCont, srcSlot, itemId, aug, equipped }
+ ************************************************************************/
+
+auto CLuaBaseEntity::getSquadGearCandidates(uint32 charId, uint8 equipSlotId) -> sol::table
+{
+    auto table = lua.create_table();
+    if (m_PBaseEntity->objtype != TYPE_PC)
+    {
+        return table;
+    }
+
+    auto* PChar = static_cast<CCharEntity*>(m_PBaseEntity);
+    for (const auto& c : squadutils::ListGearCandidates(PChar->accid, charId, equipSlotId))
+    {
+        auto row        = lua.create_table();
+        row["srcChar"]  = c.srcCharId;
+        row["srcSelf"]  = c.srcCharSelf;
+        row["srcCont"]  = c.srcContainer;
+        row["srcSlot"]  = c.srcSlot;
+        row["itemId"]   = c.itemId;
+        row["aug"]      = c.aug;
+        row["equipped"] = c.equippedElsewhere;
+        table.add(row);
+    }
+    return table;
+}
+
+namespace
+{
+    // Shared: after gear changed on an offline alt, if that alt is out as one of
+    // PChar's mimic trusts, rebuild it on the new gear - unless PChar is engaged,
+    // in which case leave it (re-summons after the fight). Returns true if it was
+    // deferred for combat.
+    auto squadResummonMimicIfOut(CCharEntity* PChar, uint32 altCharId) -> bool
+    {
+        CTrustEntity* PMimic = nullptr;
+        for (auto* PTrust : PChar->PTrusts)
+        {
+            if (PTrust != nullptr && PTrust->m_MimicSourceCharId == altCharId)
+            {
+                PMimic = PTrust;
+                break;
+            }
+        }
+        if (PMimic == nullptr)
+        {
+            return false;
+        }
+        if (PChar->PAI->IsEngaged())
+        {
+            return true;
+        }
+        PChar->RemoveTrust(PMimic);
+        trustutils::BuildMimicTrust(PChar, altCharId);
+        return false;
+    }
+} // namespace
+
+/************************************************************************
+ *  Function: squadEquip(charId, equipSlotId, srcCharId, srcContainerId, srcSlot)
+ *  Purpose : Equip one of the account's items onto an offline alt (a trust).
+ *            Relocates the item into the alt's inventory (force-unequipping
+ *            whatever offline character currently holds it), writes char_equip
+ *            + char_look, and rebuilds the live trust if it is out and the
+ *            caller is not in combat.
+ *  Returns : 0 ok, 1 not on account, 2 alt online, 3 bad slot / item does not
+ *            fit, 4 no item, 5 job/level/race check failed, 6 db error,
+ *            8 changed but caller in combat (re-summon deferred).
+ ************************************************************************/
+
+uint8 CLuaBaseEntity::squadEquip(uint32 charId, uint8 equipSlotId, uint32 srcCharId, uint8 srcContainerId, uint8 srcSlot)
+{
+    if (m_PBaseEntity->objtype != TYPE_PC)
+    {
+        return 1;
+    }
+    auto* PChar = static_cast<CCharEntity*>(m_PBaseEntity);
+
+    auto res = squadutils::EquipAltItem(PChar->accid, charId, equipSlotId, srcCharId, srcContainerId, srcSlot);
+
+    if (res == squadutils::GearResult::NeedsLiveMove)
+    {
+        // Source is the online summoner: move it with a transaction, then finish.
+        if (srcCharId != PChar->id)
+        {
+            return 6;
+        }
+
+        auto tx = ItemClaimTransaction::start(PChar);
+        if (!tx)
+        {
+            return 6;
+        }
+        CItem* PSrc = tx->claimSlot(srcContainerId, srcSlot);
+        if (PSrc == nullptr || PSrc->getID() == 0 || PSrc->getID() == 65535)
+        {
+            return 4;
+        }
+
+        squadutils::BagItem row;
+        row.itemId    = PSrc->getID();
+        row.quantity  = 1;
+        row.signature = PSrc->getSignature();
+        std::memcpy(row.extra, PSrc->m_extra, sizeof(row.extra));
+
+        const uint8 invSlot = squadutils::BagFirstFreeSlot(charId, LOC_INVENTORY);
+        if (invSlot == 0)
+        {
+            return 6;
+        }
+        if (!tx->take(srcContainerId, srcSlot, 1))
+        {
+            return 6;
+        }
+        row.slot = invSlot;
+        if (!squadutils::BagInsertRow(charId, LOC_INVENTORY, invSlot, row))
+        {
+            return 6;
+        }
+        if (!tx->commit())
+        {
+            squadutils::BagTakeRow(charId, LOC_INVENTORY, invSlot, 1);
+            return 6;
+        }
+
+        res = squadutils::FinishAltEquip(charId, equipSlotId, invSlot, row.itemId);
+    }
+
+    switch (res)
+    {
+        case squadutils::GearResult::Ok:
+            break;
+        case squadutils::GearResult::NotOwned:      return 1;
+        case squadutils::GearResult::Online:        return 2;
+        case squadutils::GearResult::BadSlot:       return 3;
+        case squadutils::GearResult::NoItem:        return 4;
+        case squadutils::GearResult::NotEquippable: return 5;
+        default:                                    return 6;
+    }
+
+    return squadResummonMimicIfOut(PChar, charId) ? 8 : 0;
+}
+
+/************************************************************************
+ *  Function: squadUnequip(charId, equipSlotId)
+ *  Purpose : Clear one equip slot on an offline alt; the item stays in its
+ *            inventory. Rebuilds the live trust as squadEquip does.
+ *  Returns : as squadEquip (0 ok, 1 not-account, 2 online, 3 bad slot,
+ *            6 db error, 8 deferred for combat).
+ ************************************************************************/
+
+uint8 CLuaBaseEntity::squadUnequip(uint32 charId, uint8 equipSlotId)
+{
+    if (m_PBaseEntity->objtype != TYPE_PC)
+    {
+        return 1;
+    }
+    auto* PChar = static_cast<CCharEntity*>(m_PBaseEntity);
+
+    switch (squadutils::UnequipAltItem(PChar->accid, charId, equipSlotId))
+    {
+        case squadutils::GearResult::Ok:       break;
+        case squadutils::GearResult::NotOwned: return 1;
+        case squadutils::GearResult::Online:   return 2;
+        case squadutils::GearResult::BadSlot:  return 3;
+        default:                               return 6;
+    }
+
+    return squadResummonMimicIfOut(PChar, charId) ? 8 : 0;
+}
+
+/************************************************************************
  *  Function: getTrustID()
  *  Purpose :
  *  Example : trust:getTrustID()
@@ -22045,6 +22252,10 @@ void CLuaBaseEntity::Register()
     SOL_REGISTER("getSquadBags", CLuaBaseEntity::getSquadBags);
     SOL_REGISTER("getSquadBagItems", CLuaBaseEntity::getSquadBagItems);
     SOL_REGISTER("squadBagMove", CLuaBaseEntity::squadBagMove);
+    SOL_REGISTER("getSquadGear", CLuaBaseEntity::getSquadGear);
+    SOL_REGISTER("getSquadGearCandidates", CLuaBaseEntity::getSquadGearCandidates);
+    SOL_REGISTER("squadEquip", CLuaBaseEntity::squadEquip);
+    SOL_REGISTER("squadUnequip", CLuaBaseEntity::squadUnequip);
     SOL_REGISTER("getTrustID", CLuaBaseEntity::getTrustID);
     SOL_REGISTER("trustPartyMessage", CLuaBaseEntity::trustPartyMessage);
     SOL_REGISTER("addGambit", CLuaBaseEntity::addGambit);

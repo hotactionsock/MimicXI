@@ -44,6 +44,56 @@ commandObj.onTrigger = function(player, input)
         end
         xi.squad.msqBagItems(player, 'bag', charid, cont)
 
+    elseif verb == 'gear' then
+        local charid = tonumber(a[2])
+        if not charid then
+            xi.squad.msqError(player, 'gear <charid>')
+            return
+        end
+        xi.squad.msqGear(player, 'gear', charid)
+
+    elseif verb == 'gearslot' then
+        local charid = tonumber(a[2])
+        local slot   = tonumber(a[3])
+        if not charid or not slot then
+            xi.squad.msqError(player, 'gearslot <charid> <equipSlot>')
+            return
+        end
+        xi.squad.msqGearCandidates(player, 'gearslot', charid, slot)
+
+    elseif verb == 'equip' then
+        local charid = tonumber(a[2])
+        local slot   = tonumber(a[3])
+        local sC, sK, sS = tonumber(a[4]), tonumber(a[5]), tonumber(a[6])
+        if not (charid and slot and sC and sK and sS) then
+            xi.squad.msqError(player, 'equip <charid> <equipSlot> <srcChar> <srcCont> <srcSlot>')
+            return
+        end
+        local res = player:squadEquip(charid, slot, sC, sK, sS)
+        local why = xi.squad.GEAR_RESULT[res]
+        if why then
+            if res == 8 then xi.squad.msqStatus(player, why) else xi.squad.msqError(player, why) end
+        else
+            xi.squad.msqStatus(player, 'Equipped.')
+        end
+        xi.squad.msqGear(player, 'equip', charid)
+
+    elseif verb == 'unequip' then
+        local charid = tonumber(a[2])
+        local slot   = tonumber(a[3])
+        if not charid or not slot then
+            xi.squad.msqError(player, 'unequip <charid> <equipSlot>')
+            return
+        end
+        local res = player:squadUnequip(charid, slot)
+        local why = xi.squad.GEAR_RESULT[res]
+        if why then
+            if res == 8 then xi.squad.msqStatus(player, why) else xi.squad.msqError(player, why) end
+        else
+            xi.squad.msqStatus(player, 'Unequipped.')
+        end
+        xi.squad.msqGear(player, 'unequip', charid)
+
     elseif verb == 'bagmove' then
         local sC, sK, sS = tonumber(a[2]), tonumber(a[3]), tonumber(a[4])
         local dC, dK     = tonumber(a[5]), tonumber(a[6])

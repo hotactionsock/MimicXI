@@ -20,6 +20,11 @@
 --   MSQ|bk|<charid>|<containerId>|<size>|<used>          one container's fill
 --   MSQ|bi|<charid>|<containerId>|<slot>|<itemId>|<qty>|<aug>   one item row
 --                                  aug: 1 if the item carries an augment / exdata
+--
+-- Gear (equip an offline alt / trust):
+--   MSQ|g|<charid>|<equipSlot>|<itemId>|<aug>            one of the 16 worn slots
+--   MSQ|gc|<charid>|<equipSlot>|<srcChar>|<srcSelf>|<srcCont>|<srcSlot>|<itemId>|<aug>|<equipped>
+--                                  one equip candidate (srcSelf 1 = the summoner)
 -----------------------------------
 xi       = xi       or {}
 xi.squad = xi.squad or {}
@@ -150,6 +155,46 @@ xi.squad.msqBagItems = function(player, verb, charid, containerId)
             charid, containerId, it.slot, it.itemId, it.quantity, it.aug and 1 or 0))
     end
 
+    rec(player, 'z|' .. verb)
+end
+
+-- Equip-slot id -> label (SLOTTYPE in battle_entity.h).
+xi.squad.EQUIP_SLOTS =
+{
+    [0]  = 'Main',  [1]  = 'Sub',   [2]  = 'Range', [3]  = 'Ammo',
+    [4]  = 'Head',  [5]  = 'Body',  [6]  = 'Hands', [7]  = 'Legs',
+    [8]  = 'Feet',  [9]  = 'Neck',  [10] = 'Waist', [11] = 'Ear 1',
+    [12] = 'Ear 2', [13] = 'Ring 1',[14] = 'Ring 2',[15] = 'Back',
+}
+
+xi.squad.GEAR_RESULT =
+{
+    [0] = nil,
+    [1] = 'That is not one of your account characters.',
+    [2] = 'That character is logged in - change its gear directly.',
+    [3] = 'That item does not fit that slot.',
+    [4] = 'The item is no longer there.',
+    [5] = "That character's job, level or race cannot wear it.",
+    [6] = 'The equip failed - nothing was changed.',
+    [8] = 'Equipped - the trust re-summons on the new gear after this fight.',
+}
+
+-- Emit an alt's 16 worn slots.
+xi.squad.msqGear = function(player, verb, charid)
+    rec(player, string.format('d|%d|%s', xi.squad.PROTOCOL, verb))
+    for _, g in ipairs(player:getSquadGear(charid)) do
+        rec(player, string.format('g|%d|%d|%d|%d', charid, g.equipSlot, g.itemId, g.aug))
+    end
+    rec(player, 'z|' .. verb)
+end
+
+-- Emit the equip candidates for one slot.
+xi.squad.msqGearCandidates = function(player, verb, charid, equipSlot)
+    rec(player, string.format('d|%d|%s', xi.squad.PROTOCOL, verb))
+    for _, c in ipairs(player:getSquadGearCandidates(charid, equipSlot)) do
+        rec(player, string.format('gc|%d|%d|%d|%d|%d|%d|%d|%d|%d',
+            charid, equipSlot, c.srcChar, c.srcSelf, c.srcCont, c.srcSlot, c.itemId, c.aug, c.equipped))
+    end
     rec(player, 'z|' .. verb)
 end
 

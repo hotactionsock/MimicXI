@@ -243,6 +243,78 @@ local function doTransfer(player, args, toAlt)
     msg(player, why or (toAlt and string.format('Sent to %s.', alt.name) or string.format('Fetched from %s.', alt.name)))
 end
 
+local function slotArg(a)
+    if not a then return nil end
+    local n = tonumber(a)
+    if n then return n end
+    local want = string.lower(a)
+    for id, label in pairs(xi.squad.EQUIP_SLOTS) do
+        if string.lower(label):gsub(' ', '') == want then return id end
+    end
+    return nil
+end
+
+local function doGear(player, args)
+    local alt = args[2] and findAltByName(player, args[2])
+    if not alt then
+        msg(player, 'Usage: !squad gear <character name>')
+        return
+    end
+    msg(player, string.format('%s equipment:', alt.name))
+    for _, g in ipairs(player:getSquadGear(alt.charid)) do
+        if g.itemId ~= 0 then
+            msg(player, string.format('  %-6s item %d%s',
+                xi.squad.EQUIP_SLOTS[g.equipSlot] or ('s' .. g.equipSlot), g.itemId, g.aug == 1 and ' (aug)' or ''))
+        end
+    end
+end
+
+local function doGearSlot(player, args)
+    local alt  = args[2] and findAltByName(player, args[2])
+    local slot = slotArg(args[3])
+    if not alt or not slot then
+        msg(player, 'Usage: !squad gearslot <character name> <slot>')
+        return
+    end
+    local cands = player:getSquadGearCandidates(alt.charid, slot)
+    msg(player, string.format('%s / %s - %d option(s):', alt.name, xi.squad.EQUIP_SLOTS[slot] or slot, #cands))
+    for i, c in ipairs(cands) do
+        local byId = charsById(player)
+        local holder = byId[c.srcChar] and byId[c.srcChar].name or ('char ' .. c.srcChar)
+        msg(player, string.format('  %d) item %d  (%s%s%s)', i, c.itemId, holder,
+            c.aug == 1 and ', aug' or '', c.equipped == 1 and ', equipped' or ''))
+    end
+end
+
+local function doEquip(player, args)
+    local alt  = args[2] and findAltByName(player, args[2])
+    local slot = slotArg(args[3])
+    local idx  = tonumber(args[4])
+    if not alt or not slot or not idx then
+        msg(player, 'Usage: !squad equip <character name> <slot> <option#>   (see !squad gearslot)')
+        return
+    end
+    local cands = player:getSquadGearCandidates(alt.charid, slot)
+    local c = cands[idx]
+    if not c then
+        msg(player, string.format('No option %d for that slot.', idx))
+        return
+    end
+    local res = player:squadEquip(alt.charid, slot, c.srcChar, c.srcCont, c.srcSlot)
+    msg(player, xi.squad.GEAR_RESULT[res] or string.format('Equipped item %d on %s.', c.itemId, alt.name))
+end
+
+local function doUnequip(player, args)
+    local alt  = args[2] and findAltByName(player, args[2])
+    local slot = slotArg(args[3])
+    if not alt or not slot then
+        msg(player, 'Usage: !squad unequip <character name> <slot>')
+        return
+    end
+    local res = player:squadUnequip(alt.charid, slot)
+    msg(player, xi.squad.GEAR_RESULT[res] or string.format('Cleared %s on %s.', xi.squad.EQUIP_SLOTS[slot] or slot, alt.name))
+end
+
 local function doSetJob(player, args)
     local name = args[2]
     local mj   = args[3] and (tonumber(args[3]) or xi.job[string.upper(args[3])])
@@ -278,6 +350,10 @@ local dispatch =
     bag     = function(player, args) doBag(player, args)     end,
     send    = function(player, args) doTransfer(player, args, true)  end,
     fetch   = function(player, args) doTransfer(player, args, false) end,
+    gear     = function(player, args) doGear(player, args)     end,
+    gearslot = function(player, args) doGearSlot(player, args) end,
+    equip    = function(player, args) doEquip(player, args)    end,
+    unequip  = function(player, args) doUnequip(player, args)  end,
 }
 
 commandObj.onTrigger = function(player, input)
@@ -288,7 +364,7 @@ commandObj.onTrigger = function(player, input)
     if handler then
         handler(player, args)
     else
-        msg(player, 'Subcommands: list | set <slot> <name> | clear <slot> | call [slot|all] | dismiss | engage 0|1 | setjob <name> <mjob> [sjob] | bags | bag <name> [container] | send <name> <slot> [qty] | fetch <name> <slot> [qty]')
+        msg(player, 'Subcommands: list | set <slot> <name> | clear <slot> | call [slot|all] | dismiss | engage 0|1 | setjob <name> <mjob> [sjob] | bags | bag <name> [container] | send <name> <slot> [qty] | fetch <name> <slot> [qty] | gear <name> | gearslot <name> <slot> | equip <name> <slot> <#> | unequip <name> <slot>')
     end
 end
 

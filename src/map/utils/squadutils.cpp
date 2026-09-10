@@ -29,6 +29,8 @@
 #include "common/database.h"
 
 #include "item_container.h"
+#include "items/item_equipment.h"
+#include "items/item_weapon.h"
 #include "utils/itemutils.h"
 
 namespace squadutils
@@ -491,6 +493,411 @@ auto ItemStackSize(uint16 itemId) -> uint16
 {
     auto PItem = xi::items::spawn(itemId);
     return PItem ? static_cast<uint16>(PItem->getStackSize()) : 1;
+}
+
+// --- gear ---------------------------------------------------------------
+
+namespace
+{
+    // Equip slot ids (mirror battle_entity.h SLOTTYPE) - kept local so this file
+    // needn't pull the entity headers.
+    enum : uint8
+    {
+        SL_MAIN = 0, SL_SUB = 1, SL_RANGED = 2, SL_AMMO = 3,
+        SL_HEAD = 4, SL_BODY = 5, SL_HANDS = 6, SL_LEGS = 7, SL_FEET = 8,
+        SL_NECK = 9, SL_WAIST = 10, SL_EAR1 = 11, SL_EAR2 = 12,
+        SL_RING1 = 13, SL_RING2 = 14, SL_BACK = 15,
+    };
+
+    struct AltEquipInfo
+    {
+        uint8  mjob{};
+        uint8  mjobLevel{};   // real char_jobs.<mjob>
+        uint8  race{};
+        bool   ok{};
+    };
+
+    auto LoadAltEquipInfo(uint32 charId) -> AltEquipInfo
+    {
+        AltEquipInfo info;
+
+        const auto sRset = db::preparedStmt("SELECT mjob FROM char_stats WHERE charid = ? LIMIT 1", charId);
+        if (!sRset || sRset->rowsCount() == 0 || !sRset->next())
+        {
+            return info;
+        }
+        info.mjob = sRset->get<uint8>("mjob");
+
+        const auto lRset = db::preparedStmt("SELECT race FROM char_look WHERE charid = ? LIMIT 1", charId);
+        if (lRset && lRset->rowsCount() != 0 && lRset->next())
+        {
+            info.race = lRset->get<uint8>("race");
+        }
+
+        if (const char* col = JobColumn(info.mjob))
+        {
+            const auto jRset = db::preparedStmt(
+                fmt::format("SELECT `{}` AS lv FROM char_jobs WHERE charid = ? LIMIT 1", col), charId);
+            if (jRset && jRset->rowsCount() != 0 && jRset->next())
+            {
+                info.mjobLevel = std::max<uint8>(jRset->get<uint8>("lv"), 1);
+            }
+        }
+
+        info.ok = info.mjob >= 1 && info.mjob <= 22;
+        return info;
+    }
+
+    // Race / final validation on a spawned equipment item for this alt.
+    auto ItemFitsAlt(uint16 itemId, uint8 equipSlotId, const AltEquipInfo& alt) -> bool
+    {
+        auto PItem = xi::items::spawn(itemId);
+        auto* PEquip = dynamic_cast<CItemEquipment*>(PItem.get());
+        if (PEquip == nullptr)
+        {
+            return false;
+        }
+        if ((PEquip->getEquipSlotId() & (1 << equipSlotId)) == 0)
+        {
+            return false;
+        }
+        if ((PEquip->getJobs() & (1u << (alt.mjob - 1))) == 0)
+        {
+            return false;
+        }
+        if (PEquip->getReqLvl() > alt.mjobLevel)
+        {
+            return false;
+        }
+        if (!PEquip->isEquippableByRace(alt.race))
+        {
+            return false;
+        }
+        return true;
+    }
+
+    auto ItemHasAug(uint32 charId, uint8 containerId, uint8 slot) -> bool
+    {
+        const auto rset = db::preparedStmt(
+            "SELECT extra FROM char_inventory WHERE charid = ? AND location = ? AND slot = ? LIMIT 1",
+            charId, containerId, slot);
+        if (!rset || rset->rowsCount() == 0 || !rset->next())
+        {
+            return false;
+        }
+        uint8 extra[24]{};
+        db::extractFromBlob(rset, "extra", extra);
+        for (uint8 i = 0; i < sizeof(extra); ++i)
+        {
+            if (extra[i] != 0)
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    auto IsTwoHandedOrH2H(uint16 itemId) -> bool
+    {
+        auto  PItem   = xi::items::spawn(itemId);
+        auto* PWeapon = dynamic_cast<CItemWeapon*>(PItem.get());
+        return PWeapon != nullptr && (PWeapon->isTwoHanded() || PWeapon->isHandToHand());
+    }
+} // namespace
+
+auto GearLookColumn(uint8 equipSlotId) -> const char*
+{
+    switch (equipSlotId)
+    {
+        case SL_MAIN:   return "main";
+        case SL_SUB:    return "sub";
+        case SL_RANGED: return "ranged";
+        case SL_HEAD:   return "head";
+        case SL_BODY:   return "body";
+        case SL_HANDS:  return "hands";
+        case SL_LEGS:   return "legs";
+        case SL_FEET:   return "feet";
+        default:        return nullptr;
+    }
+}
+
+auto ItemModelId(uint16 itemId) -> uint16
+{
+    const auto rset = db::preparedStmt("SELECT MId FROM item_equipment WHERE itemId = ? LIMIT 1", itemId);
+    if (rset && rset->rowsCount() != 0 && rset->next())
+    {
+        return rset->get<uint16>("MId");
+    }
+    return 0;
+}
+
+auto ListAltGear(uint32 charId) -> std::array<GearSlot, 16>
+{
+    std::array<GearSlot, 16> gear{};
+    for (uint8 i = 0; i < 16; ++i)
+    {
+        gear[i].equipSlotId = i;
+    }
+
+    const auto rset = db::preparedStmt(
+        "SELECT e.equipslotid, e.slotid, e.containerid, i.itemId, i.extra "
+        "FROM char_equip e "
+        "JOIN char_inventory i ON i.charid = e.charid AND i.location = e.containerid AND i.slot = e.slotid "
+        "WHERE e.charid = ?",
+        charId);
+    if (rset)
+    {
+        while (rset->next())
+        {
+            const uint8 slot = rset->get<uint8>("equipslotid");
+            if (slot >= 16)
+            {
+                continue;
+            }
+            gear[slot].itemId = rset->get<uint16>("itemId");
+
+            uint8 extra[24]{};
+            db::extractFromBlob(rset, "extra", extra);
+            for (uint8 i = 0; i < sizeof(extra); ++i)
+            {
+                if (extra[i] != 0)
+                {
+                    gear[slot].aug = true;
+                    break;
+                }
+            }
+        }
+    }
+
+    return gear;
+}
+
+auto ListGearCandidates(uint32 accId, uint32 altCharId, uint8 equipSlotId) -> std::vector<GearCandidate>
+{
+    std::vector<GearCandidate> out;
+
+    if (equipSlotId >= 16 || !IsOwnedByAccount(accId, altCharId))
+    {
+        return out;
+    }
+
+    const AltEquipInfo alt = LoadAltEquipInfo(altCharId);
+    if (!alt.ok)
+    {
+        return out;
+    }
+
+    // Account characters and which of them is the (online) summoner.
+    const auto charRset = db::preparedStmt(
+        "SELECT c.charid, (sess.charid IS NOT NULL) AS online "
+        "FROM chars c LEFT JOIN accounts_sessions sess ON sess.charid = c.charid "
+        "WHERE c.accid = ? ORDER BY c.charid",
+        accId);
+    if (!charRset)
+    {
+        return out;
+    }
+
+    std::vector<std::pair<uint32, bool>> chars;
+    while (charRset->next())
+    {
+        chars.emplace_back(charRset->get<uint32>("charid"), charRset->get<uint32>("online") != 0);
+    }
+
+    // SQL pre-filter on item_equipment; race is checked afterwards on a spawn.
+    const std::string containerList = "0,8,10,11,12,13,14,15,16"; // LOC_INVENTORY + wardrobes 1-8
+
+    for (const auto& [cid, online] : chars)
+    {
+        const auto rset = db::preparedStmt(
+            fmt::format(
+                "SELECT ci.location, ci.slot, ci.itemId, "
+                "       (ce.equipslotid IS NOT NULL) AS equipped "
+                "FROM char_inventory ci "
+                "JOIN item_equipment ie ON ie.itemId = ci.itemId "
+                "LEFT JOIN char_equip ce ON ce.charid = ci.charid AND ce.containerid = ci.location AND ce.slotid = ci.slot "
+                "WHERE ci.charid = ? AND ci.location IN ({}) "
+                "  AND (ie.slot & (1 << ?)) <> 0 "
+                "  AND (ie.jobs & (1 << ?)) <> 0 "
+                "  AND ie.level <= ? "
+                "ORDER BY ci.itemId",
+                containerList),
+            cid, equipSlotId, alt.mjob - 1, alt.mjobLevel);
+        if (!rset)
+        {
+            continue;
+        }
+
+        while (rset->next())
+        {
+            const uint16 itemId = rset->get<uint16>("itemId");
+            if (!ItemFitsAlt(itemId, equipSlotId, alt))
+            {
+                continue;
+            }
+
+            GearCandidate gc;
+            gc.srcCharId         = cid;
+            gc.srcCharSelf       = online ? 1 : 0;
+            gc.srcContainer      = rset->get<uint8>("location");
+            gc.srcSlot           = rset->get<uint8>("slot");
+            gc.itemId            = itemId;
+            gc.equippedElsewhere = rset->get<uint32>("equipped") != 0 ? 1 : 0;
+            gc.aug               = ItemHasAug(cid, gc.srcContainer, gc.srcSlot) ? 1 : 0;
+            out.emplace_back(gc);
+        }
+    }
+
+    return out;
+}
+
+namespace
+{
+    // Write char_equip + char_look for a slot whose item already sits in
+    // altCharId's inventory at invSlot. Clears the sub slot for a 2H / H2H main.
+    auto ApplyAltEquipRows(uint32 altCharId, uint8 equipSlotId, uint8 invSlot, uint16 itemId) -> GearResult
+    {
+        db::preparedStmt(
+            "INSERT INTO char_equip (charid, slotid, equipslotid, containerid) VALUES (?, ?, ?, 0) "
+            "ON DUPLICATE KEY UPDATE slotid = VALUES(slotid), containerid = 0",
+            altCharId, invSlot, equipSlotId);
+
+        if (const char* col = GearLookColumn(equipSlotId))
+        {
+            db::preparedStmt(fmt::format("UPDATE char_look SET `{}` = ? WHERE charid = ?", col),
+                             ItemModelId(itemId), altCharId);
+        }
+
+        if (equipSlotId == SL_MAIN && IsTwoHandedOrH2H(itemId))
+        {
+            db::preparedStmt("DELETE FROM char_equip WHERE charid = ? AND equipslotid = ?", altCharId, SL_SUB);
+            db::preparedStmt("UPDATE char_look SET `sub` = 0 WHERE charid = ?", altCharId);
+        }
+
+        return GearResult::Ok;
+    }
+} // namespace
+
+auto FinishAltEquip(uint32 altCharId, uint8 equipSlotId, uint8 invSlot, uint16 itemId) -> GearResult
+{
+    if (equipSlotId >= 16)
+    {
+        return GearResult::BadSlot;
+    }
+    return ApplyAltEquipRows(altCharId, equipSlotId, invSlot, itemId);
+}
+
+auto EquipAltItem(uint32 accId, uint32 altCharId, uint8 equipSlotId,
+                  uint32 srcCharId, uint8 srcContainer, uint8 srcSlot) -> GearResult
+{
+    if (equipSlotId >= 16)
+    {
+        return GearResult::BadSlot;
+    }
+    if (!IsOwnedByAccount(accId, altCharId) || !IsOwnedByAccount(accId, srcCharId))
+    {
+        return GearResult::NotOwned;
+    }
+    if (IsCharOnline(altCharId))
+    {
+        return GearResult::Online;
+    }
+
+    const AltEquipInfo alt = LoadAltEquipInfo(altCharId);
+    if (!alt.ok)
+    {
+        return GearResult::NotEquippable;
+    }
+
+    BagItem row;
+    if (!BagReadRow(srcCharId, srcContainer, srcSlot, row))
+    {
+        return GearResult::NoItem;
+    }
+    if (!ItemFitsAlt(row.itemId, equipSlotId, alt))
+    {
+        return GearResult::NotEquippable;
+    }
+
+    if (IsCharOnline(srcCharId))
+    {
+        // The summoner holds it live; the binding must move it with a transaction.
+        return GearResult::NeedsLiveMove;
+    }
+
+    // Free the source: if that row is currently equipped on srcCharId, drop the
+    // char_equip pointer first (force-unequip, offline char).
+    db::preparedStmt(
+        "DELETE FROM char_equip WHERE charid = ? AND containerid = ? AND slotid = ?",
+        srcCharId, srcContainer, srcSlot);
+
+    // Relocate the item into the alt's inventory.
+    uint8 destSlot = 0;
+    if (srcCharId == altCharId)
+    {
+        if (srcContainer == LOC_INVENTORY)
+        {
+            destSlot = srcSlot; // already where it needs to be
+        }
+        else
+        {
+            destSlot = BagFirstFreeSlot(altCharId, LOC_INVENTORY);
+            if (destSlot == 0)
+            {
+                return GearResult::DbError;
+            }
+            if (!db::preparedStmt(
+                    "UPDATE char_inventory SET location = 0, slot = ? WHERE charid = ? AND location = ? AND slot = ?",
+                    destSlot, altCharId, srcContainer, srcSlot))
+            {
+                return GearResult::DbError;
+            }
+        }
+    }
+    else
+    {
+        destSlot = BagFirstFreeSlot(altCharId, LOC_INVENTORY);
+        if (destSlot == 0)
+        {
+            return GearResult::DbError;
+        }
+        BagItem placed = row;
+        placed.slot    = destSlot;
+        if (!BagInsertRow(altCharId, LOC_INVENTORY, destSlot, placed))
+        {
+            return GearResult::DbError;
+        }
+        db::preparedStmt(
+            "DELETE FROM char_inventory WHERE charid = ? AND location = ? AND slot = ?",
+            srcCharId, srcContainer, srcSlot);
+    }
+
+    return ApplyAltEquipRows(altCharId, equipSlotId, destSlot, row.itemId);
+}
+
+auto UnequipAltItem(uint32 accId, uint32 altCharId, uint8 equipSlotId) -> GearResult
+{
+    if (equipSlotId >= 16)
+    {
+        return GearResult::BadSlot;
+    }
+    if (!IsOwnedByAccount(accId, altCharId))
+    {
+        return GearResult::NotOwned;
+    }
+    if (IsCharOnline(altCharId))
+    {
+        return GearResult::Online;
+    }
+
+    db::preparedStmt("DELETE FROM char_equip WHERE charid = ? AND equipslotid = ?", altCharId, equipSlotId);
+
+    if (const char* col = GearLookColumn(equipSlotId))
+    {
+        db::preparedStmt(fmt::format("UPDATE char_look SET `{}` = 0 WHERE charid = ?", col), altCharId);
+    }
+
+    return GearResult::Ok;
 }
 
 }; // namespace squadutils

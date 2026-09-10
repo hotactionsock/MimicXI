@@ -813,6 +813,10 @@ public:
     auto   getSquadBags() -> sol::table;
     auto   getSquadBagItems(uint32 charId, uint8 containerId) -> sol::table;
     uint8  squadBagMove(uint32 srcCharId, uint8 srcContainerId, uint8 srcSlot, uint32 dstCharId, uint8 dstContainerId, uint32 quantity);
+    auto   getSquadGear(uint32 charId) -> sol::table;
+    auto   getSquadGearCandidates(uint32 charId, uint8 equipSlotId) -> sol::table;
+    uint8  squadEquip(uint32 charId, uint8 equipSlotId, uint32 srcCharId, uint8 srcContainerId, uint8 srcSlot);
+    uint8  squadUnequip(uint32 charId, uint8 equipSlotId);
     uint32 getTrustID();
     void   trustPartyMessage(uint32 message_id) const;
     auto   addGambit(uint16 targ, const sol::table& predicates, const sol::table& reactions, const sol::object& retry) -> std::string;
