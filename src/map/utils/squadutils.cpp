@@ -69,8 +69,13 @@ auto ListAccountChars(uint32 accId) -> std::vector<AccountChar>
     std::vector<AccountChar> chars;
 
     const auto rset = db::preparedStmt(
-        "SELECT c.charid, c.charname, s.mjob, s.mlvl "
-        "FROM chars c JOIN char_stats s ON s.charid = c.charid "
+        "SELECT c.charid, c.charname, s.mjob, s.mlvl, "
+        "       (sess.charid IS NOT NULL) AS online, "
+        "       (mim.charid IS NOT NULL)  AS locked "
+        "FROM chars c "
+        "JOIN char_stats s          ON s.charid    = c.charid "
+        "LEFT JOIN accounts_sessions sess ON sess.charid = c.charid "
+        "LEFT JOIN char_mimic_active mim  ON mim.charid  = c.charid "
         "WHERE c.accid = ? ORDER BY c.charid",
         accId);
 
@@ -83,6 +88,8 @@ auto ListAccountChars(uint32 accId) -> std::vector<AccountChar>
             entry.name    = rset->get<std::string>("charname");
             entry.mainJob = rset->get<uint8>("mjob");
             entry.mainLvl = rset->get<uint8>("mlvl");
+            entry.online  = rset->get<uint32>("online") != 0;
+            entry.locked  = rset->get<uint32>("locked") != 0;
             chars.emplace_back(std::move(entry));
         }
     }

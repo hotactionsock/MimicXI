@@ -38,6 +38,8 @@ struct AccountChar
     std::string name;
     uint8       mainJob{};
     uint8       mainLvl{};
+    bool        online{};   // has a live accounts_sessions row
+    bool        locked{};   // currently out as someone's mimic trust (char_mimic_active)
 };
 
 // Returns slot -> charid for the account (index 0 == slot 1). 0 means the slot is empty.

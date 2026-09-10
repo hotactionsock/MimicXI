@@ -166,19 +166,31 @@ local function doDismiss(player)
     msg(player, 'Mimic trusts dismissed.')
 end
 
+local function doEngage(player, args)
+    local mode = tonumber(args[2])
+    if not xi.squad.setEngageMode(player, mode) then
+        msg(player, 'Usage: !squad engage 0|1  (0 = engage + swing, 1 = engage on your target)')
+        return
+    end
+    msg(player, mode == 1
+        and 'Squad now engages as soon as you target a monster.'
+        or  'Squad now engages when you land a swing.')
+end
+
 -----------------------------------
 -- Dispatch
 -----------------------------------
 
 local dispatch =
 {
-    list    = function(player, _)    doList(player)       end,
-    who     = function(player, _)    doList(player)       end,
-    set     = function(player, args) doSet(player, args)  end,
+    list    = function(player, _)    doList(player)        end,
+    who     = function(player, _)    doList(player)        end,
+    set     = function(player, args) doSet(player, args)   end,
     clear   = function(player, args) doClear(player, args) end,
-    call    = function(player, args) doCall(player, args) end,
-    summon  = function(player, args) doCall(player, args) end,
-    dismiss = function(player, _)    doDismiss(player)    end,
+    call    = function(player, args) doCall(player, args)  end,
+    summon  = function(player, args) doCall(player, args)  end,
+    dismiss = function(player, _)    doDismiss(player)     end,
+    engage  = function(player, args) doEngage(player, args) end,
 }
 
 commandObj.onTrigger = function(player, input)
@@ -189,7 +201,7 @@ commandObj.onTrigger = function(player, input)
     if handler then
         handler(player, args)
     else
-        msg(player, 'Subcommands: list | set <slot> <name> | clear <slot> | call [slot|all] | dismiss')
+        msg(player, 'Subcommands: list | set <slot> <name> | clear <slot> | call [slot|all] | dismiss | engage 0|1')
     end
 end
 

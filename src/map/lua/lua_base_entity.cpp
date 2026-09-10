@@ -16456,6 +16456,8 @@ auto CLuaBaseEntity::getAccountCharacters() -> sol::table
         row["name"]    = entry.name;
         row["mainJob"] = entry.mainJob;
         row["mainLvl"] = entry.mainLvl;
+        row["online"]  = entry.online;
+        row["locked"]  = entry.locked;
         table.add(row);
     }
 
