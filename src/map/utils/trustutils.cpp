@@ -776,6 +776,47 @@ void LoadTrustStatsAndSkills(CTrustEntity* PTrust)
     }
 }
 
+namespace
+{
+    // Mirror of the piecewise curve in CBattleEntity.cpp's GetAccFromSkill: a
+    // combat-skill value converted to the accuracy it grants. Integer math floors
+    // the same way std::floor does for non-negative input.
+    auto mimicAccFromSkill(uint32 skill) -> uint32
+    {
+        if (skill > 600)
+        {
+            return (skill - 600) * 9 / 10 + 540;
+        }
+        if (skill > 400)
+        {
+            return (skill - 400) * 8 / 10 + 380;
+        }
+        if (skill > 200)
+        {
+            return (skill - 200) * 9 / 10 + 200;
+        }
+        return skill;
+    }
+
+    // The job's cap in a weapon skill at a level, falling back to the sub job and
+    // then to a dagger-rank baseline so the value is never simply 0.
+    auto mimicWeaponSkillCap(xi::SkillType wSkill, xi::Job mjob, xi::Job sjob, uint8 lvl) -> uint16
+    {
+        const uint8 capLvl = lvl > 99 ? 99 : lvl;
+
+        uint16 cap = battleutils::GetMaxSkill(wSkill, mjob, capLvl);
+        if (cap == 0)
+        {
+            cap = battleutils::GetMaxSkill(wSkill, sjob, capLvl);
+        }
+        if (cap == 0)
+        {
+            cap = battleutils::GetMaxSkill(xi::SkillType::Dagger, xi::Job::WAR, capLvl);
+        }
+        return cap;
+    }
+} // namespace
+
 auto trustutils::BuildMimicTrust(CCharEntity* PMaster, uint32 altCharId) -> CTrustEntity*
 {
     // Cap only - the mimic spawns at the alt's own real level for its main job, never
@@ -808,6 +849,11 @@ auto trustutils::BuildMimicTrust(CCharEntity* PMaster, uint32 altCharId) -> CTru
     PTrust->m_MimicSourceCharId = altCharId;
     PTrust->status              = xi::Status::Normal;
     PTrust->m_EcoSystem         = xi::Ecosystem::Humanoid;
+    // A model radius, so GetMeleeRange() (hitbox + 2 + target hitbox) exceeds the
+    // controller's RoamDistance - a 0 radius parks the mimic just outside its own
+    // reach and it never swings.
+    PTrust->modelSize       = 1;
+    PTrust->modelHitboxSize = 2.0f;
     // 32 = proper-noun name flag (every real trust pool uses it): battle messages
     // read "<name> defeats ..." instead of "The <name> defeats ...".
     PTrust->m_name_prefix = 32;
@@ -865,28 +911,57 @@ auto trustutils::BuildMimicTrust(CCharEntity* PMaster, uint32 altCharId) -> CTru
 
     // Weapons: real, augmented items assigned directly so damage calc and added-effect
     // procs read them exactly as they would for a live character's equipped weapon.
+    // slot is the equip-slot id (0 MAIN, 1 SUB, 2 RANGED, 3 AMMO).
     for (uint8 slot = 0; slot < snapshot.weapons.size(); ++slot)
     {
         if (snapshot.weapons[slot] != nullptr)
         {
             destroy(PTrust->m_Weapons[slot]);
             PTrust->m_Weapons[slot] = static_cast<CItemEquipment*>(snapshot.weapons[slot].release());
+
+            // Apply the weapon's own stat mods + augment mods, the way a PC's
+            // equipItem does - m_Weapons assignment alone only gives damage/delay.
+            if (auto* PWeapon = dynamic_cast<CItemEquipment*>(PTrust->m_Weapons[slot]))
+            {
+                PTrust->addEquipModifiers(&PWeapon->modList, PWeapon->getReqLvl(), slot);
+            }
         }
     }
 
-    // Baseline combat mods. Mobs/trusts derive melee ATT/ACC/DEF/EVA from rank-scaled
-    // skill, not from WorkingSkills like a PC does, so without this a mimic trust has
-    // only whatever its gear grants and whiffs almost everything at high level.
-    // Ranks: B attack/accuracy, C defence/evasion (a competent adventurer, not an NM).
+    // --- Player-like melee stats ---
+    // CBattleEntity::ATT()/ACC() fold in the wielded weapon's combat skill (and a
+    // 0.75-ish STR/DEX multiplier) ONLY for TYPE_PC. A mimic is a trust, so a
+    // level-99 mimic otherwise fights with 8 + STR*0.5 attack and no skill-based
+    // accuracy at all. Buy that contribution back as flat mods, computed the way a
+    // player of this job / level / weapon would earn it.
     const auto skillMult = settings::get<float>("map.ALTER_EGO_SKILL_MULTIPLIER");
-    PTrust->attRank = 2;
-    PTrust->accRank = 2;
+
+    const auto*   mainWeapon = dynamic_cast<CItemWeapon*>(PTrust->m_Weapons[SLOT_MAIN]);
+    xi::SkillType wSkill     = (mainWeapon != nullptr && mainWeapon->getSkillType() != xi::SkillType::None)
+                                   ? mainWeapon->getSkillType()
+                                   : xi::SkillType::HandToHand;
+    const uint16  wSkillCap  = mimicWeaponSkillCap(wSkill, snapshot.mjob, snapshot.sjob, snapshot.mlvl);
+
+    const bool  twoH    = mainWeapon != nullptr && mainWeapon->isTwoHanded();
+    const bool  h2h     = mainWeapon == nullptr || mainWeapon->isHandToHand();
+    const float strMult = twoH ? settings::get<float>("main.TWO_HANDED_STR_ATTACK_MULTIPLIER")
+                          : h2h ? settings::get<float>("main.HAND_TO_HAND_STR_ATTACK_MULTIPLIER")
+                                : settings::get<float>("main.ONE_HAND_MAIN_HAND_STR_ATTACK_MULTIPLIER");
+    const float dexMult = twoH ? settings::get<float>("main.TWO_HANDED_DEX_ACCURACY_MULTIPLIER")
+                          : h2h ? settings::get<float>("main.HAND_TO_HAND_DEX_ACCURACY_MULTIPLIER")
+                                : settings::get<float>("main.ONE_HAND_MAIN_HAND_DEX_ACCURACY_MULTIPLIER");
+
+    PTrust->addModifier(xi::Mod::ATT,  static_cast<int16>(wSkillCap * skillMult));
+    PTrust->addModifier(xi::Mod::ACC,  static_cast<int16>(mimicAccFromSkill(wSkillCap) * skillMult));
+    PTrust->addModifier(xi::Mod::RATT, static_cast<int16>(wSkillCap * skillMult));
+    PTrust->addModifier(xi::Mod::RACC, static_cast<int16>(mimicAccFromSkill(wSkillCap) * skillMult));
+    // The non-PC path only credits STR*0.5 / DEX*0.5; top up to the PC multiplier.
+    PTrust->addModifier(xi::Mod::ATT, static_cast<int16>(PTrust->STR() * std::max(0.0f, strMult - 0.5f)));
+    PTrust->addModifier(xi::Mod::ACC, static_cast<int16>(PTrust->DEX() * std::max(0.0f, dexMult - 0.5f)));
+
+    // Defence / evasion stay rank-scaled - a trust already gets VIT*1.5 like a PC.
     PTrust->defRank = 3;
     PTrust->evaRank = 3;
-    PTrust->addModifier(xi::Mod::ATT,  static_cast<int16>(mobutils::GetBaseSkill(PTrust, PTrust->attRank) * skillMult));
-    PTrust->addModifier(xi::Mod::ACC,  static_cast<int16>(mobutils::GetBaseSkill(PTrust, PTrust->accRank) * skillMult));
-    PTrust->addModifier(xi::Mod::RATT, static_cast<int16>(mobutils::GetBaseSkill(PTrust, PTrust->attRank) * skillMult));
-    PTrust->addModifier(xi::Mod::RACC, static_cast<int16>(mobutils::GetBaseSkill(PTrust, PTrust->accRank) * skillMult));
     PTrust->addModifier(xi::Mod::DEF,  static_cast<int16>(mobutils::GetBaseSkill(PTrust, PTrust->defRank) * skillMult));
     PTrust->addModifier(xi::Mod::EVA,  static_cast<int16>(mobutils::GetBaseSkill(PTrust, PTrust->evaRank) * skillMult));
     PTrust->addModifier(xi::Mod::MEVA, mobutils::GetMagicEvasion(PTrust));

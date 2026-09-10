@@ -396,10 +396,10 @@ void AwardMimicExp(CCharEntity* PMaster, CTrustEntity* PMimic, uint32 gainedExp)
             std::make_unique<GP_SERV_COMMAND_SCHEDULOR>(PMimic, PMimic, "ef40"));
     }
 
-    // Advance the live entity's stats only when it is NOT level-synced below the new
-    // level; a synced-down trust keeps fighting at the summoner's level. Base stats /
-    // combat mods fully refresh on the next summon - here we just keep level and the
-    // HP/MP pool right.
+    // Advance the live entity only when it is NOT level-synced below the new level;
+    // a synced-down trust keeps fighting at the summoner's level. Weapon-skill ATT/
+    // ACC and job traits fully refresh on the next summon - here we keep level, base
+    // stats and the HP/MP pool climbing so damage scales with it.
     const uint8 syncLevel = std::min<uint8>(level, PMaster->GetMLevel());
     if (syncLevel > PMimic->GetMLevel())
     {
@@ -408,6 +408,23 @@ void AwardMimicExp(CCharEntity* PMaster, CTrustEntity* PMimic, uint32 gainedExp)
 
         const uint8   race = RaceIndexFromLook(PMimic->look.race);
         const xi::Job sjob = PMimic->GetSJob();
+
+        // Base stats (STR..CHR) recomputed at the new level, overwriting - gear mods
+        // are separate (m_modStat) and survive.
+        uint16* const statFields[] = {
+            &PMimic->stats.STR, &PMimic->stats.DEX, &PMimic->stats.VIT, &PMimic->stats.AGI,
+            &PMimic->stats.INT, &PMimic->stats.MND, &PMimic->stats.CHR
+        };
+        for (uint8 statIndex = 2; statIndex <= 8; ++statIndex)
+        {
+            *statFields[statIndex - 2] = grade::GetBaseStat(
+                grade::GetRaceGrades(race, statIndex),
+                grade::GetJobGrade(job, statIndex),
+                syncLevel,
+                grade::GetJobGrade(sjob, statIndex),
+                PMimic->GetSLevel());
+        }
+
         PMimic->health.maxhp = static_cast<int16>(grade::GetBaseHP(race, grade::GetJobGrade(job, 0), syncLevel, grade::GetJobGrade(sjob, 0), PMimic->GetSLevel()));
         PMimic->health.maxmp = static_cast<int16>(grade::GetBaseMP(race, grade::GetJobGrade(job, 1), syncLevel, grade::GetJobGrade(sjob, 1), PMimic->GetSLevel()));
 
