@@ -38,6 +38,7 @@
 #include "packets/s2c/0x02d_battle_message2.h"
 #include "enums/msg_basic.h"
 #include "party.h"
+#include "zone.h"
 #include "utils/charutils.h"
 #include "utils/itemutils.h"
 
@@ -392,7 +393,15 @@ void AwardMimicExp(CCharEntity* PMaster, CTrustEntity* PMimic, uint32 gainedExp)
     PMimic->health.mp = PMimic->GetMaxMP();
     PMimic->updatemask |= UPDATE_HP;
 
-    PMaster->pushPacket<GP_SERV_COMMAND_BATTLE_MESSAGE2>(PMimic, PMaster, static_cast<int32>(level), 0, MsgBasic::LevelUp);
+    // Broadcast the level-up exactly the way a player's does: BATTLE_MESSAGE2 with
+    // MsgBasic::LevelUp, entity as the caster, to everyone in range - the client
+    // plays the level-up glow on the caster and prints "<name> attains level N".
+    if (PMimic->loc.zone != nullptr)
+    {
+        PMimic->loc.zone->PushPacket(
+            PMimic, CHAR_INRANGE,
+            std::make_unique<GP_SERV_COMMAND_BATTLE_MESSAGE2>(PMimic, PMimic, static_cast<int32>(level), 0, MsgBasic::LevelUp));
+    }
 
     if (PMaster->PParty != nullptr)
     {
