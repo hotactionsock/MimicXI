@@ -132,6 +132,9 @@ void CAttackState::UpdateTarget(const EntityId& target)
         {
             newTarget          = EntityId{};
             CCharEntity* PChar = dynamic_cast<CCharEntity*>(m_PEntity);
+            ShowInfo("retarget: target invalid, PChar=%d autoTarget=%d spawnMobs=%zu",
+                     PChar ? 1 : 0, (PChar && PChar->hasAutoTargetEnabled()) ? 1 : 0,
+                     PChar ? PChar->SpawnMOBList.size() : 0);
             if (PChar && PChar->hasAutoTargetEnabled())
             {
                 // Retarget priority:
@@ -145,24 +148,28 @@ void CAttackState::UpdateTarget(const EntityId& target)
                 for (auto&& PPotentialTarget : PChar->SpawnMOBList)
                 {
                     auto* PMob = dynamic_cast<CMobEntity*>(PPotentialTarget.second);
-                    if (!PMob || PMob->animation != xi::Animation::Attack)
+                    if (!PMob)
                     {
                         continue;
                     }
 
-                    const float dist = distance(PChar->loc.p, PMob->loc.p);
-                    if (dist > 25.0f)
-                    {
-                        continue;
-                    }
+                    const float dist  = distance(PChar->loc.p, PMob->loc.p);
+                    const bool  anim  = PMob->animation == xi::Animation::Attack;
+                    const bool  hasMe = PMob->PEnmityContainer && PMob->PEnmityContainer->HasID(PChar->id);
 
                     std::unique_ptr<CBasicPacket> errMsg;
-                    if (!PChar->IsValidTarget(EntityId(PMob), TARGET_ENEMY, errMsg))
+                    const bool valid = PChar->IsValidTarget(EntityId(PMob), TARGET_ENEMY, errMsg) != nullptr;
+
+                    ShowInfo("retarget scan: mob %s id=%u targid=%u anim=%d dist=%.1f hasMyId=%d valid=%d",
+                             PMob->getName().c_str(), PMob->id, PMob->targid, anim ? 1 : 0, dist,
+                             hasMe ? 1 : 0, valid ? 1 : 0);
+
+                    if (!anim || dist > 25.0f || !valid)
                     {
                         continue;
                     }
 
-                    if (PMob->PEnmityContainer && PMob->PEnmityContainer->HasID(PChar->id))
+                    if (hasMe)
                     {
                         PAggroPick = PMob;
                         break;
@@ -173,6 +180,8 @@ void CAttackState::UpdateTarget(const EntityId& target)
                         PFacingPick = PMob;
                     }
                 }
+
+                ShowInfo("retarget scan: pick=%s", PAggroPick ? "aggro" : (PFacingPick ? "facing" : "none"));
 
                 CBattleEntity* PRetarget = PAggroPick ? PAggroPick : PFacingPick;
                 if (PRetarget)
