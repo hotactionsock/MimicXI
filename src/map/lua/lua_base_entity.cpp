@@ -17262,6 +17262,35 @@ uint8 CLuaBaseEntity::squadLearnScroll(uint32 srcCharId, uint8 srcContainerId, u
         PChar->pushPacket<GP_SERV_COMMAND_BATTLE_MESSAGE>(PChar, PChar, 0, 0, MsgBasic::LearnsNewSpell);
     }
 
+    // Play the scroll's own use animation on the summoner as feedback - the
+    // white/black/etc. magic flavoured flash a normal scroll-use shows.
+    if (PChar->loc.zone != nullptr)
+    {
+        if (auto PScroll = xi::items::spawn(itemId))
+        {
+            if (auto* PUsable = dynamic_cast<CItemUsable*>(PScroll.get()))
+            {
+                action_t action{
+                    .actorId    = PChar->id,
+                    .actiontype = ActionCategory::ItemFinish,
+                    .actionid   = itemId,
+                    .targets    = {
+                        {
+                            .actorId = PChar->id,
+                            .results = {
+                                {
+                                    .resolution = ActionResolution::Hit,
+                                    .animation  = PUsable->getAnimationID(),
+                                },
+                            },
+                        },
+                    },
+                };
+                PChar->loc.zone->PushPacket(PChar, CHAR_INRANGE_SELF, std::make_unique<GP_SERV_COMMAND_BATTLE2>(action));
+            }
+        }
+    }
+
     return 0;
 }
 
