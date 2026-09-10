@@ -79,9 +79,10 @@ local casketInfo =
     },
     dropTypes =
     {
-        TEMP    = 1,
-        ITEM    = 2,
-        EVOLITH = 3, -- NOTE: not implemented! item id: 2783
+        TEMP      = 1,
+        ITEM      = 2,
+        EVOLITH   = 3, -- NOTE: not implemented! item id: 2783
+        RARE_ITEM = 4, -- Gold casket: HQ gear with optional augments (xi.caskets.rarePools / augmentTiers / augmentPools)
     },
     evolithAugs =
     {
@@ -194,7 +195,7 @@ end
 -----------------------------------
 -- Desc: Sets all the base localVar's, type of chest and if locked, sets the random number.
 -----------------------------------
-local function setCasketData(player, x, y, z, r, npc, partyID, mobLvl)
+local function setCasketData(player, x, y, z, r, npc, partyID, mob, mobLvl)
     -- Early return.
     if npc == nil then
         return
@@ -206,7 +207,28 @@ local function setCasketData(player, x, y, z, r, npc, partyID, mobLvl)
 
     -- Get casket type.
     local kupowersBonus = 0 -- TODO: Kupowers add a 20% chance.
-    if math.randomInt(1, 100) <= 15 + kupowersBonus then
+    local roll          = math.randomInt(1, 100)
+
+    -- Casket Hunter (THF trait): boost gold casket chance if a THF landed a hit.
+    -- Checks the mob's enmity list so any THF in the party counts, not just the
+    -- killer. Gold caskets are possible in every casket zone; zones without a
+    -- dedicated rare pool fall back to the standard item table in getDrops().
+    local goldChance = 5
+    for _, entry in ipairs(mob and mob:getEnmityList() or {}) do
+        local e = entry.entity
+        if e and e:getMainJob() == xi.job.THF then
+            local lvl   = e:getMainJobLevel()
+            local bonus = lvl >= 65 and 30 or lvl >= 35 and 15 or lvl >= 15 and 7 or 0
+            if bonus > 0 then
+                goldChance = goldChance + bonus
+                break -- use the first qualifying THF found
+            end
+        end
+    end
+
+    if roll <= goldChance then
+        chestStyle = 969 -- Gold: rare HQ casket
+    elseif roll <= 20 + kupowersBonus then
         chestStyle = 966 -- Brown locked
     else
         chestStyle = 965 -- Blue
@@ -222,8 +244,16 @@ local function setCasketData(player, x, y, z, r, npc, partyID, mobLvl)
     npc:setLocalVar('[caskets]ITEMS_SET', 0)
     npc:setLocalVar('[caskets]MOBLVL', mobLvl)
 
-    -- Brown.
-    if chestStyle == 966 then
+    -- Gold rare casket (locked, HQ loot).
+    if chestStyle == 969 then
+        npc:setLocalVar('[caskets]ATTEMPTS', attempts)
+        npc:setLocalVar('[caskets]CORRECT_NUM', correctNum)
+        npc:setLocalVar('[caskets]FAILED_ATEMPTS', 0)
+        npc:setLocalVar('[caskets]LOCKED', 1)
+        npc:setLocalVar('[caskets]LOOT_TYPE', casketInfo.dropTypes.RARE_ITEM)
+        npc:setLocalVar('[caskets]HINTS_TABLE', 1234567)
+    -- Brown locked casket.
+    elseif chestStyle == 966 then
         npc:setLocalVar('[caskets]ATTEMPTS', attempts)
         npc:setLocalVar('[caskets]CORRECT_NUM', correctNum)
         npc:setLocalVar('[caskets]FAILED_ATEMPTS', 0)
@@ -308,6 +338,11 @@ local function checkRemainingAttempts(player, npc, remaining, correctNumber)
     if remaining == 1 then
         player:messageSpecial(baseMessage + casketInfo.messageOffset.CORRECT_NUMBER_WAS, correctNumber, 0, 0, 0, 0)
         messageChest(player, 'UNABLE_TO_OPEN_LOCK', 0, 0, 0, 0, npc)
+        -- Gold casket: a failed lock has a chance to spawn a Casket Mimic. Must run
+        -- before removeChest wipes the NPC local vars the mimic module reads.
+        if xi.caskets.mimic and xi.caskets.mimic.onChestFail then
+            xi.caskets.mimic.onChestFail(player, npc)
+        end
         removeChest(npc)
     end
 end
@@ -419,6 +454,83 @@ local function getDrops(npc, dropType, zoneId)
         end
 
         setItems(npc, items[1], items[2], items[3], items[4])
+    -----------------------------------
+    -- Rare HQ item drops (Gold casket)
+    -----------------------------------
+    elseif dropType == casketInfo.dropTypes.RARE_ITEM then
+        -- Primary source: xi.caskets.rarePools, populated by the casket loot
+        -- modules at load time. Falls back to the zone's regular item pool so a
+        -- Gold casket is never permanently empty even where no rare pool exists.
+        local pool = xi.caskets.rarePools and xi.caskets.rarePools[zoneId]
+        if not pool then
+            local zoneItems = xi.casket_loot.casketItems[zoneId]
+            if zoneItems then
+                if casketInfo.splitZones[zoneId] then
+                    local mobLvl = npc:getLocalVar('[caskets]MOBLVL')
+                    pool = mobLvl > 50 and zoneItems.itemsHi or zoneItems.itemsLow
+                else
+                    pool = zoneItems.items
+                end
+            end
+        end
+
+        if not pool then
+            return
+        end
+
+        local randomTable = { 1, 2, 1, 1, 2, 1, 1, 2, 1, 1, 1, 2 }
+        local itemCount   = utils.randomEntry(randomTable)
+        local items       = { 0, 0, 0, 0 }
+
+        for i = 1, itemCount do
+            items[i] = xi.itemUtils.pickItemRandom(pool)
+        end
+
+        setItems(npc, items[1], items[2], items[3], items[4])
+
+        -- Pre-roll augments now so the preview and the grant always match.
+        -- Per-item pool (xi.caskets.augmentPools) overrides the zone tier pool;
+        -- augment count comes from sequential tier probability rolls.
+        local zoneTier = xi.caskets.zoneTier and xi.caskets.zoneTier[zoneId]
+        local tierDef  = zoneTier and xi.caskets.augmentTiers and xi.caskets.augmentTiers[zoneTier]
+        for slot = 1, itemCount do
+            local itemId = items[slot]
+            if itemId == 0 then
+                break
+            end
+
+            local itemPool = xi.caskets.augmentPools and xi.caskets.augmentPools[itemId]
+            local augPool  = itemPool or (tierDef and tierDef.pool)
+            if augPool and #augPool > 0 then
+                local chances = (tierDef and tierDef.augChances) or { 50, 5, 0, 0 }
+                local numAugs = 0
+                for _, chance in ipairs(chances) do
+                    if math.randomInt(1, 100) <= chance then
+                        numAugs = numAugs + 1
+                    else
+                        break
+                    end
+                end
+                numAugs = math.min(numAugs, #augPool)
+
+                if numAugs > 0 then
+                    local available = {}
+                    for _, aug in ipairs(augPool) do
+                        available[#available + 1] = aug
+                    end
+
+                    npc:setLocalVar(string.format('[caskets]ITEM%dNUMAUGS', slot), numAugs)
+                    for j = 1, numAugs do
+                        local idx   = math.randomInt(1, #available)
+                        local aug   = available[idx]
+                        local value = math.randomInt(aug.min, aug.max)
+                        npc:setLocalVar(string.format('[caskets]ITEM%dAUG%dID',  slot, j), aug.id)
+                        npc:setLocalVar(string.format('[caskets]ITEM%dAUG%dVAL', slot, j), value)
+                        table.remove(available, idx)
+                    end
+                end
+            end
+        end
     -----------------------------------
     -- Evolith drops
     -----------------------------------
@@ -562,6 +674,116 @@ local function giveItem(player, npc, itemNum, subOption)
 end
 
 -----------------------------------
+-- Desc: Prints the pre-rolled augment info for a Gold Casket to the player, so
+--       they can see what each slot holds before choosing one.
+-----------------------------------
+local function showRareItemContents(player, npc)
+    for slot = 1, 4 do
+        local itemId  = getChestItem(npc, slot)
+        local numAugs = npc:getLocalVar(string.format('[caskets]ITEM%dNUMAUGS', slot))
+        if itemId ~= 0 and numAugs and numAugs > 0 then
+            local parts = {}
+            for j = 1, numAugs do
+                local augId  = npc:getLocalVar(string.format('[caskets]ITEM%dAUG%dID',  slot, j))
+                local augVal = npc:getLocalVar(string.format('[caskets]ITEM%dAUG%dVAL', slot, j))
+                local name   = (xi.augments and xi.augments.name and xi.augments.name[augId]) or tostring(augId)
+                local part
+                if name:find('[%+%-]') then
+                    -- compound / directional augment: the name already carries the per-unit effect
+                    part = augVal > 1 and string.format('%s x%d', name, augVal) or name
+                else
+                    part = string.format('%s+%d', name, augVal)
+                end
+                parts[#parts + 1] = part
+            end
+            player:printToPlayer(
+                string.format('[Gold Casket] Slot %d augment(s): %s', slot, table.concat(parts, ', ')),
+                xi.msg.channel.SYSTEM_3)
+        end
+    end
+end
+
+-----------------------------------
+-- Desc: Gives a rare (HQ) Gold Casket item, applying the augments that were
+--       pre-rolled in getDrops() so the grant always matches the preview.
+-----------------------------------
+local function giveRareItem(player, npc, itemNum, subOption)
+    local itemQuery   = string.format('[caskets]ITEM' .. itemNum .. '')
+    local itemID      = npc:getLocalVar(itemQuery)
+    local zoneId      = player:getZoneID()
+    local ID          = zones[zoneId]
+    local spawnStatus = npc:getLocalVar('[caskets]SPAWNSTATUS')
+
+    if spawnStatus == casketInfo.spawnStatus.DESPAWNED then
+        return
+    end
+
+    if subOption == 2 or subOption == 0 then
+        return
+    end
+
+    if itemID == 0 then
+        player:messageSpecial(ID.text.UNABLE_TO_OBTAIN_ITEM)
+        return
+    end
+
+    if player:getFreeSlotsCount() == 0 then
+        player:messageSpecial(ID.text.ITEM_CANNOT_BE_OBTAINED, itemID)
+        return
+    end
+
+    local numAugs = npc:getLocalVar(string.format('[caskets]ITEM%dNUMAUGS', itemNum))
+
+    if numAugs and numAugs > 0 then
+        local augments = {}
+        for j = 1, numAugs do
+            augments[j] =
+            {
+                id    = npc:getLocalVar(string.format('[caskets]ITEM%dAUG%dID',  itemNum, j)),
+                value = npc:getLocalVar(string.format('[caskets]ITEM%dAUG%dVAL', itemNum, j)) - 1,
+            }
+        end
+
+        if player:addItem({ id = itemID, exdata = { augmentKind = xi.augment.kind.HAS_AUGMENTS, augmentSubKind = xi.augment.subKind.STANDARD, augments = augments } }) then
+            messageChest(player, 'PLAYER_OBTAINS_ITEM', itemID, 0, 0, 0)
+            npc:setLocalVar(itemQuery, 0)
+            checkItemChestIsEmpty(npc)
+        end
+    elseif player:addItem(itemID, 1) then
+        messageChest(player, 'PLAYER_OBTAINS_ITEM', itemID, 0, 0, 0)
+        npc:setLocalVar(itemQuery, 0)
+        checkItemChestIsEmpty(npc)
+    end
+end
+
+-----------------------------------
+-- Expose drop-type constants + a loot extractor for the Casket Mimic module.
+-----------------------------------
+xi.caskets.dropTypes = casketInfo.dropTypes
+
+-- Pulls the pre-rolled item + augment data out of an NPC's local vars into a
+-- plain table. Must be called before removeChest() resets the vars.
+xi.caskets.extractNpcLoot = function(npc)
+    local items = {}
+    for slot = 1, 4 do
+        local itemId = npc:getLocalVar(string.format('[caskets]ITEM%d', slot))
+        if itemId and itemId ~= 0 then
+            local numAugs  = npc:getLocalVar(string.format('[caskets]ITEM%dNUMAUGS', slot)) or 0
+            local augments = {}
+            for j = 1, numAugs do
+                augments[j] =
+                {
+                    id    = npc:getLocalVar(string.format('[caskets]ITEM%dAUG%dID',  slot, j)),
+                    value = npc:getLocalVar(string.format('[caskets]ITEM%dAUG%dVAL', slot, j)) - 1,
+                }
+            end
+            items[#items + 1] = { id = itemId, augments = augments }
+        end
+    end
+    return items
+end
+
+-----------------------------------
 -- Desc: Casket spawn checks, runs through all checks before spawning
 -----------------------------------
 xi.caskets.spawnCasket = function(player, mob, x, y, z, r)
@@ -574,7 +796,7 @@ xi.caskets.spawnCasket = function(player, mob, x, y, z, r)
     end
 
     if dropChance(player) then
-        setCasketData(player, x, y, z, r, npc, chestOwner, mob:getMainLvl())
+        setCasketData(player, x, y, z, r, npc, chestOwner, mob, mob:getMainLvl())
     end
 end
 
@@ -637,6 +859,14 @@ xi.caskets.onTrigger = function(player, npc)
                 getTempDrop(npc, 3),
                 0, 0, 0, 0, 0)
         elseif dropType == casketInfo.dropTypes.ITEM then
+            player:startEvent(unlockedEvent,
+                getChestItem(npc, 1),
+                getChestItem(npc, 2),
+                getChestItem(npc, 3),
+                getChestItem(npc, 4),
+                0, 0, 0, 0)
+        elseif dropType == casketInfo.dropTypes.RARE_ITEM then
+            showRareItemContents(player, npc)
             player:startEvent(unlockedEvent,
                 getChestItem(npc, 1),
                 getChestItem(npc, 2),
@@ -873,6 +1103,8 @@ xi.caskets.onEventFinish = function(player, csid, option, npc)
             giveTempItem(player, chestObj, itemPos, subOption)
         elseif dropType == casketInfo.dropTypes.ITEM then
             giveItem(player, chestObj, itemPos, subOption)
+        elseif dropType == casketInfo.dropTypes.RARE_ITEM then
+            giveRareItem(player, chestObj, itemPos, subOption)
         end
     end
 end
