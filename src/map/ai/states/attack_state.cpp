@@ -25,6 +25,8 @@
 #include "entities/battle_entity.h"
 
 #include "ai/ai_container.h"
+#include "enmity_container.h"
+#include "entities/mob_entity.h"
 #include "packets/s2c/0x028_battle2.h"
 #include "packets/s2c/0x058_assist.h"
 #include "utils/battleutils.h"
@@ -132,19 +134,51 @@ void CAttackState::UpdateTarget(const EntityId& target)
             CCharEntity* PChar = dynamic_cast<CCharEntity*>(m_PEntity);
             if (PChar && PChar->hasAutoTargetEnabled())
             {
+                // Retarget priority:
+                //  1. any still-hostile mob that has THIS player on its hate list -
+                //     don't drop combat just because the player isn't facing it.
+                //  2. otherwise the vanilla behaviour: an engaged mob in front of
+                //     the player and close by.
+                CBattleEntity* PAggroPick  = nullptr;
+                CBattleEntity* PFacingPick = nullptr;
+
                 for (auto&& PPotentialTarget : PChar->SpawnMOBList)
                 {
-                    if (PPotentialTarget.second->animation == xi::Animation::Attack && facing(PChar->loc.p, PPotentialTarget.second->loc.p, 64) &&
-                        distance(PChar->loc.p, PPotentialTarget.second->loc.p) <= 10)
+                    auto* PMob = dynamic_cast<CMobEntity*>(PPotentialTarget.second);
+                    if (!PMob || PMob->animation != xi::Animation::Attack)
                     {
-                        std::unique_ptr<CBasicPacket> errMsg;
-                        if (PChar->IsValidTarget(EntityId(PPotentialTarget.second), TARGET_ENEMY, errMsg))
-                        {
-                            newTarget = EntityId(PPotentialTarget.second);
-                            PChar->pushPacket<GP_SERV_COMMAND_ASSIST>(PChar, static_cast<CBattleEntity*>(PPotentialTarget.second));
-                            break;
-                        }
+                        continue;
                     }
+
+                    const float dist = distance(PChar->loc.p, PMob->loc.p);
+                    if (dist > 25.0f)
+                    {
+                        continue;
+                    }
+
+                    std::unique_ptr<CBasicPacket> errMsg;
+                    if (!PChar->IsValidTarget(EntityId(PMob), TARGET_ENEMY, errMsg))
+                    {
+                        continue;
+                    }
+
+                    if (PMob->PEnmityContainer && PMob->PEnmityContainer->HasID(PChar->id))
+                    {
+                        PAggroPick = PMob;
+                        break;
+                    }
+
+                    if (!PFacingPick && dist <= 10.0f && facing(PChar->loc.p, PMob->loc.p, 64))
+                    {
+                        PFacingPick = PMob;
+                    }
+                }
+
+                CBattleEntity* PRetarget = PAggroPick ? PAggroPick : PFacingPick;
+                if (PRetarget)
+                {
+                    newTarget = EntityId(PRetarget);
+                    PChar->pushPacket<GP_SERV_COMMAND_ASSIST>(PChar, PRetarget);
                 }
             }
             m_PEntity->PAI->ChangeTarget(newTarget);
