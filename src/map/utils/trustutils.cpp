@@ -887,7 +887,16 @@ auto trustutils::BuildMimicTrust(CCharEntity* PMaster, uint32 altCharId) -> CTru
     }
     for (int i = static_cast<int>(xi::SkillType::HandToHand); i <= static_cast<int>(xi::SkillType::Staff); i++)
     {
-        uint16 maxSkill = battleutils::GetMaxSkill(static_cast<uint8>(i), snapshot.mlvl > 99 ? 99 : snapshot.mlvl);
+        // Job-based cap for the mimic's main job, falling back to the sub job at its
+        // (halved) level. GetMaxSkill(uint8, uint8) takes a skill *rank*, not a skill
+        // type - passing the SkillType enum value there gave every weapon a garbage
+        // skill and, for H2H, an undersized value that starved m_naturalH2hDamage.
+        const auto skillType = static_cast<xi::SkillType>(i);
+        uint16     maxSkill  = battleutils::GetMaxSkill(skillType, snapshot.mjob, snapshot.mlvl > 99 ? 99 : snapshot.mlvl);
+        if (maxSkill == 0)
+        {
+            maxSkill = battleutils::GetMaxSkill(skillType, snapshot.sjob, snapshot.slvl > 99 ? 99 : snapshot.slvl);
+        }
         if (maxSkill != 0)
         {
             PTrust->WorkingSkills.skill[i] = maxSkill;
@@ -926,6 +935,39 @@ auto trustutils::BuildMimicTrust(CCharEntity* PMaster, uint32 altCharId) -> CTru
                 PTrust->addEquipModifiers(&PWeapon->modList, PWeapon->getReqLvl(), slot);
             }
         }
+    }
+
+    // Bare-handed mimic: CMobEntity seeds every weapon slot with a blank
+    // CItemWeapon(0) (SkillType::None, 0 damage). Left untouched, the attack round
+    // treats a barefisted MNK as one blunt 1-hand swing for ~1 damage. Mirror
+    // charutils::CheckUnarmedWeapon: a job with any Hand-to-Hand skill fights
+    // unarmed as H2H (twin strike + natural H2H damage scaled off skill); every
+    // other job swings a damage-3 "fist".
+    if (auto* PMain = dynamic_cast<CItemWeapon*>(PTrust->m_Weapons[SLOT_MAIN]);
+        PMain != nullptr && PMain->getID() == 0 && PMain->getSkillType() == xi::SkillType::None && PMain->getDamage() == 0)
+    {
+        const bool h2hJob = battleutils::GetSkillRank(xi::SkillType::HandToHand, snapshot.mjob) > 0 ||
+                            battleutils::GetSkillRank(xi::SkillType::HandToHand, snapshot.sjob) > 0;
+        if (h2hJob)
+        {
+            PMain->setSkillType(xi::SkillType::HandToHand);
+            PMain->setDmgType(xi::DamageType::HandToHand);
+            PMain->setDamage(0);
+            PTrust->look.main = 21; // H2H animation hook - same value CheckUnarmedWeapon writes.
+        }
+        else
+        {
+            PMain->setDamage(3);
+        }
+    }
+
+    // Off-hand swing: non-mobs gate the sub-weapon attack on m_dualWield, which
+    // nothing sets for a trust. A mimic only carries a real off-hand weapon if the
+    // source character had Dual Wield to equip one, so honour it here.
+    if (auto* PSubWeapon = dynamic_cast<CItemWeapon*>(PTrust->m_Weapons[SLOT_SUB]);
+        PSubWeapon != nullptr && PSubWeapon->getSkillType() != xi::SkillType::None)
+    {
+        PTrust->m_dualWield = true;
     }
 
     // --- Player-like melee stats ---
