@@ -15,6 +15,11 @@
 --   MSQ|t|<0|1>                    trust-engage mode charvar
 --   MSQ|m|<text>  /  MSQ|e|<text>  status / error prose (any time)
 --   MSQ|z|<verb>                   envelope close
+--
+-- Bags (item transfer between the account's characters):
+--   MSQ|bk|<charid>|<containerId>|<size>|<used>          one container's fill
+--   MSQ|bi|<charid>|<containerId>|<slot>|<itemId>|<qty>|<aug>   one item row
+--                                  aug: 1 if the item carries an augment / exdata
 -----------------------------------
 xi       = xi       or {}
 xi.squad = xi.squad or {}
@@ -74,6 +79,77 @@ xi.squad.msqRoster = function(player, verb)
     end
 
     rec(player, string.format('t|%d', player:getCharVar(xi.squad.ENGAGE_VAR)))
+    rec(player, 'z|' .. verb)
+end
+
+-- Containers surfaced to the Bags UI: id -> short label. Mirrors the wire order
+-- in squadutils.cpp kBagContainers. Used by !squad prose; the addon has its own
+-- names from the client resources.
+xi.squad.CONTAINERS =
+{
+    [0]  = 'inventory',
+    [1]  = 'mog safe',
+    [9]  = 'mog safe 2',
+    [4]  = 'mog locker',
+    [5]  = 'mog satchel',
+    [6]  = 'mog sack',
+    [7]  = 'mog case',
+    [8]  = 'wardrobe',
+    [10] = 'wardrobe 2',
+    [11] = 'wardrobe 3',
+    [12] = 'wardrobe 4',
+    [13] = 'wardrobe 5',
+    [14] = 'wardrobe 6',
+    [15] = 'wardrobe 7',
+    [16] = 'wardrobe 8',
+}
+
+xi.squad.CONTAINER_ORDER = { 0, 1, 9, 4, 5, 6, 7, 8, 10, 11, 12, 13, 14, 15, 16 }
+
+-- Human-readable reason for a squadBagMove result code.
+xi.squad.BAG_RESULT =
+{
+    [0] = nil,
+    [1] = 'That is not one of your account characters.',
+    [2] = 'That container is not available on that character.',
+    [3] = 'Nothing is in that slot.',
+    [4] = 'The destination bag is full.',
+    [5] = 'That character is logged in - move items on it directly.',
+    [6] = 'Bad quantity (or the item does not stack).',
+    [7] = 'The move failed - nothing was changed.',
+    [8] = 'Nothing to move.',
+}
+
+-- Emit every account character's container fills (Bags tab overview).
+xi.squad.msqBags = function(player, verb)
+    rec(player, string.format('d|%d|%s', xi.squad.PROTOCOL, verb))
+    for _, c in ipairs(player:getSquadBags()) do
+        for _, k in ipairs(c.containers) do
+            rec(player, string.format('bk|%d|%d|%d|%d', c.charid, k.id, k.size, k.used))
+        end
+    end
+    rec(player, 'z|' .. verb)
+end
+
+-- Emit one container's contents for one character.
+xi.squad.msqBagItems = function(player, verb, charid, containerId)
+    rec(player, string.format('d|%d|%s', xi.squad.PROTOCOL, verb))
+
+    for _, c in ipairs(player:getSquadBags()) do
+        if c.charid == charid then
+            for _, k in ipairs(c.containers) do
+                if k.id == containerId then
+                    rec(player, string.format('bk|%d|%d|%d|%d', c.charid, k.id, k.size, k.used))
+                end
+            end
+        end
+    end
+
+    for _, it in ipairs(player:getSquadBagItems(charid, containerId)) do
+        rec(player, string.format('bi|%d|%d|%d|%d|%d|%d',
+            charid, containerId, it.slot, it.itemId, it.quantity, it.aug and 1 or 0))
+    end
+
     rec(player, 'z|' .. verb)
 end
 

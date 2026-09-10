@@ -90,4 +90,77 @@ auto ListAccountChars(uint32 accId) -> std::vector<AccountChar>;
 // True if charId belongs to accId (an owned alt).
 auto IsOwnedByAccount(uint32 accId, uint32 charId) -> bool;
 
+// True if charId has a live accounts_sessions row.
+auto IsCharOnline(uint32 charId) -> bool;
+
+// --- bags (item transfer between the account's characters) ---
+//
+// The mimic squad lets you shuffle items between your own characters through
+// the addon: a trust IS an offline alt, so "the trust's bag" is that alt's
+// char_inventory. Only the summoner is ever online, so one endpoint of a move
+// is the live CCharEntity (handled by the lua binding via ItemClaimTransaction)
+// and the other is pure DB. Rare/Ex and every other item flag are ignored on
+// purpose - moving between your own characters is always allowed.
+
+// Storable containers surfaced to the Bags UI, with the char_storage column
+// that carries each one's capacity. Order matters: it is the wire order.
+struct BagContainerDef
+{
+    uint8       id;    // CONTAINER_ID
+    const char* key;   // short label for the addon
+    const char* col;   // char_storage column
+};
+auto BagContainers() -> const std::vector<BagContainerDef>&;
+
+struct BagContainerFill
+{
+    uint8 id{};
+    uint8 size{};  // capacity from char_storage (0 = not provisioned; skip)
+    uint8 used{};  // occupied slots
+};
+
+struct BagChar
+{
+    uint32                        charId{};
+    std::string                   name;
+    bool                          online{};
+    bool                          locked{};
+    std::vector<BagContainerFill> containers;
+};
+
+// The account's characters and how full each surfaced container is.
+auto ListBagChars(uint32 accId) -> std::vector<BagChar>;
+
+struct BagItem
+{
+    uint8       slot{};
+    uint16      itemId{};
+    uint32      quantity{};
+    std::string signature;
+    uint8       extra[24]{};
+};
+
+// One container's rows for an offline character (DB read). The online summoner's
+// own containers are read from the live entity by the binding instead.
+auto ListBagItems(uint32 charId, uint8 containerId) -> std::vector<BagItem>;
+
+// char_storage capacity for one container of one character; 0 if unprovisioned.
+auto BagContainerSize(uint32 charId, uint8 containerId) -> uint8;
+
+// Lowest free slot [1..size] in an offline character's container, 0 if full.
+auto BagFirstFreeSlot(uint32 charId, uint8 containerId) -> uint8;
+
+// Read a single offline row. False if the slot is empty.
+auto BagReadRow(uint32 charId, uint8 containerId, uint8 slot, BagItem& out) -> bool;
+
+// Insert a row for an offline character. Caller supplies a known-free slot.
+auto BagInsertRow(uint32 charId, uint8 containerId, uint8 slot, const BagItem& item) -> bool;
+
+// Remove `quantity` from an offline row (deletes the row when it hits zero).
+auto BagTakeRow(uint32 charId, uint8 containerId, uint8 slot, uint32 quantity) -> bool;
+
+// True if the item stacks (maxstack > 1) - the binding needs it to decide
+// whether a partial move is legal.
+auto ItemStackSize(uint16 itemId) -> uint16;
+
 }; // namespace squadutils

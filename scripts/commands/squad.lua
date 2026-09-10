@@ -177,6 +177,72 @@ local function doEngage(player, args)
         or  'Squad now engages when you land a swing.')
 end
 
+local function doBags(player)
+    msg(player, 'Bags (used/size):')
+    for _, c in ipairs(player:getSquadBags()) do
+        local parts = {}
+        for _, k in ipairs(c.containers) do
+            if k.used > 0 or k.id == 0 then
+                parts[#parts + 1] = string.format('%s %d/%d',
+                    xi.squad.CONTAINERS[k.id] or ('c' .. k.id), k.used, k.size)
+            end
+        end
+        msg(player, string.format('  %s: %s', c.name, table.concat(parts, ', ')))
+    end
+end
+
+-- container id from a name/id arg; defaults to inventory
+local function containerArg(a)
+    if not a then return 0 end
+    local n = tonumber(a)
+    if n then return n end
+    local want = string.lower(a)
+    for id, label in pairs(xi.squad.CONTAINERS) do
+        if label == want or label:gsub(' ', '') == want then return id end
+    end
+    return nil
+end
+
+local function doBag(player, args)
+    local alt  = args[2] and findAltByName(player, args[2])
+    local cont = containerArg(args[3])
+    if not alt or not cont then
+        msg(player, 'Usage: !squad bag <character name> [container]')
+        return
+    end
+    local items = player:getSquadBagItems(alt.charid, cont)
+    msg(player, string.format('%s / %s: %d item(s)', alt.name, xi.squad.CONTAINERS[cont] or ('c' .. cont), #items))
+    for _, it in ipairs(items) do
+        msg(player, string.format('  slot %d: item %d x%d%s', it.slot, it.itemId, it.quantity, it.aug and ' (aug)' or ''))
+    end
+end
+
+-- !squad send <name> <slot> [qty]  : summoner inventory slot -> alt inventory
+-- !squad fetch <name> <slot> [qty] : alt inventory slot -> summoner inventory
+local function doTransfer(player, args, toAlt)
+    local alt  = args[2] and findAltByName(player, args[2])
+    local slot = tonumber(args[3])
+    local qty  = tonumber(args[4]) or 0
+    if not alt or not slot then
+        msg(player, string.format('Usage: !squad %s <character name> <slot> [qty]', toAlt and 'send' or 'fetch'))
+        return
+    end
+    if alt.charid == player:getID() then
+        msg(player, 'Pick one of your other characters.')
+        return
+    end
+
+    local res
+    if toAlt then
+        res = player:squadBagMove(player:getID(), 0, slot, alt.charid, 0, qty)
+    else
+        res = player:squadBagMove(alt.charid, 0, slot, player:getID(), 0, qty)
+    end
+
+    local why = xi.squad.BAG_RESULT[res]
+    msg(player, why or (toAlt and string.format('Sent to %s.', alt.name) or string.format('Fetched from %s.', alt.name)))
+end
+
 local function doSetJob(player, args)
     local name = args[2]
     local mj   = args[3] and (tonumber(args[3]) or xi.job[string.upper(args[3])])
@@ -208,6 +274,10 @@ local dispatch =
     dismiss = function(player, _)    doDismiss(player)     end,
     engage  = function(player, args) doEngage(player, args) end,
     setjob  = function(player, args) doSetJob(player, args) end,
+    bags    = function(player, _)    doBags(player)          end,
+    bag     = function(player, args) doBag(player, args)     end,
+    send    = function(player, args) doTransfer(player, args, true)  end,
+    fetch   = function(player, args) doTransfer(player, args, false) end,
 }
 
 commandObj.onTrigger = function(player, input)
@@ -218,7 +288,7 @@ commandObj.onTrigger = function(player, input)
     if handler then
         handler(player, args)
     else
-        msg(player, 'Subcommands: list | set <slot> <name> | clear <slot> | call [slot|all] | dismiss | engage 0|1 | setjob <name> <mjob> [sjob]')
+        msg(player, 'Subcommands: list | set <slot> <name> | clear <slot> | call [slot|all] | dismiss | engage 0|1 | setjob <name> <mjob> [sjob] | bags | bag <name> [container] | send <name> <slot> [qty] | fetch <name> <slot> [qty]')
     end
 end
 

@@ -16612,6 +16612,355 @@ void CLuaBaseEntity::deleteSquadJobPreset(const std::string& name)
 }
 
 /************************************************************************
+ *  Function: getSquadBags()
+ *  Purpose : Every account character and how full each of its surfaced
+ *            containers is, for the msquad Bags tab. Row:
+ *            { charid, name, online, locked, containers = { {id, size, used} } }
+ *  Example : for _, c in ipairs(player:getSquadBags()) do ... end
+ ************************************************************************/
+
+auto CLuaBaseEntity::getSquadBags() -> sol::table
+{
+    if (m_PBaseEntity->objtype != TYPE_PC)
+    {
+        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->getName());
+        return sol::lua_nil;
+    }
+
+    auto*      PChar = static_cast<CCharEntity*>(m_PBaseEntity);
+    const auto bags  = squadutils::ListBagChars(PChar->accid);
+
+    auto table = lua.create_table();
+    for (const auto& bc : bags)
+    {
+        auto row      = lua.create_table();
+        row["charid"] = bc.charId;
+        row["name"]   = bc.name;
+        row["online"] = bc.online;
+        row["locked"] = bc.locked;
+
+        auto containers = lua.create_table();
+        for (const auto& c : bc.containers)
+        {
+            // Read the live entity for the summoner's own containers - char_inventory
+            // lags a running session by up to one periodic save.
+            uint8 used = c.used;
+            if (bc.charId == PChar->id)
+            {
+                if (auto* PStorage = PChar->getStorage(c.id))
+                {
+                    used = static_cast<uint8>(PStorage->GetSize() - PStorage->GetFreeSlotsCount());
+                }
+            }
+
+            auto cr    = lua.create_table();
+            cr["id"]   = c.id;
+            cr["size"] = c.size;
+            cr["used"] = used;
+            containers.add(cr);
+        }
+        row["containers"] = containers;
+
+        table.add(row);
+    }
+
+    return table;
+}
+
+/************************************************************************
+ *  Function: getSquadBagItems(charid, containerId)
+ *  Purpose : One container's contents. The summoner's own containers are read
+ *            live; other account characters are read from the database.
+ *            Row: { slot, itemId, quantity, aug } (aug = has augment/exdata).
+ *  Example : for _, it in ipairs(player:getSquadBagItems(altId, 0)) do ... end
+ ************************************************************************/
+
+auto CLuaBaseEntity::getSquadBagItems(uint32 charId, uint8 containerId) -> sol::table
+{
+    if (m_PBaseEntity->objtype != TYPE_PC)
+    {
+        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->getName());
+        return sol::lua_nil;
+    }
+
+    auto* PChar = static_cast<CCharEntity*>(m_PBaseEntity);
+    auto  table = lua.create_table();
+
+    if (!squadutils::IsOwnedByAccount(PChar->accid, charId))
+    {
+        return table;
+    }
+
+    if (charId == PChar->id)
+    {
+        auto* PStorage = PChar->getStorage(containerId);
+        if (PStorage == nullptr)
+        {
+            return table;
+        }
+        for (uint8 slot = 1; slot <= PStorage->GetSize(); ++slot)
+        {
+            auto* PItem = PStorage->GetItem(slot);
+            if (PItem == nullptr || PItem->getID() == 0 || PItem->getID() == 65535)
+            {
+                continue;
+            }
+            bool aug = false;
+            for (uint8 i = 0; i < sizeof(PItem->m_extra); ++i)
+            {
+                if (PItem->m_extra[i] != 0)
+                {
+                    aug = true;
+                    break;
+                }
+            }
+            auto ir         = lua.create_table();
+            ir["slot"]      = slot;
+            ir["itemId"]    = PItem->getID();
+            ir["quantity"]  = PItem->getQuantity();
+            ir["aug"]       = aug;
+            table.add(ir);
+        }
+        return table;
+    }
+
+    for (const auto& it : squadutils::ListBagItems(charId, containerId))
+    {
+        bool aug = false;
+        for (uint8 i = 0; i < sizeof(it.extra); ++i)
+        {
+            if (it.extra[i] != 0)
+            {
+                aug = true;
+                break;
+            }
+        }
+        auto ir        = lua.create_table();
+        ir["slot"]     = it.slot;
+        ir["itemId"]   = it.itemId;
+        ir["quantity"] = it.quantity;
+        ir["aug"]      = aug;
+        table.add(ir);
+    }
+
+    return table;
+}
+
+/************************************************************************
+ *  Function: squadBagMove(srcCharId, srcContainerId, srcSlot,
+ *                         dstCharId, dstContainerId, quantity)
+ *  Purpose : Move an item stack between two of the account's characters.
+ *            The summoner (this character) is the only endpoint that may be
+ *            online; its side goes through an item transaction so the client
+ *            stays in sync, the offline side is a direct char_inventory write.
+ *            quantity 0 = whole stack. Rare/Ex and other flags are ignored.
+ *  Returns : 0 ok, 1 not on account, 2 bad container, 3 no item, 4 dest full,
+ *            5 endpoint online that is not the summoner, 6 bad quantity,
+ *            7 db/transaction error, 8 nothing to do.
+ ************************************************************************/
+
+uint8 CLuaBaseEntity::squadBagMove(uint32 srcCharId, uint8 srcContainerId, uint8 srcSlot, uint32 dstCharId, uint8 dstContainerId, uint32 quantity)
+{
+    if (m_PBaseEntity->objtype != TYPE_PC)
+    {
+        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->getName());
+        return 1;
+    }
+
+    auto*        PChar = static_cast<CCharEntity*>(m_PBaseEntity);
+    const uint32 accId = PChar->accid;
+
+    if (!squadutils::IsOwnedByAccount(accId, srcCharId) || !squadutils::IsOwnedByAccount(accId, dstCharId))
+    {
+        return 1;
+    }
+    if (squadutils::BagContainerSize(srcCharId, srcContainerId) == 0 ||
+        squadutils::BagContainerSize(dstCharId, dstContainerId) == 0)
+    {
+        return 2;
+    }
+    if (srcCharId == dstCharId && srcContainerId == dstContainerId && srcSlot != 0)
+    {
+        return 8;
+    }
+
+    const bool srcIsSelf = srcCharId == PChar->id;
+    const bool dstIsSelf = dstCharId == PChar->id;
+
+    if ((!srcIsSelf && squadutils::IsCharOnline(srcCharId)) ||
+        (!dstIsSelf && squadutils::IsCharOnline(dstCharId)))
+    {
+        return 5;
+    }
+
+    // ---- both offline: pure database move ----
+    if (!srcIsSelf && !dstIsSelf)
+    {
+        squadutils::BagItem row;
+        if (!squadutils::BagReadRow(srcCharId, srcContainerId, srcSlot, row))
+        {
+            return 3;
+        }
+        const uint32 have = row.quantity;
+        const uint32 qty  = quantity == 0 ? have : quantity;
+        if (qty == 0 || qty > have)
+        {
+            return 6;
+        }
+        if (qty < have && squadutils::ItemStackSize(row.itemId) <= 1)
+        {
+            return 6;
+        }
+
+        const uint8 dstSlot = squadutils::BagFirstFreeSlot(dstCharId, dstContainerId);
+        if (dstSlot == 0)
+        {
+            return 4;
+        }
+
+        squadutils::BagItem placed = row;
+        placed.slot                = dstSlot;
+        placed.quantity            = qty;
+        if (!squadutils::BagInsertRow(dstCharId, dstContainerId, dstSlot, placed))
+        {
+            return 7;
+        }
+        if (!squadutils::BagTakeRow(srcCharId, srcContainerId, srcSlot, qty))
+        {
+            squadutils::BagTakeRow(dstCharId, dstContainerId, dstSlot, qty); // undo
+            return 7;
+        }
+        return 0;
+    }
+
+    // ---- summoner -> offline alt ----
+    if (srcIsSelf)
+    {
+        auto tx = ItemClaimTransaction::start(PChar);
+        if (!tx)
+        {
+            return 7;
+        }
+        CItem* PSrc = tx->claimSlot(srcContainerId, srcSlot);
+        if (PSrc == nullptr || PSrc->getID() == 0 || PSrc->getID() == 65535)
+        {
+            return 3;
+        }
+
+        const uint32 have = PSrc->getQuantity();
+        const uint32 qty  = quantity == 0 ? have : quantity;
+        if (qty == 0 || qty > have)
+        {
+            return 6;
+        }
+        if (qty < have && PSrc->getStackSize() <= 1)
+        {
+            return 6;
+        }
+
+        squadutils::BagItem row;
+        row.itemId    = PSrc->getID();
+        row.quantity  = qty;
+        row.signature = PSrc->getSignature();
+        std::memcpy(row.extra, PSrc->m_extra, sizeof(row.extra));
+
+        const uint8 dstSlot = squadutils::BagFirstFreeSlot(dstCharId, dstContainerId);
+        if (dstSlot == 0)
+        {
+            return 4;
+        }
+
+        if (!tx->take(srcContainerId, srcSlot, qty))
+        {
+            return 7;
+        }
+        row.slot = dstSlot;
+        if (!squadutils::BagInsertRow(dstCharId, dstContainerId, dstSlot, row))
+        {
+            return 7; // tx rolls back on scope exit
+        }
+        if (!tx->commit())
+        {
+            squadutils::BagTakeRow(dstCharId, dstContainerId, dstSlot, qty);
+            return 7;
+        }
+        return 0;
+    }
+
+    // ---- offline alt -> summoner ----
+    {
+        squadutils::BagItem row;
+        if (!squadutils::BagReadRow(srcCharId, srcContainerId, srcSlot, row))
+        {
+            return 3;
+        }
+        const uint32 have = row.quantity;
+        const uint32 qty  = quantity == 0 ? have : quantity;
+        if (qty == 0 || qty > have)
+        {
+            return 6;
+        }
+
+        auto PItem = xi::items::spawn(row.itemId);
+        if (!PItem)
+        {
+            return 3;
+        }
+        if (qty < have && PItem->getStackSize() <= 1)
+        {
+            return 6;
+        }
+        PItem->setQuantity(qty);
+        PItem->setSignature(row.signature);
+        std::memcpy(PItem->m_extra, row.extra, sizeof(PItem->m_extra));
+        if (auto* PEquip = dynamic_cast<CItemEquipment*>(PItem.get()))
+        {
+            for (uint8 augSlot = 0; augSlot < 4; ++augSlot)
+            {
+                if (PEquip->getAugment(augSlot) != 0)
+                {
+                    PEquip->ApplyAugment(augSlot);
+                }
+            }
+        }
+
+        if (PChar->getStorage(dstContainerId)->GetFreeSlotsCount() == 0)
+        {
+            return 4;
+        }
+
+        auto tx = ItemClaimTransaction::start(PChar);
+        if (!tx)
+        {
+            return 7;
+        }
+        const uint8 dstSlot = tx->give(dstContainerId, std::move(PItem)).value_or(ERROR_SLOTID);
+        if (dstSlot == ERROR_SLOTID)
+        {
+            return 4;
+        }
+        if (!squadutils::BagTakeRow(srcCharId, srcContainerId, srcSlot, qty))
+        {
+            return 7; // tx rolls back on scope exit
+        }
+        if (!tx->commit())
+        {
+            // put the alt's row back
+            squadutils::BagItem back = row;
+            back.quantity            = qty;
+            const uint8 backSlot     = squadutils::BagFirstFreeSlot(srcCharId, srcContainerId);
+            if (backSlot != 0)
+            {
+                back.slot = backSlot;
+                squadutils::BagInsertRow(srcCharId, srcContainerId, backSlot, back);
+            }
+            return 7;
+        }
+        return 0;
+    }
+}
+
+/************************************************************************
  *  Function: getTrustID()
  *  Purpose :
  *  Example : trust:getTrustID()
@@ -21693,6 +22042,9 @@ void CLuaBaseEntity::Register()
     SOL_REGISTER("loadSquadJobPreset", CLuaBaseEntity::loadSquadJobPreset);
     SOL_REGISTER("listSquadJobPresets", CLuaBaseEntity::listSquadJobPresets);
     SOL_REGISTER("deleteSquadJobPreset", CLuaBaseEntity::deleteSquadJobPreset);
+    SOL_REGISTER("getSquadBags", CLuaBaseEntity::getSquadBags);
+    SOL_REGISTER("getSquadBagItems", CLuaBaseEntity::getSquadBagItems);
+    SOL_REGISTER("squadBagMove", CLuaBaseEntity::squadBagMove);
     SOL_REGISTER("getTrustID", CLuaBaseEntity::getTrustID);
     SOL_REGISTER("trustPartyMessage", CLuaBaseEntity::trustPartyMessage);
     SOL_REGISTER("addGambit", CLuaBaseEntity::addGambit);

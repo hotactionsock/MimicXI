@@ -32,6 +32,39 @@ commandObj.onTrigger = function(player, input)
     if verb == 'who' then
         xi.squad.msqRoster(player, 'who')
 
+    elseif verb == 'bags' then
+        xi.squad.msqBags(player, 'bags')
+
+    elseif verb == 'bag' then
+        local charid = tonumber(a[2])
+        local cont   = tonumber(a[3])
+        if not charid or not cont then
+            xi.squad.msqError(player, 'bag <charid> <containerId>')
+            return
+        end
+        xi.squad.msqBagItems(player, 'bag', charid, cont)
+
+    elseif verb == 'bagmove' then
+        local sC, sK, sS = tonumber(a[2]), tonumber(a[3]), tonumber(a[4])
+        local dC, dK     = tonumber(a[5]), tonumber(a[6])
+        local qty        = tonumber(a[7]) or 0
+        if not (sC and sK and sS and dC and dK) then
+            xi.squad.msqError(player, 'bagmove <srcCharid> <srcCont> <srcSlot> <dstCharid> <dstCont> [qty]')
+            return
+        end
+        local res = player:squadBagMove(sC, sK, sS, dC, dK, qty)
+        local why = xi.squad.BAG_RESULT[res]
+        if why then
+            xi.squad.msqError(player, why)
+        else
+            xi.squad.msqStatus(player, 'Moved.')
+        end
+        -- Refresh both affected containers so the addon repaints.
+        xi.squad.msqBagItems(player, 'bagmove', sC, sK)
+        if dC ~= sC or dK ~= sK then
+            xi.squad.msqBagItems(player, 'bagmove', dC, dK)
+        end
+
     elseif verb == 'set' then
         local slot   = tonumber(a[2])
         local charid = tonumber(a[3])
