@@ -167,6 +167,22 @@ commandObj.onTrigger = function(player, input)
         end
         xi.squad.msqRoster(player, 'setjob')
 
+    elseif verb == 'selfjob' then
+        local mjob = tonumber(a[2])
+        local sjob = tonumber(a[3]) or 0
+        if not mjob then
+            xi.squad.msqError(player, 'selfjob <mjob> [sjob]')
+            return
+        end
+        local res = xi.squad.selfChangeJob(player, mjob, sjob)
+        local why = xi.squad.SELFJOB_RESULT[res]
+        if why then
+            xi.squad.msqError(player, why)
+        else
+            xi.squad.msqStatus(player, 'Job changed.')
+        end
+        xi.squad.msqRoster(player, 'selfjob')
+
     elseif verb == 'savejobs' then
         local name = a[2]
         if not name or #name == 0 then

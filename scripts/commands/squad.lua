@@ -334,6 +334,18 @@ local function doLearn(player, args)
     msg(player, xi.squad.LEARN_RESULT[res] or ('learn failed (' .. tostring(res) .. ')'))
 end
 
+local function doSelfJob(player, args)
+    local mj = args[2] and (tonumber(args[2]) or xi.job[string.upper(args[2])])
+    local sj = args[3] and (tonumber(args[3]) or xi.job[string.upper(args[3])]) or 0
+    if not mj then
+        msg(player, 'Usage: !squad selfjob <mainJob> [subJob]   (job short name or id)')
+        return
+    end
+    local res = xi.squad.selfChangeJob(player, mj, sj)
+    local why = xi.squad.SELFJOB_RESULT[res]
+    msg(player, why or 'Job changed.')
+end
+
 local function doSetJob(player, args)
     local name = args[2]
     local mj   = args[3] and (tonumber(args[3]) or xi.job[string.upper(args[3])])
@@ -365,6 +377,7 @@ local dispatch =
     dismiss = function(player, _)    doDismiss(player)     end,
     engage  = function(player, args) doEngage(player, args) end,
     setjob  = function(player, args) doSetJob(player, args) end,
+    selfjob = function(player, args) doSelfJob(player, args) end,
     bags    = function(player, _)    doBags(player)          end,
     bag     = function(player, args) doBag(player, args)     end,
     send    = function(player, args) doTransfer(player, args, true)  end,
@@ -384,7 +397,7 @@ commandObj.onTrigger = function(player, input)
     if handler then
         handler(player, args)
     else
-        msg(player, 'Subcommands: list | set <slot> <name> | clear <slot> | call [slot|all] | dismiss | engage 0|1 | setjob <name> <mjob> [sjob] | bags | bag <name> [container] | send <name> <slot> [qty] | fetch <name> <slot> [qty] | gear <name> | gearslot <name> <slot> | equip <name> <slot> <#> | unequip <name> <slot> | learn [name] <slot>')
+        msg(player, 'Subcommands: list | set <slot> <name> | clear <slot> | call [slot|all] | dismiss | engage 0|1 | setjob <name> <mjob> [sjob] | selfjob <mjob> [sjob] | bags | bag <name> [container] | send <name> <slot> [qty] | fetch <name> <slot> [qty] | gear <name> | gearslot <name> <slot> | equip <name> <slot> <#> | unequip <name> <slot> | learn [name] <slot>')
     end
 end
 

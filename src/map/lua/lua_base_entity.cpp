@@ -17296,6 +17296,110 @@ uint8 CLuaBaseEntity::squadLearnScroll(uint32 srcCharId, uint8 srcContainerId, u
 }
 
 /************************************************************************
+ *  Function: swapOwnJobs(mjob, sjob)
+ *  Purpose : Change the calling PLAYER's own main/sub job on the fly, to any
+ *            job they already have unlocked. Level becomes their saved level in
+ *            that job (sub capped at half main by SetSLevel). Mirrors the
+ *            changeJob() recalc/packet sequence but never touches saved exp and
+ *            refuses to force-unlock a locked job.
+ *  Returns : 0 ok, 1 bad job, 2 job not unlocked, 3 engaged, 4 no change,
+ *            5 not allowed here (battlefield / instance).
+ ************************************************************************/
+
+uint8 CLuaBaseEntity::swapOwnJobs(uint8 mjob, uint8 sjob)
+{
+    if (m_PBaseEntity->objtype != TYPE_PC)
+    {
+        return 1;
+    }
+    auto* PChar = static_cast<CCharEntity*>(m_PBaseEntity);
+
+    if (mjob < 1 || mjob > 22)
+    {
+        return 1;
+    }
+    if (sjob != 0 && (sjob < 1 || sjob > 22))
+    {
+        return 1;
+    }
+    if (sjob == mjob)
+    {
+        return 1;
+    }
+
+    if ((PChar->jobs.unlocked & (1u << mjob)) == 0)
+    {
+        return 2;
+    }
+    if (sjob != 0 && (PChar->jobs.unlocked & (1u << sjob)) == 0)
+    {
+        return 2;
+    }
+
+    if (PChar->PAI->IsEngaged() || PChar->animation == xi::Animation::Attack)
+    {
+        return 3;
+    }
+    if (PChar->PBattlefield != nullptr || PChar->PInstance != nullptr)
+    {
+        return 5;
+    }
+
+    if (static_cast<uint8>(PChar->GetMJob()) == mjob && static_cast<uint8>(PChar->GetSJob()) == sjob)
+    {
+        return 4;
+    }
+
+    charutils::RemoveAllEquipMods(PChar);
+
+    PChar->SetMJob(mjob);
+    PChar->SetSJob(sjob);
+    PChar->SetMLevel(std::max<uint8>(PChar->jobs.job[mjob], 1));
+    PChar->SetSLevel(sjob != 0 ? PChar->jobs.job[sjob] : 0);
+
+    charutils::ApplyAllEquipMods(PChar);
+    puppetutils::LoadAutomaton(PChar);
+
+    if (mjob == static_cast<uint8>(xi::Job::BLU) || sjob == static_cast<uint8>(xi::Job::BLU))
+    {
+        blueutils::LoadSetSpells(PChar);
+    }
+    else
+    {
+        blueutils::UnequipAllBlueSpells(PChar);
+    }
+
+    charutils::SetStyleLock(PChar, false);
+    luautils::CheckForGearSet(PChar);
+    jobpointutils::RefreshGiftMods(PChar);
+    charutils::BuildingCharSkillsTable(PChar);
+    charutils::BuildingCharWeaponSkills(PChar);
+    charutils::CalculateStats(PChar);
+    charutils::CheckValidEquipment(PChar);
+    PChar->PRecastContainer->ChangeJob();
+    charutils::BuildingCharAbilityTable(PChar);
+    charutils::BuildingCharTraitsTable(PChar);
+
+    PChar->UpdateHealth();
+    PChar->health.hp = std::min<int32>(PChar->health.hp, PChar->GetMaxHP());
+    PChar->health.mp = std::min<int32>(PChar->health.mp, PChar->GetMaxMP());
+    PChar->updatemask |= UPDATE_HP;
+
+    charutils::SaveCharStats(PChar);
+    charutils::SaveCharJob(PChar, PChar->GetMJob());
+
+    PChar->pushPacket<GP_SERV_COMMAND_JOB_INFO>(PChar);
+    PChar->pushPacket<GP_SERV_COMMAND_CLISTATUS>(PChar);
+    PChar->pushPacket<GP_SERV_COMMAND_CLISTATUS2>(PChar);
+    PChar->pushPacket<GP_SERV_COMMAND_ABIL_RECAST>(PChar);
+    PChar->pushPacket<GP_SERV_COMMAND_COMMAND_DATA>(PChar);
+    PChar->pushPacket<CCharStatusPacket>(PChar);
+    charutils::SendExtendedJobPackets(PChar);
+
+    return 0;
+}
+
+/************************************************************************
  *  mwarehouse - an account-wide, effectively unlimited item stash.
  *
  *  warehouseInfo()          -> { generation, used, cap, pageSize, pages }
@@ -22692,6 +22796,7 @@ void CLuaBaseEntity::Register()
     SOL_REGISTER("squadEquip", CLuaBaseEntity::squadEquip);
     SOL_REGISTER("squadUnequip", CLuaBaseEntity::squadUnequip);
     SOL_REGISTER("squadLearnScroll", CLuaBaseEntity::squadLearnScroll);
+    SOL_REGISTER("swapOwnJobs", CLuaBaseEntity::swapOwnJobs);
     SOL_REGISTER("warehouseInfo", CLuaBaseEntity::warehouseInfo);
     SOL_REGISTER("warehousePage", CLuaBaseEntity::warehousePage);
     SOL_REGISTER("warehousePut", CLuaBaseEntity::warehousePut);

@@ -818,6 +818,7 @@ public:
     uint8  squadEquip(uint32 charId, uint8 equipSlotId, uint32 srcCharId, uint8 srcContainerId, uint8 srcSlot);
     uint8  squadUnequip(uint32 charId, uint8 equipSlotId);
     uint8  squadLearnScroll(uint32 srcCharId, uint8 srcContainerId, uint8 srcSlot);
+    uint8  swapOwnJobs(uint8 mjob, uint8 sjob);
     auto   warehouseInfo() -> sol::table;
     auto   warehousePage(uint32 page) -> sol::table;
     uint8  warehousePut(uint8 srcContainerId, uint8 srcSlot, uint16 itemId, uint32 quantity);

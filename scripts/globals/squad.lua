@@ -222,6 +222,41 @@ xi.squad.msqGearCandidates = function(player, verb, charid, equipSlot)
     rec(player, 'z|' .. verb)
 end
 
+-- Human-readable reason for a swapOwnJobs (self job change) result code.
+xi.squad.SELFJOB_RESULT =
+{
+    [0] = nil,
+    [1] = 'Invalid job.',
+    [2] = 'That job is not unlocked on your character.',
+    [3] = 'You cannot change jobs while engaged.',
+    [4] = 'You are already on that job.',
+    [5] = 'You cannot change jobs here.',
+}
+
+-- Change the caller's own main/sub job (Jobs-tab "You" row). Handles the PUP
+-- automaton setup and despawns any active pet first, like !changejob does.
+xi.squad.selfChangeJob = function(player, mjob, sjob)
+    sjob = sjob or 0
+
+    if mjob == xi.job.PUP or sjob == xi.job.PUP then
+        if player:getAutomatonName() == '' then
+            player:setPetName(xi.petType.AUTOMATON, xi.petName.MK_IV)
+        end
+        if not player:hasAttachment(xi.item.HARLEQUIN_FRAME) then
+            player:unlockAttachment(xi.item.HARLEQUIN_FRAME)
+        end
+        if not player:hasAttachment(xi.item.HARLEQUIN_HEAD) then
+            player:unlockAttachment(xi.item.HARLEQUIN_HEAD)
+        end
+    end
+
+    if player:getPet() then
+        player:despawnPet()
+    end
+
+    return player:swapOwnJobs(mjob, sjob)
+end
+
 -- Human-readable reason for a setSquadMemberJob result code.
 xi.squad.JOB_RESULT =
 {
