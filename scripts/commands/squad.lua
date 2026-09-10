@@ -315,6 +315,25 @@ local function doUnequip(player, args)
     msg(player, xi.squad.GEAR_RESULT[res] or string.format('Cleared %s on %s.', xi.squad.EQUIP_SLOTS[slot] or slot, alt.name))
 end
 
+-- !squad learn <name> <slot>   : learn the scroll in that char's inventory slot
+-- !squad learn <slot>          : learn the scroll in your own inventory slot
+local function doLearn(player, args)
+    local alt, slot
+    if args[3] then
+        alt  = findAltByName(player, args[2])
+        slot = tonumber(args[3])
+    else
+        alt  = { charid = player:getID(), name = 'you' }
+        slot = tonumber(args[2])
+    end
+    if not alt or not slot then
+        msg(player, 'Usage: !squad learn [character name] <inventory slot>')
+        return
+    end
+    local res = player:squadLearnScroll(alt.charid, 0, slot)
+    msg(player, xi.squad.LEARN_RESULT[res] or ('learn failed (' .. tostring(res) .. ')'))
+end
+
 local function doSetJob(player, args)
     local name = args[2]
     local mj   = args[3] and (tonumber(args[3]) or xi.job[string.upper(args[3])])
@@ -354,6 +373,7 @@ local dispatch =
     gearslot = function(player, args) doGearSlot(player, args) end,
     equip    = function(player, args) doEquip(player, args)    end,
     unequip  = function(player, args) doUnequip(player, args)  end,
+    learn    = function(player, args) doLearn(player, args)    end,
 }
 
 commandObj.onTrigger = function(player, input)
@@ -364,7 +384,7 @@ commandObj.onTrigger = function(player, input)
     if handler then
         handler(player, args)
     else
-        msg(player, 'Subcommands: list | set <slot> <name> | clear <slot> | call [slot|all] | dismiss | engage 0|1 | setjob <name> <mjob> [sjob] | bags | bag <name> [container] | send <name> <slot> [qty] | fetch <name> <slot> [qty] | gear <name> | gearslot <name> <slot> | equip <name> <slot> <#> | unequip <name> <slot>')
+        msg(player, 'Subcommands: list | set <slot> <name> | clear <slot> | call [slot|all] | dismiss | engage 0|1 | setjob <name> <mjob> [sjob] | bags | bag <name> [container] | send <name> <slot> [qty] | fetch <name> <slot> [qty] | gear <name> | gearslot <name> <slot> | equip <name> <slot> <#> | unequip <name> <slot> | learn [name] <slot>')
     end
 end
 

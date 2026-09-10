@@ -229,4 +229,22 @@ auto FinishAltEquip(uint32 altCharId, uint8 equipSlotId, uint8 invSlot, uint16 i
 // Clear one equip slot; the item stays in the alt's inventory.
 auto UnequipAltItem(uint32 accId, uint32 altCharId, uint8 equipSlotId) -> GearResult;
 
+// --- scroll learning (account-wide) ---
+//
+// A spell scroll in any bag can be learned if ANY character on the account meets
+// the spell's job/level requirement. Learning consumes one scroll and grants the
+// spell to every character on the account (and, live, to the online summoner) -
+// so any trust whose job/level fits can then cast it.
+
+// The spell a scroll item teaches (item_basic.type 5 + subid resolving to a
+// spell), or 0 if the item is not a spell scroll.
+auto ScrollSpellId(uint16 itemId) -> uint16;
+
+// True if any character on the account has a job at or above the level that job
+// learns spellId.
+auto AccountMeetsSpellPrereq(uint32 accId, uint16 spellId) -> bool;
+
+// INSERT IGNORE spellId into char_spells for every character on the account.
+void FanOutSpellToAccount(uint32 accId, uint16 spellId);
+
 }; // namespace squadutils

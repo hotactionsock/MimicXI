@@ -900,4 +900,72 @@ auto UnequipAltItem(uint32 accId, uint32 altCharId, uint8 equipSlotId) -> GearRe
     return GearResult::Ok;
 }
 
+// --- scroll learning --------------------------------------------------
+
+auto ScrollSpellId(uint16 itemId) -> uint16
+{
+    // item_basic.type 5 (usable) whose subid names a real spell = a spell scroll.
+    const auto rset = db::preparedStmt(
+        "SELECT subid FROM item_basic "
+        "WHERE itemid = ? AND type = 5 AND subid > 0 AND subid IN (SELECT spellid FROM spell_list) LIMIT 1",
+        itemId);
+    if (rset && rset->rowsCount() != 0 && rset->next())
+    {
+        return rset->get<uint16>("subid");
+    }
+    return 0;
+}
+
+auto AccountMeetsSpellPrereq(uint32 accId, uint16 spellId) -> bool
+{
+    // spell_list.jobs is binary(22): byte j = the level job (j+1) learns it at,
+    // 0 = never. Same test spell::CanUseSpell uses (level >= that).
+    const auto sRset = db::preparedStmt("SELECT jobs FROM spell_list WHERE spellid = ? LIMIT 1", spellId);
+    if (!sRset || sRset->rowsCount() == 0 || !sRset->next())
+    {
+        return false;
+    }
+    uint8 jobLvl[22]{};
+    db::extractFromBlob(sRset, "jobs", jobLvl);
+
+    std::string cols;
+    for (int i = 0; i < 22; ++i)
+    {
+        if (i != 0)
+        {
+            cols += ",";
+        }
+        cols += "j.";
+        cols += kJobCols[i];
+    }
+
+    const auto cRset = db::preparedStmt(
+        fmt::format("SELECT {} FROM char_jobs j JOIN chars c ON c.charid = j.charid WHERE c.accid = ?", cols),
+        accId);
+    if (!cRset)
+    {
+        return false;
+    }
+
+    while (cRset->next())
+    {
+        for (int i = 0; i < 22; ++i)
+        {
+            if (jobLvl[i] > 0 && cRset->get<uint8>(kJobCols[i]) >= jobLvl[i])
+            {
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+void FanOutSpellToAccount(uint32 accId, uint16 spellId)
+{
+    db::preparedStmt(
+        "INSERT IGNORE INTO char_spells (charid, spellid) "
+        "SELECT charid, ? FROM chars WHERE accid = ?",
+        spellId, accId);
+}
+
 }; // namespace squadutils

@@ -94,6 +94,14 @@ commandObj.onTrigger = function(player, input)
         end
         xi.squad.msqGear(player, 'unequip', charid)
 
+    elseif verb == 'learn' then
+        local sC, sK, sS = tonumber(a[2]), tonumber(a[3]), tonumber(a[4])
+        if not (sC and sK and sS) then
+            xi.squad.msqError(player, 'learn <srcCharid> <srcCont> <srcSlot>')
+            return
+        end
+        xi.squad.msqLearn(player, sC, sK, sS)
+
     elseif verb == 'bagmove' then
         local sC, sK, sS = tonumber(a[2]), tonumber(a[3]), tonumber(a[4])
         local dC, dK     = tonumber(a[5]), tonumber(a[6])

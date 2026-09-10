@@ -111,6 +111,30 @@ xi.squad.CONTAINERS =
 
 xi.squad.CONTAINER_ORDER = { 0, 1, 9, 4, 5, 6, 7, 8, 10, 11, 12, 13, 14, 15, 16 }
 
+-- Human-readable reason for a squadLearnScroll result code.
+xi.squad.LEARN_RESULT =
+{
+    [0] = 'Learned! Every character on the account now knows it.',
+    [1] = 'That is not one of your account characters.',
+    [2] = 'That item is not a spell scroll.',
+    [3] = 'Nothing is in that slot.',
+    [4] = 'The account already knows that spell.',
+    [5] = 'No character on the account meets the requirement for that spell.',
+    [6] = 'Learning failed - nothing was changed.',
+}
+
+-- Try to learn the scroll at (srcChar, srcCont, srcSlot); refresh that bag.
+xi.squad.msqLearn = function(player, srcChar, srcCont, srcSlot)
+    local res = player:squadLearnScroll(srcChar, srcCont, srcSlot)
+    local why = xi.squad.LEARN_RESULT[res]
+    if res == 0 then
+        xi.squad.msqStatus(player, why)
+    else
+        xi.squad.msqError(player, why or ('learn failed (' .. tostring(res) .. ')'))
+    end
+    xi.squad.msqBagItems(player, 'learn', srcChar, srcCont)
+end
+
 -- Human-readable reason for a squadBagMove result code.
 xi.squad.BAG_RESULT =
 {
@@ -183,7 +207,7 @@ xi.squad.GEAR_RESULT =
 xi.squad.msqGear = function(player, verb, charid)
     rec(player, string.format('d|%d|%s', xi.squad.PROTOCOL, verb))
     for _, g in ipairs(player:getSquadGear(charid)) do
-        rec(player, string.format('g|%d|%d|%d|%d', charid, g.equipSlot, g.itemId, g.aug))
+        rec(player, string.format('g|%d|%d|%d|%d', charid, g.equipSlot, g.itemId, g.aug and 1 or 0))
     end
     rec(player, 'z|' .. verb)
 end

@@ -17168,6 +17168,104 @@ uint8 CLuaBaseEntity::squadUnequip(uint32 charId, uint8 equipSlotId)
 }
 
 /************************************************************************
+ *  Function: squadLearnScroll(srcCharId, srcContainerId, srcSlot)
+ *  Purpose : Learn the spell taught by a scroll sitting in one of the account's
+ *            bags, if any character on the account meets the job/level
+ *            requirement. Consumes one scroll and grants the spell to every
+ *            character on the account (live to the summoner); trusts whose
+ *            job/level fits can then cast it.
+ *  Returns : 0 ok, 1 not on account, 2 not a spell scroll, 3 no item there,
+ *            4 the account already knows it, 5 no character meets the
+ *            prerequisite, 6 error.
+ ************************************************************************/
+
+uint8 CLuaBaseEntity::squadLearnScroll(uint32 srcCharId, uint8 srcContainerId, uint8 srcSlot)
+{
+    if (m_PBaseEntity->objtype != TYPE_PC)
+    {
+        return 1;
+    }
+    auto*        PChar = static_cast<CCharEntity*>(m_PBaseEntity);
+    const uint32 accId = PChar->accid;
+
+    if (!squadutils::IsOwnedByAccount(accId, srcCharId))
+    {
+        return 1;
+    }
+
+    const bool srcIsSelf = srcCharId == PChar->id;
+
+    // Resolve the scroll's item id from wherever it sits.
+    uint16 itemId = 0;
+    if (srcIsSelf)
+    {
+        auto* PStorage = PChar->getStorage(srcContainerId);
+        auto* PItem    = PStorage != nullptr ? PStorage->GetItem(srcSlot) : nullptr;
+        if (PItem == nullptr || PItem->getID() == 0 || PItem->getID() == 65535)
+        {
+            return 3;
+        }
+        itemId = PItem->getID();
+    }
+    else
+    {
+        if (squadutils::IsCharOnline(srcCharId))
+        {
+            return 6; // only the summoner is expected online
+        }
+        squadutils::BagItem row;
+        if (!squadutils::BagReadRow(srcCharId, srcContainerId, srcSlot, row))
+        {
+            return 3;
+        }
+        itemId = row.itemId;
+    }
+
+    const uint16 spellId = squadutils::ScrollSpellId(itemId);
+    if (spellId == 0)
+    {
+        return 2;
+    }
+    if (charutils::hasSpell(PChar, spellId))
+    {
+        return 4;
+    }
+    if (!squadutils::AccountMeetsSpellPrereq(accId, spellId))
+    {
+        return 5;
+    }
+
+    // Consume one scroll.
+    if (srcIsSelf)
+    {
+        auto tx = ItemClaimTransaction::start(PChar);
+        if (!tx || !tx->take(srcContainerId, srcSlot, 1) || !tx->commit())
+        {
+            return 6;
+        }
+    }
+    else
+    {
+        if (!squadutils::BagTakeRow(srcCharId, srcContainerId, srcSlot, 1))
+        {
+            return 6;
+        }
+    }
+
+    // Grant it account-wide, then bring it live on the summoner.
+    squadutils::FanOutSpellToAccount(accId, spellId);
+
+    if (charutils::addSpell(PChar, spellId))
+    {
+        charutils::SaveSpell(PChar, spellId);
+        PChar->pushPacket<GP_SERV_COMMAND_MAGIC_DATA>(PChar);
+        PChar->pushPacket<GP_SERV_COMMAND_BATTLE_MESSAGE>(PChar, PChar, 0, 0, MsgBasic::LearnsNewSpell);
+    }
+
+    return 0;
+}
+
+/************************************************************************
  *  Function: getTrustID()
  *  Purpose :
  *  Example : trust:getTrustID()
@@ -22256,6 +22354,7 @@ void CLuaBaseEntity::Register()
     SOL_REGISTER("getSquadGearCandidates", CLuaBaseEntity::getSquadGearCandidates);
     SOL_REGISTER("squadEquip", CLuaBaseEntity::squadEquip);
     SOL_REGISTER("squadUnequip", CLuaBaseEntity::squadUnequip);
+    SOL_REGISTER("squadLearnScroll", CLuaBaseEntity::squadLearnScroll);
     SOL_REGISTER("getTrustID", CLuaBaseEntity::getTrustID);
     SOL_REGISTER("trustPartyMessage", CLuaBaseEntity::trustPartyMessage);
     SOL_REGISTER("addGambit", CLuaBaseEntity::addGambit);
