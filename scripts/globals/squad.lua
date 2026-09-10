@@ -8,8 +8,9 @@
 -- PROTOCOL for any breaking change:
 --
 --   MSQ|d|<protocol>|<verb>        envelope open, names the verb being answered
---   MSQ|c|<charid>|<name>|<mjob>|<mlvl>|<flags>   one account character
+--   MSQ|c|<charid>|<name>|<mjob>|<mlvl>|<flags>|<sjob>|<slvl>   one account character
 --                                  flags: 1 online, 2 locked (out as a mimic), 4 self
+--                                  sjob/slvl are appended (0/0 = no sub)
 --   MSQ|s|<slot>|<charid>          one filled squad slot (1..SLOTS)
 --   MSQ|t|<0|1>                    trust-engage mode charvar
 --   MSQ|m|<text>  /  MSQ|e|<text>  status / error prose (any time)
@@ -48,7 +49,8 @@ xi.squad.msqRoster = function(player, verb)
         if c.online          then flags = flags + FLAG_ONLINE end
         if c.locked          then flags = flags + FLAG_LOCKED end
         if c.charid == selfId then flags = flags + FLAG_SELF   end
-        rec(player, string.format('c|%d|%s|%d|%d|%d', c.charid, c.name, c.mainJob, c.mainLvl, flags))
+        rec(player, string.format('c|%d|%s|%d|%d|%d|%d|%d',
+            c.charid, c.name, c.mainJob, c.mainLvl, flags, c.subJob or 0, c.subLvl or 0))
     end
 
     local roster = player:getSquadRoster()

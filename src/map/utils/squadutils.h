@@ -38,6 +38,8 @@ struct AccountChar
     std::string name;
     uint8       mainJob{};
     uint8       mainLvl{};
+    uint8       subJob{};
+    uint8       subLvl{};
     bool        online{};   // has a live accounts_sessions row
     bool        locked{};   // currently out as someone's mimic trust (char_mimic_active)
 };
