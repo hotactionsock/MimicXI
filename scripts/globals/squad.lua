@@ -2,17 +2,18 @@
 -- xi.squad  -  mimic-trust squad shared logic + machine protocol
 --
 -- The human command (!squad) and the addon command (!msq) both live on top of
--- this. The addon protocol is a stream of pipe-delimited records sent to the
--- player under the reserved chat sender "_MSQDATA"; the msquad addon parses and
--- hides them. Wire layout (bump PROTOCOL for any breaking change):
+-- this. The addon protocol is a stream of pipe-delimited records, each line
+-- prefixed "MSQ|" and sent on SYSTEM_3; the msquad addon matches the prefix,
+-- parses and blocks them (same shape FATETracker uses for FSYNC|). Bump
+-- PROTOCOL for any breaking change:
 --
---   d|<protocol>|<verb>            envelope open, names the verb being answered
---   c|<charid>|<name>|<mjob>|<mlvl>|<flags>   one account character
+--   MSQ|d|<protocol>|<verb>        envelope open, names the verb being answered
+--   MSQ|c|<charid>|<name>|<mjob>|<mlvl>|<flags>   one account character
 --                                  flags: 1 online, 2 locked (out as a mimic), 4 self
---   s|<slot>|<charid>              one filled squad slot (1..SLOTS)
---   t|<0|1>                        trust-engage mode charvar
---   m|<text>  /  e|<text>          status / error prose (any time)
---   z|<verb>                       envelope close
+--   MSQ|s|<slot>|<charid>          one filled squad slot (1..SLOTS)
+--   MSQ|t|<0|1>                    trust-engage mode charvar
+--   MSQ|m|<text>  /  MSQ|e|<text>  status / error prose (any time)
+--   MSQ|z|<verb>                   envelope close
 -----------------------------------
 xi       = xi       or {}
 xi.squad = xi.squad or {}
@@ -21,14 +22,12 @@ xi.squad.SLOTS      = 5
 xi.squad.PROTOCOL   = 1
 xi.squad.ENGAGE_VAR = 'TrustEngageType' -- 0 = engage + swing (retail), 1 = engage on target
 
-local MSQ_SENDER = '_MSQDATA'
-
 local FLAG_ONLINE = 1
 local FLAG_LOCKED = 2
 local FLAG_SELF   = 4
 
 local function rec(player, line)
-    player:printToPlayer(line, xi.msg.channel.SYSTEM_3, MSQ_SENDER)
+    player:printToPlayer('MSQ|' .. line, xi.msg.channel.SYSTEM_3)
 end
 
 xi.squad.msqStatus = function(player, text)
