@@ -808,6 +808,9 @@ auto trustutils::BuildMimicTrust(CCharEntity* PMaster, uint32 altCharId) -> CTru
     PTrust->m_MimicSourceCharId = altCharId;
     PTrust->status              = xi::Status::Normal;
     PTrust->m_EcoSystem         = xi::Ecosystem::Humanoid;
+    // 32 = proper-noun name flag (every real trust pool uses it): battle messages
+    // read "<name> defeats ..." instead of "The <name> defeats ...".
+    PTrust->m_name_prefix = 32;
 
     PTrust->SetMJob(static_cast<uint8>(snapshot.mjob));
     PTrust->SetSJob(static_cast<uint8>(snapshot.sjob));

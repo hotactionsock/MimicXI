@@ -36,6 +36,7 @@
 #include "items/item_weapon.h"
 #include "packets/entity_update.h"
 #include "packets/s2c/0x02d_battle_message2.h"
+#include "packets/s2c/0x038_schedulor.h"
 #include "enums/msg_basic.h"
 #include "party.h"
 #include "zone.h"
@@ -329,9 +330,11 @@ void AwardMimicExp(CCharEntity* PMaster, CTrustEntity* PMimic, uint32 gainedExp)
         return;
     }
 
-    // Never let a mimic out-level the summoner. A mimic sitting at the cap earns nothing
-    // until the summoner gains a level of their own.
-    const uint8 cap = PMaster->GetMLevel();
+    // The alt's real job progresses freely toward 99 - it is NOT capped at the
+    // summoner's level. When the summoner is lower, the live trust is just level-
+    // synced down (see BuildMimicTrust / LoadMimicTrustSnapshot); the alt still
+    // banks the EXP and levels in the background, retail level-sync style.
+    constexpr uint8 kMaxLevel = 99;
 
     const auto rset = db::preparedStmt(
         fmt::format("SELECT j.`{0}` AS lvl, e.`{0}` AS exp "
@@ -347,7 +350,7 @@ void AwardMimicExp(CCharEntity* PMaster, CTrustEntity* PMimic, uint32 gainedExp)
     uint8  level = std::max<uint8>(rset->get<uint8>("lvl"), 1);
     uint32 exp   = rset->get<uint32>("exp");
 
-    if (level >= cap)
+    if (level >= kMaxLevel)
     {
         return;
     }
@@ -355,15 +358,15 @@ void AwardMimicExp(CCharEntity* PMaster, CTrustEntity* PMimic, uint32 gainedExp)
     const uint8 startLevel = level;
     exp += gainedExp;
 
-    while (level < cap && exp >= charutils::GetExpNEXTLevel(level))
+    while (level < kMaxLevel && exp >= charutils::GetExpNEXTLevel(level))
     {
         exp -= charutils::GetExpNEXTLevel(level);
         ++level;
     }
 
-    if (level >= cap)
+    if (level >= kMaxLevel)
     {
-        level = cap;
+        level = kMaxLevel;
         exp   = std::min<uint32>(exp, charutils::GetExpNEXTLevel(level) - 1);
     }
 
@@ -377,35 +380,46 @@ void AwardMimicExp(CCharEntity* PMaster, CTrustEntity* PMimic, uint32 gainedExp)
         return;
     }
 
-    // Level-up: bring the live mimic entity up and refill it, like a player dinging.
-    // Base stats and combat modifiers fully refresh on the next summon; here we keep
-    // the level, HP/MP pool and party-frame numbers correct.
-    PMimic->SetMLevel(level);
-    PMimic->SetSLevel(static_cast<uint8>(level / 2));
-
-    const uint8   race = RaceIndexFromLook(PMimic->look.race);
-    const xi::Job sjob = PMimic->GetSJob();
-    PMimic->health.maxhp = static_cast<int16>(grade::GetBaseHP(race, grade::GetJobGrade(job, 0), level, grade::GetJobGrade(sjob, 0), PMimic->GetSLevel()));
-    PMimic->health.maxmp = static_cast<int16>(grade::GetBaseMP(race, grade::GetJobGrade(job, 1), level, grade::GetJobGrade(sjob, 1), PMimic->GetSLevel()));
-
-    PMimic->UpdateHealth();
-    PMimic->health.hp = PMimic->GetMaxHP();
-    PMimic->health.mp = PMimic->GetMaxMP();
-    PMimic->updatemask |= UPDATE_HP;
-
-    // Broadcast the level-up exactly the way a player's does: BATTLE_MESSAGE2 with
-    // MsgBasic::LevelUp, entity as the caster, to everyone in range - the client
-    // plays the level-up glow on the caster and prints "<name> attains level N".
+    // The trust dinged: announce it on its ACTUAL new level, always - even if the
+    // trust is currently level-synced below this. BATTLE_MESSAGE2 / MsgBasic::LevelUp
+    // prints "<name> attains level N" (and plays the native glow on a real PC); a
+    // trust is an NPC-type entity so the glow may not fire, so pair it with an
+    // explicit sparkle (SYNERGY_COMPLETE fourcc) that renders on any entity.
     if (PMimic->loc.zone != nullptr)
     {
         PMimic->loc.zone->PushPacket(
-            PMimic, CHAR_INRANGE,
+            PMimic, CHAR_INRANGE_SELF,
             std::make_unique<GP_SERV_COMMAND_BATTLE_MESSAGE2>(PMimic, PMimic, static_cast<int32>(level), 0, MsgBasic::LevelUp));
+
+        PMimic->loc.zone->PushPacket(
+            PMimic, CHAR_INRANGE_SELF,
+            std::make_unique<GP_SERV_COMMAND_SCHEDULOR>(PMimic, PMimic, "ef40"));
     }
 
-    if (PMaster->PParty != nullptr)
+    // Advance the live entity's stats only when it is NOT level-synced below the new
+    // level; a synced-down trust keeps fighting at the summoner's level. Base stats /
+    // combat mods fully refresh on the next summon - here we just keep level and the
+    // HP/MP pool right.
+    const uint8 syncLevel = std::min<uint8>(level, PMaster->GetMLevel());
+    if (syncLevel > PMimic->GetMLevel())
     {
-        PMaster->PParty->ReloadParty();
+        PMimic->SetMLevel(syncLevel);
+        PMimic->SetSLevel(static_cast<uint8>(syncLevel / 2));
+
+        const uint8   race = RaceIndexFromLook(PMimic->look.race);
+        const xi::Job sjob = PMimic->GetSJob();
+        PMimic->health.maxhp = static_cast<int16>(grade::GetBaseHP(race, grade::GetJobGrade(job, 0), syncLevel, grade::GetJobGrade(sjob, 0), PMimic->GetSLevel()));
+        PMimic->health.maxmp = static_cast<int16>(grade::GetBaseMP(race, grade::GetJobGrade(job, 1), syncLevel, grade::GetJobGrade(sjob, 1), PMimic->GetSLevel()));
+
+        PMimic->UpdateHealth();
+        PMimic->health.hp = PMimic->GetMaxHP();
+        PMimic->health.mp = PMimic->GetMaxMP();
+        PMimic->updatemask |= UPDATE_HP;
+
+        if (PMaster->PParty != nullptr)
+        {
+            PMaster->PParty->ReloadParty();
+        }
     }
 }
 

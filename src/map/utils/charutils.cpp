@@ -4595,15 +4595,6 @@ void DistributeExperiencePoints(CCharEntity* PChar, CMobEntity* PMob)
             }
 
             charutils::AddExperiencePoints(false, true, false, PMember, PMob, exp, mobCheck, wasChained);
-
-            // Mimic trusts progress the real alt character 1:1 with what the summoner earned.
-            for (auto* PTrust : PMember->PTrusts)
-            {
-                if (PTrust != nullptr && PTrust->m_MimicSourceCharId != 0)
-                {
-                    mimicutils::AwardMimicExp(PMember, PTrust, exp);
-                }
-            }
         });
     // clang-format on
 }
@@ -4940,6 +4931,21 @@ void AddExperiencePoints(bool expFromRaise, bool awardRegionPoints, bool fromScr
     {
         exp = (uint32)(exp * settings::get<float>("map.EXP_RATE"));
     }
+
+    // Mimic trusts progress the real alt character 1:1 with every EXP source the
+    // summoner gains from (mob kills, quests, GoV, campaign, ...) - just not Raise,
+    // which only restores what the summoner personally lost.
+    if (!expFromRaise && exp > 0)
+    {
+        for (auto* PTrust : PChar->PTrusts)
+        {
+            if (PTrust != nullptr && PTrust->m_MimicSourceCharId != 0)
+            {
+                mimicutils::AwardMimicExp(PChar, PTrust, exp);
+            }
+        }
+    }
+
     uint16 currentExp  = PChar->jobs.exp[static_cast<uint8>(PChar->GetMJob())];
     bool   onLimitMode = false;
 
