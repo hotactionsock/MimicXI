@@ -148,6 +148,13 @@ auto MapEngine::init() -> Task<void>
                      mapIPP.getIP(),
                      mapIPP.getPort());
 
+    // char_mimic_active holds the "this alt is currently out as a mimic trust" lock
+    // (blocks re-summon and blocks that alt from logging in). Mimic trusts, like all
+    // trusts, do not survive a reboot, so any row whose master no longer has a live
+    // session is stale and must be cleared or the alt is locked out forever. Runs
+    // after the accounts_sessions cleanup above so this process's sessions are gone.
+    db::preparedStmt("DELETE FROM char_mimic_active WHERE master_charid NOT IN (SELECT charid FROM accounts_sessions)");
+
     // Return any character whose current zone is an instance zone to their previous zone.
     // Instance state does not survive server reboots; leaving chars in these zones makes
     // them unable to log in.
