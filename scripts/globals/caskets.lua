@@ -674,6 +674,23 @@ local function giveItem(player, npc, itemNum, subOption)
 end
 
 -----------------------------------
+-- Desc: Turns a '+1' unit template ('Accuracy+1', 'Acc+1 Atk+1', 'HP+2 per unit',
+--       'STR+1 DEX-1 VIT-1') plus a rolled unit count into a readable string:
+--       ('Accuracy+7', 'Acc+3 Atk+3', 'HP+10', 'STR+4 DEX-4 VIT-4').
+-----------------------------------
+local function formatAugLabel(template, value)
+    if template == nil then
+        return nil
+    end
+    local out = template:gsub(' per unit', '')
+    out = out:gsub('([%+%-])(%d+)', function(sign, n)
+        local scaled = tonumber(n) * value
+        return (sign == '-') and ('-' .. scaled) or ('+' .. scaled)
+    end)
+    return out
+end
+
+-----------------------------------
 -- Desc: Prints the pre-rolled augment info for a Gold Casket to the player, so
 --       they can see what each slot holds before choosing one.
 -----------------------------------
@@ -684,20 +701,13 @@ local function showRareItemContents(player, npc)
         if itemId ~= 0 and numAugs and numAugs > 0 then
             local parts = {}
             for j = 1, numAugs do
-                local augId  = npc:getLocalVar(string.format('[caskets]ITEM%dAUG%dID',  slot, j))
-                local augVal = npc:getLocalVar(string.format('[caskets]ITEM%dAUG%dVAL', slot, j))
-                local name   = (xi.augments and xi.augments.name and xi.augments.name[augId]) or tostring(augId)
-                local part
-                if name:find('[%+%-]') then
-                    -- compound / directional augment: the name already carries the per-unit effect
-                    part = augVal > 1 and string.format('%s x%d', name, augVal) or name
-                else
-                    part = string.format('%s+%d', name, augVal)
-                end
-                parts[#parts + 1] = part
+                local augId    = npc:getLocalVar(string.format('[caskets]ITEM%dAUG%dID',  slot, j))
+                local augVal   = npc:getLocalVar(string.format('[caskets]ITEM%dAUG%dVAL', slot, j))
+                local template = xi.augments and xi.augments.name and xi.augments.name[augId]
+                parts[#parts + 1] = formatAugLabel(template, augVal) or string.format('aug %d +%d', augId, augVal)
             end
             player:printToPlayer(
-                string.format('[Gold Casket] Slot %d augment(s): %s', slot, table.concat(parts, ', ')),
+                string.format('[Gold Casket] Slot %d: %s', slot, table.concat(parts, ', ')),
                 xi.msg.channel.SYSTEM_3)
         end
     end
