@@ -894,11 +894,13 @@ auto trustutils::BuildMimicTrust(CCharEntity* PMaster, uint32 altCharId) -> CTru
     // Job-specific mob behaviour tuning (magic cadence, special-move cooldowns, etc.).
     mobutils::SetupJob(PTrust);
 
-    ShowInfo("BuildMimicTrust: %s Lv%u/%u job %u/%u hp=%d mp=%d STR=%u look(size=%u race=%u face=%u)",
+    ShowInfo("BuildMimicTrust: %s Lv%u/%u job %u/%u hp=%d mp=%d STR=%u look(size=%u race=%u face=%u head=%u body=%u hands=%u legs=%u feet=%u main=%u sub=%u ranged=%u)",
              snapshot.name, snapshot.mlvl, snapshot.slvl,
              static_cast<uint32>(snapshot.mjob), static_cast<uint32>(snapshot.sjob),
              snapshot.maxhp, snapshot.maxmp, snapshot.stats.STR,
-             snapshot.look.size, snapshot.look.race, snapshot.look.face);
+             snapshot.look.size, snapshot.look.race, snapshot.look.face,
+             snapshot.look.head, snapshot.look.body, snapshot.look.hands, snapshot.look.legs,
+             snapshot.look.feet, snapshot.look.main, snapshot.look.sub, snapshot.look.ranged);
 
     if (PMaster->PParty == nullptr)
     {
