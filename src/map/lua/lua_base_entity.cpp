@@ -16451,19 +16451,164 @@ auto CLuaBaseEntity::getAccountCharacters() -> sol::table
     auto table = lua.create_table();
     for (const auto& entry : chars)
     {
-        auto row       = lua.create_table();
-        row["charid"]  = entry.charId;
-        row["name"]    = entry.name;
-        row["mainJob"] = entry.mainJob;
-        row["mainLvl"] = entry.mainLvl;
-        row["subJob"]  = entry.subJob;
-        row["subLvl"]  = entry.subLvl;
-        row["online"]  = entry.online;
-        row["locked"]  = entry.locked;
+        auto row        = lua.create_table();
+        row["charid"]   = entry.charId;
+        row["name"]     = entry.name;
+        row["mainJob"]  = entry.mainJob;
+        row["mainLvl"]  = entry.mainLvl;
+        row["subJob"]   = entry.subJob;
+        row["subLvl"]   = entry.subLvl;
+        row["online"]   = entry.online;
+        row["locked"]   = entry.locked;
+        row["unlocked"] = entry.unlocked;
+
+        auto levels = lua.create_table();
+        for (uint8 jobId = 1; jobId <= 22; ++jobId)
+        {
+            levels[jobId] = entry.levels[jobId];
+        }
+        row["levels"] = levels;
+
         table.add(row);
     }
 
     return table;
+}
+
+/************************************************************************
+ *  Function: setSquadMemberJob(charid, mjob, sjob)
+ *  Purpose : Change an offline alt's active main/sub job. If that alt is
+ *            currently out as one of the caller's mimic trusts and the caller
+ *            is not engaged, it is dismissed and re-summoned on the new jobs.
+ *  Returns : 0 ok, 1 not on account, 2 online, 3 job locked, 4 bad job,
+ *            5 changed but the caller is in combat (resummon deferred).
+ *  Example : player:setSquadMemberJob(altId, xi.job.WHM, xi.job.SCH)
+ ************************************************************************/
+
+uint8 CLuaBaseEntity::setSquadMemberJob(uint32 charId, uint8 mjob, uint8 sjob)
+{
+    if (m_PBaseEntity->objtype != TYPE_PC)
+    {
+        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->getName());
+        return 1;
+    }
+
+    auto* PChar = static_cast<CCharEntity*>(m_PBaseEntity);
+
+    const auto res = squadutils::SetAltJob(PChar->accid, charId, mjob, sjob);
+    if (res != squadutils::SetJobResult::Ok)
+    {
+        return static_cast<uint8>(res);
+    }
+
+    // Is this alt currently one of our mimic trusts?
+    CTrustEntity* PMimic = nullptr;
+    for (auto* PTrust : PChar->PTrusts)
+    {
+        if (PTrust != nullptr && PTrust->m_MimicSourceCharId == charId)
+        {
+            PMimic = PTrust;
+            break;
+        }
+    }
+
+    if (PMimic == nullptr)
+    {
+        return 0; // changed; it will summon on the new jobs next time
+    }
+
+    if (PChar->PAI->IsEngaged())
+    {
+        return 5; // out right now, but in combat - leave it, re-called after the fight
+    }
+
+    PChar->RemoveTrust(PMimic);
+    trustutils::BuildMimicTrust(PChar, charId);
+    return 0;
+}
+
+/************************************************************************
+ *  Function: saveSquadJobPreset(name)  /  loadSquadJobPreset(name)
+ *          : listSquadJobPresets()      /  deleteSquadJobPreset(name)
+ *  Purpose : Named job lineups for the current squad.
+ ************************************************************************/
+
+void CLuaBaseEntity::saveSquadJobPreset(const std::string& name)
+{
+    if (m_PBaseEntity->objtype != TYPE_PC)
+    {
+        return;
+    }
+
+    auto* PChar = static_cast<CCharEntity*>(m_PBaseEntity);
+
+    // Snapshot the current active jobs of everyone in a squad slot.
+    std::vector<squadutils::JobPresetEntry> entries;
+    const auto squad = squadutils::GetSquad(PChar->accid);
+    for (uint32 charId : squad)
+    {
+        if (charId == 0)
+        {
+            continue;
+        }
+        const auto detail = db::preparedStmt("SELECT mjob, sjob FROM char_stats WHERE charid = ? LIMIT 1", charId);
+        if (detail && detail->rowsCount() != 0 && detail->next())
+        {
+            entries.push_back({ charId, detail->get<uint8>("mjob"), detail->get<uint8>("sjob") });
+        }
+    }
+
+    squadutils::SaveJobPreset(PChar->accid, name, entries);
+}
+
+auto CLuaBaseEntity::loadSquadJobPreset(const std::string& name) -> sol::table
+{
+    if (m_PBaseEntity->objtype != TYPE_PC)
+    {
+        return sol::lua_nil;
+    }
+
+    const auto entries = squadutils::LoadJobPreset(static_cast<CCharEntity*>(m_PBaseEntity)->accid, name);
+
+    auto table = lua.create_table();
+    for (const auto& e : entries)
+    {
+        auto row      = lua.create_table();
+        row["charid"] = e.charId;
+        row["mjob"]   = e.mjob;
+        row["sjob"]   = e.sjob;
+        table.add(row);
+    }
+    return table;
+}
+
+auto CLuaBaseEntity::listSquadJobPresets() -> sol::table
+{
+    if (m_PBaseEntity->objtype != TYPE_PC)
+    {
+        return sol::lua_nil;
+    }
+
+    const auto presets = squadutils::ListJobPresets(static_cast<CCharEntity*>(m_PBaseEntity)->accid);
+
+    auto table = lua.create_table();
+    for (const auto& [name, count] : presets)
+    {
+        auto row     = lua.create_table();
+        row["name"]  = name;
+        row["count"] = count;
+        table.add(row);
+    }
+    return table;
+}
+
+void CLuaBaseEntity::deleteSquadJobPreset(const std::string& name)
+{
+    if (m_PBaseEntity->objtype != TYPE_PC)
+    {
+        return;
+    }
+    squadutils::DeleteJobPreset(static_cast<CCharEntity*>(m_PBaseEntity)->accid, name);
 }
 
 /************************************************************************
@@ -21543,6 +21688,11 @@ void CLuaBaseEntity::Register()
     SOL_REGISTER("getSquadRoster", CLuaBaseEntity::getSquadRoster);
     SOL_REGISTER("setSquadSlot", CLuaBaseEntity::setSquadSlot);
     SOL_REGISTER("getAccountCharacters", CLuaBaseEntity::getAccountCharacters);
+    SOL_REGISTER("setSquadMemberJob", CLuaBaseEntity::setSquadMemberJob);
+    SOL_REGISTER("saveSquadJobPreset", CLuaBaseEntity::saveSquadJobPreset);
+    SOL_REGISTER("loadSquadJobPreset", CLuaBaseEntity::loadSquadJobPreset);
+    SOL_REGISTER("listSquadJobPresets", CLuaBaseEntity::listSquadJobPresets);
+    SOL_REGISTER("deleteSquadJobPreset", CLuaBaseEntity::deleteSquadJobPreset);
     SOL_REGISTER("getTrustID", CLuaBaseEntity::getTrustID);
     SOL_REGISTER("trustPartyMessage", CLuaBaseEntity::trustPartyMessage);
     SOL_REGISTER("addGambit", CLuaBaseEntity::addGambit);

@@ -805,6 +805,11 @@ public:
     auto   getSquadRoster() -> sol::table;
     void   setSquadSlot(uint8 slot, uint32 charId);
     auto   getAccountCharacters() -> sol::table;
+    uint8  setSquadMemberJob(uint32 charId, uint8 mjob, uint8 sjob);
+    void   saveSquadJobPreset(const std::string& name);
+    auto   loadSquadJobPreset(const std::string& name) -> sol::table;
+    auto   listSquadJobPresets() -> sol::table;
+    void   deleteSquadJobPreset(const std::string& name);
     uint32 getTrustID();
     void   trustPartyMessage(uint32 message_id) const;
     auto   addGambit(uint16 targ, const sol::table& predicates, const sol::table& reactions, const sol::object& retry) -> std::string;

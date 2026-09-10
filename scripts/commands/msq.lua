@@ -1,13 +1,14 @@
 -----------------------------------
 -- !msq <verb> [args...]
 -- Machine-facing squad command for the msquad Ashita addon. Every reply is a
--- stream of "_MSQDATA" records (see scripts/globals/squad.lua). Humans use
--- !squad; the addon uses this.
+-- stream of "MSQ|" records (see scripts/globals/squad.lua). Humans use !squad;
+-- the addon uses this.
 --
 --   !msq who
---   !msq set <slot> <charid>
---   !msq clear <slot>
+--   !msq set <slot> <charid>   /  !msq clear <slot>
 --   !msq engage <0|1>
+--   !msq setjob <charid> <mjob> [sjob]
+--   !msq savejobs <name>  /  usejobs <name>  /  deljobs <name>
 --
 -- permission = 0 (all players)
 -----------------------------------
@@ -59,6 +60,61 @@ commandObj.onTrigger = function(player, input)
             return
         end
         xi.squad.msqRoster(player, 'engage')
+
+    elseif verb == 'setjob' then
+        local charid = tonumber(a[2])
+        local mjob   = tonumber(a[3])
+        local sjob   = tonumber(a[4]) or 0
+        if not charid or not mjob then
+            xi.squad.msqError(player, 'setjob <charid> <mjob> [sjob]')
+            return
+        end
+        local res = player:setSquadMemberJob(charid, mjob, sjob)
+        local why = xi.squad.JOB_RESULT[res]
+        if why then
+            if res == 5 then xi.squad.msqStatus(player, why) else xi.squad.msqError(player, why) end
+        end
+        xi.squad.msqRoster(player, 'setjob')
+
+    elseif verb == 'savejobs' then
+        local name = a[2]
+        if not name or #name == 0 then
+            xi.squad.msqError(player, 'savejobs <name>')
+            return
+        end
+        player:saveSquadJobPreset(name)
+        xi.squad.msqStatus(player, 'Saved lineup "' .. name .. '".')
+        xi.squad.msqRoster(player, 'savejobs')
+
+    elseif verb == 'usejobs' then
+        local name = a[2]
+        local entries = name and player:loadSquadJobPreset(name) or {}
+        if #entries == 0 then
+            xi.squad.msqError(player, 'No lineup called "' .. tostring(name) .. '".')
+            xi.squad.msqRoster(player, 'usejobs')
+            return
+        end
+        local applied, deferred = 0, 0
+        for _, e in ipairs(entries) do
+            local res = player:setSquadMemberJob(e.charid, e.mjob, e.sjob)
+            if res == 0 then applied = applied + 1
+            elseif res == 5 then applied, deferred = applied + 1, deferred + 1 end
+        end
+        local msg = string.format('Applied lineup "%s" to %d member(s).', name, applied)
+        if deferred > 0 then
+            msg = msg .. string.format(' %d re-summon after this fight.', deferred)
+        end
+        xi.squad.msqStatus(player, msg)
+        xi.squad.msqRoster(player, 'usejobs')
+
+    elseif verb == 'deljobs' then
+        local name = a[2]
+        if not name or #name == 0 then
+            xi.squad.msqError(player, 'deljobs <name>')
+            return
+        end
+        player:deleteSquadJobPreset(name)
+        xi.squad.msqRoster(player, 'deljobs')
 
     else
         xi.squad.msqError(player, 'unknown verb: ' .. verb)

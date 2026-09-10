@@ -39,7 +39,8 @@ xi.squad.msqError = function(player, text)
     rec(player, 'e|' .. tostring(text))
 end
 
--- Emit the full roster answer for verb (who|set|clear|engage).
+-- Emit the full roster answer for verb (who|set|clear|engage|setjob|...).
+-- One answer feeds both the Squad tab and the Jobs tab of the addon.
 xi.squad.msqRoster = function(player, verb)
     rec(player, string.format('d|%d|%s', xi.squad.PROTOCOL, verb))
 
@@ -49,8 +50,15 @@ xi.squad.msqRoster = function(player, verb)
         if c.online          then flags = flags + FLAG_ONLINE end
         if c.locked          then flags = flags + FLAG_LOCKED end
         if c.charid == selfId then flags = flags + FLAG_SELF   end
-        rec(player, string.format('c|%d|%s|%d|%d|%d|%d|%d',
-            c.charid, c.name, c.mainJob, c.mainLvl, flags, c.subJob or 0, c.subLvl or 0))
+        rec(player, string.format('c|%d|%s|%d|%d|%d|%d|%d|%d',
+            c.charid, c.name, c.mainJob, c.mainLvl, flags, c.subJob or 0, c.subLvl or 0, c.unlocked or 0))
+
+        -- Per-job levels, comma list WAR..RUN (job 1..22).
+        local lv, parts = c.levels or {}, {}
+        for j = 1, 22 do
+            parts[j] = tostring(lv[j] or 0)
+        end
+        rec(player, string.format('j|%d|%s', c.charid, table.concat(parts, ',')))
     end
 
     local roster = player:getSquadRoster()
@@ -61,9 +69,24 @@ xi.squad.msqRoster = function(player, verb)
         end
     end
 
+    for _, p in ipairs(player:listSquadJobPresets()) do
+        rec(player, string.format('p|%s|%d', p.name, p.count))
+    end
+
     rec(player, string.format('t|%d', player:getCharVar(xi.squad.ENGAGE_VAR)))
     rec(player, 'z|' .. verb)
 end
+
+-- Human-readable reason for a setSquadMemberJob result code.
+xi.squad.JOB_RESULT =
+{
+    [0] = nil,                                   -- ok
+    [1] = 'That character is not on your account.',
+    [2] = 'That character is logged in - change jobs on it directly.',
+    [3] = 'That job is not unlocked on that character.',
+    [4] = 'Invalid job.',
+    [5] = 'Job changed - the trust re-summons on the new jobs after this fight.',
+}
 
 -- charid -> account character row, by (case-insensitive) name.
 xi.squad.findAltByName = function(player, needle)

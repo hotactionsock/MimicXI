@@ -177,6 +177,22 @@ local function doEngage(player, args)
         or  'Squad now engages when you land a swing.')
 end
 
+local function doSetJob(player, args)
+    local name = args[2]
+    local mj   = args[3] and (tonumber(args[3]) or xi.job[string.upper(args[3])])
+    local sj   = args[4] and (tonumber(args[4]) or xi.job[string.upper(args[4])]) or 0
+
+    local alt = name and xi.squad.findAltByName(player, name)
+    if not alt or not mj then
+        msg(player, 'Usage: !squad setjob <character name> <mainJob> [subJob]   (job short name or id)')
+        return
+    end
+
+    local res = player:setSquadMemberJob(alt.charid, mj, sj)
+    local why = xi.squad.JOB_RESULT[res]
+    msg(player, why or string.format('%s is now on the new job.', alt.name))
+end
+
 -----------------------------------
 -- Dispatch
 -----------------------------------
@@ -191,6 +207,7 @@ local dispatch =
     summon  = function(player, args) doCall(player, args)  end,
     dismiss = function(player, _)    doDismiss(player)     end,
     engage  = function(player, args) doEngage(player, args) end,
+    setjob  = function(player, args) doSetJob(player, args) end,
 }
 
 commandObj.onTrigger = function(player, input)
@@ -201,7 +218,7 @@ commandObj.onTrigger = function(player, input)
     if handler then
         handler(player, args)
     else
-        msg(player, 'Subcommands: list | set <slot> <name> | clear <slot> | call [slot|all] | dismiss | engage 0|1')
+        msg(player, 'Subcommands: list | set <slot> <name> | clear <slot> | call [slot|all] | dismiss | engage 0|1 | setjob <name> <mjob> [sjob]')
     end
 end
 
