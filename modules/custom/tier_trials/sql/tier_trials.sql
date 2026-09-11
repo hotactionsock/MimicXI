@@ -131,89 +131,89 @@ INSERT INTO `mob_groups` VALUES (12051, 65,   183, 'Vraeth_the_Tetrachromic', 0,
 -- Tier 30 mob entities (IDs 17526785–17526798)
 -- -----------------------------------------------------------
 -- Wave 1
-INSERT INTO `mob_spawn_points` VALUES (17526785, 0, 'Goblin_Leecher', 'Goblin Leecher', 12000, 28, 30, 0.000, 0.000, 0.000, 0);
-INSERT INTO `mob_spawn_points` VALUES (17526786, 0, 'Goblin_Leecher', 'Goblin Leecher', 12001, 28, 30, 0.000, 0.000, 0.000, 0);
-INSERT INTO `mob_spawn_points` VALUES (17526787, 0, 'Goblin_Bouncer', 'Goblin Bouncer', 12002, 29, 31, 0.000, 0.000, 0.000, 0);
+INSERT INTO `mob_spawn_points` VALUES (17526785, 0, 'Goblin_Leecher', 'Goblin Leecher', 12000, 28, 30, 0.000, 0.000, 0.000, 0, NULL, NULL);
+INSERT INTO `mob_spawn_points` VALUES (17526786, 0, 'Goblin_Leecher', 'Goblin Leecher', 12001, 28, 30, 0.000, 0.000, 0.000, 0, NULL, NULL);
+INSERT INTO `mob_spawn_points` VALUES (17526787, 0, 'Goblin_Bouncer', 'Goblin Bouncer', 12002, 29, 31, 0.000, 0.000, 0.000, 0, NULL, NULL);
 -- Wave 2
-INSERT INTO `mob_spawn_points` VALUES (17526788, 0, 'Orcish_Grunt', 'Orcish Grunt', 12003, 28, 30, 0.000, 0.000, 0.000, 0);
-INSERT INTO `mob_spawn_points` VALUES (17526789, 0, 'Orcish_Grunt', 'Orcish Grunt', 12004, 28, 30, 0.000, 0.000, 0.000, 0);
-INSERT INTO `mob_spawn_points` VALUES (17526790, 0, 'Orcish_Cursemaker', 'Orcish Cursemaker', 12005, 29, 31, 0.000, 0.000, 0.000, 0);
+INSERT INTO `mob_spawn_points` VALUES (17526788, 0, 'Orcish_Grunt', 'Orcish Grunt', 12003, 28, 30, 0.000, 0.000, 0.000, 0, NULL, NULL);
+INSERT INTO `mob_spawn_points` VALUES (17526789, 0, 'Orcish_Grunt', 'Orcish Grunt', 12004, 28, 30, 0.000, 0.000, 0.000, 0, NULL, NULL);
+INSERT INTO `mob_spawn_points` VALUES (17526790, 0, 'Orcish_Cursemaker', 'Orcish Cursemaker', 12005, 29, 31, 0.000, 0.000, 0.000, 0, NULL, NULL);
 -- Wave 3
-INSERT INTO `mob_spawn_points` VALUES (17526791, 0, 'Brass_Quadav', 'Brass Quadav', 12006, 28, 30, 0.000, 0.000, 0.000, 0);
-INSERT INTO `mob_spawn_points` VALUES (17526792, 0, 'Brass_Quadav', 'Brass Quadav', 12007, 28, 30, 0.000, 0.000, 0.000, 0);
-INSERT INTO `mob_spawn_points` VALUES (17526793, 0, 'Copper_Quadav', 'Copper Quadav', 12008, 29, 31, 0.000, 0.000, 0.000, 0);
+INSERT INTO `mob_spawn_points` VALUES (17526791, 0, 'Brass_Quadav', 'Brass Quadav', 12006, 28, 30, 0.000, 0.000, 0.000, 0, NULL, NULL);
+INSERT INTO `mob_spawn_points` VALUES (17526792, 0, 'Brass_Quadav', 'Brass Quadav', 12007, 28, 30, 0.000, 0.000, 0.000, 0, NULL, NULL);
+INSERT INTO `mob_spawn_points` VALUES (17526793, 0, 'Copper_Quadav', 'Copper Quadav', 12008, 29, 31, 0.000, 0.000, 0.000, 0, NULL, NULL);
 -- Wave 4
-INSERT INTO `mob_spawn_points` VALUES (17526794, 0, 'Goblin_Leecher', 'Goblin Leecher', 12009, 29, 31, 0.000, 0.000, 0.000, 0);
-INSERT INTO `mob_spawn_points` VALUES (17526795, 0, 'Goblin_Leecher', 'Goblin Leecher', 12010, 29, 31, 0.000, 0.000, 0.000, 0);
-INSERT INTO `mob_spawn_points` VALUES (17526796, 0, 'Orcish_Grunt', 'Orcish Grunt', 12011, 29, 31, 0.000, 0.000, 0.000, 0);
-INSERT INTO `mob_spawn_points` VALUES (17526797, 0, 'Orcish_Grunt', 'Orcish Grunt', 12012, 29, 31, 0.000, 0.000, 0.000, 0);
+INSERT INTO `mob_spawn_points` VALUES (17526794, 0, 'Goblin_Leecher', 'Goblin Leecher', 12009, 29, 31, 0.000, 0.000, 0.000, 0, NULL, NULL);
+INSERT INTO `mob_spawn_points` VALUES (17526795, 0, 'Goblin_Leecher', 'Goblin Leecher', 12010, 29, 31, 0.000, 0.000, 0.000, 0, NULL, NULL);
+INSERT INTO `mob_spawn_points` VALUES (17526796, 0, 'Orcish_Grunt', 'Orcish Grunt', 12011, 29, 31, 0.000, 0.000, 0.000, 0, NULL, NULL);
+INSERT INTO `mob_spawn_points` VALUES (17526797, 0, 'Orcish_Grunt', 'Orcish Grunt', 12012, 29, 31, 0.000, 0.000, 0.000, 0, NULL, NULL);
 -- Wave 5 boss
-INSERT INTO `mob_spawn_points` VALUES (17526798, 0, 'Brakk_the_Lockjaw', 'Brakk the Lockjaw', 12013, 32, 32, 0.000, 0.000, 0.000, 0);
+INSERT INTO `mob_spawn_points` VALUES (17526798, 0, 'Brakk_the_Lockjaw', 'Brakk the Lockjaw', 12013, 32, 32, 0.000, 0.000, 0.000, 0, NULL, NULL);
 
 -- -----------------------------------------------------------
 -- Tier 40 mob entities (IDs 17526799–17526812)
 -- -----------------------------------------------------------
 -- Wave 1
-INSERT INTO `mob_spawn_points` VALUES (17526799, 0, 'Gigas_Fighter', 'Gigas Fighter', 12014, 38, 40, 0.000, 0.000, 0.000, 0);
-INSERT INTO `mob_spawn_points` VALUES (17526800, 0, 'Gigas_Wrestler', 'Gigas Wrestler', 12015, 38, 40, 0.000, 0.000, 0.000, 0);
+INSERT INTO `mob_spawn_points` VALUES (17526799, 0, 'Gigas_Fighter', 'Gigas Fighter', 12014, 38, 40, 0.000, 0.000, 0.000, 0, NULL, NULL);
+INSERT INTO `mob_spawn_points` VALUES (17526800, 0, 'Gigas_Wrestler', 'Gigas Wrestler', 12015, 38, 40, 0.000, 0.000, 0.000, 0, NULL, NULL);
 -- Wave 2
-INSERT INTO `mob_spawn_points` VALUES (17526801, 0, 'Ghoul', 'Ghoul', 12016, 38, 40, 0.000, 0.000, 0.000, 0);
-INSERT INTO `mob_spawn_points` VALUES (17526802, 0, 'Ghoul', 'Ghoul', 12017, 38, 40, 0.000, 0.000, 0.000, 0);
-INSERT INTO `mob_spawn_points` VALUES (17526803, 0, 'Wight', 'Wight', 12018, 39, 41, 0.000, 0.000, 0.000, 0);
+INSERT INTO `mob_spawn_points` VALUES (17526801, 0, 'Ghoul', 'Ghoul', 12016, 38, 40, 0.000, 0.000, 0.000, 0, NULL, NULL);
+INSERT INTO `mob_spawn_points` VALUES (17526802, 0, 'Ghoul', 'Ghoul', 12017, 38, 40, 0.000, 0.000, 0.000, 0, NULL, NULL);
+INSERT INTO `mob_spawn_points` VALUES (17526803, 0, 'Wight', 'Wight', 12018, 39, 41, 0.000, 0.000, 0.000, 0, NULL, NULL);
 -- Wave 3
-INSERT INTO `mob_spawn_points` VALUES (17526804, 0, 'Tonberry_Tracker', 'Tonberry Tracker', 12019, 38, 40, 0.000, 0.000, 0.000, 0);
-INSERT INTO `mob_spawn_points` VALUES (17526805, 0, 'Tonberry_Elder', 'Tonberry Elder', 12020, 39, 41, 0.000, 0.000, 0.000, 0);
+INSERT INTO `mob_spawn_points` VALUES (17526804, 0, 'Tonberry_Tracker', 'Tonberry Tracker', 12019, 38, 40, 0.000, 0.000, 0.000, 0, NULL, NULL);
+INSERT INTO `mob_spawn_points` VALUES (17526805, 0, 'Tonberry_Elder', 'Tonberry Elder', 12020, 39, 41, 0.000, 0.000, 0.000, 0, NULL, NULL);
 -- Wave 4
-INSERT INTO `mob_spawn_points` VALUES (17526806, 0, 'Roc', 'Roc', 12021, 39, 41, 0.000, 0.000, 0.000, 0);
-INSERT INTO `mob_spawn_points` VALUES (17526807, 0, 'Gigas_Fighter', 'Gigas Fighter', 12022, 39, 41, 0.000, 0.000, 0.000, 0);
-INSERT INTO `mob_spawn_points` VALUES (17526808, 0, 'Gigas_Wrestler', 'Gigas Wrestler', 12023, 39, 41, 0.000, 0.000, 0.000, 0);
+INSERT INTO `mob_spawn_points` VALUES (17526806, 0, 'Roc', 'Roc', 12021, 39, 41, 0.000, 0.000, 0.000, 0, NULL, NULL);
+INSERT INTO `mob_spawn_points` VALUES (17526807, 0, 'Gigas_Fighter', 'Gigas Fighter', 12022, 39, 41, 0.000, 0.000, 0.000, 0, NULL, NULL);
+INSERT INTO `mob_spawn_points` VALUES (17526808, 0, 'Gigas_Wrestler', 'Gigas Wrestler', 12023, 39, 41, 0.000, 0.000, 0.000, 0, NULL, NULL);
 -- Wave 5 boss + summon
-INSERT INTO `mob_spawn_points` VALUES (17526809, 0, 'Kalabaros_the_Unbroken', 'Kalabaros the Unbroken', 12024, 43, 43, 0.000, 0.000, 0.000, 0);
-INSERT INTO `mob_spawn_points` VALUES (17526810, 0, 'Wight_Summon', 'Wight', 12025, 41, 41, 0.000, 0.000, 0.000, 0);
+INSERT INTO `mob_spawn_points` VALUES (17526809, 0, 'Kalabaros_the_Unbroken', 'Kalabaros the Unbroken', 12024, 43, 43, 0.000, 0.000, 0.000, 0, NULL, NULL);
+INSERT INTO `mob_spawn_points` VALUES (17526810, 0, 'Wight_Summon', 'Wight', 12025, 41, 41, 0.000, 0.000, 0.000, 0, NULL, NULL);
 
 -- -----------------------------------------------------------
 -- Tier 50 mob entities (IDs 17526811–17526823)
 -- -----------------------------------------------------------
 -- Wave 1
-INSERT INTO `mob_spawn_points` VALUES (17526811, 0, 'Imp', 'Imp', 12026, 48, 50, 0.000, 0.000, 0.000, 0);
-INSERT INTO `mob_spawn_points` VALUES (17526812, 0, 'Imp', 'Imp', 12027, 48, 50, 0.000, 0.000, 0.000, 0);
-INSERT INTO `mob_spawn_points` VALUES (17526813, 0, 'Imp', 'Imp', 12028, 49, 51, 0.000, 0.000, 0.000, 0);
+INSERT INTO `mob_spawn_points` VALUES (17526811, 0, 'Imp', 'Imp', 12026, 48, 50, 0.000, 0.000, 0.000, 0, NULL, NULL);
+INSERT INTO `mob_spawn_points` VALUES (17526812, 0, 'Imp', 'Imp', 12027, 48, 50, 0.000, 0.000, 0.000, 0, NULL, NULL);
+INSERT INTO `mob_spawn_points` VALUES (17526813, 0, 'Imp', 'Imp', 12028, 49, 51, 0.000, 0.000, 0.000, 0, NULL, NULL);
 -- Wave 2
-INSERT INTO `mob_spawn_points` VALUES (17526814, 0, 'Shadow_Orc', 'Shadow Orc', 12029, 48, 50, 0.000, 0.000, 0.000, 0);
-INSERT INTO `mob_spawn_points` VALUES (17526815, 0, 'Shadow_Orc', 'Shadow Orc', 12030, 48, 50, 0.000, 0.000, 0.000, 0);
-INSERT INTO `mob_spawn_points` VALUES (17526816, 0, 'Undead_Quadav', 'Undead Quadav', 12031, 48, 50, 0.000, 0.000, 0.000, 0);
+INSERT INTO `mob_spawn_points` VALUES (17526814, 0, 'Shadow_Orc', 'Shadow Orc', 12029, 48, 50, 0.000, 0.000, 0.000, 0, NULL, NULL);
+INSERT INTO `mob_spawn_points` VALUES (17526815, 0, 'Shadow_Orc', 'Shadow Orc', 12030, 48, 50, 0.000, 0.000, 0.000, 0, NULL, NULL);
+INSERT INTO `mob_spawn_points` VALUES (17526816, 0, 'Undead_Quadav', 'Undead Quadav', 12031, 48, 50, 0.000, 0.000, 0.000, 0, NULL, NULL);
 -- Wave 3
-INSERT INTO `mob_spawn_points` VALUES (17526817, 0, 'Fire_Elemental', 'Fire Elemental', 12032, 48, 50, 0.000, 0.000, 0.000, 0);
-INSERT INTO `mob_spawn_points` VALUES (17526818, 0, 'Ice_Elemental', 'Ice Elemental', 12033, 48, 50, 0.000, 0.000, 0.000, 0);
+INSERT INTO `mob_spawn_points` VALUES (17526817, 0, 'Fire_Elemental', 'Fire Elemental', 12032, 48, 50, 0.000, 0.000, 0.000, 0, NULL, NULL);
+INSERT INTO `mob_spawn_points` VALUES (17526818, 0, 'Ice_Elemental', 'Ice Elemental', 12033, 48, 50, 0.000, 0.000, 0.000, 0, NULL, NULL);
 -- Wave 4
-INSERT INTO `mob_spawn_points` VALUES (17526819, 0, 'Haunt', 'Haunt', 12034, 49, 51, 0.000, 0.000, 0.000, 0);
-INSERT INTO `mob_spawn_points` VALUES (17526820, 0, 'Haunt', 'Haunt', 12035, 49, 51, 0.000, 0.000, 0.000, 0);
-INSERT INTO `mob_spawn_points` VALUES (17526821, 0, 'Imp', 'Imp', 12036, 49, 51, 0.000, 0.000, 0.000, 0);
-INSERT INTO `mob_spawn_points` VALUES (17526822, 0, 'Imp', 'Imp', 12037, 49, 51, 0.000, 0.000, 0.000, 0);
+INSERT INTO `mob_spawn_points` VALUES (17526819, 0, 'Haunt', 'Haunt', 12034, 49, 51, 0.000, 0.000, 0.000, 0, NULL, NULL);
+INSERT INTO `mob_spawn_points` VALUES (17526820, 0, 'Haunt', 'Haunt', 12035, 49, 51, 0.000, 0.000, 0.000, 0, NULL, NULL);
+INSERT INTO `mob_spawn_points` VALUES (17526821, 0, 'Imp', 'Imp', 12036, 49, 51, 0.000, 0.000, 0.000, 0, NULL, NULL);
+INSERT INTO `mob_spawn_points` VALUES (17526822, 0, 'Imp', 'Imp', 12037, 49, 51, 0.000, 0.000, 0.000, 0, NULL, NULL);
 -- Wave 5 boss
-INSERT INTO `mob_spawn_points` VALUES (17526823, 0, 'Valdris_the_Hollowed', 'Valdris the Hollowed', 12038, 54, 54, 0.000, 0.000, 0.000, 0);
+INSERT INTO `mob_spawn_points` VALUES (17526823, 0, 'Valdris_the_Hollowed', 'Valdris the Hollowed', 12038, 54, 54, 0.000, 0.000, 0.000, 0, NULL, NULL);
 
 -- -----------------------------------------------------------
 -- Tier 60 mob entities (IDs 17526824–17526837)
 -- -----------------------------------------------------------
 -- Wave 1
-INSERT INTO `mob_spawn_points` VALUES (17526824, 0, 'Ahriman', 'Ahriman', 12039, 58, 60, 0.000, 0.000, 0.000, 0);
-INSERT INTO `mob_spawn_points` VALUES (17526825, 0, 'Ahriman', 'Ahriman', 12040, 58, 60, 0.000, 0.000, 0.000, 0);
+INSERT INTO `mob_spawn_points` VALUES (17526824, 0, 'Ahriman', 'Ahriman', 12039, 58, 60, 0.000, 0.000, 0.000, 0, NULL, NULL);
+INSERT INTO `mob_spawn_points` VALUES (17526825, 0, 'Ahriman', 'Ahriman', 12040, 58, 60, 0.000, 0.000, 0.000, 0, NULL, NULL);
 -- Wave 2
-INSERT INTO `mob_spawn_points` VALUES (17526826, 0, 'Haunt', 'Haunt', 12041, 58, 60, 0.000, 0.000, 0.000, 0);
-INSERT INTO `mob_spawn_points` VALUES (17526827, 0, 'Haunt', 'Haunt', 12042, 58, 60, 0.000, 0.000, 0.000, 0);
-INSERT INTO `mob_spawn_points` VALUES (17526828, 0, 'Specter', 'Specter', 12043, 59, 61, 0.000, 0.000, 0.000, 0);
+INSERT INTO `mob_spawn_points` VALUES (17526826, 0, 'Haunt', 'Haunt', 12041, 58, 60, 0.000, 0.000, 0.000, 0, NULL, NULL);
+INSERT INTO `mob_spawn_points` VALUES (17526827, 0, 'Haunt', 'Haunt', 12042, 58, 60, 0.000, 0.000, 0.000, 0, NULL, NULL);
+INSERT INTO `mob_spawn_points` VALUES (17526828, 0, 'Specter', 'Specter', 12043, 59, 61, 0.000, 0.000, 0.000, 0, NULL, NULL);
 -- Wave 3
-INSERT INTO `mob_spawn_points` VALUES (17526829, 0, 'Demon_Knight', 'Demon Knight', 12044, 58, 60, 0.000, 0.000, 0.000, 0);
-INSERT INTO `mob_spawn_points` VALUES (17526830, 0, 'Demon_Knight', 'Demon Knight', 12045, 58, 60, 0.000, 0.000, 0.000, 0);
-INSERT INTO `mob_spawn_points` VALUES (17526831, 0, 'Demon_Warlock', 'Demon Warlock', 12046, 59, 61, 0.000, 0.000, 0.000, 0);
+INSERT INTO `mob_spawn_points` VALUES (17526829, 0, 'Demon_Knight', 'Demon Knight', 12044, 58, 60, 0.000, 0.000, 0.000, 0, NULL, NULL);
+INSERT INTO `mob_spawn_points` VALUES (17526830, 0, 'Demon_Knight', 'Demon Knight', 12045, 58, 60, 0.000, 0.000, 0.000, 0, NULL, NULL);
+INSERT INTO `mob_spawn_points` VALUES (17526831, 0, 'Demon_Warlock', 'Demon Warlock', 12046, 59, 61, 0.000, 0.000, 0.000, 0, NULL, NULL);
 -- Wave 4
-INSERT INTO `mob_spawn_points` VALUES (17526832, 0, 'Ahriman', 'Ahriman', 12047, 59, 61, 0.000, 0.000, 0.000, 0);
-INSERT INTO `mob_spawn_points` VALUES (17526833, 0, 'Ahriman', 'Ahriman', 12048, 59, 61, 0.000, 0.000, 0.000, 0);
-INSERT INTO `mob_spawn_points` VALUES (17526834, 0, 'Demon_Knight', 'Demon Knight', 12049, 59, 61, 0.000, 0.000, 0.000, 0);
-INSERT INTO `mob_spawn_points` VALUES (17526835, 0, 'Demon_Knight', 'Demon Knight', 12050, 59, 61, 0.000, 0.000, 0.000, 0);
+INSERT INTO `mob_spawn_points` VALUES (17526832, 0, 'Ahriman', 'Ahriman', 12047, 59, 61, 0.000, 0.000, 0.000, 0, NULL, NULL);
+INSERT INTO `mob_spawn_points` VALUES (17526833, 0, 'Ahriman', 'Ahriman', 12048, 59, 61, 0.000, 0.000, 0.000, 0, NULL, NULL);
+INSERT INTO `mob_spawn_points` VALUES (17526834, 0, 'Demon_Knight', 'Demon Knight', 12049, 59, 61, 0.000, 0.000, 0.000, 0, NULL, NULL);
+INSERT INTO `mob_spawn_points` VALUES (17526835, 0, 'Demon_Knight', 'Demon Knight', 12050, 59, 61, 0.000, 0.000, 0.000, 0, NULL, NULL);
 -- Wave 5 boss
-INSERT INTO `mob_spawn_points` VALUES (17526836, 0, 'Vraeth_the_Tetrachromic', 'Vraeth the Tetrachromic', 12051, 64, 64, 0.000, 0.000, 0.000, 0);
+INSERT INTO `mob_spawn_points` VALUES (17526836, 0, 'Vraeth_the_Tetrachromic', 'Vraeth the Tetrachromic', 12051, 64, 64, 0.000, 0.000, 0.000, 0, NULL, NULL);
 
 -- =============================================================
 -- SECTION 3: instance_list entries
@@ -223,35 +223,35 @@ INSERT INTO `mob_spawn_points` VALUES (17526836, 0, 'Vraeth_the_Tetrachromic', '
 -- =============================================================
 
 INSERT INTO `instance_list` VALUES
-    (18301, 'tier_trial_30', 183, 103, 30, 0.000, 0.000, 0.000, 0, NULL, NULL, NULL, NULL);
+    (18301, 'tier_trial_30', 183, 103, NULL, 30, 0.000, 0.000, 0.000, 0, NULL, NULL, NULL, NULL);
     -- instance_zone=183, entrance_zone=103 (Valkurm Dunes, thematic entry)
 
 INSERT INTO `instance_list` VALUES
-    (18302, 'tier_trial_40', 183, 126, 30, 0.000, 0.000, 0.000, 0, NULL, NULL, NULL, NULL);
+    (18302, 'tier_trial_40', 183, 126, NULL, 30, 0.000, 0.000, 0.000, 0, NULL, NULL, NULL, NULL);
     -- entrance_zone=126 (Qufim Island)
 
 INSERT INTO `instance_list` VALUES
-    (18303, 'tier_trial_50', 183, 111, 30, 0.000, 0.000, 0.000, 0, NULL, NULL, NULL, NULL);
+    (18303, 'tier_trial_50', 183, 111, NULL, 30, 0.000, 0.000, 0.000, 0, NULL, NULL, NULL, NULL);
     -- entrance_zone=111 (Beaucedine Glacier)
 
 INSERT INTO `instance_list` VALUES
-    (18304, 'tier_trial_60', 183, 9,  30, 0.000, 0.000, 0.000, 0, NULL, NULL, NULL, NULL);
+    (18304, 'tier_trial_60', 183, 9, NULL,  30, 0.000, 0.000, 0.000, 0, NULL, NULL, NULL, NULL);
     -- entrance_zone=9 (Pso'Xja)
 
 -- Circuit instances share the same zone, entrance zones match their tier
 -- Circuit Alpha = shortest, Gamma = longest (time_limit used as reference only — scoring by elapsed)
-INSERT INTO `instance_list` VALUES (18310, 'circuit_30_alpha', 183, 103, 15, 0.000, 0.000, 0.000, 0, NULL, NULL, NULL, NULL);
-INSERT INTO `instance_list` VALUES (18311, 'circuit_30_beta',  183, 103, 20, 0.000, 0.000, 0.000, 0, NULL, NULL, NULL, NULL);
-INSERT INTO `instance_list` VALUES (18312, 'circuit_30_gamma', 183, 103, 25, 0.000, 0.000, 0.000, 0, NULL, NULL, NULL, NULL);
-INSERT INTO `instance_list` VALUES (18313, 'circuit_40_alpha', 183, 126, 15, 0.000, 0.000, 0.000, 0, NULL, NULL, NULL, NULL);
-INSERT INTO `instance_list` VALUES (18314, 'circuit_40_beta',  183, 126, 20, 0.000, 0.000, 0.000, 0, NULL, NULL, NULL, NULL);
-INSERT INTO `instance_list` VALUES (18315, 'circuit_40_gamma', 183, 126, 25, 0.000, 0.000, 0.000, 0, NULL, NULL, NULL, NULL);
-INSERT INTO `instance_list` VALUES (18316, 'circuit_50_alpha', 183, 111, 15, 0.000, 0.000, 0.000, 0, NULL, NULL, NULL, NULL);
-INSERT INTO `instance_list` VALUES (18317, 'circuit_50_beta',  183, 111, 20, 0.000, 0.000, 0.000, 0, NULL, NULL, NULL, NULL);
-INSERT INTO `instance_list` VALUES (18318, 'circuit_50_gamma', 183, 111, 25, 0.000, 0.000, 0.000, 0, NULL, NULL, NULL, NULL);
-INSERT INTO `instance_list` VALUES (18319, 'circuit_60_alpha', 183, 9,  15, 0.000, 0.000, 0.000, 0, NULL, NULL, NULL, NULL);
-INSERT INTO `instance_list` VALUES (18320, 'circuit_60_beta',  183, 9,  20, 0.000, 0.000, 0.000, 0, NULL, NULL, NULL, NULL);
-INSERT INTO `instance_list` VALUES (18321, 'circuit_60_gamma', 183, 9,  25, 0.000, 0.000, 0.000, 0, NULL, NULL, NULL, NULL);
+INSERT INTO `instance_list` VALUES (18310, 'circuit_30_alpha', 183, 103, NULL, 15, 0.000, 0.000, 0.000, 0, NULL, NULL, NULL, NULL);
+INSERT INTO `instance_list` VALUES (18311, 'circuit_30_beta',  183, 103, NULL, 20, 0.000, 0.000, 0.000, 0, NULL, NULL, NULL, NULL);
+INSERT INTO `instance_list` VALUES (18312, 'circuit_30_gamma', 183, 103, NULL, 25, 0.000, 0.000, 0.000, 0, NULL, NULL, NULL, NULL);
+INSERT INTO `instance_list` VALUES (18313, 'circuit_40_alpha', 183, 126, NULL, 15, 0.000, 0.000, 0.000, 0, NULL, NULL, NULL, NULL);
+INSERT INTO `instance_list` VALUES (18314, 'circuit_40_beta',  183, 126, NULL, 20, 0.000, 0.000, 0.000, 0, NULL, NULL, NULL, NULL);
+INSERT INTO `instance_list` VALUES (18315, 'circuit_40_gamma', 183, 126, NULL, 25, 0.000, 0.000, 0.000, 0, NULL, NULL, NULL, NULL);
+INSERT INTO `instance_list` VALUES (18316, 'circuit_50_alpha', 183, 111, NULL, 15, 0.000, 0.000, 0.000, 0, NULL, NULL, NULL, NULL);
+INSERT INTO `instance_list` VALUES (18317, 'circuit_50_beta',  183, 111, NULL, 20, 0.000, 0.000, 0.000, 0, NULL, NULL, NULL, NULL);
+INSERT INTO `instance_list` VALUES (18318, 'circuit_50_gamma', 183, 111, NULL, 25, 0.000, 0.000, 0.000, 0, NULL, NULL, NULL, NULL);
+INSERT INTO `instance_list` VALUES (18319, 'circuit_60_alpha', 183, 9, NULL,  15, 0.000, 0.000, 0.000, 0, NULL, NULL, NULL, NULL);
+INSERT INTO `instance_list` VALUES (18320, 'circuit_60_beta',  183, 9, NULL,  20, 0.000, 0.000, 0.000, 0, NULL, NULL, NULL, NULL);
+INSERT INTO `instance_list` VALUES (18321, 'circuit_60_gamma', 183, 9, NULL,  25, 0.000, 0.000, 0.000, 0, NULL, NULL, NULL, NULL);
 
 -- =============================================================
 -- SECTION 4: instance_entities

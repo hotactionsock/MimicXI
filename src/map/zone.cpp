@@ -989,6 +989,14 @@ void CZone::IncreaseZoneCounter(CCharEntity* PChar)
 
     m_zoneEntities->InsertPC(PChar);
 
+    // Wake the zone back up if it was slept while empty. The base sync kept the
+    // empty-zone timer teardown in ZoneServer() but dropped this restart, leaving
+    // any previously-empty zone dead on re-entry (no ticks -> players cannot zone out).
+    if (!zoneTimerToken_.has_value() && !m_zoneEntities->CharListEmpty())
+    {
+        createZoneTimers();
+    }
+
     PChar->StatusEffectContainer->DelStatusEffectsByFlag(xi::StatusEffectFlag::OnZonePathos, EffectNotice::Silent);
 
     CharZoneIn(PChar);

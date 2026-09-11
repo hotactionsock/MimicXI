@@ -121,64 +121,64 @@ INSERT INTO `mob_groups` VALUES (12111, 65,   183, 'Circuit_Arbiter_60', 0, 128,
 -- =============================================================
 
 -- Lv30 Circuit mobs (17526837–17526849)
-INSERT INTO `mob_spawn_points` VALUES (17526837, 0, 'Goblin_Leecher', 'Goblin Leecher', 12060, 28, 30, 0.000, 0.000, 0.000, 0);
-INSERT INTO `mob_spawn_points` VALUES (17526838, 0, 'Goblin_Leecher', 'Goblin Leecher', 12061, 28, 30, 0.000, 0.000, 0.000, 0);
-INSERT INTO `mob_spawn_points` VALUES (17526839, 0, 'Goblin_Bouncer', 'Goblin Bouncer', 12062, 29, 31, 0.000, 0.000, 0.000, 0);
-INSERT INTO `mob_spawn_points` VALUES (17526840, 0, 'Orcish_Grunt', 'Orcish Grunt', 12063, 28, 30, 0.000, 0.000, 0.000, 0);
-INSERT INTO `mob_spawn_points` VALUES (17526841, 0, 'Orcish_Grunt', 'Orcish Grunt', 12064, 28, 30, 0.000, 0.000, 0.000, 0);
-INSERT INTO `mob_spawn_points` VALUES (17526842, 0, 'Orcish_Cursemaker', 'Orcish Cursemaker', 12065, 29, 31, 0.000, 0.000, 0.000, 0);
-INSERT INTO `mob_spawn_points` VALUES (17526843, 0, 'Brass_Quadav', 'Brass Quadav', 12066, 28, 30, 0.000, 0.000, 0.000, 0);
-INSERT INTO `mob_spawn_points` VALUES (17526844, 0, 'Copper_Quadav', 'Copper Quadav', 12067, 29, 31, 0.000, 0.000, 0.000, 0);
-INSERT INTO `mob_spawn_points` VALUES (17526845, 0, 'Goblin_Leecher', 'Goblin Leecher', 12068, 29, 31, 0.000, 0.000, 0.000, 0);
-INSERT INTO `mob_spawn_points` VALUES (17526846, 0, 'Orcish_Grunt', 'Orcish Grunt', 12069, 29, 31, 0.000, 0.000, 0.000, 0);
-INSERT INTO `mob_spawn_points` VALUES (17526847, 0, 'Brass_Quadav', 'Brass Quadav', 12070, 29, 31, 0.000, 0.000, 0.000, 0);
-INSERT INTO `mob_spawn_points` VALUES (17526848, 0, 'Brass_Quadav', 'Brass Quadav', 12071, 29, 31, 0.000, 0.000, 0.000, 0);
-INSERT INTO `mob_spawn_points` VALUES (17526849, 0, 'Circuit_Arbiter_30', 'Circuit Arbiter', 12072, 32, 32, 0.000, 0.000, 0.000, 0);
+INSERT INTO `mob_spawn_points` VALUES (17526837, 0, 'Goblin_Leecher', 'Goblin Leecher', 12060, 28, 30, 0.000, 0.000, 0.000, 0, NULL, NULL);
+INSERT INTO `mob_spawn_points` VALUES (17526838, 0, 'Goblin_Leecher', 'Goblin Leecher', 12061, 28, 30, 0.000, 0.000, 0.000, 0, NULL, NULL);
+INSERT INTO `mob_spawn_points` VALUES (17526839, 0, 'Goblin_Bouncer', 'Goblin Bouncer', 12062, 29, 31, 0.000, 0.000, 0.000, 0, NULL, NULL);
+INSERT INTO `mob_spawn_points` VALUES (17526840, 0, 'Orcish_Grunt', 'Orcish Grunt', 12063, 28, 30, 0.000, 0.000, 0.000, 0, NULL, NULL);
+INSERT INTO `mob_spawn_points` VALUES (17526841, 0, 'Orcish_Grunt', 'Orcish Grunt', 12064, 28, 30, 0.000, 0.000, 0.000, 0, NULL, NULL);
+INSERT INTO `mob_spawn_points` VALUES (17526842, 0, 'Orcish_Cursemaker', 'Orcish Cursemaker', 12065, 29, 31, 0.000, 0.000, 0.000, 0, NULL, NULL);
+INSERT INTO `mob_spawn_points` VALUES (17526843, 0, 'Brass_Quadav', 'Brass Quadav', 12066, 28, 30, 0.000, 0.000, 0.000, 0, NULL, NULL);
+INSERT INTO `mob_spawn_points` VALUES (17526844, 0, 'Copper_Quadav', 'Copper Quadav', 12067, 29, 31, 0.000, 0.000, 0.000, 0, NULL, NULL);
+INSERT INTO `mob_spawn_points` VALUES (17526845, 0, 'Goblin_Leecher', 'Goblin Leecher', 12068, 29, 31, 0.000, 0.000, 0.000, 0, NULL, NULL);
+INSERT INTO `mob_spawn_points` VALUES (17526846, 0, 'Orcish_Grunt', 'Orcish Grunt', 12069, 29, 31, 0.000, 0.000, 0.000, 0, NULL, NULL);
+INSERT INTO `mob_spawn_points` VALUES (17526847, 0, 'Brass_Quadav', 'Brass Quadav', 12070, 29, 31, 0.000, 0.000, 0.000, 0, NULL, NULL);
+INSERT INTO `mob_spawn_points` VALUES (17526848, 0, 'Brass_Quadav', 'Brass Quadav', 12071, 29, 31, 0.000, 0.000, 0.000, 0, NULL, NULL);
+INSERT INTO `mob_spawn_points` VALUES (17526849, 0, 'Circuit_Arbiter_30', 'Circuit Arbiter', 12072, 32, 32, 0.000, 0.000, 0.000, 0, NULL, NULL);
 
 -- Lv40 Circuit mobs (17526850–17526862)
-INSERT INTO `mob_spawn_points` VALUES (17526850, 0, 'Gigas_Fighter', 'Gigas Fighter', 12073, 38, 40, 0.000, 0.000, 0.000, 0);
-INSERT INTO `mob_spawn_points` VALUES (17526851, 0, 'Gigas_Wrestler', 'Gigas Wrestler', 12074, 38, 40, 0.000, 0.000, 0.000, 0);
-INSERT INTO `mob_spawn_points` VALUES (17526852, 0, 'Ghoul', 'Ghoul', 12075, 38, 40, 0.000, 0.000, 0.000, 0);
-INSERT INTO `mob_spawn_points` VALUES (17526853, 0, 'Wight', 'Wight', 12076, 39, 41, 0.000, 0.000, 0.000, 0);
-INSERT INTO `mob_spawn_points` VALUES (17526854, 0, 'Tonberry_Tracker', 'Tonberry Tracker', 12077, 38, 40, 0.000, 0.000, 0.000, 0);
-INSERT INTO `mob_spawn_points` VALUES (17526855, 0, 'Tonberry_Elder', 'Tonberry Elder', 12078, 39, 41, 0.000, 0.000, 0.000, 0);
-INSERT INTO `mob_spawn_points` VALUES (17526856, 0, 'Roc', 'Roc', 12079, 39, 41, 0.000, 0.000, 0.000, 0);
-INSERT INTO `mob_spawn_points` VALUES (17526857, 0, 'Gigas_Fighter', 'Gigas Fighter', 12080, 39, 41, 0.000, 0.000, 0.000, 0);
-INSERT INTO `mob_spawn_points` VALUES (17526858, 0, 'Ghoul', 'Ghoul', 12081, 39, 41, 0.000, 0.000, 0.000, 0);
-INSERT INTO `mob_spawn_points` VALUES (17526859, 0, 'Ghoul', 'Ghoul', 12082, 39, 41, 0.000, 0.000, 0.000, 0);
-INSERT INTO `mob_spawn_points` VALUES (17526860, 0, 'Wight', 'Wight', 12083, 39, 41, 0.000, 0.000, 0.000, 0);
-INSERT INTO `mob_spawn_points` VALUES (17526861, 0, 'Gigas_Wrestler', 'Gigas Wrestler', 12084, 39, 41, 0.000, 0.000, 0.000, 0);
-INSERT INTO `mob_spawn_points` VALUES (17526862, 0, 'Circuit_Arbiter_40', 'Circuit Arbiter', 12085, 43, 43, 0.000, 0.000, 0.000, 0);
+INSERT INTO `mob_spawn_points` VALUES (17526850, 0, 'Gigas_Fighter', 'Gigas Fighter', 12073, 38, 40, 0.000, 0.000, 0.000, 0, NULL, NULL);
+INSERT INTO `mob_spawn_points` VALUES (17526851, 0, 'Gigas_Wrestler', 'Gigas Wrestler', 12074, 38, 40, 0.000, 0.000, 0.000, 0, NULL, NULL);
+INSERT INTO `mob_spawn_points` VALUES (17526852, 0, 'Ghoul', 'Ghoul', 12075, 38, 40, 0.000, 0.000, 0.000, 0, NULL, NULL);
+INSERT INTO `mob_spawn_points` VALUES (17526853, 0, 'Wight', 'Wight', 12076, 39, 41, 0.000, 0.000, 0.000, 0, NULL, NULL);
+INSERT INTO `mob_spawn_points` VALUES (17526854, 0, 'Tonberry_Tracker', 'Tonberry Tracker', 12077, 38, 40, 0.000, 0.000, 0.000, 0, NULL, NULL);
+INSERT INTO `mob_spawn_points` VALUES (17526855, 0, 'Tonberry_Elder', 'Tonberry Elder', 12078, 39, 41, 0.000, 0.000, 0.000, 0, NULL, NULL);
+INSERT INTO `mob_spawn_points` VALUES (17526856, 0, 'Roc', 'Roc', 12079, 39, 41, 0.000, 0.000, 0.000, 0, NULL, NULL);
+INSERT INTO `mob_spawn_points` VALUES (17526857, 0, 'Gigas_Fighter', 'Gigas Fighter', 12080, 39, 41, 0.000, 0.000, 0.000, 0, NULL, NULL);
+INSERT INTO `mob_spawn_points` VALUES (17526858, 0, 'Ghoul', 'Ghoul', 12081, 39, 41, 0.000, 0.000, 0.000, 0, NULL, NULL);
+INSERT INTO `mob_spawn_points` VALUES (17526859, 0, 'Ghoul', 'Ghoul', 12082, 39, 41, 0.000, 0.000, 0.000, 0, NULL, NULL);
+INSERT INTO `mob_spawn_points` VALUES (17526860, 0, 'Wight', 'Wight', 12083, 39, 41, 0.000, 0.000, 0.000, 0, NULL, NULL);
+INSERT INTO `mob_spawn_points` VALUES (17526861, 0, 'Gigas_Wrestler', 'Gigas Wrestler', 12084, 39, 41, 0.000, 0.000, 0.000, 0, NULL, NULL);
+INSERT INTO `mob_spawn_points` VALUES (17526862, 0, 'Circuit_Arbiter_40', 'Circuit Arbiter', 12085, 43, 43, 0.000, 0.000, 0.000, 0, NULL, NULL);
 
 -- Lv50 Circuit mobs (17526863–17526875)
-INSERT INTO `mob_spawn_points` VALUES (17526863, 0, 'Imp', 'Imp', 12086, 48, 50, 0.000, 0.000, 0.000, 0);
-INSERT INTO `mob_spawn_points` VALUES (17526864, 0, 'Imp', 'Imp', 12087, 48, 50, 0.000, 0.000, 0.000, 0);
-INSERT INTO `mob_spawn_points` VALUES (17526865, 0, 'Shadow_Orc', 'Shadow Orc', 12088, 48, 50, 0.000, 0.000, 0.000, 0);
-INSERT INTO `mob_spawn_points` VALUES (17526866, 0, 'Shadow_Orc', 'Shadow Orc', 12089, 48, 50, 0.000, 0.000, 0.000, 0);
-INSERT INTO `mob_spawn_points` VALUES (17526867, 0, 'Fire_Elemental', 'Fire Elemental', 12090, 48, 50, 0.000, 0.000, 0.000, 0);
-INSERT INTO `mob_spawn_points` VALUES (17526868, 0, 'Ice_Elemental', 'Ice Elemental', 12091, 48, 50, 0.000, 0.000, 0.000, 0);
-INSERT INTO `mob_spawn_points` VALUES (17526869, 0, 'Haunt', 'Haunt', 12092, 49, 51, 0.000, 0.000, 0.000, 0);
-INSERT INTO `mob_spawn_points` VALUES (17526870, 0, 'Haunt', 'Haunt', 12093, 49, 51, 0.000, 0.000, 0.000, 0);
-INSERT INTO `mob_spawn_points` VALUES (17526871, 0, 'Imp', 'Imp', 12094, 49, 51, 0.000, 0.000, 0.000, 0);
-INSERT INTO `mob_spawn_points` VALUES (17526872, 0, 'Shadow_Orc', 'Shadow Orc', 12095, 49, 51, 0.000, 0.000, 0.000, 0);
-INSERT INTO `mob_spawn_points` VALUES (17526873, 0, 'Fire_Elemental', 'Fire Elemental', 12096, 49, 51, 0.000, 0.000, 0.000, 0);
-INSERT INTO `mob_spawn_points` VALUES (17526874, 0, 'Ice_Elemental', 'Ice Elemental', 12097, 49, 51, 0.000, 0.000, 0.000, 0);
-INSERT INTO `mob_spawn_points` VALUES (17526875, 0, 'Circuit_Arbiter_50', 'Circuit Arbiter', 12098, 54, 54, 0.000, 0.000, 0.000, 0);
+INSERT INTO `mob_spawn_points` VALUES (17526863, 0, 'Imp', 'Imp', 12086, 48, 50, 0.000, 0.000, 0.000, 0, NULL, NULL);
+INSERT INTO `mob_spawn_points` VALUES (17526864, 0, 'Imp', 'Imp', 12087, 48, 50, 0.000, 0.000, 0.000, 0, NULL, NULL);
+INSERT INTO `mob_spawn_points` VALUES (17526865, 0, 'Shadow_Orc', 'Shadow Orc', 12088, 48, 50, 0.000, 0.000, 0.000, 0, NULL, NULL);
+INSERT INTO `mob_spawn_points` VALUES (17526866, 0, 'Shadow_Orc', 'Shadow Orc', 12089, 48, 50, 0.000, 0.000, 0.000, 0, NULL, NULL);
+INSERT INTO `mob_spawn_points` VALUES (17526867, 0, 'Fire_Elemental', 'Fire Elemental', 12090, 48, 50, 0.000, 0.000, 0.000, 0, NULL, NULL);
+INSERT INTO `mob_spawn_points` VALUES (17526868, 0, 'Ice_Elemental', 'Ice Elemental', 12091, 48, 50, 0.000, 0.000, 0.000, 0, NULL, NULL);
+INSERT INTO `mob_spawn_points` VALUES (17526869, 0, 'Haunt', 'Haunt', 12092, 49, 51, 0.000, 0.000, 0.000, 0, NULL, NULL);
+INSERT INTO `mob_spawn_points` VALUES (17526870, 0, 'Haunt', 'Haunt', 12093, 49, 51, 0.000, 0.000, 0.000, 0, NULL, NULL);
+INSERT INTO `mob_spawn_points` VALUES (17526871, 0, 'Imp', 'Imp', 12094, 49, 51, 0.000, 0.000, 0.000, 0, NULL, NULL);
+INSERT INTO `mob_spawn_points` VALUES (17526872, 0, 'Shadow_Orc', 'Shadow Orc', 12095, 49, 51, 0.000, 0.000, 0.000, 0, NULL, NULL);
+INSERT INTO `mob_spawn_points` VALUES (17526873, 0, 'Fire_Elemental', 'Fire Elemental', 12096, 49, 51, 0.000, 0.000, 0.000, 0, NULL, NULL);
+INSERT INTO `mob_spawn_points` VALUES (17526874, 0, 'Ice_Elemental', 'Ice Elemental', 12097, 49, 51, 0.000, 0.000, 0.000, 0, NULL, NULL);
+INSERT INTO `mob_spawn_points` VALUES (17526875, 0, 'Circuit_Arbiter_50', 'Circuit Arbiter', 12098, 54, 54, 0.000, 0.000, 0.000, 0, NULL, NULL);
 
 -- Lv60 Circuit mobs (17526876–17526888)
-INSERT INTO `mob_spawn_points` VALUES (17526876, 0, 'Ahriman', 'Ahriman', 12099, 58, 60, 0.000, 0.000, 0.000, 0);
-INSERT INTO `mob_spawn_points` VALUES (17526877, 0, 'Ahriman', 'Ahriman', 12100, 58, 60, 0.000, 0.000, 0.000, 0);
-INSERT INTO `mob_spawn_points` VALUES (17526878, 0, 'Haunt', 'Haunt', 12101, 58, 60, 0.000, 0.000, 0.000, 0);
-INSERT INTO `mob_spawn_points` VALUES (17526879, 0, 'Specter', 'Specter', 12102, 59, 61, 0.000, 0.000, 0.000, 0);
-INSERT INTO `mob_spawn_points` VALUES (17526880, 0, 'Demon_Knight', 'Demon Knight', 12103, 58, 60, 0.000, 0.000, 0.000, 0);
-INSERT INTO `mob_spawn_points` VALUES (17526881, 0, 'Demon_Knight', 'Demon Knight', 12104, 58, 60, 0.000, 0.000, 0.000, 0);
-INSERT INTO `mob_spawn_points` VALUES (17526882, 0, 'Demon_Warlock', 'Demon Warlock', 12105, 59, 61, 0.000, 0.000, 0.000, 0);
-INSERT INTO `mob_spawn_points` VALUES (17526883, 0, 'Ahriman', 'Ahriman', 12106, 59, 61, 0.000, 0.000, 0.000, 0);
-INSERT INTO `mob_spawn_points` VALUES (17526884, 0, 'Haunt', 'Haunt', 12107, 59, 61, 0.000, 0.000, 0.000, 0);
-INSERT INTO `mob_spawn_points` VALUES (17526885, 0, 'Demon_Knight', 'Demon Knight', 12108, 59, 61, 0.000, 0.000, 0.000, 0);
-INSERT INTO `mob_spawn_points` VALUES (17526886, 0, 'Ahriman', 'Ahriman', 12109, 59, 61, 0.000, 0.000, 0.000, 0);
-INSERT INTO `mob_spawn_points` VALUES (17526887, 0, 'Demon_Knight', 'Demon Knight', 12110, 59, 61, 0.000, 0.000, 0.000, 0);
-INSERT INTO `mob_spawn_points` VALUES (17526888, 0, 'Circuit_Arbiter_60', 'Circuit Arbiter', 12111, 64, 64, 0.000, 0.000, 0.000, 0);
+INSERT INTO `mob_spawn_points` VALUES (17526876, 0, 'Ahriman', 'Ahriman', 12099, 58, 60, 0.000, 0.000, 0.000, 0, NULL, NULL);
+INSERT INTO `mob_spawn_points` VALUES (17526877, 0, 'Ahriman', 'Ahriman', 12100, 58, 60, 0.000, 0.000, 0.000, 0, NULL, NULL);
+INSERT INTO `mob_spawn_points` VALUES (17526878, 0, 'Haunt', 'Haunt', 12101, 58, 60, 0.000, 0.000, 0.000, 0, NULL, NULL);
+INSERT INTO `mob_spawn_points` VALUES (17526879, 0, 'Specter', 'Specter', 12102, 59, 61, 0.000, 0.000, 0.000, 0, NULL, NULL);
+INSERT INTO `mob_spawn_points` VALUES (17526880, 0, 'Demon_Knight', 'Demon Knight', 12103, 58, 60, 0.000, 0.000, 0.000, 0, NULL, NULL);
+INSERT INTO `mob_spawn_points` VALUES (17526881, 0, 'Demon_Knight', 'Demon Knight', 12104, 58, 60, 0.000, 0.000, 0.000, 0, NULL, NULL);
+INSERT INTO `mob_spawn_points` VALUES (17526882, 0, 'Demon_Warlock', 'Demon Warlock', 12105, 59, 61, 0.000, 0.000, 0.000, 0, NULL, NULL);
+INSERT INTO `mob_spawn_points` VALUES (17526883, 0, 'Ahriman', 'Ahriman', 12106, 59, 61, 0.000, 0.000, 0.000, 0, NULL, NULL);
+INSERT INTO `mob_spawn_points` VALUES (17526884, 0, 'Haunt', 'Haunt', 12107, 59, 61, 0.000, 0.000, 0.000, 0, NULL, NULL);
+INSERT INTO `mob_spawn_points` VALUES (17526885, 0, 'Demon_Knight', 'Demon Knight', 12108, 59, 61, 0.000, 0.000, 0.000, 0, NULL, NULL);
+INSERT INTO `mob_spawn_points` VALUES (17526886, 0, 'Ahriman', 'Ahriman', 12109, 59, 61, 0.000, 0.000, 0.000, 0, NULL, NULL);
+INSERT INTO `mob_spawn_points` VALUES (17526887, 0, 'Demon_Knight', 'Demon Knight', 12110, 59, 61, 0.000, 0.000, 0.000, 0, NULL, NULL);
+INSERT INTO `mob_spawn_points` VALUES (17526888, 0, 'Circuit_Arbiter_60', 'Circuit Arbiter', 12111, 64, 64, 0.000, 0.000, 0.000, 0, NULL, NULL);
 
 -- =============================================================
 -- SECTION 4: instance_entities for all 12 circuits

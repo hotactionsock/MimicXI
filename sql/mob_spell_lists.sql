@@ -5816,24 +5816,12 @@ INSERT INTO `mob_spell_lists` VALUES ('Stormwalker_Frame',566,55,1,255);  -- Aqu
 INSERT INTO `mob_spell_lists` VALUES ('Harlequin_Frame',567,23,1,255); -- Dia (1~255)
 
 -- Next Available: 568
-
--- Forsaken Revenant — LQS: Echoes of the Abyss (566)
-INSERT INTO `mob_spell_lists` VALUES ('Forsaken_Revenant',566,172,1,255); -- water_iv (1~255)
-INSERT INTO `mob_spell_lists` VALUES ('Forsaken_Revenant',566,173,1,255); -- water_v (1~255)
-INSERT INTO `mob_spell_lists` VALUES ('Forsaken_Revenant',566,201,1,255); -- waterga_iii (1~255)
-INSERT INTO `mob_spell_lists` VALUES ('Forsaken_Revenant',566,214,1,255); -- flood (1~255)
-INSERT INTO `mob_spell_lists` VALUES ('Forsaken_Revenant',566,240,1,255); -- drown (1~255)
-INSERT INTO `mob_spell_lists` VALUES ('Forsaken_Revenant',566,231,1,255); -- bio_ii (1~255)
-INSERT INTO `mob_spell_lists` VALUES ('Forsaken_Revenant',566,232,1,255); -- bio_iii (1~255)
-INSERT INTO `mob_spell_lists` VALUES ('Forsaken_Revenant',566,245,1,255); -- drain (1~255)
-INSERT INTO `mob_spell_lists` VALUES ('Forsaken_Revenant',566,247,1,255); -- aspir (1~255)
-INSERT INTO `mob_spell_lists` VALUES ('Forsaken_Revenant',566,258,1,255); -- bind (1~255)
-
--- Abyssal Shade — LQS: Echoes of the Abyss (567)
-INSERT INTO `mob_spell_lists` VALUES ('Abyssal_Shade',567,171,1,255); -- water_iii (1~255)
-INSERT INTO `mob_spell_lists` VALUES ('Abyssal_Shade',567,231,1,255); -- bio_ii (1~255)
-INSERT INTO `mob_spell_lists` VALUES ('Abyssal_Shade',567,245,1,255); -- drain (1~255)
-INSERT INTO `mob_spell_lists` VALUES ('Abyssal_Shade',567,247,1,255); -- aspir (1~255)
+--
+-- NOTE: custom LQS "Echoes of the Abyss" mobs (Forsaken_Revenant, Abyssal_Shade)
+-- previously squatted families 566/567 here. The base sync assigned those to
+-- upstream Stormwalker_Frame / Harlequin_Frame (Troll Automaton Mixin), causing
+-- a PK collision on import. The LQS entries were orphans (no mob_pools/groups/
+-- spawn/Lua) and were removed. Re-add with fresh family ids if that content is built.
 
 /*!40000 ALTER TABLE `mob_spell_lists` ENABLE KEYS */;
 UNLOCK TABLES;

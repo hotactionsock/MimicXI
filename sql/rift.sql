@@ -34,4 +34,4 @@ CREATE TABLE IF NOT EXISTS `rift_leaderboard` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- Persistent season counter.
-INSERT IGNORE INTO `server_vars` (varname, value) VALUES ('RIFT_SEASON', 1);
+INSERT IGNORE INTO `server_variables` (`name`, `value`) VALUES ('RIFT_SEASON', 1);

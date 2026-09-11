@@ -12,10 +12,13 @@ xi.rift.UNLOCK_ITEM = xi.item.DARK_MATTER
 
 -- Shard drops from rift mobs. Four tiers, each significantly rarer than the last.
 -- Boss kills receive 2x multiplier on all shard rates.
-xi.rift.NASCENT_SHARD  = xi.item.NASCENT_SHARD
-xi.rift.TEMPERED_SHARD = xi.item.TEMPERED_SHARD
-xi.rift.FORGED_SHARD   = xi.item.FORGED_SHARD
-xi.rift.RESOLUTE_SHARD = xi.item.RESOLUTE_SHARD
+-- NOTE: these four item IDs are not yet in scripts/enum/item.lua or item_basic,
+-- so they are referenced by literal ID here (matching modules/custom/proving_arms).
+-- Switch back to xi.item.* once the items are added to the DB and enum.
+xi.rift.NASCENT_SHARD  = 3757
+xi.rift.TEMPERED_SHARD = 3758
+xi.rift.FORGED_SHARD   = 3759
+xi.rift.RESOLUTE_SHARD = 3760
 
 -- Ultra-rare item pool (boss-only).
 -- One item is chosen at random if the UR rate roll succeeds — never multiple per kill.

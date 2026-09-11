@@ -6,7 +6,7 @@
 -- Mobs spawn dynamically — no instance_entities rows required.
 -----------------------------------
 
-require('globals/rift')
+require('scripts/globals/rift')
 
 local instanceObject = {}
 

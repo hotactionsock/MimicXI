@@ -67,8 +67,6 @@ public:
 
     virtual void updateCharLevelRestriction(CCharEntity* PChar) override;
 
-    virtual void TOTDChange(vanadiel_time::TOTD TOTD) override; // process the world's reactions to changing time of day
-
     virtual void PushPacket(CBaseEntity*, GLOBAL_MESSAGE_TYPE, const std::unique_ptr<CBasicPacket>&) override; // send a global package within the zone
 
     virtual void UpdateEntityPacket(CBaseEntity* PEntity, ENTITYUPDATE type, uint8 updatemask, bool alwaysInclude = false) override;

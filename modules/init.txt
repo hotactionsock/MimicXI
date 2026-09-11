@@ -49,16 +49,21 @@ custom/LQS/lib/LQS.lua
 custom/LQS/questpack
 custom/LQS/commands/
 
--- Tier Trials (toggle by commenting these three lines)
+# Tier Trials (toggle by commenting these three lines)
 custom/tier_trials/lua/
 custom/tier_trials/commands/
 custom/tier_trials/sql/
 
--- The Circuit (toggle by commenting these three lines)
+# The Circuit (toggle by commenting these three lines)
 custom/circuit/lua/
 custom/circuit/commands/
 custom/circuit/sql/
 
--- Proving Arms (toggle by commenting these two lines)
+# Proving Arms (toggle by commenting these two lines)
 custom/proving_arms/lua/
 custom/proving_arms/commands/
+
+# Custom items (IDs 29700-29910) — applied by dbtool AFTER sql/item_*.sql so
+# the custom rows + mods survive every `dbtool update`. Regenerate the .sql with
+# tools/gen_custom_items_sql.py from ShiningFantasia/custom_mimic_items/custom_items_reference.lua
+custom/custom_items/sql/custom_items.sql

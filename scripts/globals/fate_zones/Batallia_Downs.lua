@@ -394,11 +394,8 @@ xi.fate.zones[xi.zone.BATALLIA_DOWNS] =
             onVictory = function(zoneID)
                 -- Victory ripple: boost nearby regular FATEs for 4 hours.
                 SetServerVariable(string.format("[SBOSS][%d]VictoryBonus", zoneID), GetSystemTime() + 14400)
-                local zone = GetZone(zoneID)
-                if not zone then return end
-                for _, p in pairs(zone:getPlayers()) do
-                    p:printToPlayer("[FATE] The Eternal Warlord has been slain! A boon descends upon Batallia Downs.", xi.msg.channel.SYSTEM_3)
-                end
+                -- Server-wide: a superboss kill is a world event.
+                xi.fate.broadcastToFateZones("[FATE] The Eternal Warlord has been slain! A boon descends upon Batallia Downs.")
             end,
 
             onFailure = function(zoneID)

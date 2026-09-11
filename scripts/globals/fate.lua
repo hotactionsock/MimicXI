@@ -347,6 +347,27 @@ xi.fate.isInArea = function(player, zoneID, eventIdx)
     return (dx * dx + dz * dz) <= (def.area[4] * def.area[4])
 end
 
+-- Broadcast msg only to players involved in this FATE: anyone standing inside
+-- the FATE's area radius, plus any registered participant wherever they are.
+-- Use this instead of a zone:getPlayers() loop for messages that only concern
+-- the fight itself (e.g. defense-target status), not the whole zone.
+--
+-- Defend/supply FATEs are the exception: their mobs path across a large swath of
+-- the zone, so their area check would catch players doing an unrelated nearby
+-- FATE. Those go to registered sign-ups only.
+xi.fate.messageArea = function(zone, zoneID, eventIdx, msg)
+    local def            = xi.fate.getEventDef(zoneID, eventIdx)
+    local registeredOnly = def and def.objective and def.objective.type == "defend"
+
+    for _, player in pairs(zone:getPlayers()) do
+        if player:getCharVar(regKey(zoneID, eventIdx)) == 1
+            or (not registeredOnly and xi.fate.isInArea(player, zoneID, eventIdx))
+        then
+            player:printToPlayer(msg, xi.msg.channel.SYSTEM_3)
+        end
+    end
+end
+
 -----------------------------------
 -- Addon user registry
 -----------------------------------
@@ -554,8 +575,14 @@ xi.fate.spawnWave = function(zoneID, eventIdx, waveIdx)
     if waves and waves[waveIdx] and waves[waveIdx].announcement then
         local zone = GetZone(zoneID)
         if zone then
-            for _, p in pairs(zone:getPlayers()) do
-                p:printToPlayer("[FATE] " .. waves[waveIdx].announcement, xi.msg.channel.SYSTEM_3)
+            local msg = "[FATE] " .. waves[waveIdx].announcement
+            if def.superboss then
+                -- Superbosses are big zone events: wave flavour stays zone-wide.
+                for _, p in pairs(zone:getPlayers()) do
+                    p:printToPlayer(msg, xi.msg.channel.SYSTEM_3)
+                end
+            else
+                xi.fate.messageArea(zone, zoneID, eventIdx, msg)
             end
         end
     end
@@ -733,10 +760,8 @@ xi.fate.onKill = function(mob, player, zoneID, eventIdx)
         for _, pct in ipairs({ 25, 50, 75 }) do
             local threshold = math.max(1, math.floor(target * pct / 100))
             if prev < threshold and kills >= threshold then
-                local msg = string.format("[FATE] %s - %d%% complete! (%d/%d)", def.name, pct, kills, target)
-                for _, p in pairs(zone:getPlayers()) do
-                    p:printToPlayer(msg, xi.msg.channel.SYSTEM_3)
-                end
+                xi.fate.messageArea(zone, zoneID, eventIdx,
+                    string.format("[FATE] %s - %d%% complete! (%d/%d)", def.name, pct, kills, target))
                 break
             end
         end
@@ -1048,8 +1073,16 @@ xi.fate.resolve = function(zoneID, eventIdx, victory, silent)
 
     if not silent then
         local outcomeMsg = victory and "FATE complete! A chest has appeared." or "FATE failed."
+        local resolveMsg = string.format("[FATE] %s - %s", def.name, outcomeMsg)
+        if def.superboss then
+            -- Superbosses are big zone events: the outcome stays zone-wide.
+            for _, player in pairs(zone:getPlayers()) do
+                player:printToPlayer(resolveMsg, xi.msg.channel.SYSTEM_3)
+            end
+        else
+            xi.fate.messageArea(zone, zoneID, eventIdx, resolveMsg)
+        end
         for _, player in pairs(zone:getPlayers()) do
-            player:printToPlayer(string.format("[FATE] %s - %s", def.name, outcomeMsg), xi.msg.channel.SYSTEM_3)
             if player:getCharVar(regKey(zoneID, eventIdx)) == 1 then
                 xi.fate.removeSync(player)
             end
@@ -1127,17 +1160,13 @@ xi.fate.resolve = function(zoneID, eventIdx, victory, silent)
             local bonus = xi.fate.getMomentumBonus(zoneID)
             if streak == 3 or streak == 5 or streak == 8 then
                 local pct = math.floor(bonus * 100)
-                local msg = string.format("[FATE] Zone momentum! %d consecutive victories - +%d%% EXP bonus now active.", streak, pct)
-                for _, p in pairs(zone:getPlayers()) do
-                    p:printToPlayer(msg, xi.msg.channel.SYSTEM_3)
-                end
+                xi.fate.messageArea(zone, zoneID, eventIdx,
+                    string.format("[FATE] Zone momentum! %d consecutive victories - +%d%% EXP bonus now active.", streak, pct))
             end
         else
             if GetServerVariable(momentumKey(zoneID)) > 0 then
                 SetServerVariable(momentumKey(zoneID), 0)
-                for _, p in pairs(zone:getPlayers()) do
-                    p:printToPlayer("[FATE] Zone momentum lost - win streak broken.", xi.msg.channel.SYSTEM_3)
-                end
+                xi.fate.messageArea(zone, zoneID, eventIdx, "[FATE] Zone momentum lost - win streak broken.")
             end
         end
     end
@@ -1151,8 +1180,8 @@ xi.fate.resolve = function(zoneID, eventIdx, victory, silent)
                 local tier = GetServerVariable(dynDiffKey(zoneID, eventIdx)) + 1
                 SetServerVariable(dynDiffKey(zoneID, eventIdx), tier)
                 if tier >= 2 then
-                    local msg = string.format("[FATE] The enemy has adapted. Difficulty increases (tier %d).", tier)
-                    for _, p in pairs(zone:getPlayers()) do p:printToPlayer(msg, xi.msg.channel.SYSTEM_3) end
+                    xi.fate.messageArea(zone, zoneID, eventIdx,
+                        string.format("[FATE] The enemy has adapted. Difficulty increases (tier %d).", tier))
                 end
             else
                 SetServerVariable(dynDiffKey(zoneID, eventIdx), 0)
@@ -1201,13 +1230,10 @@ xi.fate.preannounce = function(zone, eventDef, zoneID, eventIdx)
 
     local isSuperBoss = eventDef.superboss == true
 
+    -- Pre-announce warnings are always zone-wide, superboss included.
     local function broadcastMsg(msg)
-        if isSuperBoss then
-            xi.fate.broadcastToFateZones(msg)
-        else
-            for _, player in pairs(zone:getPlayers()) do
-                player:printToPlayer(msg, xi.msg.channel.SYSTEM_3)
-            end
+        for _, player in pairs(zone:getPlayers()) do
+            player:printToPlayer(msg, xi.msg.channel.SYSTEM_3)
         end
     end
 
@@ -1232,12 +1258,8 @@ xi.fate.preannounce = function(zone, eventDef, zoneID, eventIdx)
 
         local isSuper2 = def.superboss == true
         local function broadcastMsg2(msg)
-            if isSuper2 then
-                xi.fate.broadcastToFateZones(msg)
-            else
-                for _, player in pairs(z:getPlayers()) do
-                    player:printToPlayer(msg, xi.msg.channel.SYSTEM_3)
-                end
+            for _, player in pairs(z:getPlayers()) do
+                player:printToPlayer(msg, xi.msg.channel.SYSTEM_3)
             end
         end
 
@@ -1257,12 +1279,8 @@ xi.fate.preannounce = function(zone, eventDef, zoneID, eventIdx)
                 local w2      = def2.bossWarnings or {}
                 local isSuper3 = def2.superboss == true
                 local msg3    = w2[3] or (isSuper3 and "[FATE] ★★★★★ Its arrival is imminent. Rally now." or "[FATE] An overwhelming presence descends upon you...")
-                if isSuper3 then
-                    xi.fate.broadcastToFateZones(msg3)
-                else
-                    for _, player in pairs(z2:getPlayers()) do
-                        player:printToPlayer(msg3, xi.msg.channel.SYSTEM_3)
-                    end
+                for _, player in pairs(z2:getPlayers()) do
+                    player:printToPlayer(msg3, xi.msg.channel.SYSTEM_3)
                 end
                 e2:timer(300000, function(e3)
                     local zID3 = e3:getLocalVar("fateZoneID")
@@ -1332,9 +1350,11 @@ xi.fate.activate = function(zone, eventDef, zoneID, eventIdx)
         for _, p in pairs(zone:getPlayers()) do
             xi.fate.register(p, zoneID, eventIdx)
         end
-        -- Server-wide broadcast across all active FATE zones.
+        -- Superboss activation announcement: zone-wide (only onVictory is server-wide).
         if eventDef.worldBroadcast then
-            xi.fate.broadcastToFateZones(eventDef.worldBroadcast)
+            for _, p in pairs(zone:getPlayers()) do
+                p:printToPlayer(eventDef.worldBroadcast, xi.msg.channel.SYSTEM_3)
+            end
         end
         -- Kick off wave 1 instead of the normal flat spawn.
         xi.fate.spawnWave(zoneID, eventIdx, 1)
@@ -1469,6 +1489,7 @@ xi.fate.addRage = function(zoneID, eventIdx, amount)
         local zone = GetZone(zoneID)
         if zone then
             local bonus = new * (def.ragePerDeath or 3)
+            -- Superboss: zone-wide.
             for _, p in pairs(zone:getPlayers()) do
                 p:printToPlayer(string.format("[FATE] %s grows stronger from your losses! (+%d%% damage)", def.name, bonus), xi.msg.channel.SYSTEM_3)
             end
@@ -1527,6 +1548,7 @@ xi.fate.triggerSuperBossEnrage = function(zoneID, eventIdx)
         end
     end
     if zone then
+        -- Superboss: zone-wide.
         for _, p in pairs(zone:getPlayers()) do
             p:printToPlayer(string.format("[FATE] %s - ENRAGE! The beast is beyond stopping!", def.name), xi.msg.channel.SYSTEM_3)
         end
@@ -1553,6 +1575,7 @@ xi.fate.resetSuperBoss = function(zoneID, eventIdx)
     end
     local zone = GetZone(zoneID)
     if zone then
+        -- Superboss: zone-wide.
         for _, p in pairs(zone:getPlayers()) do
             p:printToPlayer("[FATE] The beast loses its prey and resets. The hard cap is still ticking.", xi.msg.channel.SYSTEM_3)
         end
@@ -1909,6 +1932,7 @@ local function initFATEEvent(zone, zoneID, idx, eventDef, areaID)
                             local zone = GetZone(zID)
                             if zone then
                                 local mins = math.floor((def.enrageTime or 1800) / 60)
+                                -- Superboss: zone-wide.
                                 for _, p in pairs(zone:getPlayers()) do
                                     p:printToPlayer(string.format("[FATE] The battle has begun! Enrage in %d minutes.", mins), xi.msg.channel.SYSTEM_3)
                                 end
@@ -2152,9 +2176,8 @@ xi.fate.tickDefenseFATEs = function(zone, zoneID, now)
                     local nextWave = currentWave + 1
                     SetVolatileServerVariable(sbWaveKey(zoneID, eventIdx), nextWave)
                     xi.fate.spawnWave(zoneID, eventIdx, nextWave)
-                    for _, p in pairs(zone:getPlayers()) do
-                        p:printToPlayer(string.format("[FATE] %s - Wave %d incoming!", def.name, nextWave), xi.msg.channel.SYSTEM_3)
-                    end
+                    xi.fate.messageArea(zone, zoneID, eventIdx,
+                        string.format("[FATE] %s - Wave %d incoming!", def.name, nextWave))
                 end
             end
 
@@ -2189,19 +2212,17 @@ xi.fate.tickDefenseFATEs = function(zone, zoneID, now)
                         local maxHP = nearest:getLocalVar("defMaxHP")
                         local newHP = math.max(0, hp - dmg)
                         nearest:setLocalVar("defHP", newHP)
-                        for _, p in pairs(zone:getPlayers()) do
-                            p:printToPlayer(string.format("[FATE] A supply post is under attack! (%d%%)", math.floor(newHP * 100 / maxHP)), xi.msg.channel.SYSTEM_3)
-                        end
+                        xi.fate.messageArea(zone, zoneID, eventIdx,
+                            string.format("[FATE] A supply post is under attack! (%d%%)", math.floor(newHP * 100 / maxHP)))
                         if newHP == 0 then
                             nearest:setStatus(xi.status.DISAPPEAR)
                             local surviving = 0
                             for _, t in ipairs(dTargets) do
                                 if t:getLocalVar("defHP") > 0 then surviving = surviving + 1 end
                             end
-                            for _, p in pairs(zone:getPlayers()) do
-                                if surviving > 0 then
-                                    p:printToPlayer(string.format("[FATE] A supply post has been destroyed! (%d remaining)", surviving), xi.msg.channel.SYSTEM_3)
-                                end
+                            if surviving > 0 then
+                                xi.fate.messageArea(zone, zoneID, eventIdx,
+                                    string.format("[FATE] A supply post has been destroyed! (%d remaining)", surviving))
                             end
                             if surviving == 0 then
                                 xi.fate.resolve(zoneID, eventIdx, false)
