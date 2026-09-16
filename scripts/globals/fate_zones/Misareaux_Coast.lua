@@ -44,7 +44,9 @@ xi.fate.zones[xi.zone.MISAREAUX_COAST] =
             mobs =
             {
                 {
-                    base        = { 25, 1 },  -- TODO: verify mob_groups (zoneId, groupId)
+                    -- No "Bhikkhu" template locally; Gigas_Martialist (a
+                    -- martial-artist Gigas) is the closest fit.
+                    templateName = "Gigas_Martialist",
                     name        = string.char(0xA6) .. "Gigas Bhikkhu",
                     count       = 6,
                     spawnPoints =
@@ -58,7 +60,7 @@ xi.fate.zones[xi.zone.MISAREAUX_COAST] =
                     },
                 },
                 {
-                    base        = { 25, 2 },  -- TODO: verify mob_groups (zoneId, groupId)
+                    templateName = "Gigas_Warwolf",
                     name        = string.char(0xA6) .. "Gigas Reaver",
                     count       = 4,
                     spawnPoints =
@@ -134,7 +136,11 @@ xi.fate.zones[xi.zone.MISAREAUX_COAST] =
             mobs =
             {
                 {
-                    base        = { 25, 3 },  -- TODO: verify mob_groups (zoneId, groupId)
+                    base        = { 25, 3 },  -- TODO: verify mob_groups (no local template fits)
+                    -- Searched cross-zone too (Beaucedine_Glacier, Xarcabard, Qufim_Island,
+                    -- Lufaise_Meadows) - every Gigas template anywhere is bst/mnk/rng/war/pld;
+                    -- there is no caster-jobbed Gigas anywhere in the base game's mobs.yaml
+                    -- data. This mob's premise needs new content, not a reskin.
                     name        = string.char(0xA6) .. "Gigas Shaman",
                     count       = 3,
                     spawnPoints =
@@ -145,7 +151,9 @@ xi.fate.zones[xi.zone.MISAREAUX_COAST] =
                     },
                 },
                 {
-                    base        = { 25, 4 },  -- TODO: verify mob_groups (zoneId, groupId)
+                    -- Gigas_Braver reads as the most elite/leader-flavoured
+                    -- local Gigas template, fitting "Jarl".
+                    templateName = "Gigas_Braver",
                     name        = string.char(0xA6) .. "Gigas Jarl",
                     count       = 2,
                     spawnPoints =
@@ -244,7 +252,12 @@ xi.fate.zones[xi.zone.MISAREAUX_COAST] =
             mobs =
             {
                 {
-                    base         = { 25, 5 },  -- TODO: verify mob_groups (zoneId, groupId)
+                    -- Cross-zone borrow: no turtle/adamantoise-type template exists in this
+                    -- zone's own mobs.yaml. Ruaun_Gardens has Genbu, the legendary_adamantoise
+                    -- celestial guardian - a direct fit for a "colossal domed shape" hauling
+                    -- itself ashore, and boss-tier by nature (NM, 19000 HP baseline).
+                    templateName   = "Genbu",
+                    templateZoneId = xi.zone.RUAUN_GARDENS,
                     name         = string.char(0xA6) .. "Shore Ravager",
                     count        = 1,
                     isBoss       = true,
@@ -256,7 +269,7 @@ xi.fate.zones[xi.zone.MISAREAUX_COAST] =
                     },
                 },
                 {
-                    base        = { 25, 6 },  -- TODO: verify mob_groups (zoneId, groupId)
+                    templateName = "Bugard",
                     name        = string.char(0xA6) .. "Coast Bugard",
                     count       = 4,
                     noCount     = true,

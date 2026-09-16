@@ -6143,10 +6143,35 @@ CBaseEntity* GenerateDynamicEntity(CZone* PZone, CInstance* PInstance, sol::tabl
     }
     else
     {
-        auto groupId     = table.get_or<uint32>("groupId", 0);
-        auto groupZoneId = static_cast<xi::ZoneId>(table.get_or<uint32>("groupZoneId", 0));
+        // templateName (a zone mobs.yaml template, e.g. "Goblin_Mugger") is the
+        // modern path - most zones' per-zone trash-mob mob_groups rows have
+        // been pruned in favour of mobs.yaml, so groupId/groupZoneId now
+        // resolves to nothing for them. groupId/groupZoneId stays supported
+        // unchanged for any caller still pointing at a surviving mob_groups
+        // row (mostly NM/unique content) - a caller passes one or the other,
+        // never both.
+        auto templateName = table.get_or<std::string>("templateName", "");
 
-        PEntity = mobutils::InstantiateDynamicMob(groupId, groupZoneId, PZone->GetID());
+        if (!templateName.empty())
+        {
+            // templateZoneId lets a mob borrow a template from a DIFFERENT
+            // zone's mobs.yaml than the one it spawns into (mirrors the old
+            // groupZoneId's cross-zone use) - defaults to the spawning zone.
+            auto templateZoneId = PZone->GetID();
+            if (const sol::optional<uint32> explicitZoneId = table["templateZoneId"]; explicitZoneId.has_value())
+            {
+                templateZoneId = static_cast<xi::ZoneId>(*explicitZoneId);
+            }
+
+            PEntity = mobutils::InstantiateDynamicMobFromTemplate(templateName, templateZoneId);
+        }
+        else
+        {
+            auto groupId     = table.get_or<uint32>("groupId", 0);
+            auto groupZoneId = static_cast<xi::ZoneId>(table.get_or<uint32>("groupZoneId", 0));
+
+            PEntity = mobutils::InstantiateDynamicMob(groupId, groupZoneId, PZone->GetID());
+        }
     }
 
     // This can happen if the Target's Zone ID is invalid.

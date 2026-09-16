@@ -43,7 +43,10 @@ xi.fate.zones[xi.zone.QUFIM_ISLAND] =
             mobs =
             {
                 {
-                    base        = { 126, 1 },  -- TODO: verify mob_groups (zoneId, groupId)
+                    -- "Bhikkhu" is a Buddhist monk term; Giant_Monk (this
+                    -- zone's Gigas family uses the Giant_* naming) matches
+                    -- directly.
+                    templateName = "Giant_Monk",
                     name        = string.char(0xA6) .. "Gigas Bhikkhu",
                     count       = 5,
                     spawnPoints =
@@ -56,7 +59,9 @@ xi.fate.zones[xi.zone.QUFIM_ISLAND] =
                     },
                 },
                 {
-                    base        = { 126, 2 },  -- TODO: verify mob_groups (zoneId, groupId)
+                    -- No "Pickman" template; Giant_Trapper is the closest
+                    -- tool-using Gigas variant locally.
+                    templateName = "Giant_Trapper",
                     name        = string.char(0xA6) .. "Gigas Pickman",
                     count       = 4,
                     spawnPoints =
@@ -157,7 +162,10 @@ xi.fate.zones[xi.zone.QUFIM_ISLAND] =
             mobs =
             {
                 {
-                    base         = { 126, 3 },  -- TODO: verify mob_groups (zoneId, groupId)
+                    -- No "Sea Monk" template exists; the flavour text's own
+                    -- "crushing tentacles" points to Kraken, the actual
+                    -- tentacled leviathan available locally.
+                    templateName = "Kraken",
                     name         = string.char(0xA6) .. "Sea Leviathan",
                     count        = 1,
                     isBoss       = true,
@@ -169,7 +177,7 @@ xi.fate.zones[xi.zone.QUFIM_ISLAND] =
                     },
                 },
                 {
-                    base        = { 126, 4 },  -- TODO: verify mob_groups (zoneId, groupId)
+                    templateName = "Wight_war",
                     name        = string.char(0xA6) .. "Island Wight",
                     count       = 3,
                     noCount     = true,

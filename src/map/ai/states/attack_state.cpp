@@ -132,13 +132,19 @@ void CAttackState::UpdateTarget(const EntityId& target)
         {
             newTarget          = EntityId{};
             CCharEntity* PChar = dynamic_cast<CCharEntity*>(m_PEntity);
-            if (PChar && PChar->hasAutoTargetEnabled())
+            if (PChar)
             {
                 // Retarget priority:
-                //  1. any still-hostile mob that has THIS player on its hate list -
-                //     don't drop combat just because the player isn't facing it.
-                //  2. otherwise the vanilla behaviour: an engaged mob in front of
-                //     the player and close by.
+                //  1. any still-hostile mob that has THIS player on its hate
+                //     list - runs UNCONDITIONALLY, not gated on the
+                //     auto-target setting: being on a mob's hate list means
+                //     the player is in combat whether or not they are
+                //     looking at it, and losing lock on it should not
+                //     require an opt-in preference (this is the enmity ==
+                //     in-combat rule, not a QoL convenience).
+                //  2. otherwise, only if auto-target is enabled, the vanilla
+                //     behaviour: an engaged mob in front of the player and
+                //     close by - genuinely a preference, left as opt-in.
                 CBattleEntity* PAggroPick  = nullptr;
                 CBattleEntity* PFacingPick = nullptr;
 
@@ -173,7 +179,7 @@ void CAttackState::UpdateTarget(const EntityId& target)
                         break;
                     }
 
-                    if (!PFacingPick && dist <= 10.0f && facing(PChar->loc.p, PMob->loc.p, 64))
+                    if (PChar->hasAutoTargetEnabled() && !PFacingPick && dist <= 10.0f && facing(PChar->loc.p, PMob->loc.p, 64))
                     {
                         PFacingPick = PMob;
                     }

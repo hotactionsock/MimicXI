@@ -43,7 +43,11 @@ xi.fate.zones[xi.zone.YUHTUNGA_JUNGLE] =
             mobs =
             {
                 {
-                    base        = { 123, 1 },  -- TODO: verify mob_groups (zoneId, groupId)
+                    -- Cross-zone borrow: no Tonberry templates in this zone's mobs.yaml
+                    -- (it's Sahagin/Goblins/Hobgoblins). Temple of Uggalepih is the
+                    -- game's dedicated Tonberry dungeon.
+                    templateName   = "Tonberry_Cutter",
+                    templateZoneId = xi.zone.TEMPLE_OF_UGGALEPIH,
                     name        = string.char(0xA6) .. "Berry Initiate",
                     count       = 5,
                     spawnPoints =
@@ -56,7 +60,8 @@ xi.fate.zones[xi.zone.YUHTUNGA_JUNGLE] =
                     },
                 },
                 {
-                    base        = { 123, 2 },  -- TODO: verify mob_groups (zoneId, groupId)
+                    templateName   = "Tonberry_Stalker",  -- Temple of Uggalepih - exact name match
+                    templateZoneId = xi.zone.TEMPLE_OF_UGGALEPIH,
                     name        = string.char(0xA6) .. "Berry Stalker",
                     count       = 3,
                     spawnPoints =
@@ -156,7 +161,12 @@ xi.fate.zones[xi.zone.YUHTUNGA_JUNGLE] =
             mobs =
             {
                 {
-                    base         = { 123, 3 },  -- TODO: verify mob_groups (zoneId, groupId)
+                    -- Cross-zone borrow: flavour text/loot call this a Goobbue, but this
+                    -- zone's mobs.yaml has no Goobbue template at all. The Boyahda Tree is
+                    -- the game's dedicated Goobbue dungeon; Ancient_Goobbue fits "massive...
+                    -- lumbers through... destroying everything in its path".
+                    templateName   = "Ancient_Goobbue",
+                    templateZoneId = xi.zone.THE_BOYAHDA_TREE,
                     name         = string.char(0xA6) .. "Jungle Tyrant",
                     count        = 1,
                     isBoss       = true,
@@ -168,7 +178,9 @@ xi.fate.zones[xi.zone.YUHTUNGA_JUNGLE] =
                     },
                 },
                 {
-                    base        = { 123, 4 },  -- TODO: verify mob_groups (zoneId, groupId)
+                    -- Local fit: this zone's own Overgrown_Rose (plant-type) matches the
+                    -- "vines and jungle flora" growing off the Sovereign.
+                    templateName = "Overgrown_Rose",
                     name        = string.char(0xA6) .. "Jungle Sapling",
                     count       = 4,
                     noCount     = true,

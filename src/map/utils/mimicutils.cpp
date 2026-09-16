@@ -460,6 +460,40 @@ void AwardMimicExp(CCharEntity* PMaster, CTrustEntity* PMimic, uint32 gainedExp)
     }
 }
 
+auto RefreshMimicTrustLook(CTrustEntity* PMimic) -> bool
+{
+    if (PMimic == nullptr || PMimic->m_MimicSourceCharId == 0)
+    {
+        return false;
+    }
+
+    const auto lookRset = db::preparedStmt(
+        "SELECT face, race, head, body, hands, legs, feet, main, sub, ranged FROM char_look WHERE charid = ? LIMIT 1",
+        PMimic->m_MimicSourceCharId);
+    if (!lookRset || lookRset->rowsCount() == 0 || !lookRset->next())
+    {
+        return false;
+    }
+
+    look_t look{};
+    look.size   = MODEL_EQUIPPED;
+    look.face   = lookRset->get<uint8>("face");
+    look.race   = lookRset->get<uint8>("race");
+    look.head   = lookRset->get<uint16>("head");
+    look.body   = lookRset->get<uint16>("body");
+    look.hands  = lookRset->get<uint16>("hands");
+    look.legs   = lookRset->get<uint16>("legs");
+    look.feet   = lookRset->get<uint16>("feet");
+    look.main   = lookRset->get<uint16>("main");
+    look.sub    = lookRset->get<uint16>("sub");
+    look.ranged = lookRset->get<uint16>("ranged");
+
+    PMimic->look         = look;
+    PMimic->updatemask  |= UPDATE_LOOK;
+
+    return true;
+}
+
 void LoadTrustSpells(CTrustEntity* PMimic, uint32 altCharId, xi::Job mjob, xi::Job sjob, uint8 mlvl, uint8 slvl)
 {
     if (PMimic == nullptr || PMimic->SpellContainer == nullptr)

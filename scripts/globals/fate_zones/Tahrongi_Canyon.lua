@@ -28,7 +28,7 @@ xi.fate.zones[xi.zone.TAHRONGI_CANYON] =
         -----------------------------------
         {
             id          = "TC_GOBLIN_01",
-            name        = "Goblin Poachers",
+            name        = "Goblin Grabbers",
             level       = 20,
             duration    = 600,
             chainOnly   = false,
@@ -43,7 +43,10 @@ xi.fate.zones[xi.zone.TAHRONGI_CANYON] =
             mobs =
             {
                 {
-                    base        = { 117, 1 },  -- TODO: verify mob_groups (zoneId, groupId)
+                    -- No dedicated poacher template in this zone's mobs.yaml;
+                    -- Goblin_Ambusher matches the flavour text ("ambushing
+                    -- any travellers they find").
+                    templateName = "Goblin_Ambusher",
                     name        = string.char(0xA6) .. "Goblin Poacher",
                     count       = 6,
                     spawnPoints =
@@ -57,7 +60,7 @@ xi.fate.zones[xi.zone.TAHRONGI_CANYON] =
                     },
                 },
                 {
-                    base        = { 117, 2 },  -- TODO: verify mob_groups (zoneId, groupId)
+                    templateName = "Goblin_Tinkerer",
                     name        = string.char(0xA6) .. "Goblin Tinker",
                     count       = 4,
                     spawnPoints =
@@ -158,7 +161,9 @@ xi.fate.zones[xi.zone.TAHRONGI_CANYON] =
             mobs =
             {
                 {
-                    base         = { 117, 3 },  -- TODO: verify mob_groups (zoneId, groupId)
+                    -- "A colossal Crawler queen" - Canyon_Crawler is this
+                    -- zone's own crawler template, scaled up via hpMultiplier/size.
+                    templateName = "Canyon_Crawler",
                     name         = string.char(0xA6) .. "Canyon Tyrant",
                     count        = 1,
                     isBoss       = true,
@@ -170,7 +175,10 @@ xi.fate.zones[xi.zone.TAHRONGI_CANYON] =
                     },
                 },
                 {
-                    base        = { 117, 4 },  -- TODO: verify mob_groups (zoneId, groupId)
+                    -- No dedicated crawlerling template; reuses the queen's
+                    -- own Canyon_Crawler look for her brood, same treatment
+                    -- as Hill Vulture/Carrion Crow in East_Sarutabaruta.lua.
+                    templateName = "Canyon_Crawler",
                     name        = string.char(0xA6) .. "Crawlerling",
                     count       = 3,
                     noCount     = true,
@@ -249,7 +257,7 @@ xi.fate.zones[xi.zone.TAHRONGI_CANYON] =
             mobs =
             {
                 {
-                    base        = { 117, 5 },  -- TODO: verify mob_groups (Dhalmel)
+                    templateName = "Wild_Dhalmel",
                     name        = string.char(0xA6) .. "Canyon Dhalmel",
                     count       = 5,
                     spawnPoints =
@@ -262,7 +270,10 @@ xi.fate.zones[xi.zone.TAHRONGI_CANYON] =
                     },
                 },
                 {
-                    base        = { 117, 6 },  -- TODO: verify mob_groups (Canyon Lizard)
+                    -- Cross-zone borrow: no reptile/lizard species exists in this zone's own
+                    -- mobs.yaml. Konschtat Highlands (adjacent, similar tier) has Mist_Lizard.
+                    templateName   = "Mist_Lizard",
+                    templateZoneId = xi.zone.KONSCHTAT_HIGHLANDS,
                     name        = string.char(0xA6) .. "Canyon Lizard",
                     count       = 3,
                     spawnPoints =
@@ -337,7 +348,7 @@ xi.fate.zones[xi.zone.TAHRONGI_CANYON] =
             mobs =
             {
                 {
-                    base        = { 117, 7 },  -- TODO: verify mob_groups (Mandragora)
+                    templateName = "Pygmaioi", -- species: mandragora
                     name        = string.char(0xA6) .. "Canyon Mandra",
                     count       = 6,
                     spawnPoints =
@@ -351,7 +362,9 @@ xi.fate.zones[xi.zone.TAHRONGI_CANYON] =
                     },
                 },
                 {
-                    base        = { 117, 8 },  -- TODO: verify mob_groups (Mousse/Flytrap)
+                    -- No flytrap/funguar template in this zone; Strolling_Sapling
+                    -- is the closest plant-type look available.
+                    templateName = "Strolling_Sapling",
                     name        = string.char(0xA6) .. "Flytrap",
                     count       = 4,
                     spawnPoints =
@@ -426,7 +439,7 @@ xi.fate.zones[xi.zone.TAHRONGI_CANYON] =
             mobs =
             {
                 {
-                    base        = { 117, 9 },  -- TODO: verify mob_groups (elder mandragora)
+                    templateName = "Pygmaioi", -- species: mandragora
                     name        = string.char(0xA6) .. "Old Mandragora",
                     count       = 3,
                     spawnPoints =
@@ -437,7 +450,9 @@ xi.fate.zones[xi.zone.TAHRONGI_CANYON] =
                     },
                 },
                 {
-                    base        = { 117, 10 }, -- TODO: verify mob_groups (Canyon Funguar)
+                    -- No funguar template in this zone; reuses the same
+                    -- plant look as Flytrap above.
+                    templateName = "Strolling_Sapling",
                     name        = string.char(0xA6) .. "Canyon Funguar",
                     count       = 2,
                     spawnPoints =
@@ -510,7 +525,7 @@ xi.fate.zones[xi.zone.TAHRONGI_CANYON] =
             mobs =
             {
                 {
-                    base        = { 117, 2 },  -- TODO: verify mob_groups (Goblin Tinkerer)
+                    templateName = "Goblin_Tinkerer",
                     name        = string.char(0xA6) .. "Goblin Tinker",
                     count       = 5,
                     spawnPoints =
@@ -523,7 +538,10 @@ xi.fate.zones[xi.zone.TAHRONGI_CANYON] =
                     },
                 },
                 {
-                    base        = { 117, 11 }, -- TODO: verify mob_groups (Goblin Gamblertype)
+                    -- No gambler-type template; Goblin_Archaeologist gives a
+                    -- non-warrior civilian goblin look distinct from the
+                    -- Ambusher/Tinkerer already used in this zone's FATEs.
+                    templateName = "Goblin_Archaeologist",
                     name        = string.char(0xA6) .. "Goblin Gambler",
                     count       = 3,
                     spawnPoints =
@@ -624,7 +642,9 @@ xi.fate.zones[xi.zone.TAHRONGI_CANYON] =
             mobs =
             {
                 {
-                    base         = { 117, 5 },  -- TODO: verify mob_groups (Dhalmel)
+                    -- Allocamelus (species: dhalmel) gives the boss a distinct
+                    -- named look from the regular Wild_Dhalmel trash mobs.
+                    templateName = "Allocamelus",
                     name         = string.char(0xA6) .. "Canyon Empress",
                     count        = 1,
                     isBoss       = true,
@@ -636,7 +656,10 @@ xi.fate.zones[xi.zone.TAHRONGI_CANYON] =
                     },
                 },
                 {
-                    base        = { 117, 6 },  -- TODO: verify mob_groups
+                    -- Cross-zone borrow: no reptile/lizard species exists in this zone's own
+                    -- mobs.yaml. Konschtat Highlands (adjacent, similar tier) has Mist_Lizard.
+                    templateName   = "Mist_Lizard",
+                    templateZoneId = xi.zone.KONSCHTAT_HIGHLANDS,
                     name        = string.char(0xA6) .. "Canyon Lizard",
                     count       = 4,
                     noCount     = true,
@@ -742,7 +765,10 @@ xi.fate.zones[xi.zone.TAHRONGI_CANYON] =
             mobs =
             {
                 {
-                    base         = { 117, 12 }, -- TODO: verify mob_groups (Stone Eater family)
+                    -- No stone eater/golem template in this zone; the flavour
+                    -- text ("something geological rises from below") fits
+                    -- Earth_Elemental, this zone's own earth-themed template.
+                    templateName = "Earth_Elemental",
                     name         = string.char(0xA6) .. "Stone Sentinel",
                     count        = 1,
                     isBoss       = true,
@@ -754,7 +780,7 @@ xi.fate.zones[xi.zone.TAHRONGI_CANYON] =
                     },
                 },
                 {
-                    base        = { 117, 4 },  -- TODO: verify mob_groups (Crawlerling)
+                    templateName = "Canyon_Crawler",
                     name        = string.char(0xA6) .. "Crawlerling",
                     count       = 5,
                     noCount     = true,

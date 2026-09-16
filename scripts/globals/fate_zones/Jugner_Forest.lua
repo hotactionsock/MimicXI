@@ -43,7 +43,9 @@ xi.fate.zones[xi.zone.JUGNER_FOREST] =
             mobs =
             {
                 {
-                    base        = { 104, 1 },  -- TODO: verify mob_groups (zoneId, groupId)
+                    -- No Orcish Golem template locally; Orcish Stonechucker is the
+                    -- closest stone/heavy-orc look this zone has.
+                    templateName = "Orcish_Stonechucker",
                     name        = string.char(0xA6) .. "Orcish Golem",
                     count       = 6,
                     spawnPoints =
@@ -57,7 +59,7 @@ xi.fate.zones[xi.zone.JUGNER_FOREST] =
                     },
                 },
                 {
-                    base        = { 104, 2 },  -- TODO: verify mob_groups (zoneId, groupId)
+                    templateName = "Orcish_Cursemaker",
                     name        = string.char(0xA6) .. "Orcish Curser",
                     count       = 4,
                     spawnPoints =
@@ -158,7 +160,10 @@ xi.fate.zones[xi.zone.JUGNER_FOREST] =
             mobs =
             {
                 {
-                    base         = { 104, 3 },  -- TODO: verify mob_groups (zoneId, groupId)
+                    -- No Elder Sapling template locally; Walking Tree is the
+                    -- biggest tree-type look this zone has, matching the "ancient,
+                    -- massive" flavour text better than the smaller sapling look.
+                    templateName = "Walking_Tree",
                     name         = string.char(0xA6) .. "Elder Sapling",
                     count        = 1,
                     isBoss       = true,
@@ -170,7 +175,7 @@ xi.fate.zones[xi.zone.JUGNER_FOREST] =
                     },
                 },
                 {
-                    base        = { 104, 4 },  -- TODO: verify mob_groups (zoneId, groupId)
+                    templateName = "Wandering_Sapling",
                     name        = string.char(0xA6) .. "Forest Sapling",
                     count       = 3,
                     noCount     = true,

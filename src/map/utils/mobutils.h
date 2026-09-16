@@ -116,6 +116,15 @@ void AddSqlModifiers(CMobEntity* PMob);
 void SetSpellList(CMobEntity*, uint16);
 auto InstantiateAlly(uint32 groupid, xi::ZoneId zoneID, CInstance* = nullptr) -> CMobEntity*;
 auto InstantiateDynamicMob(uint32 groupid, xi::ZoneId groupZoneId, xi::ZoneId targetZoneId) -> CMobEntity*;
+
+// Modern replacement for InstantiateDynamicMob: builds a dynamic mob from a
+// zone's mobs.yaml template (by template name) instead of the legacy
+// mob_groups/mob_pools/mob_resistances SQL join - most zones' per-zone trash
+// mob rows have been pruned out of mob_groups.sql (moved to mobs.yaml as
+// ordinary static-spawn templates instead), so that join now returns nothing
+// for them. Returns nullptr (with a warning logged) if the zone has no
+// mobs.yaml or the template name is not in it.
+auto InstantiateDynamicMobFromTemplate(const std::string& templateName, xi::ZoneId targetZoneId) -> CMobEntity*;
 void WeaknessTrigger(CBaseEntity* PTarget, WeaknessType level);
 
 }; // namespace mobutils

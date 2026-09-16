@@ -17,4 +17,4 @@ commandObj.onTrigger = function(player)
     xi.fate.sendAddonDef(player, player:getZoneID())
 end
 
-return commandObj
+xi.module.registerCommand('fatedef', commandObj)

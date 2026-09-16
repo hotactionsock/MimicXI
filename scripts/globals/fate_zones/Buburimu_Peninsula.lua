@@ -43,7 +43,7 @@ xi.fate.zones[xi.zone.BUBURIMU_PENINSULA] =
             mobs =
             {
                 {
-                    base        = { 118, 1 },  -- TODO: verify mob_groups (zoneId, groupId)
+                    templateName = "Goblin_Leecher",
                     name        = string.char(0xA6) .. "Goblin Leecher",
                     count       = 6,
                     spawnPoints =
@@ -57,7 +57,7 @@ xi.fate.zones[xi.zone.BUBURIMU_PENINSULA] =
                     },
                 },
                 {
-                    base        = { 118, 2 },  -- TODO: verify mob_groups (zoneId, groupId)
+                    templateName = "Goblin_Mugger",
                     name        = string.char(0xA6) .. "Goblin Mugger",
                     count       = 4,
                     spawnPoints =
@@ -136,8 +136,10 @@ xi.fate.zones[xi.zone.BUBURIMU_PENINSULA] =
                 {
                     -- Script: scripts/zones/Buburimu_Peninsula/mobs/Goblin_Heckler.lua
                     -- Loaded automatically by the engine when mob name matches the script filename.
-                    -- Ensure mob_groups entry name matches "Goblin Heckler" exactly.
-                    base  = { 118, 17 },  -- TODO: verify mob_groups (Goblin Heckler)
+                    -- No "Goblin_Heckler" template in this zone's mobs.yaml;
+                    -- Goblin_Thespian (theatrical/loud) is the closest fit for
+                    -- a mouthy heckler.
+                    templateName = "Goblin_Thespian",
                     name  = string.char(0xA6) .. "Goblin Heckler",
                     count = 8,
                     -- spawn positions generated from area center via navmesh at runtime
@@ -232,7 +234,10 @@ xi.fate.zones[xi.zone.BUBURIMU_PENINSULA] =
             mobs =
             {
                 {
-                    base         = { 118, 3 },  -- TODO: verify mob_groups (zoneId, groupId)
+                    -- No coeurl template in this zone's mobs.yaml;
+                    -- Carnivorous_Crawler is the closest apex-predator fit
+                    -- available locally.
+                    templateName = "Carnivorous_Crawler",
                     name         = string.char(0xA6) .. "Shore Coeurl",
                     count        = 1,
                     isBoss       = true,
@@ -244,7 +249,9 @@ xi.fate.zones[xi.zone.BUBURIMU_PENINSULA] =
                     },
                 },
                 {
-                    base        = { 118, 4 },  -- TODO: verify mob_groups (zoneId, groupId)
+                    -- No Roc template locally; Zu (a large bird mob) matches
+                    -- the "bonded Roc companion" flavour text best.
+                    templateName = "Zu",
                     name        = string.char(0xA6) .. "Buburimu Roc",
                     count       = 2,
                     noCount     = true,
@@ -322,7 +329,7 @@ xi.fate.zones[xi.zone.BUBURIMU_PENINSULA] =
             mobs =
             {
                 {
-                    base        = { 118, 6 },  -- TODO: verify mob_groups (Sea Leech)
+                    templateName = "Poison_Leech",
                     name        = string.char(0xA6) .. "Sea Leech",
                     count       = 12,
                     spawnPoints =
@@ -407,7 +414,7 @@ xi.fate.zones[xi.zone.BUBURIMU_PENINSULA] =
             mobs =
             {
                 {
-                    base        = { 118, 7 },  -- TODO: verify mob_groups (Snipper)
+                    templateName = "Snipper",
                     name        = string.char(0xA6) .. "Shore Snipper",
                     count       = 10,
                     spawnPoints =
@@ -490,7 +497,9 @@ xi.fate.zones[xi.zone.BUBURIMU_PENINSULA] =
             mobs =
             {
                 {
-                    base        = { 118, 8 },  -- TODO: verify mob_groups (Giant Snipper)
+                    -- No "giant" variant locally; reuses the base Snipper
+                    -- template.
+                    templateName = "Snipper",
                     name        = string.char(0xA6) .. "Giant Snipper",
                     count       = 5,
                     spawnPoints =
@@ -593,7 +602,9 @@ xi.fate.zones[xi.zone.BUBURIMU_PENINSULA] =
             mobs =
             {
                 {
-                    base         = { 118, 9 },  -- TODO: verify mob_groups (Tidal Crusher)
+                    -- Flavour text calls it "a colossal Snipper" outright;
+                    -- reuses the local Snipper template, scaled up.
+                    templateName = "Snipper",
                     name         = string.char(0xA6) .. "Tidal Crusher",
                     count        = 1,
                     isBoss       = true,
@@ -605,7 +616,7 @@ xi.fate.zones[xi.zone.BUBURIMU_PENINSULA] =
                     },
                 },
                 {
-                    base        = { 118, 10 },  -- TODO: verify mob_groups (Buburimu Crab)
+                    templateName = "Stag_Crab",
                     name        = string.char(0xA6) .. "Buburimu Crab",
                     count       = 3,
                     noCount     = true,
@@ -710,7 +721,10 @@ xi.fate.zones[xi.zone.BUBURIMU_PENINSULA] =
             mobs =
             {
                 {
-                    base         = { 118, 11 },  -- TODO: verify mob_groups (Devourer of Tides)
+                    -- Flavour text is explicitly "an ancient, vastly engorged
+                    -- Sea Leech"; reuses the Poison_Leech template from the
+                    -- Sea Leech Swarm event, scaled up.
+                    templateName = "Poison_Leech",
                     name         = string.char(0xA6) .. "Tide Devourer",
                     count        = 1,
                     isBoss       = true,

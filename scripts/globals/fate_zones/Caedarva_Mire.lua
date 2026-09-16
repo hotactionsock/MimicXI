@@ -43,7 +43,7 @@ xi.fate.zones[xi.zone.CAEDARVA_MIRE] =
             mobs =
             {
                 {
-                    base        = { 79, 1 },  -- TODO: verify mob_groups (zoneId, groupId)
+                    templateName = "Lamia_Deathdancer",
                     name        = string.char(0xA6) .. "Lamia Dancer",
                     count       = 5,
                     spawnPoints =
@@ -56,7 +56,9 @@ xi.fate.zones[xi.zone.CAEDARVA_MIRE] =
                     },
                 },
                 {
-                    base        = { 79, 2 },  -- TODO: verify mob_groups (zoneId, groupId)
+                    -- Lamia_Toxophilite_CM ("toxophilite" = archer) is the exact local
+                    -- match for a Bowyer.
+                    templateName = "Lamia_Toxophilite_CM",
                     name        = string.char(0xA6) .. "Lamia Bowyer",
                     count       = 4,
                     spawnPoints =
@@ -157,7 +159,10 @@ xi.fate.zones[xi.zone.CAEDARVA_MIRE] =
             mobs =
             {
                 {
-                    base         = { 216, 53 },  -- TODO: verify mob_groups (zoneId, groupId)
+                    -- No "giant" template in this zone's mobs.yaml; Awoken_Vampyr_Jarl is
+                    -- the closest ancient, unique-tier undead lord for a colossal undead
+                    -- boss per this event's flavor text.
+                    templateName = "Awoken_Vampyr_Jarl",
                     name         = string.char(0xA6) .. "Mire Colossus",
                     count        = 1,
                     isBoss       = true,
@@ -169,7 +174,7 @@ xi.fate.zones[xi.zone.CAEDARVA_MIRE] =
                     },
                 },
                 {
-                    base        = { 289, 97 },  -- TODO: verify mob_groups (zoneId, groupId)
+                    templateName = "Lamia_Chaukidar",
                     name        = string.char(0xA6) .. "Caedarva Lamia",
                     count       = 4,
                     noCount     = true,

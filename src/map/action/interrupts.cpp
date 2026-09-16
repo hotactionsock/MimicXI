@@ -231,8 +231,13 @@ void MobSkillOutOfRange(CBattleEntity* PEntity, const CBattleEntity* PTarget)
     PEntity->loc.zone->PushPacket(PEntity, CHAR_INRANGE_SELF, std::make_unique<GP_SERV_COMMAND_BATTLE2>(magicFinishAction));
 }
 
-void WeaponSkillOutOfRange(CBattleEntity* PEntity, const CBattleEntity* PTarget)
+void WeaponSkillOutOfRange(CBattleEntity* PEntity, const CBattleEntity* PTarget, int16 tpRefund)
 {
+    if (tpRefund > 0)
+    {
+        PEntity->addTP(tpRefund);
+    }
+
     auto magicFinishAction = action_t{
         .actorId    = PEntity->id,
         .actiontype = ActionCategory::MagicFinish,

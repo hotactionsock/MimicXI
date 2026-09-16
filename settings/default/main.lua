@@ -22,24 +22,24 @@ xi.settings.main =
     -- This generally results in a more accurate presentation of your selected expansions,
     -- as well as a less confusing player experience for things that are disabled (things that are disabled are not loaded).
     -- This feature correlates to the content_tag column in the SQL files.
-    RESTRICT_CONTENT = 0,
+    RESTRICT_CONTENT = 1,
 
     -- Enable Expansion (1 = Enabled, 0 = Disabled)
     ENABLE_ROTZ      = 1,
     ENABLE_COP       = 1,
     ENABLE_TOAU      = 1,
     ENABLE_WOTG      = 1,
-    ENABLE_ACP       = 1,
-    ENABLE_AMK       = 1,
-    ENABLE_ASA       = 1,
-    ENABLE_ABYSSEA   = 1,
-    ENABLE_SOA       = 1,
-    ENABLE_ROV       = 1,
-    ENABLE_TVR       = 1,
-    ENABLE_VOIDWATCH = 1, -- Not an expansion, but has its own storyline. (Not Implemented)
+    ENABLE_ACP       = 0,
+    ENABLE_AMK       = 0,
+    ENABLE_ASA       = 0,
+    ENABLE_ABYSSEA   = 0,
+    ENABLE_SOA       = 0,
+    ENABLE_ROV       = 0,
+    ENABLE_TVR       = 0,
+    ENABLE_VOIDWATCH = 0, -- Not an expansion, but has its own storyline. (Not Implemented)
 
     -- MOG HOUSE
-    ENABLE_MOG_HOUSE_2F = 1, -- Enables Access to Mog House 2F / Mog Safe 2.
+    ENABLE_MOG_HOUSE_2F = 0, -- Enables Access to Mog House 2F / Mog Safe 2.
     ENABLE_MOG_GARDEN   = 1, -- Enables Access to Mog Garden, will send player to the area they entered from if disabled.
 
     -- FIELDS OF VALOR/Grounds of Valor settings
@@ -51,7 +51,7 @@ xi.settings.main =
     GOV_REWARD_ALLIANCE   = 1, -- Allow Grounds of Valor rewards while being a member of an alliance. (default retail behavior: 1)
 
     -- Daily points / Gobbie mystery box.
-    ENABLE_DAILY_TALLY = 1,  -- Allows acquisition of daily points for gobbie mystery box.
+    ENABLE_DAILY_TALLY = 0,  -- Allows acquisition of daily points for gobbie mystery box.
     DAILY_TALLY_AMOUNT = 10,
     DAILY_TALLY_LIMIT  = 50000,
     GOBBIE_BOX_MIN_AGE = 45, -- Minimum character age in days before a character can sign up for Gobbie Mystery Box
@@ -62,9 +62,9 @@ xi.settings.main =
     ASSIST_CHANNEL_RETURNEE_LOGIN_GAP =  48,  -- How many days must have elapsed before returnees are added to the assist channel.
 
     -- Records of Eminence
-    ENABLE_ROE            = 1, -- Enable Records of Eminence
-    ENABLE_ROE_TIMED      = 1, -- Enable 4-hour timed records
-    ENABLE_EXCHANGE_LIMIT = 1, -- Enable Maximum limit of sparks spent per Week (default retail behavior: 1)
+    ENABLE_ROE            = 0, -- Enable Records of Eminence
+    ENABLE_ROE_TIMED      = 0, -- Enable 4-hour timed records
+    ENABLE_EXCHANGE_LIMIT = 0, -- Enable Maximum limit of sparks spent per Week (default retail behavior: 1)
 
     WEEKLY_EXCHANGE_LIMIT = 100000, -- Maximum amount of sparks/accolades that can be spent per week (default retail value: 100000)
 
@@ -75,10 +75,10 @@ xi.settings.main =
     CAP_CURRENCY_VALOR     = 50000,
 
     -- Magian Trials
-    ENABLE_MAGIAN_TRIALS = 1,
+    ENABLE_MAGIAN_TRIALS = 0,
 
     -- VoidWalker
-    ENABLE_VOIDWALKER = 1,
+    ENABLE_VOIDWALKER = 0,
 
     -- Moblin Maze Mongers
     ENABLE_MMM = 0,
@@ -107,18 +107,18 @@ xi.settings.main =
     ABYSSEA_BONUSLIGHT_AMOUNT = 0,
 
     -- CHARACTER CONFIG
-    INITIAL_LEVEL_CAP              = 50,  -- The initial level cap for new players.  There seems to be a hardcap of 255.
-    MAX_LEVEL                      = 99,  -- Level max of the server, lowers the attainable cap by disabling Limit Break quests.
+    INITIAL_LEVEL_CAP              = 75,  -- The initial level cap for new players.  There seems to be a hardcap of 255.
+    MAX_LEVEL                      = 75,  -- Level max of the server, lowers the attainable cap by disabling Limit Break quests.
     NORMAL_MOB_MAX_LEVEL_RANGE_MIN = 0,   -- Lower Bound of Max Level Range for Normal Mobs (0 = Uncapped)
     NORMAL_MOB_MAX_LEVEL_RANGE_MAX = 0,   -- Upper Bound of Max Level Range for Normal Mobs (0 = Uncapped)
     START_GIL                      = 10,  -- Amount of gil given to newly created characters.
-    START_INVENTORY                = 30,  -- Starting inventory and satchel size.  Ignores values < 30.  Do not set above 80!
-    NEW_CHARACTER_CUTSCENE         = 1,   -- Set to 1 to enable opening cutscenes, 0 to disable.
+    START_INVENTORY                = 80,  -- Starting inventory and satchel size.  Ignores values < 30.  Do not set above 80!
+    NEW_CHARACTER_CUTSCENE         = 0,   -- Set to 1 to enable opening cutscenes, 0 to disable.
     NEW_ADVENTURER_PLAYTIME_LIMIT  = 240, -- Hours played before the New Adventurer icon is removed. 240 for retail, 10 for pre-TVR.
     SUBJOB_QUEST_LEVEL             = 18,  -- Minimum level to accept either subjob quest.  Set to 0 to start the game with subjobs unlocked.
     ADVANCED_JOB_LEVEL             = 30,  -- Minimum level to accept advanced job quests.  Set to 0 to start the game with advanced jobs.
-    ALL_MAPS                       = 0,   -- Set to 1 to give starting characters all the maps.
-    UNLOCK_OUTPOST_WARPS           = 0,   -- Set to 1 to give starting characters all outpost warps.  2 to add Tu'Lia and Tavnazia.
+    ALL_MAPS                       = 1,   -- Set to 1 to give starting characters all the maps.
+    UNLOCK_OUTPOST_WARPS           = 1,   -- Set to 1 to give starting characters all outpost warps.  2 to add Tu'Lia and Tavnazia.
 
     SHOP_PRICE          = 1.000, -- Multiplies prices in NPC shops.
     GIL_RATE            = 1.000, -- Multiplies gil earned from quests.  Won't always display in game.
@@ -294,7 +294,7 @@ xi.settings.main =
     MAX_FAKE_ENTRIES     = 15,
 
     -- NYZUL
-    NYZUL_ENABLED        = false, -- true/false. Enable Nyzul Isle content and functionality.
+    NYZUL_ENABLED        = true, -- true/false. Enable Nyzul Isle content and functionality.
     RUNIC_DISK_SAVE      = true,  -- Allow anyone participating in Nyzul to save progress. Set to false so only initiator can save progress.
     ENABLE_NYZUL_CASKETS = true,  -- Enable Treasure casket pops from NMs.
     ENABLE_VIGIL_DROPS   = true,  -- Enable Vigil Weapon drops from NMs.

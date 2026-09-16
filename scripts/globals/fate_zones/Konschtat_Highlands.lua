@@ -44,7 +44,9 @@ xi.fate.zones[xi.zone.KONSCHTAT_HIGHLANDS] =
             mobs =
             {
                 {
-                    base        = { 108, 1 },  -- TODO: verify mob_groups (zoneId, groupId)
+                    -- No crawler species in this zone's mobs.yaml; Rock_Eater
+                    -- (a worm) is the closest ground-creeping look available.
+                    templateName = "Rock_Eater",
                     name        = string.char(0xA6) .. "Hill Crawler",
                     count       = 6,
                     spawnPoints =
@@ -58,7 +60,7 @@ xi.fate.zones[xi.zone.KONSCHTAT_HIGHLANDS] =
                     },
                 },
                 {
-                    base        = { 108, 2 },  -- TODO: verify mob_groups (zoneId, groupId)
+                    templateName = "Pixie", -- small flying fae fits "glider"
                     name        = string.char(0xA6) .. "Dew Glider",
                     count       = 4,
                     spawnPoints =
@@ -134,7 +136,7 @@ xi.fate.zones[xi.zone.KONSCHTAT_HIGHLANDS] =
             mobs =
             {
                 {
-                    base        = { 108, 3 },  -- TODO: verify mob_groups (zoneId, groupId)
+                    templateName = "Highlander_Lizard", -- species: hill_lizard
                     name        = string.char(0xA6) .. "Gliding Lizard",
                     count       = 3,
                     spawnPoints =
@@ -145,7 +147,7 @@ xi.fate.zones[xi.zone.KONSCHTAT_HIGHLANDS] =
                     },
                 },
                 {
-                    base        = { 108, 4 },  -- TODO: verify mob_groups (zoneId, groupId)
+                    templateName = "Rock_Eater", -- see Hill Crawler above
                     name        = string.char(0xA6) .. "Giant Crawler",
                     count       = 2,
                     spawnPoints =
@@ -244,7 +246,9 @@ xi.fate.zones[xi.zone.KONSCHTAT_HIGHLANDS] =
             mobs =
             {
                 {
-                    base         = { 108, 5 },  -- TODO: verify mob_groups (zoneId, groupId)
+                    -- "Ancient rises from below" / bedrock erupts - Earth_Elemental
+                    -- fits the flavour text; no golem/stone-eater template locally.
+                    templateName = "Earth_Elemental",
                     name         = string.char(0xA6) .. "Stone Colossus",
                     count        = 1,
                     isBoss       = true,
@@ -256,7 +260,9 @@ xi.fate.zones[xi.zone.KONSCHTAT_HIGHLANDS] =
                     },
                 },
                 {
-                    base        = { 108, 6 },  -- TODO: verify mob_groups (zoneId, groupId)
+                    -- No bat template in this zone; reuses the only flying
+                    -- look available (see Dew Glider above).
+                    templateName = "Pixie",
                     name        = string.char(0xA6) .. "Konschtat Bat",
                     count       = 4,
                     noCount     = true,
@@ -337,7 +343,7 @@ xi.fate.zones[xi.zone.KONSCHTAT_HIGHLANDS] =
             mobs =
             {
                 {
-                    base        = { 108, 7 },  -- TODO: verify mob_groups (Quadav Miner)
+                    templateName = "Young_Quadav",
                     name        = string.char(0xA6) .. "Quadav Miner",
                     count       = 5,
                     spawnPoints =
@@ -350,7 +356,7 @@ xi.fate.zones[xi.zone.KONSCHTAT_HIGHLANDS] =
                     },
                 },
                 {
-                    base        = { 108, 8 },  -- TODO: verify mob_groups (Sapphire Quadav)
+                    templateName = "Amethyst_Quadav", -- closest gem-coloured quadav to "Blue/Sapphire"
                     name        = string.char(0xA6) .. "Blue Quadav",
                     count       = 4,
                     spawnPoints =
@@ -426,7 +432,7 @@ xi.fate.zones[xi.zone.KONSCHTAT_HIGHLANDS] =
             mobs =
             {
                 {
-                    base        = { 108, 9 },  -- TODO: verify mob_groups (Ruby Quadav)
+                    templateName = "Amber_Quadav", -- closest warm-toned gem quadav to "Ruby"
                     name        = string.char(0xA6) .. "Ruby Quadav",
                     count       = 3,
                     spawnPoints =
@@ -437,7 +443,7 @@ xi.fate.zones[xi.zone.KONSCHTAT_HIGHLANDS] =
                     },
                 },
                 {
-                    base        = { 108, 10 }, -- TODO: verify mob_groups (Quadav Shieldbearer)
+                    templateName = "Veteran_Quadav", -- armoured/elite fits "Shieldbearer"
                     name        = string.char(0xA6) .. "Shield Quadav",
                     count       = 2,
                     spawnPoints =
@@ -511,7 +517,7 @@ xi.fate.zones[xi.zone.KONSCHTAT_HIGHLANDS] =
             mobs =
             {
                 {
-                    base        = { 108, 11 }, -- TODO: verify mob_groups (Highland Ram)
+                    templateName = "Tremor_Ram", -- fits "Ram Stampede" flavour
                     name        = string.char(0xA6) .. "Wailing Ram",
                     count       = 5,
                     spawnPoints =
@@ -524,7 +530,7 @@ xi.fate.zones[xi.zone.KONSCHTAT_HIGHLANDS] =
                     },
                 },
                 {
-                    base        = { 108, 12 }, -- TODO: verify mob_groups (Ornery Sheep)
+                    templateName = "Mad_Sheep",
                     name        = string.char(0xA6) .. "Ornery Sheep",
                     count       = 4,
                     spawnPoints =
@@ -625,7 +631,10 @@ xi.fate.zones[xi.zone.KONSCHTAT_HIGHLANDS] =
             mobs =
             {
                 {
-                    base         = { 108, 13 }, -- TODO: verify mob_groups (Quadav Warlord)
+                    -- Flavour text ("decorated Quadav Shieldwarrior... veteran
+                    -- Quadav commander") is quadav despite the "Stone" display
+                    -- name; Greater_Quadav is this zone's top-tier quadav look.
+                    templateName = "Greater_Quadav",
                     name         = string.char(0xA6) .. "Stone Warlord",
                     count        = 1,
                     isBoss       = true,
@@ -637,7 +646,7 @@ xi.fate.zones[xi.zone.KONSCHTAT_HIGHLANDS] =
                     },
                 },
                 {
-                    base        = { 108, 8 },  -- TODO: verify mob_groups (Sapphire Quadav)
+                    templateName = "Amethyst_Quadav", -- closest gem-coloured quadav to "Blue/Sapphire"
                     name        = string.char(0xA6) .. "Blue Quadav",
                     count       = 4,
                     noCount     = true,
@@ -743,7 +752,7 @@ xi.fate.zones[xi.zone.KONSCHTAT_HIGHLANDS] =
             mobs =
             {
                 {
-                    base         = { 108, 5 },  -- TODO: verify mob_groups (Stone Eater / Colossus)
+                    templateName = "Earth_Elemental",
                     name         = string.char(0xA6) .. "Stone Behemoth",
                     count        = 1,
                     isBoss       = true,
@@ -755,7 +764,7 @@ xi.fate.zones[xi.zone.KONSCHTAT_HIGHLANDS] =
                     },
                 },
                 {
-                    base        = { 108, 6 },  -- TODO: verify mob_groups (Konschtat Bat)
+                    templateName = "Pixie", -- see Dew Glider / Konschtat Bat above
                     name        = string.char(0xA6) .. "Konschtat Bat",
                     count       = 5,
                     noCount     = true,

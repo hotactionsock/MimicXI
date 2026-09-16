@@ -21,6 +21,8 @@
 
 #pragma once
 
+#include "common/cbasetypes.h"
+
 class CSpell;
 class CPetSkill;
 class CBattleEntity;
@@ -39,7 +41,10 @@ void WyvernSkillReady(CBattleEntity* PWyvern);
 void MobSkillNoTargetInRange(CBattleEntity* PEntity);
 void MobSkillOutOfRange(CBattleEntity* PEntity, const CBattleEntity* PTarget);
 
-void WeaponSkillOutOfRange(CBattleEntity* PEntity, const CBattleEntity* PTarget);
+// tpRefund: TP to give back to PEntity (the amount SpendCost() actually took
+// for this attempt) - a weaponskill that fails for being out of range should
+// not cost TP, for players or trusts alike.
+void WeaponSkillOutOfRange(CBattleEntity* PEntity, const CBattleEntity* PTarget, int16 tpRefund = 0);
 
 void RangedInterrupt(CBattleEntity* PEntity);
 void RangedParalyzed(CBattleEntity* PEntity);

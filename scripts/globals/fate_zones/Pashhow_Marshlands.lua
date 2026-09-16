@@ -44,7 +44,9 @@ xi.fate.zones[xi.zone.PASHHOW_MARSHLANDS] =
             mobs =
             {
                 {
-                    base        = { 109, 1 },  -- TODO: verify mob_groups (zoneId, groupId)
+                    -- No "Miner" template locally; Brass_Quadav is this zone's base-tier
+                    -- Quadav, fitting a rank-and-file surveyor/worker.
+                    templateName = "Brass_Quadav",
                     name        = string.char(0xA6) .. "Quadav Miner",
                     count       = 6,
                     spawnPoints =
@@ -58,7 +60,9 @@ xi.fate.zones[xi.zone.PASHHOW_MARSHLANDS] =
                     },
                 },
                 {
-                    base        = { 109, 2 },  -- TODO: verify mob_groups (zoneId, groupId)
+                    -- No "Purple" Quadav locally; Sapphirine_Quadav is the closest colour
+                    -- match available in this zone's mobs.yaml.
+                    templateName = "Sapphirine_Quadav",
                     name        = string.char(0xA6) .. "Purple Quadav",
                     count       = 4,
                     spawnPoints =
@@ -134,7 +138,9 @@ xi.fate.zones[xi.zone.PASHHOW_MARSHLANDS] =
             mobs =
             {
                 {
-                    base        = { 109, 3 },  -- TODO: verify mob_groups (zoneId, groupId)
+                    -- No "Ruby" Quadav locally; Greater_Quadav is the closest elite-tier
+                    -- match for an emboldened assault force.
+                    templateName = "Greater_Quadav",
                     name        = string.char(0xA6) .. "Ruby Quadav",
                     count       = 3,
                     spawnPoints =
@@ -145,7 +151,9 @@ xi.fate.zones[xi.zone.PASHHOW_MARSHLANDS] =
                     },
                 },
                 {
-                    base        = { 109, 4 },  -- TODO: verify mob_groups (zoneId, groupId)
+                    -- No "Shield" Quadav locally; Veteran_Quadav is the closest
+                    -- armoured/defensive match.
+                    templateName = "Veteran_Quadav",
                     name        = string.char(0xA6) .. "Shield Quadav",
                     count       = 2,
                     spawnPoints =
@@ -244,7 +252,9 @@ xi.fate.zones[xi.zone.PASHHOW_MARSHLANDS] =
             mobs =
             {
                 {
-                    base         = { 109, 5 },  -- TODO: verify mob_groups (zoneId, groupId)
+                    -- No "Clot" template locally; Blobdingnag is the closest colossal-slime
+                    -- match for this event's flavor text.
+                    templateName = "Blobdingnag",
                     name         = string.char(0xA6) .. "Bog Sovereign",
                     count        = 1,
                     isBoss       = true,
@@ -256,7 +266,7 @@ xi.fate.zones[xi.zone.PASHHOW_MARSHLANDS] =
                     },
                 },
                 {
-                    base        = { 109, 6 },  -- TODO: verify mob_groups (zoneId, groupId)
+                    templateName = "Globster",
                     name        = string.char(0xA6) .. "Marsh Clot",
                     count       = 3,
                     noCount     = true,
@@ -335,7 +345,7 @@ xi.fate.zones[xi.zone.PASHHOW_MARSHLANDS] =
             mobs =
             {
                 {
-                    base        = { 109, 7 },  -- TODO: verify mob_groups (Marsh Leech)
+                    templateName = "Swamp_Leech",
                     name        = string.char(0xA6) .. "Marsh Leech",
                     count       = 12,
                     spawnPoints =
@@ -420,7 +430,7 @@ xi.fate.zones[xi.zone.PASHHOW_MARSHLANDS] =
             mobs =
             {
                 {
-                    base        = { 109, 8 },  -- TODO: verify mob_groups (Pashhow Funguar)
+                    templateName = "Marsh_Funguar",
                     name        = string.char(0xA6) .. "Marsh Funguar",
                     count       = 7,
                     spawnPoints =
@@ -435,7 +445,8 @@ xi.fate.zones[xi.zone.PASHHOW_MARSHLANDS] =
                     },
                 },
                 {
-                    base        = { 109, 9 },  -- TODO: verify mob_groups (Spore Funguar)
+                    -- Marsh_Funguar is the only Funguar template in this zone's mobs.yaml.
+                    templateName = "Marsh_Funguar",
                     name        = string.char(0xA6) .. "Spore Funguar",
                     count       = 3,
                     spawnPoints =
@@ -511,7 +522,7 @@ xi.fate.zones[xi.zone.PASHHOW_MARSHLANDS] =
             mobs =
             {
                 {
-                    base        = { 109, 10 },  -- TODO: verify mob_groups (Elder Funguar)
+                    templateName = "Marsh_Funguar",
                     name        = string.char(0xA6) .. "Elder Funguar",
                     count       = 5,
                     spawnPoints =
@@ -614,7 +625,7 @@ xi.fate.zones[xi.zone.PASHHOW_MARSHLANDS] =
             mobs =
             {
                 {
-                    base         = { 109, 11 },  -- TODO: verify mob_groups (Stenchmaster)
+                    templateName = "Malboro",
                     name         = string.char(0xA6) .. "Stenchmaster",
                     count        = 1,
                     isBoss       = true,
@@ -626,7 +637,9 @@ xi.fate.zones[xi.zone.PASHHOW_MARSHLANDS] =
                     },
                 },
                 {
-                    base        = { 109, 12 },  -- TODO: verify mob_groups (Pashhow Malboro)
+                    -- Malboro is the only Malboro-family template in this zone's mobs.yaml,
+                    -- reused here for the smaller adds.
+                    templateName = "Malboro",
                     name        = string.char(0xA6) .. "Marsh Malboro",
                     count       = 3,
                     noCount     = true,
@@ -731,7 +744,7 @@ xi.fate.zones[xi.zone.PASHHOW_MARSHLANDS] =
             mobs =
             {
                 {
-                    base         = { 109, 13 },  -- TODO: verify mob_groups (Fetid Empress)
+                    templateName = "Malboro",
                     name         = string.char(0xA6) .. "Fetid Empress",
                     count        = 1,
                     isBoss       = true,

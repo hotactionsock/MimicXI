@@ -229,4 +229,4 @@ commandObj.onTrigger = function(player, subcmd, arg1, arg2)
     end
 end
 
-return commandObj
+xi.module.registerCommand('fate', commandObj)

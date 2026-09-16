@@ -56,12 +56,12 @@ xi.fate.zones[xi.zone.WEST_RONFAURE] =
             mobs =
             {
                 {
-                    base  = { 100, 7 },
+                    templateName = "Tunnel_Worm",
                     name  = string.char(0xA6) .. "Tunnel Worm",
                     count = 6,
                 },
                 {
-                    base  = { 100, 10 },
+                    templateName = "Carrion_Worm",
                     name  = string.char(0xA6) .. "Carrion Worm",
                     count = 4,
                 },
@@ -131,7 +131,7 @@ xi.fate.zones[xi.zone.WEST_RONFAURE] =
             mobs =
             {
                 {
-                    base        = { 100, 12 },
+                    templateName = "Orcish_Fodder",
                     name        = string.char(0xA6) .. "Orcish Fodder",
                     count       = 5,
                     spawnPoints =
@@ -148,7 +148,7 @@ xi.fate.zones[xi.zone.WEST_RONFAURE] =
                     },
                 },
                 {
-                    base        = { 100, 13 },
+                    templateName = "Orcish_Grappler",
                     name        = string.char(0xA6) .. "Orcish Grappler",
                     count       = 3,
                     spawnPoints =
@@ -230,7 +230,7 @@ xi.fate.zones[xi.zone.WEST_RONFAURE] =
             mobs =
             {
                 {
-                    base        = { 100, 13 },
+                    templateName = "Orcish_Grappler",
                     name        = string.char(0xA6) .. "Orcish Grappler",
                     count       = 3,
                     spawnPoints =
@@ -243,7 +243,7 @@ xi.fate.zones[xi.zone.WEST_RONFAURE] =
                     },
                 },
                 {
-                    base        = { 100, 17 },
+                    templateName = "Orcish_Mesmerizer",
                     name        = string.char(0xA6) .. "Orcish Mesmerizer",
                     count       = 2,
                     spawnPoints =
@@ -346,7 +346,10 @@ xi.fate.zones[xi.zone.WEST_RONFAURE] =
             mobs =
             {
                 {
-                    base         = { 100, 15 },
+                    -- No dedicated Funguarlord template; reskin to the zone's own
+                    -- Forest Funguar, matching the flavour text ("enormous Forest
+                    -- Funguar").
+                    templateName = "Forest_Funguar",
                     name         = string.char(0xA6) .. "Funguarlord",
                     count        = 1,
                     isBoss       = true,
@@ -358,7 +361,7 @@ xi.fate.zones[xi.zone.WEST_RONFAURE] =
                     },
                 },
                 {
-                    base        = { 100, 15 },
+                    templateName = "Forest_Funguar",
                     name        = string.char(0xA6) .. "Sporemate",
                     count       = 3,
                     noCount     = true,
@@ -438,7 +441,7 @@ xi.fate.zones[xi.zone.WEST_RONFAURE] =
             mobs =
             {
                 {
-                    base        = { 100, 15 },  -- TODO: verify mob_groups (Forest Funguar)
+                    templateName = "Forest_Funguar",
                     name        = string.char(0xA6) .. "Forest Funguar",
                     count       = 5,
                     spawnPoints =
@@ -451,7 +454,7 @@ xi.fate.zones[xi.zone.WEST_RONFAURE] =
                     },
                 },
                 {
-                    base        = { 100, 7 },
+                    templateName = "Tunnel_Worm",
                     name        = string.char(0xA6) .. "Tunnel Worm",
                     count       = 4,
                     spawnPoints =
@@ -527,7 +530,7 @@ xi.fate.zones[xi.zone.WEST_RONFAURE] =
             mobs =
             {
                 {
-                    base        = { 100, 18 },  -- TODO: verify mob_groups (Goblin Thug)
+                    templateName = "Goblin_Thug",
                     name        = string.char(0xA6) .. "Goblin Thug",
                     count       = 5,
                     spawnPoints =
@@ -540,7 +543,9 @@ xi.fate.zones[xi.zone.WEST_RONFAURE] =
                     },
                 },
                 {
-                    base        = { 100, 19 },  -- TODO: verify mob_groups (Goblin Trader)
+                    -- No Goblin Trader template locally; reskin to Goblin Weaver,
+                    -- the zone's other non-Thug (support-type) goblin look.
+                    templateName = "Goblin_Weaver",
                     name        = string.char(0xA6) .. "Goblin Trader",
                     count       = 3,
                     spawnPoints =
@@ -614,7 +619,9 @@ xi.fate.zones[xi.zone.WEST_RONFAURE] =
             mobs =
             {
                 {
-                    base        = { 100, 26 },  -- TODO: verify mob_groups (Goblin Smithy)
+                    -- No Goblin Smithy template locally; reskin to Goblin Digger,
+                    -- the closest miner/crafter-flavoured goblin look on hand.
+                    templateName = "Goblin_Digger_near",
                     name        = string.char(0xA6) .. "Goblin Smithy",
                     count       = 3,
                     spawnPoints =
@@ -625,7 +632,9 @@ xi.fate.zones[xi.zone.WEST_RONFAURE] =
                     },
                 },
                 {
-                    base        = { 100, 19 },  -- TODO: verify mob_groups (Goblin Mugger)
+                    -- No Goblin Mugger template locally; reskin to Goblin Thug,
+                    -- the zone's aggressive/robber-flavoured goblin look.
+                    templateName = "Goblin_Thug",
                     name        = string.char(0xA6) .. "Goblin Mugger",
                     count       = 2,
                     spawnPoints =
@@ -726,7 +735,9 @@ xi.fate.zones[xi.zone.WEST_RONFAURE] =
             mobs =
             {
                 {
-                    base         = { 100, 21 },  -- TODO: verify mob_groups (Hill Wolf)
+                    -- No wolf template in this zone's mobs.yaml; Tainted Hound is
+                    -- the closest canine look available.
+                    templateName = "Tainted_Hound",
                     name         = string.char(0xA6) .. "The Wolfking",
                     count        = 1,
                     isBoss       = true,
@@ -738,7 +749,7 @@ xi.fate.zones[xi.zone.WEST_RONFAURE] =
                     },
                 },
                 {
-                    base        = { 100, 21 },  -- TODO: verify mob_groups
+                    templateName = "Tainted_Hound",
                     name        = string.char(0xA6) .. "Hill Wolf",
                     count       = 4,
                     noCount     = true,
@@ -847,7 +858,11 @@ xi.fate.zones[xi.zone.WEST_RONFAURE] =
             mobs =
             {
                 {
-                    base         = { 105, 35 },  -- TODO: verify mob_groups (treant family)
+                    -- Cross-zone borrow: was already cloning zone 105's group 35 (Batallia
+                    -- Downs). Its literal Treant template is a direct match for "a colossal
+                    -- figure of bark and root" - a much stronger fit than any local reskin.
+                    templateName   = "Treant",
+                    templateZoneId = xi.zone.BATALLIA_DOWNS,
                     name         = string.char(0xA6) .. "Ancient Dryad",
                     count        = 1,
                     isBoss       = true,

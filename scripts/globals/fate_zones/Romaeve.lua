@@ -44,7 +44,11 @@ xi.fate.zones[xi.zone.ROMAEVE] =
             mobs =
             {
                 {
-                    base        = { 122, 1 },  -- TODO: verify mob_groups (zoneId, groupId)
+                    -- Cross-zone borrow: this zone's mobs.yaml is entirely golems/
+                    -- animated weapons/mimics/elementals - no undead template exists
+                    -- locally. Gusgen Mines has a proper crypt-undead roster.
+                    templateName   = "Skeleton_Warrior_GM",
+                    templateZoneId = xi.zone.GUSGEN_MINES,
                     name        = string.char(0xA6) .. "Maeve Skeleton",
                     count       = 5,
                     spawnPoints =
@@ -57,7 +61,9 @@ xi.fate.zones[xi.zone.ROMAEVE] =
                     },
                 },
                 {
-                    base        = { 122, 2 },  -- TODO: verify mob_groups (zoneId, groupId)
+                    -- Cross-zone borrow: same reasoning as Maeve Skeleton above.
+                    templateName   = "Wandering_Ghost",
+                    templateZoneId = xi.zone.GUSGEN_MINES,
                     name        = string.char(0xA6) .. "Ro'Maeve Ghost",
                     count       = 4,
                     spawnPoints =
@@ -133,7 +139,10 @@ xi.fate.zones[xi.zone.ROMAEVE] =
             mobs =
             {
                 {
-                    base        = { 122, 3 },  -- TODO: verify mob_groups (zoneId, groupId)
+                    -- Cross-zone borrow: no undead template exists in this zone's own
+                    -- mobs.yaml. Gusgen Mines has a matching Wight.
+                    templateName   = "Wight_war_GM",
+                    templateZoneId = xi.zone.GUSGEN_MINES,
                     name        = string.char(0xA6) .. "Ro'Maeve Wight",
                     count       = 3,
                     spawnPoints =
@@ -144,7 +153,11 @@ xi.fate.zones[xi.zone.ROMAEVE] =
                     },
                 },
                 {
-                    base        = { 122, 4 },  -- TODO: verify mob_groups (zoneId, groupId)
+                    -- Cross-zone borrow: no true "Spectre" template exists anywhere
+                    -- outside instance-locked content; Gusgen Mines' Ghast is the
+                    -- closest ethereal caster-undead look for the same donor zone.
+                    templateName   = "Ghast_blm_GM",
+                    templateZoneId = xi.zone.GUSGEN_MINES,
                     name        = string.char(0xA6) .. "Maeve Spectre",
                     count       = 2,
                     spawnPoints =
@@ -243,7 +256,10 @@ xi.fate.zones[xi.zone.ROMAEVE] =
             mobs =
             {
                 {
-                    base         = { 122, 5 },  -- TODO: verify mob_groups (zoneId, groupId)
+                    -- Cross-zone borrow: flavor text calls this "a massive Lich" -
+                    -- Attohwa Chasm has that exact species, no local equivalent exists.
+                    templateName   = "Lich",
+                    templateZoneId = xi.zone.ATTOHWA_CHASM,
                     name         = string.char(0xA6) .. "Eternal Sentry",
                     count        = 1,
                     isBoss       = true,
@@ -255,7 +271,10 @@ xi.fate.zones[xi.zone.ROMAEVE] =
                     },
                 },
                 {
-                    base        = { 122, 6 },  -- TODO: verify mob_groups (zoneId, groupId)
+                    -- Cross-zone borrow: exact "Revenant" name match in Sanctuary of
+                    -- Zitah, no local stone-undead equivalent exists.
+                    templateName   = "Revenant_SoZ_ENS_FY",
+                    templateZoneId = xi.zone.THE_SANCTUARY_OF_ZITAH,
                     name        = string.char(0xA6) .. "Stone Revenant",
                     count       = 4,
                     noCount     = true,

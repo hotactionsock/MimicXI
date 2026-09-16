@@ -41,7 +41,7 @@ xi.fate.zones[xi.zone.NORTH_GUSTABERG] =
             mobs =
             {
                 {
-                    base        = { 106, 6 },
+                    templateName = "Huge_Hornet",
                     name        = string.char(0xA6) .. "Huge Hornet",
                     count       = 5,
                     spawnPoints =
@@ -54,7 +54,9 @@ xi.fate.zones[xi.zone.NORTH_GUSTABERG] =
                     },
                 },
                 {
-                    base        = { 106, 9 },
+                    -- No "Killer Hornet" template locally; Maneating_Hornet is the
+                    -- more aggressive hornet variant available in this zone.
+                    templateName = "Maneating_Hornet",
                     name        = string.char(0xA6) .. "Killer Hornet",
                     count       = 4,
                     spawnPoints =
@@ -129,7 +131,7 @@ xi.fate.zones[xi.zone.NORTH_GUSTABERG] =
             mobs =
             {
                 {
-                    base        = { 106, 22 },
+                    templateName = "Young_Quadav",
                     name        = string.char(0xA6) .. "Young Quadav",
                     count       = 5,
                     spawnPoints =
@@ -142,7 +144,7 @@ xi.fate.zones[xi.zone.NORTH_GUSTABERG] =
                     },
                 },
                 {
-                    base        = { 106, 23 },
+                    templateName = "Amber_Quadav",
                     name        = string.char(0xA6) .. "Amber Quadav",
                     count       = 3,
                     spawnPoints =
@@ -216,7 +218,7 @@ xi.fate.zones[xi.zone.NORTH_GUSTABERG] =
             mobs =
             {
                 {
-                    base        = { 106, 24 },
+                    templateName = "Amethyst_Quadav",
                     name        = string.char(0xA6) .. "Purple Quadav",
                     count       = 3,
                     spawnPoints =
@@ -227,7 +229,7 @@ xi.fate.zones[xi.zone.NORTH_GUSTABERG] =
                     },
                 },
                 {
-                    base        = { 106, 23 },
+                    templateName = "Amber_Quadav",
                     name        = string.char(0xA6) .. "Amber Quadav",
                     count       = 2,
                     spawnPoints =
@@ -326,7 +328,10 @@ xi.fate.zones[xi.zone.NORTH_GUSTABERG] =
             mobs =
             {
                 {
-                    base         = { 174, 37 },
+                    -- Historically cloned zone 174's base (cross-zone) - this event's
+                    -- own flavour text calls it a "colossal Stone Eater", and this
+                    -- zone already has a Stone_Eater template, a direct local fit.
+                    templateName = "Stone_Eater",
                     name         = string.char(0xA6) .. "Bedrock Titan",
                     count        = 1,
                     isBoss       = true,
@@ -338,7 +343,9 @@ xi.fate.zones[xi.zone.NORTH_GUSTABERG] =
                     },
                 },
                 {
-                    base        = { 106, 19 },
+                    -- No newt/amphibian template locally; Rock_Lizard is the closest
+                    -- reptile-family fit available in this zone's mobs.yaml.
+                    templateName = "Rock_Lizard",
                     name        = string.char(0xA6) .. "Agitated Newt",
                     count       = 3,
                     noCount     = true,
@@ -421,7 +428,9 @@ xi.fate.zones[xi.zone.NORTH_GUSTABERG] =
             mobs =
             {
                 {
-                    base        = { 106, 19 },
+                    -- No newt/amphibian template locally; Rock_Lizard is the closest
+                    -- reptile-family fit available in this zone's mobs.yaml.
+                    templateName = "Rock_Lizard",
                     name        = string.char(0xA6) .. "Agitated Newt",
                     count       = 5,
                     spawnPoints =
@@ -434,7 +443,9 @@ xi.fate.zones[xi.zone.NORTH_GUSTABERG] =
                     },
                 },
                 {
-                    base        = { 106, 20 },  -- TODO: verify mob_groups
+                    -- Reuses Rock_Lizard (also used for this event's Agitated Newt) -
+                    -- it's the only lizard-family template in this zone's mobs.yaml.
+                    templateName = "Rock_Lizard",
                     name        = string.char(0xA6) .. "Hill Lizard",
                     count       = 4,
                     spawnPoints =
@@ -510,7 +521,9 @@ xi.fate.zones[xi.zone.NORTH_GUSTABERG] =
             mobs =
             {
                 {
-                    base        = { 106, 21 },  -- TODO: verify mob_groups (Forest Funguar)
+                    -- No Funguar-family template locally; Walking_Sapling is the
+                    -- closest plant-monster fit in this zone's mobs.yaml.
+                    templateName = "Walking_Sapling",
                     name        = string.char(0xA6) .. "Forest Funguar",
                     count       = 5,
                     spawnPoints =
@@ -523,7 +536,7 @@ xi.fate.zones[xi.zone.NORTH_GUSTABERG] =
                     },
                 },
                 {
-                    base        = { 106, 23 },
+                    templateName = "Amber_Quadav",
                     name        = string.char(0xA6) .. "Amber Quadav",
                     count       = 4,
                     spawnPoints =
@@ -598,7 +611,7 @@ xi.fate.zones[xi.zone.NORTH_GUSTABERG] =
             mobs =
             {
                 {
-                    base        = { 106, 24 },
+                    templateName = "Amethyst_Quadav",
                     name        = string.char(0xA6) .. "Purple Quadav",
                     count       = 3,
                     spawnPoints =
@@ -609,7 +622,7 @@ xi.fate.zones[xi.zone.NORTH_GUSTABERG] =
                     },
                 },
                 {
-                    base        = { 106, 25 },  -- TODO: verify mob_groups (Sapphire Quadav)
+                    templateName = "Sapphirine_Quadav",
                     name        = string.char(0xA6) .. "Blue Quadav",
                     count       = 2,
                     spawnPoints =
@@ -708,7 +721,10 @@ xi.fate.zones[xi.zone.NORTH_GUSTABERG] =
             mobs =
             {
                 {
-                    base         = { 174, 37 },
+                    -- Historically cloned zone 174's base (cross-zone) - this event's
+                    -- own flavour text calls it "A Stone Eater of extraordinary age",
+                    -- and this zone already has a Stone_Eater template.
+                    templateName = "Stone_Eater",
                     name         = string.char(0xA6) .. "Hollow King",
                     count        = 1,
                     isBoss       = true,
@@ -720,7 +736,9 @@ xi.fate.zones[xi.zone.NORTH_GUSTABERG] =
                     },
                 },
                 {
-                    base        = { 106, 19 },
+                    -- No newt/amphibian template locally; Rock_Lizard is the closest
+                    -- reptile-family fit available in this zone's mobs.yaml.
+                    templateName = "Rock_Lizard",
                     name        = string.char(0xA6) .. "Agitated Newt",
                     count       = 3,
                     noCount     = true,
@@ -825,7 +843,10 @@ xi.fate.zones[xi.zone.NORTH_GUSTABERG] =
             mobs =
             {
                 {
-                    base         = { 174, 37 },
+                    -- Historically cloned zone 174's base (cross-zone) - this event's
+                    -- own flavour text calls it "A legendary Stone Eater", and this
+                    -- zone already has a Stone_Eater template.
+                    templateName = "Stone_Eater",
                     name         = string.char(0xA6) .. "Primal Crusher",
                     count        = 1,
                     isBoss       = true,
@@ -837,7 +858,7 @@ xi.fate.zones[xi.zone.NORTH_GUSTABERG] =
                     },
                 },
                 {
-                    base        = { 106, 24 },
+                    templateName = "Amethyst_Quadav",
                     name        = string.char(0xA6) .. "Purple Quadav",
                     count       = 5,
                     noCount     = true,

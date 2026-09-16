@@ -43,7 +43,7 @@ xi.fate.zones[xi.zone.ALTAIEU] =
             mobs =
             {
                 {
-                    base        = { 33, 1 },  -- TODO: verify mob_groups (zoneId, groupId)
+                    templateName = "Omphuabo",
                     name        = string.char(0xA6) .. "Taieu Phuabo",
                     count       = 5,
                     spawnPoints =
@@ -56,7 +56,7 @@ xi.fate.zones[xi.zone.ALTAIEU] =
                     },
                 },
                 {
-                    base        = { 33, 2 },  -- TODO: verify mob_groups (zoneId, groupId)
+                    templateName = "Omxzomit_2978",
                     name        = string.char(0xA6) .. "Taieu Xzomit",
                     count       = 3,
                     spawnPoints =
@@ -156,7 +156,9 @@ xi.fate.zones[xi.zone.ALTAIEU] =
             mobs =
             {
                 {
-                    base         = { 33, 3 },  -- TODO: verify mob_groups (zoneId, groupId)
+                    -- No Ix'aern template locally; Jailer of Justice fits the
+                    -- "descends to pass judgement" flavour text directly.
+                    templateName = "Jailer_of_Justice",
                     name         = string.char(0xA6) .. "Ix'aern Judge",
                     count        = 1,
                     isBoss       = true,
@@ -168,7 +170,7 @@ xi.fate.zones[xi.zone.ALTAIEU] =
                     },
                 },
                 {
-                    base        = { 33, 4 },  -- TODO: verify mob_groups (zoneId, groupId)
+                    templateName = "Omphuabo",
                     name        = string.char(0xA6) .. "Taieu Zphar",
                     count       = 4,
                     noCount     = true,

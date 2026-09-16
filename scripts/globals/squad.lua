@@ -22,9 +22,42 @@
 --                                  aug: 1 if the item carries an augment / exdata
 --
 -- Gear (equip an offline alt / trust):
---   MSQ|g|<charid>|<equipSlot>|<itemId>|<aug>            one of the 16 worn slots
+--   MSQ|g|<charid>|<equipSlot>|<itemId>|<aug>|<containerId>|<invSlot>   one of the 16 worn slots
+--                                  containerId/invSlot address the backing
+--                                  char_inventory row (0/0 if empty) - reuse
+--                                  them for an augment lookup, same as a
+--                                  candidate's srcCont/srcSlot below
 --   MSQ|gc|<charid>|<equipSlot>|<srcChar>|<srcSelf>|<srcCont>|<srcSlot>|<itemId>|<aug>|<equipped>
 --                                  one equip candidate (srcSelf 1 = the summoner)
+--
+-- Warehouse as a gear/bag source (account_warehouse, rowid-addressed rather
+-- than charid/container/slot - see warehouseutils / squadutils):
+--   MSQ|wgc|<charid>|<equipSlot>|<rowid>|<itemId>|<aug>  one warehouse equip candidate
+--   MSQ|wp|<page>|<pages>|<used>|<cap>                   warehouse page info (Bags tab)
+--   MSQ|wi|<rowid>|<itemId>|<qty>|<aug>                  one warehouse row (Bags tab)
+--
+-- Item stat readout (Gear tab hover/click):
+--   MSQ|mi|<itemId>|<statsText>    base item_mods, static per itemId - no
+--                                  charid. Space-separated "MOD+n"/"MOD-n"
+--                                  pairs, may be empty for a plain item.
+--   MSQ|ma|<charid>|<containerId>|<slot>|<augText>   augment-only stats for
+--                                  one specific instance (account bag slot,
+--                                  or a worn slot's containerId/invSlot) -
+--                                  augments don't live on the itemId.
+--   MSQ|mw|<rowid>|<augText>       same, for one account_warehouse row.
+--
+-- Gambits (see scripts/globals/gambitrules.lua for the whitelist/parsing):
+--   MSQ|gvt|<id>|<key>|<label>            vocab: target        (verb "gambitvocab")
+--   MSQ|gvc|<id>|<key>|<argkind>|<label>  vocab: condition     (argkind: none|percent|tp|status)
+--   MSQ|gvs|<id>|<key>|<label>            vocab: status
+--   MSQ|gvf|<id>|<KEY>                    vocab: spell family (addon prettifies KEY)
+--   MSQ|gvw|<id>|<key>|<label>            vocab: weaponskill trigger (ai.tp.*)
+--   MSQ|gvu|<id>|<key>|<label>            vocab: weaponskill selector (ai.s.* subset)
+--   MSQ|gs|<setid>|<name>|<count>|<tptrigger>|<tpselector>|<tpactionid>  one owned gambit set  (verb "gambits")
+--   MSQ|gr|<setid>|<ordinal>|<target>|<cond>|<arg>|<reaction>|<selector>|<actionid>  one rule
+--   MSQ|ga|<charid>|<mjob>|<setid>        one (charid,mjob) -> set assignment
+-----------------------------------
+require('scripts/globals/gambitrules')
 -----------------------------------
 xi       = xi       or {}
 xi.squad = xi.squad or {}
@@ -191,11 +224,15 @@ xi.squad.EQUIP_SLOTS =
     [12] = 'Ear 2', [13] = 'Ring 1',[14] = 'Ring 2',[15] = 'Back',
 }
 
+-- Your own live character equips/unequips straight from your own bags (result
+-- 0, same as an alt). Result 2/6 below still apply to you for a warehouse or
+-- another alt's item - move it into your own bags first (Bags tab), then
+-- equip it from there.
 xi.squad.GEAR_RESULT =
 {
     [0] = nil,
     [1] = 'That is not one of your account characters.',
-    [2] = 'That character is logged in - change its gear directly.',
+    [2] = 'That character is logged in - equip from its own bags, or move the item to your bags first.',
     [3] = 'That item does not fit that slot.',
     [4] = 'The item is no longer there.',
     [5] = "That character's job, level or race cannot wear it.",
@@ -207,7 +244,8 @@ xi.squad.GEAR_RESULT =
 xi.squad.msqGear = function(player, verb, charid)
     rec(player, string.format('d|%d|%s', xi.squad.PROTOCOL, verb))
     for _, g in ipairs(player:getSquadGear(charid)) do
-        rec(player, string.format('g|%d|%d|%d|%d', charid, g.equipSlot, g.itemId, g.aug and 1 or 0))
+        rec(player, string.format('g|%d|%d|%d|%d|%d|%d',
+            charid, g.equipSlot, g.itemId, g.aug and 1 or 0, g.containerId, g.invSlot))
     end
     rec(player, 'z|' .. verb)
 end
@@ -221,6 +259,179 @@ xi.squad.msqGearCandidates = function(player, verb, charid, equipSlot)
     end
     rec(player, 'z|' .. verb)
 end
+
+-- Emit the equip candidates for one slot, sourced from account_warehouse.
+xi.squad.msqWarehouseGearCandidates = function(player, verb, charid, equipSlot)
+    rec(player, string.format('d|%d|%s', xi.squad.PROTOCOL, verb))
+    for _, c in ipairs(player:getSquadWarehouseGearCandidates(charid, equipSlot)) do
+        rec(player, string.format('wgc|%d|%d|%d|%d|%d',
+            charid, equipSlot, c.rowid, c.itemId, c.aug and 1 or 0))
+    end
+    rec(player, 'z|' .. verb)
+end
+
+-- modId -> short label, built once from xi.mod (already a generated name->id
+-- enum). Falls back to "mod<id>" for anything not in it (item_mods should
+-- only ever reference real mods, so this is just a safety net).
+local modLabel
+local function getModLabel(modId)
+    if not modLabel then
+        modLabel = {}
+        for name, id in pairs(xi.mod) do
+            if modLabel[id] == nil then
+                modLabel[id] = name
+            end
+        end
+    end
+    return modLabel[modId] or ('mod' .. tostring(modId))
+end
+
+-- Race id (xi.race, 1..8) -> { group, sex }. Bit (race-1) of an
+-- EQUIPMENT_ONLY_RACE mod being set means that race can wear the item
+-- (item_equipment.cpp: isEquippableByRace). Matches scripts/enum/race.lua.
+local RACE_INFO =
+{
+    [1] = { group = 'Hume',     sex = 'M' },
+    [2] = { group = 'Hume',     sex = 'F' },
+    [3] = { group = 'Elvaan',   sex = 'M' },
+    [4] = { group = 'Elvaan',   sex = 'F' },
+    [5] = { group = 'Tarutaru', sex = 'M' },
+    [6] = { group = 'Tarutaru', sex = 'F' },
+    [7] = { group = 'Mithra' },
+    [8] = { group = 'Galka' },
+}
+
+-- "EQUIPMENT_ONLY_RACE" is a race bitmask, not a signed stat delta - decode it
+-- into readable names ("Hume/Galka") instead of showing the raw mod name and
+-- mask value.
+local function formatRaceMask(mask)
+    local groups, order = {}, {}
+    for race = 1, 8 do
+        if bit.band(mask, bit.lshift(1, race - 1)) ~= 0 then
+            local info = RACE_INFO[race]
+            if not groups[info.group] then
+                groups[info.group] = {}
+                order[#order + 1] = info.group
+            end
+            if info.sex then groups[info.group][info.sex] = true else groups[info.group].any = true end
+        end
+    end
+
+    local parts = {}
+    for _, name in ipairs(order) do
+        local g = groups[name]
+        if g.any or (g.M and g.F) then
+            parts[#parts + 1] = name
+        elseif g.M then
+            parts[#parts + 1] = name .. ' (M)'
+        else
+            parts[#parts + 1] = name .. ' (F)'
+        end
+    end
+    return table.concat(parts, '/')
+end
+
+-- Compact "STR+3 DEX+2 HP+15" stat line from a list of { modId, value } rows
+-- (whatever shape - base item_mods or decoded augment deltas). Shared by
+-- formatItemMods and formatAugmentMods below.
+local function formatModRows(rows)
+    local parts = {}
+    for _, m in ipairs(rows) do
+        if m.modId == xi.mod.EQUIPMENT_ONLY_RACE then
+            if m.value > 0 then
+                parts[#parts + 1] = formatRaceMask(m.value)
+            end
+        elseif m.value ~= 0 then
+            parts[#parts + 1] = string.format('%s%+d', getModLabel(m.modId), m.value)
+        end
+    end
+    return table.concat(parts, ' ')
+end
+
+-- Base "DMG:54 Delay:240 STR+3 DEX+2 HP+15" stat line for one itemId, from
+-- the item's base item_mods rows (augments are per-instance and not covered
+-- here), with DMG/Delay prefixed for a weapon - those are item_weapon's own
+-- columns, not a stat modifier, so getItemMods doesn't carry them. Lets
+-- players in the msquad Gear tab see stats before moving gear to inventory.
+xi.squad.formatItemMods = function(player, itemId)
+    local text   = formatModRows(player:getItemMods(itemId))
+    local weapon = player:getWeaponDamageDelay(itemId)
+
+    if weapon.isWeapon then
+        local prefix = string.format('DMG:%d Delay:%d', weapon.damage, weapon.delay)
+        text = (text ~= '') and (prefix .. ' ' .. text) or prefix
+    end
+
+    return text
+end
+
+-- Augment-only stat line for one specific item instance (an account bag/
+-- wardrobe slot, or a worn slot's backing containerId/invSlot - see
+-- getSquadGear). Empty for a plain, non-augmented item.
+xi.squad.formatBagItemAugmentMods = function(player, charid, containerId, slot)
+    return formatModRows(player:getBagItemAugmentMods(charid, containerId, slot))
+end
+
+-- Same, for one account_warehouse row (rowid-addressed).
+xi.squad.formatWarehouseItemAugmentMods = function(player, rowid)
+    return formatModRows(player:getWarehouseItemAugmentMods(rowid))
+end
+
+-- Emit the base stat readout for one itemId. Static per item, not
+-- per-character - callable regardless of which alt/slot is currently open in
+-- the Gear tab.
+xi.squad.msqItemInfo = function(player, verb, itemId)
+    rec(player, string.format('d|%d|%s', xi.squad.PROTOCOL, verb))
+    rec(player, string.format('mi|%d|%s', itemId, xi.squad.formatItemMods(player, itemId)))
+    rec(player, 'z|' .. verb)
+end
+
+-- Emit the augment-only stat readout for one account bag/wardrobe slot (or a
+-- worn slot's backing containerId/invSlot).
+xi.squad.msqBagItemAugmentInfo = function(player, verb, charid, containerId, slot)
+    rec(player, string.format('d|%d|%s', xi.squad.PROTOCOL, verb))
+    rec(player, string.format('ma|%d|%d|%d|%s',
+        charid, containerId, slot, xi.squad.formatBagItemAugmentMods(player, charid, containerId, slot)))
+    rec(player, 'z|' .. verb)
+end
+
+-- Emit the augment-only stat readout for one account_warehouse row.
+xi.squad.msqWarehouseItemAugmentInfo = function(player, verb, rowid)
+    rec(player, string.format('d|%d|%s', xi.squad.PROTOCOL, verb))
+    rec(player, string.format('mw|%d|%s', rowid, xi.squad.formatWarehouseItemAugmentMods(player, rowid)))
+    rec(player, 'z|' .. verb)
+end
+
+-- Emit one page of the account warehouse, for the Bags tab's Warehouse
+-- pseudo-character (reuses the mwarehouse-addon's own warehouseInfo/Page
+-- bindings - listing is account-wide and not alt-specific).
+xi.squad.msqWarehousePage = function(player, verb, page)
+    page = page or 0
+    rec(player, string.format('d|%d|%s', xi.squad.PROTOCOL, verb))
+
+    local info = player:warehouseInfo()
+    rec(player, string.format('wp|%d|%d|%d|%d', page, info.pages, info.used, info.cap))
+
+    for _, row in ipairs(player:warehousePage(page)) do
+        rec(player, string.format('wi|%d|%d|%d|%d', row.rowid, row.itemId, row.quantity, row.aug and 1 or 0))
+    end
+
+    rec(player, 'z|' .. verb)
+end
+
+-- Human-readable reason for a squadBagMoveToWarehouse / squadBagMoveFromWarehouse
+-- result code (the two share one numbering - see squadutils::WarehouseBagResult).
+xi.squad.WAREHOUSE_BAG_RESULT =
+{
+    [0] = nil,
+    [1] = 'That is not one of your account characters.',
+    [2] = 'That container is not available on that character.',
+    [3] = 'That character is logged in - use the warehouse directly.',
+    [4] = 'Nothing is there any more.',
+    [5] = 'The destination is full.',
+    [6] = 'Bad quantity (or the item does not stack).',
+    [7] = 'The move failed - nothing was changed.',
+}
 
 -- Human-readable reason for a swapOwnJobs (self job change) result code.
 xi.squad.SELFJOB_RESULT =
@@ -260,12 +471,15 @@ end
 -- Human-readable reason for a setSquadMemberJob result code.
 xi.squad.JOB_RESULT =
 {
-    [0] = nil,                                   -- ok
+    [0] = nil,                                   -- ok - if the alt is currently
+                                                  -- out as a trust, it is force-
+                                                  -- resummoned immediately on the
+                                                  -- new job (no deferral, even in
+                                                  -- combat - see setSquadMemberJob)
     [1] = 'That character is not on your account.',
     [2] = 'That character is logged in - change jobs on it directly.',
     [3] = 'That job is not unlocked on that character.',
     [4] = 'Invalid job.',
-    [5] = 'Job changed - the trust re-summons on the new jobs after this fight.',
 }
 
 -- charid -> account character row, by (case-insensitive) name.
@@ -286,4 +500,110 @@ xi.squad.setEngageMode = function(player, mode)
     end
     player:setCharVar(xi.squad.ENGAGE_VAR, mode)
     return true
+end
+
+-----------------------------------
+-- Gambits (see scripts/globals/gambitrules.lua for the whitelist/parsing)
+-----------------------------------
+
+xi.squad.GAMBITSET_RESULT =
+{
+    [0] = nil, -- ok
+    [1] = 'You already have a gambit set with that name.',
+    [2] = string.format('You already have %d gambit sets (the max).', xi.gambitRules.MAX_SETS_PER_ACCOUNT),
+    [3] = 'Bad name (1-24 characters).',
+    [4] = 'No gambit set with that name.',
+}
+
+xi.squad.GAMBITRULE_ADD_RESULT =
+{
+    [0] = nil, -- ok
+    [1] = 'No gambit set with that name.',
+    [2] = string.format('That set already has %d rules (the max).', xi.gambitRules.MAX_RULES_PER_SET),
+}
+
+xi.squad.GAMBITRULE_REMOVE_RESULT =
+{
+    [0] = nil, -- ok
+    [1] = 'No gambit set with that name.',
+    [2] = 'No rule at that position.',
+}
+
+xi.squad.GAMBITASSIGN_RESULT =
+{
+    [0] = nil, -- ok
+    [1] = 'That character is not on your account.',
+    [2] = 'Invalid job.',
+    [3] = 'No gambit set with that name.',
+}
+
+xi.squad.GAMBITSET_UPDATE_RESULT =
+{
+    [0] = nil, -- ok
+    [3] = 'Bad name.',
+    [4] = 'No gambit set with that name.',
+}
+
+-- The vocabulary the msquad Gambits tab builds its dropdowns from. Sent once
+-- (the addon caches it) under its own envelope so it never competes with the
+-- (much more frequently refreshed) gambits envelope below.
+--   MSQ|gvt|<id>|<key>|<label>            target
+--   MSQ|gvc|<id>|<key>|<argkind>|<label>  condition (argkind: none|percent|tp|status)
+--   MSQ|gvs|<id>|<key>|<label>            status (for the status/notstatus arg)
+--   MSQ|gvf|<id>|<KEY>                    spell family (addon prettifies KEY into a label)
+xi.squad.msqGambitVocab = function(player, verb)
+    rec(player, string.format('d|%d|%s', xi.squad.PROTOCOL, verb))
+
+    for _, t in ipairs(xi.gambitRules.TARGET_LIST) do
+        rec(player, string.format('gvt|%d|%s|%s', xi.gambitRules.TARGETS[t.name], t.name, t.label))
+    end
+
+    for _, c in ipairs(xi.gambitRules.CONDITION_LIST) do
+        local def = xi.gambitRules.CONDITIONS[c.name]
+        rec(player, string.format('gvc|%d|%s|%s|%s', def.id, c.name, def.arg, c.label))
+    end
+
+    for _, s in ipairs(xi.gambitRules.STATUSES) do
+        rec(player, string.format('gvs|%d|%s|%s', s.id, s.name, s.label))
+    end
+
+    for _, f in ipairs(xi.gambitRules.FAMILY_LIST) do
+        rec(player, string.format('gvf|%d|%s', f.id, f.name))
+    end
+
+    for _, t in ipairs(xi.gambitRules.TP_TRIGGER_LIST) do
+        rec(player, string.format('gvw|%d|%s|%s', xi.gambitRules.TP_TRIGGERS[t.name], t.name, t.label))
+    end
+
+    for _, s in ipairs(xi.gambitRules.TP_SELECTOR_LIST) do
+        rec(player, string.format('gvu|%d|%s|%s', xi.gambitRules.TP_SELECTORS[s.name], s.name, s.label))
+    end
+
+    rec(player, 'z|' .. verb)
+end
+
+-- The player's own gambit sets/rules/assignments. Sent whole every time (sets
+-- are capped small - see MAX_SETS_PER_ACCOUNT/MAX_RULES_PER_SET), the same
+-- shape as msqRoster's full-dump-every-refresh pattern.
+--   MSQ|gs|<setid>|<name>|<count>|<tptrigger>|<tpselector>|<tpactionid>
+--   MSQ|gr|<setid>|<ordinal>|<target>|<cond>|<arg>|<reaction>|<selector>|<actionid>
+--   MSQ|ga|<charid>|<mjob>|<setid>
+xi.squad.msqGambits = function(player, verb)
+    rec(player, string.format('d|%d|%s', xi.squad.PROTOCOL, verb))
+
+    for _, s in ipairs(player:getGambitSets()) do
+        rec(player, string.format('gs|%d|%s|%d|%d|%d|%d',
+            s.setid, s.name, s.count, s.tpTrigger, s.tpSelector, s.tpActionId))
+
+        for _, r in ipairs(player:getGambitRules(s.name)) do
+            rec(player, string.format('gr|%d|%d|%d|%d|%d|%d|%d|%d',
+                s.setid, r.ordinal, r.target, r.cond, r.arg, r.reaction, r.selector, r.actionid))
+        end
+    end
+
+    for _, a in ipairs(player:getGambitAssignments()) do
+        rec(player, string.format('ga|%d|%d|%d', a.charid, a.mjob, a.setid))
+    end
+
+    rec(player, 'z|' .. verb)
 end

@@ -44,7 +44,7 @@ xi.fate.zones[xi.zone.BHAFLAU_THICKETS] =
             mobs =
             {
                 {
-                    base        = { 52, 1 },  -- TODO: verify mob_groups (zoneId, groupId)
+                    templateName = "Mamool_Ja_Mimer",
                     name        = string.char(0xA6) .. "Mamool Mimic",
                     count       = 5,
                     spawnPoints =
@@ -57,7 +57,7 @@ xi.fate.zones[xi.zone.BHAFLAU_THICKETS] =
                     },
                 },
                 {
-                    base        = { 52, 2 },  -- TODO: verify mob_groups (zoneId, groupId)
+                    templateName = "Mamool_Ja_Stabler",
                     name        = string.char(0xA6) .. "Mamool Slayer",
                     count       = 4,
                     spawnPoints =
@@ -133,7 +133,7 @@ xi.fate.zones[xi.zone.BHAFLAU_THICKETS] =
             mobs =
             {
                 {
-                    base        = { 52, 3 },  -- TODO: verify mob_groups (zoneId, groupId)
+                    templateName = "Mamool_Ja_Philosopher",
                     name        = string.char(0xA6) .. "Mamool Sophist",
                     count       = 3,
                     spawnPoints =
@@ -144,7 +144,7 @@ xi.fate.zones[xi.zone.BHAFLAU_THICKETS] =
                     },
                 },
                 {
-                    base        = { 52, 4 },  -- TODO: verify mob_groups (zoneId, groupId)
+                    templateName = "Mamool_Ja_Blusterer",
                     name        = string.char(0xA6) .. "Mamool Warlord",
                     count       = 2,
                     spawnPoints =
@@ -243,7 +243,7 @@ xi.fate.zones[xi.zone.BHAFLAU_THICKETS] =
             mobs =
             {
                 {
-                    base         = { 52, 5 },  -- TODO: verify mob_groups (zoneId, groupId)
+                    templateName = "Mamool_Ja_Pikeman",
                     name         = string.char(0xA6) .. "Thicket King",
                     count        = 1,
                     isBoss       = true,
@@ -255,7 +255,7 @@ xi.fate.zones[xi.zone.BHAFLAU_THICKETS] =
                     },
                 },
                 {
-                    base        = { 52, 6 },  -- TODO: verify mob_groups (zoneId, groupId)
+                    templateName = "Troll_Sabreur",
                     name        = string.char(0xA6) .. "Bhaflau Troll",
                     count       = 4,
                     noCount     = true,

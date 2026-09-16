@@ -43,7 +43,10 @@ xi.fate.zones[xi.zone.ROLANBERRY_FIELDS] =
             mobs =
             {
                 {
-                    base        = { 110, 1 },  -- TODO: verify mob_groups (zoneId, groupId)
+                    -- No distinct "gem" tier in this zone's mobs.yaml; Copper
+                    -- is the common/weakest Quadav tier here, fitting a
+                    -- rank-and-file work party.
+                    templateName = "Copper_Quadav",
                     name        = string.char(0xA6) .. "Gem Quadav",
                     count       = 6,
                     spawnPoints =
@@ -57,7 +60,9 @@ xi.fate.zones[xi.zone.ROLANBERRY_FIELDS] =
                     },
                 },
                 {
-                    base        = { 110, 2 },  -- TODO: verify mob_groups (zoneId, groupId)
+                    -- No "blue" Quadav locally; Bronze is the next tier up
+                    -- from Copper, giving the group visual variety.
+                    templateName = "Bronze_Quadav",
                     name        = string.char(0xA6) .. "Blue Quadav",
                     count       = 4,
                     spawnPoints =
@@ -158,7 +163,7 @@ xi.fate.zones[xi.zone.ROLANBERRY_FIELDS] =
             mobs =
             {
                 {
-                    base         = { 110, 3 },  -- TODO: verify mob_groups (zoneId, groupId)
+                    templateName = "Ravenous_Crawler",
                     name         = string.char(0xA6) .. "Crawler Queen",
                     count        = 1,
                     isBoss       = true,
@@ -170,7 +175,9 @@ xi.fate.zones[xi.zone.ROLANBERRY_FIELDS] =
                     },
                 },
                 {
-                    base        = { 110, 4 },  -- TODO: verify mob_groups (zoneId, groupId)
+                    -- No separate "guard" crawler template locally; reuses
+                    -- the queen's own Ravenous_Crawler look.
+                    templateName = "Ravenous_Crawler",
                     name        = string.char(0xA6) .. "Guard Crawler",
                     count       = 4,
                     noCount     = true,
@@ -250,7 +257,9 @@ xi.fate.zones[xi.zone.ROLANBERRY_FIELDS] =
             mobs =
             {
                 {
-                    base        = { 110, 5 },  -- TODO: verify mob_groups (Rolanberry Beetle)
+                    -- No beetle template in this zone's mobs.yaml; Berry_Grub
+                    -- is the closest orchard-pest insect available.
+                    templateName = "Berry_Grub",
                     name        = string.char(0xA6) .. "Field Beetle",
                     count       = 12,
                     spawnPoints =
@@ -335,7 +344,9 @@ xi.fate.zones[xi.zone.ROLANBERRY_FIELDS] =
             mobs =
             {
                 {
-                    base        = { 110, 6 },  -- TODO: verify mob_groups (Diamond Quadav)
+                    -- No diamond tier locally; Silver is the brightest
+                    -- precious-metal Quadav available here.
+                    templateName = "Silver_Quadav",
                     name        = string.char(0xA6) .. "Diamond Quadav",
                     count       = 6,
                     spawnPoints =
@@ -349,7 +360,9 @@ xi.fate.zones[xi.zone.ROLANBERRY_FIELDS] =
                     },
                 },
                 {
-                    base        = { 110, 7 },  -- TODO: verify mob_groups (Quadav Sniper)
+                    -- No ranged-specific Quadav template locally; Garnet
+                    -- gives this escort group visual variety from Silver.
+                    templateName = "Garnet_Quadav",
                     name        = string.char(0xA6) .. "Quadav Sniper",
                     count       = 4,
                     spawnPoints =
@@ -426,7 +439,9 @@ xi.fate.zones[xi.zone.ROLANBERRY_FIELDS] =
             mobs =
             {
                 {
-                    base        = { 110, 8 },  -- TODO: verify mob_groups (Veteran Quadav)
+                    -- Zircon is the highest-tier gem Quadav locally, fitting
+                    -- "Veteran".
+                    templateName = "Zircon_Quadav",
                     name        = string.char(0xA6) .. "Veteran Quadav",
                     count       = 3,
                     spawnPoints =
@@ -437,7 +452,9 @@ xi.fate.zones[xi.zone.ROLANBERRY_FIELDS] =
                     },
                 },
                 {
-                    base        = { 110, 9 },  -- TODO: verify mob_groups (Quadav Warlord)
+                    -- "Old" Quadav reads as a grizzled elder/leader, fitting
+                    -- a Warlord escort.
+                    templateName = "Old_Quadav",
                     name        = string.char(0xA6) .. "Quadav Warlord",
                     count       = 2,
                     spawnPoints =
@@ -536,7 +553,7 @@ xi.fate.zones[xi.zone.ROLANBERRY_FIELDS] =
             mobs =
             {
                 {
-                    base         = { 110, 10 },  -- TODO: verify mob_groups (Rolanberry Goobbue)
+                    templateName = "Goobbue_Farmer",
                     name         = string.char(0xA6) .. "Berry Goobbue",
                     count        = 1,
                     isBoss       = true,
@@ -548,7 +565,9 @@ xi.fate.zones[xi.zone.ROLANBERRY_FIELDS] =
                     },
                 },
                 {
-                    base        = { 110, 11 },  -- TODO: verify mob_groups (Field Goobbue)
+                    -- Only one Goobbue template locally; reused for the
+                    -- accompanying guards.
+                    templateName = "Goobbue_Farmer",
                     name        = string.char(0xA6) .. "Field Goobbue",
                     count       = 2,
                     noCount     = true,
@@ -651,7 +670,10 @@ xi.fate.zones[xi.zone.ROLANBERRY_FIELDS] =
             mobs =
             {
                 {
-                    base         = { 110, 12 },  -- TODO: verify mob_groups (Ancient Cultivator)
+                    -- No cultivator/plant-elder template locally; Drooling_Daisy
+                    -- is the only plant-type mob in this zone's pool, matching
+                    -- "something vast... growing" in the flavour text.
+                    templateName = "Drooling_Daisy",
                     name         = string.char(0xA6) .. "Old Cultivator",
                     count        = 1,
                     isBoss       = true,

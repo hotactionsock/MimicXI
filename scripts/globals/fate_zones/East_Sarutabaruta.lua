@@ -35,14 +35,20 @@ xi.fate.zones[xi.zone.EAST_SARUTABARUTA] =
 
             objective = { type = "kill", count = 10 },
 
-            area = { -3.6, -0.8, -61, 65 },
+            -- Radius trimmed from 65 to 50: the event's own spawnPoints never
+            -- sit more than ~32 units from this center, but a radius of 65
+            -- swept in 4 unrelated wild Carrion Crow/Savanna Rarab spawns
+            -- from this zone's mobs.yaml (closest at ~60 units out) - killing
+            -- those looks identical to killing a FATE mob but never counts,
+            -- since they aren't part of xi.fate.mobEntities.
+            area = { -3.6, -0.8, -61, 50 },
 
             entryPos = { -3.670, -0.811, -60.948, 249 }, -- !pos -3.670 -0.811 -60.948 116
 
             mobs =
             {
                 {
-                    base        = { 116, 10 },
+                    templateName = "Carrion_Crow",
                     name        = string.char(0xA6) .. "Carrion Crow",
                     count       = 6,
                     spawnPoints =
@@ -56,7 +62,7 @@ xi.fate.zones[xi.zone.EAST_SARUTABARUTA] =
                     },
                 },
                 {
-                    base        = { 116, 8 },
+                    templateName = "Savanna_Rarab",
                     name        = string.char(0xA6) .. "Savanna Rarab",
                     count       = 4,
                     spawnPoints =
@@ -134,7 +140,7 @@ xi.fate.zones[xi.zone.EAST_SARUTABARUTA] =
             mobs =
             {
                 {
-                    base        = { 116, 11 },
+                    templateName = "Yagudo_Initiate",
                     name        = string.char(0xA6) .. "Yagudo Initiate",
                     count       = 5,
                     spawnPoints =
@@ -147,7 +153,7 @@ xi.fate.zones[xi.zone.EAST_SARUTABARUTA] =
                     },
                 },
                 {
-                    base        = { 116, 12 },
+                    templateName = "Yagudo_Acolyte",
                     name        = string.char(0xA6) .. "Yagudo Acolyte",
                     count       = 3,
                     spawnPoints =
@@ -222,7 +228,7 @@ xi.fate.zones[xi.zone.EAST_SARUTABARUTA] =
             mobs =
             {
                 {
-                    base        = { 116, 13 },
+                    templateName = "Yagudo_Scribe",
                     name        = string.char(0xA6) .. "Yagudo Scribe",
                     count       = 3,
                     spawnPoints =
@@ -235,7 +241,7 @@ xi.fate.zones[xi.zone.EAST_SARUTABARUTA] =
                     },
                 },
                 {
-                    base        = { 116, 12 },
+                    templateName = "Yagudo_Acolyte",
                     name        = string.char(0xA6) .. "Yagudo Acolyte",
                     count       = 2,
                     spawnPoints =
@@ -338,7 +344,11 @@ xi.fate.zones[xi.zone.EAST_SARUTABARUTA] =
             mobs =
             {
                 {
-                    base         = { 116, 16 },
+                    -- historically cloned groupid 16 (Sharp-Eared_Ropipi, a
+                    -- rabbit) - clearly a mismatch for "an ancient Mandragora
+                    -- of immense size"; using the adult Mandragora template
+                    -- instead, matching the flavour text.
+                    templateName = "Mandragora",
                     name         = string.char(0xA6) .. "The Matriarch",
                     count        = 1,
                     isBoss       = true,
@@ -350,7 +360,7 @@ xi.fate.zones[xi.zone.EAST_SARUTABARUTA] =
                     },
                 },
                 {
-                    base        = { 116, 6 },
+                    templateName = "Tiny_Mandragora",
                     name        = string.char(0xA6) .. "Tiny Mandragora",
                     count       = 3,
                     noCount     = true,
@@ -431,7 +441,7 @@ xi.fate.zones[xi.zone.EAST_SARUTABARUTA] =
             mobs =
             {
                 {
-                    base        = { 116, 8 },
+                    templateName = "Savanna_Rarab",
                     name        = string.char(0xA6) .. "Savanna Rarab",
                     count       = 6,
                     spawnPoints =
@@ -445,7 +455,11 @@ xi.fate.zones[xi.zone.EAST_SARUTABARUTA] =
                     },
                 },
                 {
-                    base        = { 116, 10 },  -- TODO: verify mob_groups (Hill Sapling)
+                    -- No dedicated vulture template in this zone's mobs.yaml;
+                    -- the historical mob_groups row for this reused the crow's
+                    -- own pool anyway (poolid was shared with Carrion Crow),
+                    -- so this keeps the same visual.
+                    templateName = "Carrion_Crow",
                     name        = string.char(0xA6) .. "Hill Vulture",
                     count       = 3,
                     spawnPoints =
@@ -521,7 +535,7 @@ xi.fate.zones[xi.zone.EAST_SARUTABARUTA] =
             mobs =
             {
                 {
-                    base        = { 116, 6 },
+                    templateName = "Tiny_Mandragora",
                     name        = string.char(0xA6) .. "Tiny Mandragora",
                     count       = 6,
                     spawnPoints =
@@ -535,7 +549,7 @@ xi.fate.zones[xi.zone.EAST_SARUTABARUTA] =
                     },
                 },
                 {
-                    base        = { 116, 6 },  -- TODO: verify mob_groups (Savanna Mandragora)
+                    templateName = "Mandragora",
                     name        = string.char(0xA6) .. "Wild Mandragora",
                     count       = 3,
                     spawnPoints =
@@ -610,7 +624,7 @@ xi.fate.zones[xi.zone.EAST_SARUTABARUTA] =
             mobs =
             {
                 {
-                    base        = { 116, 6 },  -- TODO: verify mob_groups (Mandragora elder)
+                    templateName = "Mandragora",
                     name        = string.char(0xA6) .. "Mad Mandragora",
                     count       = 5,
                     spawnPoints =
@@ -715,7 +729,11 @@ xi.fate.zones[xi.zone.EAST_SARUTABARUTA] =
             mobs =
             {
                 {
-                    base         = { 116, 11 },  -- TODO: verify mob_groups (Yagudo Prelate / Priest)
+                    -- Historically cloned plain Yagudo_Initiate (the TODO
+                    -- comment shows even the original author was unsure);
+                    -- using Yagudo_Vicar instead, matching "Yagudo High
+                    -- Priest" in the flavour text.
+                    templateName = "Yagudo_Vicar",
                     name         = string.char(0xA6) .. "Flock Father",
                     count        = 1,
                     isBoss       = true,
@@ -727,7 +745,7 @@ xi.fate.zones[xi.zone.EAST_SARUTABARUTA] =
                     },
                 },
                 {
-                    base        = { 116, 13 },
+                    templateName = "Yagudo_Scribe",
                     name        = string.char(0xA6) .. "Yagudo Scribe",
                     count       = 3,
                     noCount     = true,
@@ -834,7 +852,14 @@ xi.fate.zones[xi.zone.EAST_SARUTABARUTA] =
             mobs =
             {
                 {
-                    base         = { 134, 102 },  -- TODO: verify mob_groups (high-tier Yagudo)
+                    -- Historically cloned zone 134 groupid 102
+                    -- ("Koo_Saxu_the_Everfast", an unrelated NM reused only
+                    -- for stats/look) - that mob_groups row is gone too, and
+                    -- was never thematically a Yagudo anyway. Using
+                    -- Yagudo_Vicar locally, matching "legendary Yagudo
+                    -- Prophet" in the flavour text; avoids a cross-zone
+                    -- template lookup for a mob that never really needed one.
+                    templateName = "Yagudo_Vicar",
                     name         = string.char(0xA6) .. "Exile Doomseer",
                     count        = 1,
                     isBoss       = true,

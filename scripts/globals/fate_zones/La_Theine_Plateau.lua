@@ -43,7 +43,9 @@ xi.fate.zones[xi.zone.LA_THEINE_PLATEAU] =
             mobs =
             {
                 {
-                    base        = { 102, 1 },  -- TODO: verify mob_groups (zoneId, groupId)
+                    -- No "golem" template among this zone's orcs; Orcish_Stonechucker
+                    -- (ranger/war, stone-throwing) is the closest stone-themed fit.
+                    templateName = "Orcish_Stonechucker",
                     name        = string.char(0xA6) .. "Orcish Golem",
                     count       = 6,
                     spawnPoints =
@@ -57,7 +59,7 @@ xi.fate.zones[xi.zone.LA_THEINE_PLATEAU] =
                     },
                 },
                 {
-                    base        = { 102, 2 },  -- TODO: verify mob_groups (zoneId, groupId)
+                    templateName = "Orcish_Grunt", -- basic drg/war melee fits "Fighter"
                     name        = string.char(0xA6) .. "Orcish Fighter",
                     count       = 4,
                     spawnPoints =
@@ -133,7 +135,7 @@ xi.fate.zones[xi.zone.LA_THEINE_PLATEAU] =
             mobs =
             {
                 {
-                    base        = { 102, 3 },  -- TODO: verify mob_groups (zoneId, groupId)
+                    templateName = "Orcish_Mesmerizer", -- blm/war caster fits "Curser"
                     name        = string.char(0xA6) .. "Orcish Curser",
                     count       = 3,
                     spawnPoints =
@@ -144,7 +146,7 @@ xi.fate.zones[xi.zone.LA_THEINE_PLATEAU] =
                     },
                 },
                 {
-                    base        = { 102, 4 },  -- TODO: verify mob_groups (zoneId, groupId)
+                    templateName = "Orcish_Neckchopper", -- drk/war, closest dark-magic-adjacent fit for "Hexer"
                     name        = string.char(0xA6) .. "Orcish Hexer",
                     count       = 2,
                     spawnPoints =
@@ -243,7 +245,7 @@ xi.fate.zones[xi.zone.LA_THEINE_PLATEAU] =
             mobs =
             {
                 {
-                    base         = { 102, 5 },  -- TODO: verify mob_groups (zoneId, groupId)
+                    templateName = "Chesma", -- species: coeurl
                     name         = string.char(0xA6) .. "Plateau Coeurl",
                     count        = 1,
                     isBoss       = true,
@@ -255,7 +257,7 @@ xi.fate.zones[xi.zone.LA_THEINE_PLATEAU] =
                     },
                 },
                 {
-                    base        = { 102, 6 },  -- TODO: verify mob_groups (zoneId, groupId)
+                    templateName = "Battering_Ram",
                     name        = string.char(0xA6) .. "Highland Ram",
                     count       = 3,
                     noCount     = true,
@@ -335,7 +337,7 @@ xi.fate.zones[xi.zone.LA_THEINE_PLATEAU] =
             mobs =
             {
                 {
-                    base        = { 102, 6 },  -- TODO: verify mob_groups (Highland Ram)
+                    templateName = "Battering_Ram",
                     name        = string.char(0xA6) .. "Highland Ram",
                     count       = 5,
                     spawnPoints =
@@ -348,7 +350,7 @@ xi.fate.zones[xi.zone.LA_THEINE_PLATEAU] =
                     },
                 },
                 {
-                    base        = { 102, 7 },  -- TODO: verify mob_groups (Wailing Ram)
+                    templateName = "Bloodtear_Baldurf", -- named ram NM look, distinct from the plain Battering_Ram trash
                     name        = string.char(0xA6) .. "Wailing Ram",
                     count       = 4,
                     spawnPoints =
@@ -424,7 +426,7 @@ xi.fate.zones[xi.zone.LA_THEINE_PLATEAU] =
             mobs =
             {
                 {
-                    base        = { 102, 7 },  -- TODO: verify mob_groups (Wailing Ram)
+                    templateName = "Bloodtear_Baldurf", -- named ram NM look, distinct from the plain Battering_Ram trash
                     name        = string.char(0xA6) .. "Wailing Ram",
                     count       = 2,
                     spawnPoints =
@@ -434,7 +436,7 @@ xi.fate.zones[xi.zone.LA_THEINE_PLATEAU] =
                     },
                 },
                 {
-                    base        = { 102, 8 },  -- TODO: verify mob_groups (Rampaging Ram)
+                    templateName = "Ironhorn_Baldurno", -- named ram NM look, fits "Rampaging"
                     name        = string.char(0xA6) .. "Rampaging Ram",
                     count       = 2,
                     spawnPoints =
@@ -508,7 +510,7 @@ xi.fate.zones[xi.zone.LA_THEINE_PLATEAU] =
             mobs =
             {
                 {
-                    base        = { 102, 5 },  -- TODO: verify mob_groups (Plateau Coeurl)
+                    templateName = "Chesma", -- species: coeurl
                     name        = string.char(0xA6) .. "Plateau Coeurl",
                     count       = 5,
                     spawnPoints =
@@ -521,7 +523,7 @@ xi.fate.zones[xi.zone.LA_THEINE_PLATEAU] =
                     },
                 },
                 {
-                    base        = { 102, 9 },  -- TODO: verify mob_groups (Hill Sapling)
+                    templateName = "Grass_Funguar",
                     name        = string.char(0xA6) .. "Hill Funguar",
                     count       = 3,
                     spawnPoints =
@@ -621,7 +623,10 @@ xi.fate.zones[xi.zone.LA_THEINE_PLATEAU] =
             mobs =
             {
                 {
-                    base         = { 102, 10 }, -- TODO: verify mob_groups (Orcish Warmaster)
+                    -- No dedicated warmaster template; Orcish_Grappler (mnk/war)
+                    -- gives the boss a heavier frontline look, distinct from
+                    -- the Grunt/Mesmerizer/Neckchopper/Stonechucker squad below.
+                    templateName = "Orcish_Grappler",
                     name         = string.char(0xA6) .. "Davoi Master",
                     count        = 1,
                     isBoss       = true,
@@ -633,7 +638,7 @@ xi.fate.zones[xi.zone.LA_THEINE_PLATEAU] =
                     },
                 },
                 {
-                    base        = { 102, 1 },  -- TODO: verify mob_groups (Orcish Stoneman)
+                    templateName = "Orcish_Stonechucker",
                     name        = string.char(0xA6) .. "Orcish Golem",
                     count       = 4,
                     noCount     = true,
@@ -739,7 +744,7 @@ xi.fate.zones[xi.zone.LA_THEINE_PLATEAU] =
             mobs =
             {
                 {
-                    base         = { 102, 5 },  -- TODO: verify mob_groups (Coeurl)
+                    templateName = "Chesma", -- species: coeurl
                     name         = string.char(0xA6) .. "Elder Stalker",
                     count        = 1,
                     isBoss       = true,
@@ -751,7 +756,7 @@ xi.fate.zones[xi.zone.LA_THEINE_PLATEAU] =
                     },
                 },
                 {
-                    base        = { 102, 5 },  -- TODO: verify mob_groups (Coeurl cubs)
+                    templateName = "Chesma", -- species: coeurl
                     name        = string.char(0xA6) .. "Plateau Coeurl",
                     count       = 3,
                     noCount     = true,

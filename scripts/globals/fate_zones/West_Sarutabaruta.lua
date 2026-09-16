@@ -41,7 +41,7 @@ xi.fate.zones[xi.zone.WEST_SARUTABARUTA] =
             mobs =
             {
                 {
-                    base        = { 115, 15 },
+                    templateName = "Mandragora",
                     name        = string.char(0xA6) .. "Mandragora",
                     count       = 6,
                     spawnPoints =
@@ -55,7 +55,7 @@ xi.fate.zones[xi.zone.WEST_SARUTABARUTA] =
                     },
                 },
                 {
-                    base        = { 115, 6 },
+                    templateName = "Tiny_Mandragora",
                     name        = string.char(0xA6) .. "Wee Mandragora",
                     count       = 4,
                     spawnPoints =
@@ -130,7 +130,9 @@ xi.fate.zones[xi.zone.WEST_SARUTABARUTA] =
             mobs =
             {
                 {
-                    base        = { 115, 16 },
+                    -- No "Yagudo_Novice" template; Yagudo_Follower is the
+                    -- lowest-rank Yagudo available locally, matching "Novice".
+                    templateName = "Yagudo_Follower",
                     name        = string.char(0xA6) .. "Yagudo Novice",
                     count       = 5,
                     spawnPoints =
@@ -146,7 +148,7 @@ xi.fate.zones[xi.zone.WEST_SARUTABARUTA] =
                     },
                 },
                 {
-                    base        = { 115, 17 },
+                    templateName = "Yagudo_Acolyte",
                     name        = string.char(0xA6) .. "Yagudo Acolyte",
                     count       = 3,
                     spawnPoints =
@@ -227,7 +229,7 @@ xi.fate.zones[xi.zone.WEST_SARUTABARUTA] =
             mobs =
             {
                 {
-                    base        = { 115, 18 },
+                    templateName = "Yagudo_Scribe",
                     name        = string.char(0xA6) .. "Yagudo Scribe",
                     count       = 3,
                     spawnPoints =
@@ -240,7 +242,7 @@ xi.fate.zones[xi.zone.WEST_SARUTABARUTA] =
                     },
                 },
                 {
-                    base        = { 115, 17 },
+                    templateName = "Yagudo_Acolyte",
                     name        = string.char(0xA6) .. "Yagudo Acolyte",
                     count       = 2,
                     spawnPoints =
@@ -335,7 +337,9 @@ xi.fate.zones[xi.zone.WEST_SARUTABARUTA] =
             mobs =
             {
                 {
-                    base        = { 115, 18 },
+                    -- No "Yagudo_Deacon" template; Yagudo_Votary_G (a devout
+                    -- junior-clergy variant) is the closest local fit.
+                    templateName = "Yagudo_Votary_G",
                     name        = string.char(0xA6) .. "Yagudo Deacon",
                     count       = 1,
 					isBoss 		= true,
@@ -346,7 +350,7 @@ xi.fate.zones[xi.zone.WEST_SARUTABARUTA] =
                     },
                 },
                 {
-                    base        = { 115, 17 },
+                    templateName = "Yagudo_Acolyte",
                     name        = string.char(0xA6) .. "Yagudo Acolyte",
                     count       = 2,
                     spawnPoints =
@@ -446,7 +450,9 @@ xi.fate.zones[xi.zone.WEST_SARUTABARUTA] =
             mobs =
             {
                 {
-                    base         = { 115, 23 },
+                    -- Flavour text calls it "A Giant Bee of abnormal size" -
+                    -- Giant_Bee exists locally and matches directly.
+                    templateName = "Giant_Bee",
                     name         = string.char(0xA6) .. "Beehive Master",
                     count        = 1,
                     isBoss       = true,
@@ -458,7 +464,7 @@ xi.fate.zones[xi.zone.WEST_SARUTABARUTA] =
                     },
                 },
                 {
-                    base        = { 115, 7 },
+                    templateName = "Bumblebee",
                     name        = string.char(0xA6) .. "Drone Bee",
                     count       = 3,
                     noCount     = true,

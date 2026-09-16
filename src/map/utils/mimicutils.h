@@ -91,6 +91,13 @@ auto LoadMimicTrustSnapshot(uint32 charId, uint8 levelCap) -> std::optional<Mimi
 // live mimic-trust entity (level, HP/MP, party frame) plus a level-up message.
 void AwardMimicExp(CCharEntity* PMaster, CTrustEntity* PMimic, uint32 gainedExp);
 
+// Re-reads the alt's char_look row and pushes it onto the live trust entity
+// (a full stat rebuild is not needed for a pure appearance change - just the
+// look_t fields and an UPDATE_LOOK broadcast). Returns false if PMimic is
+// null or the alt has no char_look row (should not happen for anything that
+// has ever been summoned as a mimic).
+auto RefreshMimicTrustLook(CTrustEntity* PMimic) -> bool;
+
 // Rebuilds PMimic->SpellContainer from the source character's learned spells
 // (char_spells), keeping only those its current main/sub job + level can cast.
 // spell::CanUseSpell's TYPE_TRUST path does not consult a trust's spell list, so

@@ -43,7 +43,9 @@ xi.fate.zones[xi.zone.MOUNT_ZHAYOLM] =
             mobs =
             {
                 {
-                    base        = { 61, 1 },  -- TODO: verify mob_groups (zoneId, groupId)
+                    -- No soulflayer species in this zone's mobs.yaml; Elders_Imp
+                    -- (a demonic predator) is the closest look available.
+                    templateName = "Elders_Imp",
                     name        = string.char(0xA6) .. "Zhayolm Flayer",
                     count       = 5,
                     spawnPoints =
@@ -56,7 +58,10 @@ xi.fate.zones[xi.zone.MOUNT_ZHAYOLM] =
                     },
                 },
                 {
-                    base        = { 61, 2 },  -- TODO: verify mob_groups (zoneId, groupId)
+                    -- Cross-zone borrow: no frog/amphibian species exists in this zone's own
+                    -- mobs.yaml. Caedarva Mire (similar Near East tier) has Chorus_Toad.
+                    templateName   = "Chorus_Toad",
+                    templateZoneId = xi.zone.CAEDARVA_MIRE,
                     name        = string.char(0xA6) .. "Mount Poroggo",
                     count       = 3,
                     spawnPoints =
@@ -156,7 +161,9 @@ xi.fate.zones[xi.zone.MOUNT_ZHAYOLM] =
             mobs =
             {
                 {
-                    base         = { 61, 3 },  -- TODO: verify mob_groups (zoneId, groupId)
+                    -- "Commanding the mountain's very lava as its weapon" -
+                    -- Fire_Elemental fits directly; no soulflayer template locally.
+                    templateName = "Fire_Elemental",
                     name         = string.char(0xA6) .. "Volcano Lord",
                     count        = 1,
                     isBoss       = true,
@@ -168,7 +175,7 @@ xi.fate.zones[xi.zone.MOUNT_ZHAYOLM] =
                     },
                 },
                 {
-                    base        = { 61, 4 },  -- TODO: verify mob_groups (zoneId, groupId)
+                    templateName = "Hilltroll_Warrior",
                     name        = string.char(0xA6) .. "Zhayolm Troll",
                     count       = 4,
                     noCount     = true,

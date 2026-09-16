@@ -43,7 +43,7 @@ xi.fate.zones[xi.zone.XARCABARD] =
             mobs =
             {
                 {
-                    base        = { 112, 1 },  -- TODO: verify mob_groups (zoneId, groupId)
+                    templateName = "Shadow_Eye",
                     name        = string.char(0xA6) .. "Xarc Shadow",
                     count       = 5,
                     spawnPoints =
@@ -56,7 +56,9 @@ xi.fate.zones[xi.zone.XARCABARD] =
                     },
                 },
                 {
-                    base        = { 112, 2 },  -- TODO: verify mob_groups (zoneId, groupId)
+                    -- No "Dark Corse" template by name; Lost_Soul_war is the closest
+                    -- undead/corpse-type mob available in this zone's mobs.yaml.
+                    templateName = "Lost_Soul_war",
                     name        = string.char(0xA6) .. "Dark Corse",
                     count       = 3,
                     spawnPoints =
@@ -156,7 +158,8 @@ xi.fate.zones[xi.zone.XARCABARD] =
             mobs =
             {
                 {
-                    base         = { 112, 3 },  -- TODO: verify mob_groups (zoneId, groupId)
+                    -- Chaos_Elemental is a direct name/theme match for "Chaos Shade".
+                    templateName = "Chaos_Elemental",
                     name         = string.char(0xA6) .. "Chaos Shade",
                     count        = 1,
                     isBoss       = true,
@@ -168,7 +171,9 @@ xi.fate.zones[xi.zone.XARCABARD] =
                     },
                 },
                 {
-                    base        = { 112, 4 },  -- TODO: verify mob_groups (zoneId, groupId)
+                    -- No "Shade Wraith" template by name; Etemmu is this zone's
+                    -- wraith-type mob and the closest fit.
+                    templateName = "Etemmu",
                     name        = string.char(0xA6) .. "Shade Wraith",
                     count       = 4,
                     noCount     = true,

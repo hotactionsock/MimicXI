@@ -73,24 +73,23 @@ if not xi.fate or not xi.fate.zones then return m end
 -----------------------------------
 -- Register zone callbacks for each FATE-enabled zone.
 -- zoneID and zoneName come from the zone definition tables populated above.
--- Each override stacks onto the existing zone callback via super().
+--
+-- NOTE: every FATE zone's own Zone.lua already calls xi.fate.onZoneInitialize,
+-- xi.fate.tick, xi.fate.checkSyncOnZoneIn, xi.fate.onAreaEnter and
+-- xi.fate.onAreaLeave directly (that is the real, original wiring - this
+-- module was layered on top of it later). Overriding those same callbacks
+-- here to call the exact same xi.fate.* functions again ran every one of
+-- them TWICE per zone, per tick, per zone-in, per area trigger, for every
+-- FATE zone in the game - double mob/NPC creation at zone load, double-speed
+-- leash/respawn ticking, double area-enter/leave scoring, etc. Only the two
+-- calls below (unregisterAddonUser, sendAddonSync) have no direct caller
+-- anywhere in scripts/zones and are the only reason this loop needs to exist.
 -----------------------------------
 for zoneID, zoneData in pairs(xi.fate.zones) do
     local zoneName = zoneData.zoneName
 
-    m:addOverride(string.format("xi.zones.%s.Zone.onInitialize", zoneName), function(zone)
-        super(zone)
-        xi.fate.onZoneInitialize(zone, zoneID)
-    end)
-
-    m:addOverride(string.format("xi.zones.%s.Zone.onZoneTick", zoneName), function(zone)
-        super(zone)
-        xi.fate.tick(zone, zoneID)
-    end)
-
     m:addOverride(string.format("xi.zones.%s.Zone.afterZoneIn", zoneName), function(player)
         super(player)
-        xi.fate.checkSyncOnZoneIn(player)
         -- Only send FSYNC if the addon is already registered (prevents raw text for non-addon users).
         -- !fateaddon register re-sends the sync immediately after zone-in for addon users.
         if xi.fate.addonUsers[player:getID()] then
@@ -101,16 +100,6 @@ for zoneID, zoneData in pairs(xi.fate.zones) do
     m:addOverride(string.format("xi.zones.%s.Zone.onZoneOut", zoneName), function(player)
         super(player)
         xi.fate.unregisterAddonUser(player:getID())
-    end)
-
-    m:addOverride(string.format("xi.zones.%s.Zone.onTriggerAreaEnter", zoneName), function(player, triggerArea, optInstance)
-        super(player, triggerArea, optInstance)
-        xi.fate.onAreaEnter(player, triggerArea, zoneID)
-    end)
-
-    m:addOverride(string.format("xi.zones.%s.Zone.onTriggerAreaLeave", zoneName), function(player, triggerArea, optInstance)
-        super(player, triggerArea, optInstance)
-        xi.fate.onAreaLeave(player, triggerArea, zoneID)
     end)
 end
 

@@ -98,22 +98,22 @@ xi.settings.map =
     ENABLE_AUTO_ATTACK_LUA = false,
 
     -- Weaponskill point base (before skillchain) for breaking latent - whole numbers only. retail is 5.
-    WS_POINTS_BASE = 5,
+    WS_POINTS_BASE = 50,
 
     -- Weaponskill points per skillchain level - whole numbers only, retail is 2
-    WS_POINTS_SKILLCHAIN = 2,
+    WS_POINTS_SKILLCHAIN = 20,
 
     -- Enable/disable jobs other than BST and RNG having widescan
     ALL_JOBS_WIDESCAN = true,
 
     -- Base player movement speed
-    BASE_SPEED = 50,
+    BASE_SPEED = 70,
 
     -- Player movement speed limit
-    SPEED_LIMIT = 80,
+    SPEED_LIMIT = 100,
 
     -- Mount speed, expressed as player speed. Can surpass speed limit.
-    MOUNT_SPEED = 80,
+    MOUNT_SPEED = 110,
 
     -- Player animation speed divisor
     -- Raising this increases the players movement animation speed
@@ -215,13 +215,13 @@ xi.settings.map =
     MIMIC_COMBAT_NOTIFICATIONS = true,
 
     -- Adjust mob drop rate. Acts as a multiplier, so default is 1.
-    DROP_RATE_MULTIPLIER = 1.0,
+    DROP_RATE_MULTIPLIER = 2.0,
 
     -- Multiplier for gil naturally dropped by mobs. Does not apply to the bonus gil from all_mobs_gil_bonus. Default is 1.0.
     MOB_GIL_MULTIPLIER = 1.0,
 
     -- All mobs drop this much extra gil per mob LV even if they normally drop zero.
-    ALL_MOBS_GIL_BONUS = 0,
+    ALL_MOBS_GIL_BONUS = 10,
 
     -- Maximum total bonus gil that can be dropped. Default 9999 gil.
     MAX_GIL_BONUS = 9999,

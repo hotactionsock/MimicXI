@@ -43,7 +43,7 @@ xi.fate.zones[xi.zone.BATALLIA_DOWNS] =
             mobs =
             {
                 {
-                    base        = { 105, 1 },  -- TODO: verify mob_groups (zoneId, groupId)
+                    templateName = "Orcish_Fighter",
                     name        = string.char(0xA6) .. "Orcish Warrior",
                     count       = 6,
                     spawnPoints =
@@ -57,7 +57,7 @@ xi.fate.zones[xi.zone.BATALLIA_DOWNS] =
                     },
                 },
                 {
-                    base        = { 105, 2 },  -- TODO: verify mob_groups (zoneId, groupId)
+                    templateName = "Orcish_Serjeant",
                     name        = string.char(0xA6) .. "Orcish Veteran",
                     count       = 4,
                     spawnPoints =
@@ -158,7 +158,11 @@ xi.fate.zones[xi.zone.BATALLIA_DOWNS] =
             mobs =
             {
                 {
-                    base         = { 105, 3 },  -- TODO: verify mob_groups (zoneId, groupId)
+                    -- Cross-zone borrow: no dhalmel species exists in this zone's own mobs.yaml.
+                    -- Buburimu Peninsula's Bull_Dhalmel is an oversized, aggressive look -
+                    -- fits "a wild Dhalmel of extraordinary size...territorial charge".
+                    templateName   = "Bull_Dhalmel",
+                    templateZoneId = xi.zone.BUBURIMU_PENINSULA,
                     name         = string.char(0xA6) .. "Downs Ravager",
                     count        = 1,
                     isBoss       = true,
@@ -170,7 +174,10 @@ xi.fate.zones[xi.zone.BATALLIA_DOWNS] =
                     },
                 },
                 {
-                    base        = { 105, 4 },  -- TODO: verify mob_groups (zoneId, groupId)
+                    -- Cross-zone borrow: no raptor/reptile species exists in this zone's own
+                    -- mobs.yaml. Meriphataud Mountains has a plain Raptor template.
+                    templateName   = "Raptor",
+                    templateZoneId = xi.zone.MERIPHATAUD_MOUNTAINS,
                     name        = string.char(0xA6) .. "Downs Raptor",
                     count       = 3,
                     noCount     = true,
@@ -312,7 +319,10 @@ xi.fate.zones[xi.zone.BATALLIA_DOWNS] =
                     mobs =
                     {
                         {
-                            base        = { 185, 4 },  -- TODO: verify mob_groups
+                            -- Was a cross-zone clone of zone 185's group 4. This zone has its own
+                            -- deep orc roster; Nightraider's "fast/aggressive shock troop" flavor
+                            -- fits the vanguard's charge better than a generic reskin.
+                            templateName = "Orcish_Nightraider",
                             name        = string.char(0xA6) .. "Orc Vanguard",
                             count       = 12,
                             targetHP    = 12000,
@@ -345,7 +355,10 @@ xi.fate.zones[xi.zone.BATALLIA_DOWNS] =
                     mobs =
                     {
                         {
-                            base        = { 185, 25 },  -- TODO: verify mob_groups
+                            -- Was a cross-zone clone of zone 185's group 25. Impaler (heavy
+                            -- armoured) gives this wave's "veteran champions" a visibly tougher
+                            -- look than the regular FATE's Serjeant reuse above.
+                            templateName = "Orcish_Impaler",
                             name        = string.char(0xA6) .. "Orcish Veteran",
                             count       = 6,
                             targetHP    = 35000,
@@ -372,7 +385,10 @@ xi.fate.zones[xi.zone.BATALLIA_DOWNS] =
                     mobs =
                     {
                         {
-                            base        = { 185, 30 },  -- TODO: verify mob_groups
+                            -- Was a cross-zone clone of zone 185's group 30. Yilbegan is this
+                            -- zone's own distinct unique-tier look, reserved for boss-scale
+                            -- encounters - fits the superboss finale better than a generic orc.
+                            templateName = "Yilbegan",
                             name        = string.char(0xA6) .. "Eternal Warlord",
                             count       = 1,
                             isBoss      = true,

@@ -34,6 +34,13 @@ public:
     auto GetSkill() const -> CWeaponSkill*;
     auto GetSpentTP() const -> int16;
 
+    // Net TP actually removed from the pool by SpendCost() - NOT the same
+    // thing as GetSpentTP(): that value feeds damage calculation (e.g. it is
+    // the entity's full pre-spend TP even under Meikyo Shisui, which only
+    // really deducts 1000), this is "how much to give back" if the
+    // weaponskill turns out to have been out of range (WeaponSkillOutOfRange).
+    auto GetTPDelta() const -> int16;
+
 protected:
     auto CanChangeState() -> bool override;
     auto CanFollowPath() -> bool override;
@@ -50,4 +57,5 @@ private:
     std::unique_ptr<CWeaponSkill> m_PSkill;
     timer::time_point             m_finishTime;
     int16                         m_spent{ 0 };
+    int16                         m_tpDelta{ 0 };
 };

@@ -22,4 +22,4 @@ commandObj.onTrigger = function(player, subcmd)
     end
 end
 
-return commandObj
+xi.module.registerCommand('fateaddon', commandObj)

@@ -43,7 +43,9 @@ xi.fate.zones[xi.zone.CAPE_TERIGGAN] =
             mobs =
             {
                 {
-                    base        = { 113, 1 },  -- TODO: verify mob_groups (zoneId, groupId)
+                    -- No Goblin Bondman template locally; reskin to Goblin Bandit,
+                    -- matching the "illegal dig" flavour text.
+                    templateName = "Goblin_Bandit",
                     name        = string.char(0xA6) .. "Goblin Bondman",
                     count       = 5,
                     spawnPoints =
@@ -56,7 +58,7 @@ xi.fate.zones[xi.zone.CAPE_TERIGGAN] =
                     },
                 },
                 {
-                    base        = { 113, 2 },  -- TODO: verify mob_groups (zoneId, groupId)
+                    templateName = "Goblin_Shepherd",
                     name        = string.char(0xA6) .. "Goblin Herder",
                     count       = 4,
                     spawnPoints =
@@ -157,7 +159,9 @@ xi.fate.zones[xi.zone.CAPE_TERIGGAN] =
             mobs =
             {
                 {
-                    base         = { 113, 3 },  -- TODO: verify mob_groups (zoneId, groupId)
+                    -- No tiger/big-cat template in this zone's mobs.yaml; Greater
+                    -- Manticore is the closest large predatory-beast look on hand.
+                    templateName = "Greater_Manticore",
                     name         = string.char(0xA6) .. "Cape Terror",
                     count        = 1,
                     isBoss       = true,
@@ -169,7 +173,7 @@ xi.fate.zones[xi.zone.CAPE_TERIGGAN] =
                     },
                 },
                 {
-                    base        = { 113, 4 },  -- TODO: verify mob_groups (zoneId, groupId)
+                    templateName = "Greater_Manticore",
                     name        = string.char(0xA6) .. "Teriggan Tiger",
                     count       = 3,
                     noCount     = true,

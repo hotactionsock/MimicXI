@@ -21,12 +21,15 @@
 
 #include "mobutils.h"
 
+#include "common/enum_traits.h"
 #include "common/logging.h"
 
 #include "action/action.h"
 #include "ai/ai_container.h"
 #include "battleutils.h"
+#include "data/datasets/zones/mobs/dataset.h"
 #include "data/enums/mob_mod.h"
+#include "data/loader.h"
 #include "grades.h"
 #include "instance.h"
 #include "items/item_weapon.h"
@@ -50,8 +53,33 @@ namespace
 {
 
 using EcosystemsDataset = xi::data::datasets::ecosystems::Dataset;
+using ZoneMobsDataset    = xi::data::datasets::zones::mobs::Dataset;
+
+// Mirrors zoneutils.cpp's own (also file-local) kDefaultMobDelay/
+// kDefaultMobDamageMultiplier - not worth sharing across a single pair of
+// constexpr values used the same way in both places.
+constexpr uint16 kDynamicMobDefaultDelay            = 240;
+constexpr uint16 kDynamicMobDefaultDamageMultiplier = 100;
 
 HashMap<uint16, SpeciesInfo> speciesData;
+
+// loadZoneFile() re-reads and re-parses the zone's mobs.yaml from disk on
+// every call (see data/loader.h) - fine for the one-shot static-spawn load,
+// but InstantiateDynamicMobFromTemplate can run once per mob on every FATE
+// spawn wave, so the parsed result is cached per zone the first time it is
+// needed. std::nullopt is cached too (a zone with no mobs.yaml stays that
+// way for the life of the process), so a lookup miss is not retried forever.
+HashMap<xi::ZoneId, std::optional<xi::data::Mobs>> dynamicMobTemplateCache;
+
+auto GetZoneMobTemplates(xi::ZoneId zoneId) -> const std::optional<xi::data::Mobs>&
+{
+    auto it = dynamicMobTemplateCache.find(zoneId);
+    if (it == dynamicMobTemplateCache.end())
+    {
+        it = dynamicMobTemplateCache.try_emplace(zoneId, xi::data::loadZoneFile<ZoneMobsDataset>(zoneId)).first;
+    }
+    return it->second;
+}
 
 } // namespace
 
@@ -1977,6 +2005,92 @@ auto InstantiateDynamicMob(const uint32 groupid, const xi::ZoneId groupZoneId, c
 
         mobutils::InitializeMob(PMob);
         mobutils::AddSqlModifiers(PMob);
+    }
+
+    return PMob;
+}
+
+// Mirrors zoneutils.cpp's InsertMobs species/template merge (species chain ->
+// template overrides -> ApplySpecies -> weapon/look/stat fields not covered by
+// ApplySpecies -> Mods/MobMods last) so a dynamically-spawned mob ends up with
+// exactly the same fields a statically-placed one of the same template gets.
+// Deliberately does not attempt the static-only concepts (spawn position,
+// patrol routes, spawn slots, drop lists, per-region normal-mob level
+// clamping) - GenerateDynamicEntity's own caller-supplied table already
+// layers position/level/etc. on top of whatever this returns.
+auto InstantiateDynamicMobFromTemplate(const std::string& templateName, const xi::ZoneId targetZoneId) -> CMobEntity*
+{
+    const auto& mobs = GetZoneMobTemplates(targetZoneId);
+    if (!mobs)
+    {
+        ShowWarningFmt("InstantiateDynamicMobFromTemplate: zone {} has no mobs.yaml",
+                       xi::data::EnumTraits<xi::ZoneId>::toName(targetZoneId));
+        return nullptr;
+    }
+
+    const auto templateIt = mobs->Templates.find(templateName);
+    if (templateIt == mobs->Templates.end())
+    {
+        ShowWarningFmt("InstantiateDynamicMobFromTemplate: no template '{}' in zone {}'s mobs.yaml",
+                       templateName, xi::data::EnumTraits<xi::ZoneId>::toName(targetZoneId));
+        return nullptr;
+    }
+
+    const auto& mobTemplate = templateIt->second;
+
+    auto* PMob = new CMobEntity;
+
+    PMob->m_Type    = mobTemplate.Type;
+    PMob->m_Species = static_cast<uint16>(mobTemplate.Species);
+
+    // Merge the whole chain of attributes: Ecosystem -> Family -> Species -> Template
+    auto attributes = GetSpeciesData(PMob->m_Species).MobAttributes;
+    xi::data::applyOverrides(attributes, mobTemplate.Attributes);
+
+    ApplySpecies(PMob, attributes);
+
+    // The weapon's own defaults are not a mob's, so these are always applied.
+    auto* mainWeapon = static_cast<CItemWeapon*>(PMob->m_Weapons[SLOT_MAIN]);
+    mainWeapon->setMaxHit(1);
+    mainWeapon->setSkillType(attributes.CombatSkill.value_or(xi::SkillType::None));
+    mainWeapon->setDelay(attributes.Delay.value_or(kDynamicMobDefaultDelay));
+    mainWeapon->setBaseDelay(attributes.Delay.value_or(kDynamicMobDefaultDelay));
+
+    PMob->m_dmgMult = attributes.DamageMultiplier.value_or(kDynamicMobDefaultDamageMultiplier);
+
+    if (attributes.Look)
+    {
+        PMob->look = look_t(attributes.Look->data());
+    }
+
+    PMob->HPmodifier = attributes.Stats.HP;
+    PMob->MPmodifier = attributes.Stats.MP;
+
+    PMob->m_name_prefix = attributes.NamePrefix.value_or(0);
+    PMob->m_flags       = static_cast<xi::EntityFlags>(attributes.EntityFlags.value_or(0));
+    PMob->animationsub  = attributes.AnimationSub.value_or(0);
+
+    PMob->m_SpellListContainer = mobSpellList::GetMobSpellList(mobTemplate.SpellList);
+    PMob->m_Pool               = mobTemplate.Id;
+    PMob->allegiance           = mobTemplate.Allegiance;
+    PMob->namevis              = static_cast<xi::NameVis>(attributes.NameVis.value_or(0));
+    PMob->modelHitboxSize      = std::max<float>(0.0f, attributes.Hitbox.value_or(0) / 10.f);
+    PMob->modelSize            = attributes.ModelSize.value_or(0);
+    PMob->m_MobSkillList       = mobTemplate.SkillList;
+    PMob->m_roamFlags          = mobTemplate.RoamFlags;
+    PMob->packetName           = mobTemplate.DisplayName;
+
+    mobutils::InitializeMob(PMob);
+
+    // Species chain first, then the template over it (matches InsertMobs).
+    for (const auto& [id, value] : attributes.Mods)
+    {
+        PMob->addModifier(id, value);
+    }
+
+    for (const auto& [id, value] : attributes.MobMods)
+    {
+        PMob->setMobMod(id, value);
     }
 
     return PMob;

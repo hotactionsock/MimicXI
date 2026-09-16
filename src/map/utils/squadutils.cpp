@@ -29,9 +29,12 @@
 #include "common/database.h"
 
 #include "item_container.h"
+#include "items/exdata/augment_standard.h"
 #include "items/item_equipment.h"
 #include "items/item_weapon.h"
+#include "trait.h"
 #include "utils/itemutils.h"
+#include "warehouseutils.h"
 
 namespace squadutils
 {
@@ -511,6 +514,7 @@ namespace
 
     struct AltEquipInfo
     {
+        uint32 charId{};
         uint8  mjob{};
         uint8  mjobLevel{};   // real char_jobs.<mjob>
         uint8  race{};
@@ -520,6 +524,7 @@ namespace
     auto LoadAltEquipInfo(uint32 charId) -> AltEquipInfo
     {
         AltEquipInfo info;
+        info.charId = charId;
 
         const auto sRset = db::preparedStmt("SELECT mjob FROM char_stats WHERE charid = ? LIMIT 1", charId);
         if (!sRset || sRset->rowsCount() == 0 || !sRset->next())
@@ -548,6 +553,75 @@ namespace
         return info;
     }
 
+    // True if job unlocks Dual Wield at or below level (base job trait table -
+    // an offline alt has no live TraitList, so this replays the same lookup
+    // battleutils::AddTraits uses, ignoring merit-augmented ranks).
+    auto AltHasDualWield(uint8 job, uint8 level) -> bool
+    {
+        auto* list = traits::GetTraits(static_cast<xi::Job>(job));
+        if (list == nullptr)
+        {
+            return false;
+        }
+        for (auto* trait : *list)
+        {
+            if (trait->getID() == TRAIT_DUAL_WIELD && trait->getLevel() > 0 && level >= trait->getLevel())
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    // The itemId currently sitting in one of charId's 16 equip slots, 0 if none.
+    auto GetEquippedItemId(uint32 charId, uint8 equipSlotId) -> uint16
+    {
+        const auto rset = db::preparedStmt(
+            "SELECT i.itemId FROM char_equip e "
+            "JOIN char_inventory i ON i.charid = e.charid AND i.location = e.containerid AND i.slot = e.slotid "
+            "WHERE e.charid = ? AND e.equipslotid = ? LIMIT 1",
+            charId, equipSlotId);
+        if (rset && rset->rowsCount() != 0 && rset->next())
+        {
+            return rset->get<uint16>("itemId");
+        }
+        return 0;
+    }
+
+    // Genuine two-handed main weapons a Grip can be paired with. Deliberately
+    // excludes H2H, which has no sub-slot concept of its own in retail.
+    auto IsGripEligibleMain(xi::SkillType skill) -> bool
+    {
+        switch (skill)
+        {
+            case xi::SkillType::GreatSword:
+            case xi::SkillType::GreatAxe:
+            case xi::SkillType::Scythe:
+            case xi::SkillType::Polearm:
+            case xi::SkillType::GreatKatana:
+            case xi::SkillType::Staff:
+                return true;
+            default:
+                return false;
+        }
+    }
+
+    // One-handed weapon types that can be dual-wielded into the sub slot.
+    auto IsDualWieldEligibleMain(xi::SkillType skill) -> bool
+    {
+        switch (skill)
+        {
+            case xi::SkillType::Dagger:
+            case xi::SkillType::Sword:
+            case xi::SkillType::Axe:
+            case xi::SkillType::Katana:
+            case xi::SkillType::Club:
+                return true;
+            default:
+                return false;
+        }
+    }
+
     // Race / final validation on a spawned equipment item for this alt.
     auto ItemFitsAlt(uint16 itemId, uint8 equipSlotId, const AltEquipInfo& alt) -> bool
     {
@@ -573,6 +647,36 @@ namespace
         {
             return false;
         }
+
+        // Sub-slot weapon rules: a real one-handed weapon needs Dual Wield
+        // unlocked (and a one-handed main); a Grip needs a genuine two-handed
+        // main. Shields and everything else are unaffected (not CItemWeapon).
+        if (equipSlotId == SL_SUB)
+        {
+            if (auto* PSubWeapon = dynamic_cast<CItemWeapon*>(PItem.get()))
+            {
+                const auto mainSkill = [&]
+                {
+                    auto PMain = xi::items::spawn(GetEquippedItemId(alt.charId, SL_MAIN));
+                    auto* PMainWeapon = dynamic_cast<CItemWeapon*>(PMain.get());
+                    return PMainWeapon != nullptr ? PMainWeapon->getSkillType() : xi::SkillType::None;
+                }();
+
+                const bool isGrip = PSubWeapon->getSkillType() == xi::SkillType::None;
+                if (isGrip)
+                {
+                    if (!IsGripEligibleMain(mainSkill))
+                    {
+                        return false;
+                    }
+                }
+                else if (!IsDualWieldEligibleMain(mainSkill) || !AltHasDualWield(alt.mjob, alt.mjobLevel))
+                {
+                    return false;
+                }
+            }
+        }
+
         return true;
     }
 
@@ -654,7 +758,9 @@ auto ListAltGear(uint32 charId) -> std::array<GearSlot, 16>
             {
                 continue;
             }
-            gear[slot].itemId = rset->get<uint16>("itemId");
+            gear[slot].itemId      = rset->get<uint16>("itemId");
+            gear[slot].containerId = rset->get<uint8>("containerid");
+            gear[slot].invSlot     = rset->get<uint8>("slotid");
 
             uint8 extra[24]{};
             db::extractFromBlob(rset, "extra", extra);
@@ -670,6 +776,99 @@ auto ListAltGear(uint32 charId) -> std::array<GearSlot, 16>
     }
 
     return gear;
+}
+
+auto ListItemMods(uint16 itemId) -> std::vector<ItemModRow>
+{
+    std::vector<ItemModRow> out;
+
+    const auto rset = db::preparedStmt(
+        "SELECT modId, value FROM item_mods WHERE itemId = ? ORDER BY modId", itemId);
+    if (rset)
+    {
+        while (rset->next())
+        {
+            out.emplace_back(ItemModRow{
+                .modId = rset->get<uint16>("modId"),
+                .value = rset->get<int16>("value"),
+            });
+        }
+    }
+
+    return out;
+}
+
+auto DecodeAugmentMods(const uint8 (&extra)[24]) -> std::vector<ItemModRow>
+{
+    std::vector<ItemModRow> out;
+
+    static_assert(sizeof(Exdata::AugmentStandard) == 24,
+                  "AugmentStandard must exactly cover the extdata blob squadutils reads");
+
+    Exdata::AugmentStandard augData{};
+    std::memcpy(&augData, extra, sizeof(augData));
+
+    for (const auto& slotAug : augData.Augments)
+    {
+        const uint16_t augmentId = slotAug.Id;
+        if (augmentId == 0)
+        {
+            continue;
+        }
+
+        const int16 roll = static_cast<int16>(static_cast<uint8_t>(slotAug.Value));
+
+        const auto rset = db::preparedStmt(
+            "SELECT modId, value, multiplier, isPet FROM augments WHERE augmentId = ?", augmentId);
+        if (!rset)
+        {
+            continue;
+        }
+
+        while (rset->next())
+        {
+            if (rset->get<uint8>("isPet"))
+            {
+                continue; // a pet stat, not a gear stat
+            }
+
+            const auto modId = rset->get<uint16>("modId");
+            if (modId == 0) // xi::Mod::NONE - unimplemented augment
+            {
+                continue;
+            }
+
+            const auto baseValue  = rset->get<int16>("value");
+            const auto multiplier = rset->get<uint16>("multiplier");
+
+            // Same formula as CItemEquipment::SetAugmentMod (item_equipment.cpp).
+            const int16 modValue = static_cast<int16>(
+                (baseValue > 0 ? baseValue + roll : baseValue - roll) * (multiplier > 1 ? multiplier : 1));
+
+            out.emplace_back(ItemModRow{ .modId = modId, .value = modValue });
+        }
+    }
+
+    return out;
+}
+
+auto GetWeaponDamageDelay(uint16 itemId) -> WeaponDamageDelay
+{
+    WeaponDamageDelay out;
+
+    auto PItem = xi::items::spawn(itemId);
+    if (auto* PWeapon = dynamic_cast<CItemWeapon*>(PItem.get()))
+    {
+        out.isWeapon = true;
+        out.damage   = PWeapon->getDamage();
+        // getDelay() is the *1000/60 combat-timing value in milliseconds
+        // (see setDelay); getBaseDelay() is the raw item_weapon.delay column,
+        // which is what the client actually shows on the item ("real delay
+        // used by real people" per that accessor's own comment).
+        out.delay = PWeapon->getBaseDelay();
+    }
+
+    return out;
 }
 
 auto ListGearCandidates(uint32 accId, uint32 altCharId, uint8 equipSlotId) -> std::vector<GearCandidate>
@@ -900,6 +1099,285 @@ auto UnequipAltItem(uint32 accId, uint32 altCharId, uint8 equipSlotId) -> GearRe
     return GearResult::Ok;
 }
 
+// --- warehouse as a gear/bag source --------------------------------------
+
+namespace
+{
+    auto ExtraHasAug(const uint8 extra[24]) -> bool
+    {
+        for (uint8 i = 0; i < 24; ++i)
+        {
+            if (extra[i] != 0)
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+} // namespace
+
+auto ListWarehouseGearCandidates(uint32 accId, uint32 altCharId, uint8 equipSlotId) -> std::vector<WarehouseGearCandidate>
+{
+    std::vector<WarehouseGearCandidate> out;
+
+    if (equipSlotId >= 16 || !IsOwnedByAccount(accId, altCharId))
+    {
+        return out;
+    }
+
+    const AltEquipInfo alt = LoadAltEquipInfo(altCharId);
+    if (!alt.ok)
+    {
+        return out;
+    }
+
+    // Same SQL pre-filter as ListGearCandidates; race is checked afterwards on a spawn.
+    const auto rset = db::preparedStmt(
+        "SELECT w.rowid, w.itemId, w.extra "
+        "FROM account_warehouse w "
+        "JOIN item_equipment ie ON ie.itemId = w.itemId "
+        "WHERE w.accid = ? "
+        "  AND (ie.slot & (1 << ?)) <> 0 "
+        "  AND (ie.jobs & (1 << ?)) <> 0 "
+        "  AND ie.level <= ? "
+        "ORDER BY w.itemId",
+        accId, equipSlotId, alt.mjob - 1, alt.mjobLevel);
+    if (!rset)
+    {
+        return out;
+    }
+
+    while (rset->next())
+    {
+        const uint16 itemId = rset->get<uint16>("itemId");
+        if (!ItemFitsAlt(itemId, equipSlotId, alt))
+        {
+            continue;
+        }
+
+        uint8 extra[24]{};
+        db::extractFromBlob(rset, "extra", extra);
+
+        WarehouseGearCandidate wc;
+        wc.rowid  = rset->get<uint32>("rowid");
+        wc.itemId = itemId;
+        wc.aug    = ExtraHasAug(extra) ? 1 : 0;
+        out.emplace_back(wc);
+    }
+
+    return out;
+}
+
+auto EquipAltItemFromWarehouse(uint32 accId, uint32 altCharId, uint8 equipSlotId, uint32 rowid) -> GearResult
+{
+    if (equipSlotId >= 16)
+    {
+        return GearResult::BadSlot;
+    }
+    if (!IsOwnedByAccount(accId, altCharId))
+    {
+        return GearResult::NotOwned;
+    }
+    if (IsCharOnline(altCharId))
+    {
+        return GearResult::Online;
+    }
+
+    const AltEquipInfo alt = LoadAltEquipInfo(altCharId);
+    if (!alt.ok)
+    {
+        return GearResult::NotEquippable;
+    }
+
+    warehouseutils::WarehouseRow row;
+    if (!warehouseutils::ReadRow(accId, rowid, row))
+    {
+        return GearResult::NoItem;
+    }
+    if (!ItemFitsAlt(row.itemId, equipSlotId, alt))
+    {
+        return GearResult::NotEquippable;
+    }
+
+    const uint8 destSlot = BagFirstFreeSlot(altCharId, LOC_INVENTORY);
+    if (destSlot == 0)
+    {
+        return GearResult::DbError;
+    }
+
+    if (!warehouseutils::TakeQuantity(accId, rowid, 1))
+    {
+        return GearResult::NoItem;
+    }
+
+    BagItem placed;
+    placed.slot      = destSlot;
+    placed.itemId    = row.itemId;
+    placed.quantity  = 1;
+    placed.signature = row.signature;
+    std::memcpy(placed.extra, row.extra, sizeof(placed.extra));
+
+    if (!BagInsertRow(altCharId, LOC_INVENTORY, destSlot, placed))
+    {
+        // best-effort: the row was a single unit, so put it straight back
+        warehouseutils::InsertRow(accId, row.itemId, 1, row.signature, row.extra);
+        return GearResult::DbError;
+    }
+
+    return ApplyAltEquipRows(altCharId, equipSlotId, destSlot, row.itemId);
+}
+
+auto MoveAltBagToWarehouse(uint32 accId, uint32 altCharId, uint8 containerId, uint8 slot, uint32 quantity) -> WarehouseBagResult
+{
+    if (!IsOwnedByAccount(accId, altCharId))
+    {
+        return WarehouseBagResult::NotOwned;
+    }
+    if (IsCharOnline(altCharId))
+    {
+        return WarehouseBagResult::Online;
+    }
+    if (BagContainerSize(altCharId, containerId) == 0)
+    {
+        return WarehouseBagResult::BadContainer;
+    }
+
+    BagItem row;
+    if (!BagReadRow(altCharId, containerId, slot, row))
+    {
+        return WarehouseBagResult::NoItem;
+    }
+
+    const uint32 qty = quantity == 0 ? row.quantity : quantity;
+    if (qty == 0 || qty > row.quantity)
+    {
+        return WarehouseBagResult::BadQuantity;
+    }
+
+    bool mergeable = row.signature.empty() && ItemStackSize(row.itemId) > 1;
+    if (mergeable)
+    {
+        for (uint8 i = 0; i < sizeof(row.extra); ++i)
+        {
+            if (row.extra[i] != 0)
+            {
+                mergeable = false;
+                break;
+            }
+        }
+    }
+
+    uint32 mergeRow = mergeable ? warehouseutils::FindMergeRow(accId, row.itemId) : 0;
+    if (mergeRow == 0 && warehouseutils::RowCount(accId) >= warehouseutils::SoftRowCap)
+    {
+        return WarehouseBagResult::Full;
+    }
+
+    if (!BagTakeRow(altCharId, containerId, slot, qty))
+    {
+        return WarehouseBagResult::DbError;
+    }
+
+    bool wrote = false;
+    if (mergeRow != 0)
+    {
+        wrote = warehouseutils::AddQuantity(accId, mergeRow, qty);
+    }
+    else
+    {
+        mergeRow = warehouseutils::InsertRow(accId, row.itemId, qty, row.signature, row.extra);
+        wrote    = mergeRow != 0;
+    }
+
+    if (!wrote)
+    {
+        // best-effort: put back what BagTakeRow removed. A partial take leaves the
+        // row behind at a reduced quantity (add back); a full take deletes it
+        // outright (recreate it).
+        if (qty < row.quantity)
+        {
+            db::preparedStmt(
+                "UPDATE char_inventory SET quantity = quantity + ? WHERE charid = ? AND location = ? AND slot = ?",
+                qty, altCharId, containerId, slot);
+        }
+        else
+        {
+            BagItem back  = row;
+            back.quantity = qty;
+            BagInsertRow(altCharId, containerId, slot, back);
+        }
+        return WarehouseBagResult::DbError;
+    }
+
+    return WarehouseBagResult::Ok;
+}
+
+auto MoveWarehouseToAltBag(uint32 accId, uint32 altCharId, uint8 containerId, uint32 rowid, uint32 quantity) -> WarehouseBagResult
+{
+    if (!IsOwnedByAccount(accId, altCharId))
+    {
+        return WarehouseBagResult::NotOwned;
+    }
+    if (IsCharOnline(altCharId))
+    {
+        return WarehouseBagResult::Online;
+    }
+    if (BagContainerSize(altCharId, containerId) == 0)
+    {
+        return WarehouseBagResult::BadContainer;
+    }
+
+    warehouseutils::WarehouseRow row;
+    if (!warehouseutils::ReadRow(accId, rowid, row))
+    {
+        return WarehouseBagResult::NoItem;
+    }
+
+    const uint32 qty = quantity == 0 ? row.quantity : quantity;
+    if (qty == 0 || qty > row.quantity)
+    {
+        return WarehouseBagResult::BadQuantity;
+    }
+    if (qty < row.quantity && ItemStackSize(row.itemId) <= 1)
+    {
+        return WarehouseBagResult::BadQuantity; // can't split a non-stacking item
+    }
+
+    const uint8 destSlot = BagFirstFreeSlot(altCharId, containerId);
+    if (destSlot == 0)
+    {
+        return WarehouseBagResult::BagFull;
+    }
+
+    if (!warehouseutils::TakeQuantity(accId, rowid, qty))
+    {
+        return WarehouseBagResult::DbError;
+    }
+
+    BagItem placed;
+    placed.slot      = destSlot;
+    placed.itemId    = row.itemId;
+    placed.quantity  = qty;
+    placed.signature = row.signature;
+    std::memcpy(placed.extra, row.extra, sizeof(placed.extra));
+
+    if (!BagInsertRow(altCharId, containerId, destSlot, placed))
+    {
+        // best-effort: restore the warehouse row (TakeQuantity deletes it at zero)
+        if (qty == row.quantity)
+        {
+            warehouseutils::InsertRow(accId, row.itemId, qty, row.signature, row.extra);
+        }
+        else
+        {
+            warehouseutils::AddQuantity(accId, rowid, qty);
+        }
+        return WarehouseBagResult::DbError;
+    }
+
+    return WarehouseBagResult::Ok;
+}
+
 // --- scroll learning --------------------------------------------------
 
 auto ScrollSpellId(uint16 itemId) -> uint16
@@ -966,6 +1444,269 @@ void FanOutSpellToAccount(uint32 accId, uint16 spellId)
         "INSERT IGNORE INTO char_spells (charid, spellid) "
         "SELECT charid, ? FROM chars WHERE accid = ?",
         spellId, accId);
+}
+
+auto ListGambitSets(uint32 accId) -> std::vector<GambitSet>
+{
+    std::vector<GambitSet> out;
+
+    const auto rset = db::preparedStmt(
+        "SELECT s.setid, s.name, s.tp_trigger, s.tp_selector, s.tp_actionid, COUNT(r.ordinal) AS n "
+        "FROM account_gambit_set s LEFT JOIN account_gambit_rule r ON r.setid = s.setid "
+        "WHERE s.accid = ? GROUP BY s.setid, s.name, s.tp_trigger, s.tp_selector, s.tp_actionid ORDER BY s.name",
+        accId);
+    if (rset)
+    {
+        while (rset->next())
+        {
+            GambitSet set;
+            set.setId      = rset->get<uint32>("setid");
+            set.name       = rset->get<std::string>("name");
+            set.ruleCount  = rset->get<uint8>("n");
+            set.tpTrigger  = rset->get<uint8>("tp_trigger");
+            set.tpSelector = rset->get<uint8>("tp_selector");
+            set.tpActionId = rset->get<uint16>("tp_actionid");
+            out.emplace_back(set);
+        }
+    }
+
+    return out;
+}
+
+auto FindGambitSet(uint32 accId, const std::string& name) -> uint32
+{
+    const auto rset = db::preparedStmt(
+        "SELECT setid FROM account_gambit_set WHERE accid = ? AND name = ? LIMIT 1", accId, name);
+    if (rset && rset->rowsCount() != 0 && rset->next())
+    {
+        return rset->get<uint32>("setid");
+    }
+    return 0;
+}
+
+auto CreateGambitSet(uint32 accId, const std::string& name) -> GambitSetResult
+{
+    if (name.empty() || name.size() > 24)
+    {
+        return GambitSetResult::BadName;
+    }
+
+    if (FindGambitSet(accId, name) != 0)
+    {
+        return GambitSetResult::AlreadyExists;
+    }
+
+    const auto countRset = db::preparedStmt(
+        "SELECT COUNT(*) AS n FROM account_gambit_set WHERE accid = ?", accId);
+    if (countRset && countRset->rowsCount() != 0 && countRset->next() && countRset->get<uint32>("n") >= MaxGambitSets)
+    {
+        return GambitSetResult::TooMany;
+    }
+
+    db::preparedStmt("INSERT INTO account_gambit_set (accid, name) VALUES (?, ?)", accId, name);
+    return GambitSetResult::Ok;
+}
+
+auto RenameGambitSet(uint32 accId, const std::string& name, const std::string& newName) -> GambitSetResult
+{
+    if (newName.empty() || newName.size() > 24)
+    {
+        return GambitSetResult::BadName;
+    }
+
+    const uint32 setId = FindGambitSet(accId, name);
+    if (setId == 0)
+    {
+        return GambitSetResult::NotFound;
+    }
+
+    if (FindGambitSet(accId, newName) != 0)
+    {
+        return GambitSetResult::AlreadyExists;
+    }
+
+    db::preparedStmt("UPDATE account_gambit_set SET name = ? WHERE setid = ? AND accid = ?", newName, setId, accId);
+    return GambitSetResult::Ok;
+}
+
+void DeleteGambitSet(uint32 accId, const std::string& name)
+{
+    const uint32 setId = FindGambitSet(accId, name);
+    if (setId == 0)
+    {
+        return;
+    }
+
+    db::preparedStmt("DELETE FROM account_gambit_rule WHERE setid = ?", setId);
+    db::preparedStmt("DELETE FROM account_gambit_assign WHERE accid = ? AND setid = ?", accId, setId);
+    db::preparedStmt("DELETE FROM account_gambit_set WHERE setid = ? AND accid = ?", setId, accId);
+}
+
+auto SetGambitTpSkill(uint32 accId, const std::string& name, uint8 tpTrigger, uint8 tpSelector, uint16 tpActionId) -> GambitSetResult
+{
+    const uint32 setId = FindGambitSet(accId, name);
+    if (setId == 0)
+    {
+        return GambitSetResult::NotFound;
+    }
+
+    db::preparedStmt(
+        "UPDATE account_gambit_set SET tp_trigger = ?, tp_selector = ?, tp_actionid = ? WHERE setid = ? AND accid = ?",
+        tpTrigger, tpSelector, tpActionId, setId, accId);
+
+    return GambitSetResult::Ok;
+}
+
+auto ListGambitRules(uint32 accId, const std::string& name) -> std::vector<GambitRule>
+{
+    std::vector<GambitRule> out;
+
+    const uint32 setId = FindGambitSet(accId, name);
+    if (setId == 0)
+    {
+        return out;
+    }
+
+    const auto rset = db::preparedStmt(
+        "SELECT ordinal, target, cond, arg, reaction, selector, actionid "
+        "FROM account_gambit_rule WHERE setid = ? ORDER BY ordinal",
+        setId);
+    if (rset)
+    {
+        while (rset->next())
+        {
+            GambitRule rule;
+            rule.ordinal  = rset->get<uint8>("ordinal");
+            rule.target   = rset->get<uint8>("target");
+            rule.cond     = rset->get<uint8>("cond");
+            rule.arg      = rset->get<uint16>("arg");
+            rule.reaction = rset->get<uint8>("reaction");
+            rule.selector = rset->get<uint8>("selector");
+            rule.actionid = rset->get<uint16>("actionid");
+            out.emplace_back(rule);
+        }
+    }
+
+    return out;
+}
+
+auto AddGambitRule(uint32 accId, const std::string& name, const GambitRule& rule) -> GambitRuleResult
+{
+    const uint32 setId = FindGambitSet(accId, name);
+    if (setId == 0)
+    {
+        return GambitRuleResult::NotFound;
+    }
+
+    const auto countRset = db::preparedStmt(
+        "SELECT COUNT(*) AS n FROM account_gambit_rule WHERE setid = ?", setId);
+    uint32 count = 0;
+    if (countRset && countRset->rowsCount() != 0 && countRset->next())
+    {
+        count = countRset->get<uint32>("n");
+    }
+
+    if (count >= MaxGambitRulesPerSet)
+    {
+        return GambitRuleResult::TooMany;
+    }
+
+    db::preparedStmt(
+        "INSERT INTO account_gambit_rule (setid, ordinal, target, cond, arg, reaction, selector, actionid) "
+        "VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+        setId, static_cast<uint8>(count + 1), rule.target, rule.cond, rule.arg, rule.reaction, rule.selector, rule.actionid);
+
+    return GambitRuleResult::Ok;
+}
+
+auto RemoveGambitRule(uint32 accId, const std::string& name, uint8 ordinal) -> GambitRuleResult
+{
+    const uint32 setId = FindGambitSet(accId, name);
+    if (setId == 0)
+    {
+        return GambitRuleResult::NotFound;
+    }
+
+    const auto existsRset = db::preparedStmt(
+        "SELECT 1 FROM account_gambit_rule WHERE setid = ? AND ordinal = ? LIMIT 1", setId, ordinal);
+    if (!existsRset || existsRset->rowsCount() == 0)
+    {
+        return GambitRuleResult::BadOrdinal;
+    }
+
+    db::preparedStmt("DELETE FROM account_gambit_rule WHERE setid = ? AND ordinal = ?", setId, ordinal);
+    // Compact the ordinals after the removed one so the set stays 1..count with no gaps.
+    db::preparedStmt(
+        "UPDATE account_gambit_rule SET ordinal = ordinal - 1 WHERE setid = ? AND ordinal > ?", setId, ordinal);
+
+    return GambitRuleResult::Ok;
+}
+
+auto SetGambitAssign(uint32 accId, uint32 charId, uint8 mjob, const std::string& name) -> GambitAssignResult
+{
+    if (!IsOwnedByAccount(accId, charId))
+    {
+        return GambitAssignResult::NotOwned;
+    }
+
+    if (JobColumn(mjob) == nullptr)
+    {
+        return GambitAssignResult::BadJob;
+    }
+
+    if (name.empty())
+    {
+        db::preparedStmt(
+            "DELETE FROM account_gambit_assign WHERE accid = ? AND charid = ? AND mjob = ?", accId, charId, mjob);
+        return GambitAssignResult::Ok;
+    }
+
+    const uint32 setId = FindGambitSet(accId, name);
+    if (setId == 0)
+    {
+        return GambitAssignResult::NotFound;
+    }
+
+    db::preparedStmt(
+        "INSERT INTO account_gambit_assign (accid, charid, mjob, setid) VALUES (?, ?, ?, ?) "
+        "ON DUPLICATE KEY UPDATE setid = ?",
+        accId, charId, mjob, setId, setId);
+
+    return GambitAssignResult::Ok;
+}
+
+auto GetGambitAssignName(uint32 accId, uint32 charId, uint8 mjob) -> std::string
+{
+    const auto rset = db::preparedStmt(
+        "SELECT s.name FROM account_gambit_assign a JOIN account_gambit_set s ON s.setid = a.setid "
+        "WHERE a.accid = ? AND a.charid = ? AND a.mjob = ? LIMIT 1",
+        accId, charId, mjob);
+    if (rset && rset->rowsCount() != 0 && rset->next())
+    {
+        return rset->get<std::string>("name");
+    }
+    return "";
+}
+
+auto ListGambitAssigns(uint32 accId) -> std::vector<GambitAssignEntry>
+{
+    std::vector<GambitAssignEntry> out;
+
+    const auto rset = db::preparedStmt(
+        "SELECT charid, mjob, setid FROM account_gambit_assign WHERE accid = ?", accId);
+    if (rset)
+    {
+        while (rset->next())
+        {
+            GambitAssignEntry entry;
+            entry.charId = rset->get<uint32>("charid");
+            entry.mjob   = rset->get<uint8>("mjob");
+            entry.setId  = rset->get<uint32>("setid");
+            out.emplace_back(entry);
+        }
+    }
+
+    return out;
 }
 
 }; // namespace squadutils

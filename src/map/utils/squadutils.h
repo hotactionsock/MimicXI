@@ -177,8 +177,13 @@ auto ItemStackSize(uint16 itemId) -> uint16;
 struct GearSlot
 {
     uint8  equipSlotId{};
-    uint16 itemId{};   // 0 = empty
+    uint16 itemId{};      // 0 = empty
     bool   aug{};
+    uint8  containerId{}; // char_inventory.location backing this slot (0 if empty)
+    uint8  invSlot{};     // char_inventory.slot backing this slot (0 if empty) -
+                           // lets the caller re-address this exact instance
+                           // (e.g. for an augment stat lookup) the same way a
+                           // GearCandidate's srcCont/srcSlot does.
 };
 auto ListAltGear(uint32 charId) -> std::array<GearSlot, 16>;
 
@@ -194,6 +199,37 @@ struct GearCandidate
 };
 // Everything on the account that altCharId can wear in equipSlotId right now.
 auto ListGearCandidates(uint32 accId, uint32 altCharId, uint8 equipSlotId) -> std::vector<GearCandidate>;
+
+struct ItemModRow
+{
+    uint16 modId{};
+    int16  value{};
+};
+// Raw item_mods rows (base stats baked into the item, e.g. STR+3) for one
+// itemId. Does not include augments (those live per-instance in char_inventory
+// extdata, not per-itemId) - Lua resolves modId -> label text via xi.mod, which
+// is already a name->id enum on that side.
+auto ListItemMods(uint16 itemId) -> std::vector<ItemModRow>;
+
+// Decodes up to 5 augment slots from a raw 24-byte extdata blob (the same
+// bytes char_inventory.extra / account_warehouse.extra store) into their
+// resulting stat deltas - i.e. augment-only, not combined with the item's
+// base item_mods. Replicates CItemEquipment::SetAugmentMod's formula
+// (item_equipment.cpp) as pure data so the Gear tab can preview an augmented
+// instance's stats without spawning a live item object. Pet mods are
+// skipped (not a gear stat); empty for a plain, non-augmented item.
+auto DecodeAugmentMods(const uint8 (&extra)[24]) -> std::vector<ItemModRow>;
+
+struct WeaponDamageDelay
+{
+    bool   isWeapon{};
+    uint16 damage{};
+    uint16 delay{};
+};
+// Damage/Delay for a weapon itemId (item_weapon columns, not item_mods - these
+// are intrinsic to the weapon, not a stat modifier). isWeapon false for
+// anything that isn't a CItemWeapon (armor, or an unknown itemId).
+auto GetWeaponDamageDelay(uint16 itemId) -> WeaponDamageDelay;
 
 enum class GearResult : uint8
 {
@@ -229,6 +265,52 @@ auto FinishAltEquip(uint32 altCharId, uint8 equipSlotId, uint8 invSlot, uint16 i
 // Clear one equip slot; the item stays in the alt's inventory.
 auto UnequipAltItem(uint32 accId, uint32 altCharId, uint8 equipSlotId) -> GearResult;
 
+// --- warehouse as a gear/bag source ---
+//
+// account_warehouse (warehouseutils) is an account-wide stash addressed by
+// rowid rather than (charid, container, slot). Both sides of every move here
+// are pure DB - an alt is offline and the warehouse has no live entity either -
+// so, unlike the online summoner's own warehouse bindings (which move through
+// a live ItemClaimTransaction), these run as plain sequential statements with
+// a best-effort revert of the side already written if the second write fails.
+
+struct WarehouseGearCandidate
+{
+    uint32 rowid{};
+    uint16 itemId{};
+    uint8  aug{};
+};
+
+// Everything in the account's warehouse that altCharId can wear in equipSlotId
+// right now (same job/level/race/slot filtering as ListGearCandidates).
+auto ListWarehouseGearCandidates(uint32 accId, uint32 altCharId, uint8 equipSlotId) -> std::vector<WarehouseGearCandidate>;
+
+// Equip a warehouse row directly onto an offline alt: relocates it into the
+// alt's inventory (char_inventory), removes it from account_warehouse, then
+// writes char_equip / char_look. altCharId must be owned and offline.
+auto EquipAltItemFromWarehouse(uint32 accId, uint32 altCharId, uint8 equipSlotId, uint32 rowid) -> GearResult;
+
+enum class WarehouseBagResult : uint8
+{
+    Ok,
+    NotOwned,     // altCharId not on the account
+    Online,       // altCharId is logged in (live summoner uses warehousePut/Take instead)
+    BadContainer, // containerId not provisioned for this alt
+    NoItem,       // source slot / warehouse row is empty or stale
+    Full,         // warehouse soft row cap reached
+    BagFull,      // the alt's container has no free slot
+    BadQuantity,
+    DbError,
+};
+
+// Move `quantity` (0 = whole stack) from an offline alt's bag slot into the
+// account warehouse. Merges into an existing plain-stack row when possible.
+auto MoveAltBagToWarehouse(uint32 accId, uint32 altCharId, uint8 containerId, uint8 slot, uint32 quantity) -> WarehouseBagResult;
+
+// Move `quantity` (0 = whole row) of a warehouse row into an offline alt's
+// bag container. Refuses a partial move of a non-stacking item.
+auto MoveWarehouseToAltBag(uint32 accId, uint32 altCharId, uint8 containerId, uint32 rowid, uint32 quantity) -> WarehouseBagResult;
+
 // --- scroll learning (account-wide) ---
 //
 // A spell scroll in any bag can be learned if ANY character on the account meets
@@ -246,5 +328,110 @@ auto AccountMeetsSpellPrereq(uint32 accId, uint16 spellId) -> bool;
 
 // INSERT IGNORE spellId into char_spells for every character on the account.
 void FanOutSpellToAccount(uint32 accId, uint16 spellId);
+
+// --- gambit rule sets (player-authored trust AI, account_gambit_*) ---
+//
+// A rule set is a small ordered list of gambits (target/condition/reaction),
+// stored raw as the native ai.t/ai.c/ai.r/ai.s ints - the Lua-side whitelist
+// (scripts/globals/gambitrules.lua) is what decides which of those values a
+// player is allowed to author; this layer is just ownership-scoped CRUD, the
+// same shape as the job-preset table above. A set can be assigned per
+// (charid, mjob), since a mimic's usable spells/JAs are job-dependent.
+
+inline constexpr uint8  MaxGambitSets        = 8;
+inline constexpr uint8  MaxGambitRulesPerSet = 10;
+
+struct GambitSet
+{
+    uint32      setId{};
+    std::string name;
+    uint8       ruleCount{};
+
+    // Weaponskill config (setTrustTPSkillSettings): tpTrigger is an ai.tp
+    // value, tpSelector an ai.s value, tpActionId a specific weaponskill id
+    // (meaningful only when tpSelector is SPECIFIC). Defaults (0, 3, 0) match
+    // the engine's own pre-mgambits default (ASAP + RANDOM).
+    uint8  tpTrigger{};
+    uint8  tpSelector{ 3 };
+    uint16 tpActionId{};
+};
+
+struct GambitRule
+{
+    uint8  ordinal{};
+    uint8  target{};
+    uint8  cond{};
+    uint16 arg{};
+    uint8  reaction{};
+    uint8  selector{};
+    uint16 actionid{};
+};
+
+enum class GambitSetResult : uint8
+{
+    Ok,
+    AlreadyExists,
+    TooMany,
+    BadName,
+    NotFound,
+};
+
+enum class GambitRuleResult : uint8
+{
+    Ok,
+    NotFound, // set not owned / doesn't exist
+    TooMany,  // rule cap hit
+    BadOrdinal,
+};
+
+// Owned sets for the account, name-ascending.
+auto ListGambitSets(uint32 accId) -> std::vector<GambitSet>;
+
+// 0 if no set of that name exists for this account.
+auto FindGambitSet(uint32 accId, const std::string& name) -> uint32;
+
+auto CreateGambitSet(uint32 accId, const std::string& name) -> GambitSetResult;
+auto RenameGambitSet(uint32 accId, const std::string& name, const std::string& newName) -> GambitSetResult;
+void DeleteGambitSet(uint32 accId, const std::string& name);
+
+// Updates just the weaponskill config of an owned set.
+auto SetGambitTpSkill(uint32 accId, const std::string& name, uint8 tpTrigger, uint8 tpSelector, uint16 tpActionId) -> GambitSetResult;
+
+// Rules of an owned set, ordinal-ascending.
+auto ListGambitRules(uint32 accId, const std::string& name) -> std::vector<GambitRule>;
+
+// Appends a rule at the end of the named set (ordinal = current count + 1).
+auto AddGambitRule(uint32 accId, const std::string& name, const GambitRule& rule) -> GambitRuleResult;
+
+// Removes the rule at ordinal and compacts the ordinals after it.
+auto RemoveGambitRule(uint32 accId, const std::string& name, uint8 ordinal) -> GambitRuleResult;
+
+// --- assignment (account_gambit_assign, keyed accid+charid+mjob) ---
+
+enum class GambitAssignResult : uint8
+{
+    Ok,
+    NotOwned, // charId not on the account
+    BadJob,
+    NotFound, // named set doesn't exist for this account
+};
+
+// Assigns the named set to (charId, mjob). An empty name clears the assignment.
+auto SetGambitAssign(uint32 accId, uint32 charId, uint8 mjob, const std::string& name) -> GambitAssignResult;
+
+// The rule-set name assigned to (charId, mjob), or "" if none.
+auto GetGambitAssignName(uint32 accId, uint32 charId, uint8 mjob) -> std::string;
+
+struct GambitAssignEntry
+{
+    uint32 charId{};
+    uint8  mjob{};
+    uint32 setId{};
+};
+
+// Every (charId, mjob) -> setId assignment on the account, for the addon's
+// one-shot Gambits tab refresh (avoids one getGambitAssign call per possible
+// charid/job combination).
+auto ListGambitAssigns(uint32 accId) -> std::vector<GambitAssignEntry>;
 
 }; // namespace squadutils

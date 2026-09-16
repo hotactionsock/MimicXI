@@ -42,7 +42,7 @@ xi.fate.zones[xi.zone.EAST_RONFAURE] =
             mobs =
             {
                 {
-                    base        = { 101, 12 },
+                    templateName = "Scarab_Beetle",
                     name        = string.char(0xA6) .. "Scarab Beetle",
                     count       = 7,
                     spawnPoints =
@@ -57,7 +57,7 @@ xi.fate.zones[xi.zone.EAST_RONFAURE] =
                     },
                 },
                 {
-                    base        = { 101, 11 },
+                    templateName = "Forest_Funguar",
                     name        = string.char(0xA6) .. "Forest Funguar",
                     count       = 3,
                     spawnPoints =
@@ -133,7 +133,7 @@ xi.fate.zones[xi.zone.EAST_RONFAURE] =
             mobs =
             {
                 {
-                    base        = { 101, 13 },
+                    templateName = "Orcish_Fodder",
                     name        = string.char(0xA6) .. "Orcish Fodder",
                     count       = 5,
                     spawnPoints =
@@ -149,7 +149,7 @@ xi.fate.zones[xi.zone.EAST_RONFAURE] =
                     },
                 },
                 {
-                    base        = { 101, 16 },
+                    templateName = "Orcish_Grappler",
                     name        = string.char(0xA6) .. "Orcish Grappler",
                     count       = 3,
                     spawnPoints =
@@ -230,7 +230,7 @@ xi.fate.zones[xi.zone.EAST_RONFAURE] =
             mobs =
             {
                 {
-                    base        = { 101, 16 },
+                    templateName = "Orcish_Grappler",
                     name        = string.char(0xA6) .. "Orcish Grappler",
                     count       = 3,
                     spawnPoints =
@@ -245,7 +245,7 @@ xi.fate.zones[xi.zone.EAST_RONFAURE] =
                     },
                 },
                 {
-                    base        = { 101, 15 },
+                    templateName = "Orcish_Mesmerizer",
                     name        = string.char(0xA6) .. "Orcish Mesmerizer",
                     count       = 2,
                     spawnPoints =
@@ -350,7 +350,10 @@ xi.fate.zones[xi.zone.EAST_RONFAURE] =
             mobs =
             {
                 {
-                    base         = { 150, 16 },
+                    -- No Orcish Tyrant template in this zone's mobs.yaml (the old
+                    -- base cloned a stat block from zone 150); using the local
+                    -- Orcish Grappler look, the toughest orc melee type on hand.
+                    templateName = "Orcish_Grappler",
                     name         = string.char(0xA6) .. "Orcish Tyrant",
                     count        = 1,
                     isBoss       = true,
@@ -362,7 +365,9 @@ xi.fate.zones[xi.zone.EAST_RONFAURE] =
                     },
                 },
                 {
-                    base        = { 150, 3 },
+                    -- No Orcish Grunt template locally; Orcish Fodder is this
+                    -- zone's basic-tier orc, matching "Grunt" best.
+                    templateName = "Orcish_Fodder",
                     name        = string.char(0xA6) .. "Orcish Grunt",
                     count       = 3,
                     noCount     = true,
@@ -441,7 +446,7 @@ xi.fate.zones[xi.zone.EAST_RONFAURE] =
             mobs =
             {
                 {
-                    base        = { 101, 12 },
+                    templateName = "Scarab_Beetle",
                     name        = string.char(0xA6) .. "Scarab Beetle",
                     count       = 5,
                     spawnPoints =
@@ -454,7 +459,9 @@ xi.fate.zones[xi.zone.EAST_RONFAURE] =
                     },
                 },
                 {
-                    base        = { 101, 12 },  -- TODO: verify mob_groups (Stag Beetle)
+                    -- No Stag Beetle template locally; historically reused Scarab
+                    -- Beetle's own groupid, so keep that same reskin.
+                    templateName = "Scarab_Beetle",
                     name        = string.char(0xA6) .. "Stag Beetle",
                     count       = 4,
                     spawnPoints =
@@ -531,7 +538,7 @@ xi.fate.zones[xi.zone.EAST_RONFAURE] =
             mobs =
             {
                 {
-                    base        = { 101, 14 },  -- TODO: verify mob_groups (Tunnel Worm)
+                    templateName = "Tunnel_Worm",
                     name        = string.char(0xA6) .. "Tunnel Worm",
                     count       = 5,
                     spawnPoints =
@@ -544,7 +551,7 @@ xi.fate.zones[xi.zone.EAST_RONFAURE] =
                     },
                 },
                 {
-                    base        = { 101, 14 },  -- TODO: verify mob_groups (Carrion Worm)
+                    templateName = "Carrion_Worm",
                     name        = string.char(0xA6) .. "Carrion Worm",
                     count       = 4,
                     spawnPoints =
@@ -620,7 +627,9 @@ xi.fate.zones[xi.zone.EAST_RONFAURE] =
             mobs =
             {
                 {
-                    base        = { 101, 14 },  -- TODO: verify mob_groups (Tremor Worm)
+                    -- No Tremor Worm template locally; Tunnel Worm is the closest
+                    -- burrowing-worm look this zone has.
+                    templateName = "Tunnel_Worm",
                     name        = string.char(0xA6) .. "Tremor Worm",
                     count       = 2,
                     spawnPoints =
@@ -630,7 +639,7 @@ xi.fate.zones[xi.zone.EAST_RONFAURE] =
                     },
                 },
                 {
-                    base        = { 101, 14 },  -- TODO: verify mob_groups
+                    templateName = "Carrion_Worm",
                     name        = string.char(0xA6) .. "Carrion Worm",
                     count       = 3,
                     spawnPoints =
@@ -732,7 +741,9 @@ xi.fate.zones[xi.zone.EAST_RONFAURE] =
             mobs =
             {
                 {
-                    base         = { 101, 18 },  -- TODO: verify mob_groups (Wild Karakul / Sheep family)
+                    -- No Wild Karakul template locally; Wild Sheep is this zone's
+                    -- closest sheep-family look, matching the flavour text.
+                    templateName = "Wild_Sheep",
                     name         = string.char(0xA6) .. "Ronfaure Ironhide",
                     count        = 1,
                     isBoss       = true,
@@ -744,7 +755,7 @@ xi.fate.zones[xi.zone.EAST_RONFAURE] =
                     },
                 },
                 {
-                    base        = { 101, 18 },  -- TODO: verify mob_groups (Sheep family adds)
+                    templateName = "Wild_Sheep",
                     name        = string.char(0xA6) .. "Wild Karakul",
                     count       = 3,
                     noCount     = true,
@@ -852,7 +863,11 @@ xi.fate.zones[xi.zone.EAST_RONFAURE] =
             mobs =
             {
                 {
-                    base         = { 150, 16 },
+                    -- Cross-zone borrow: was a clone of zone 150's group 16. Castle Zvahl
+                    -- Baileys' plain Ahriman is a direct match for "Dread Champion" - an
+                    -- Ahriman-type floating-eye horror fits the miasma/dark-void flavour text.
+                    templateName   = "Ahriman",
+                    templateZoneId = xi.zone.CASTLE_ZVAHL_BAILEYS,
                     name         = string.char(0xA6) .. "Dread Champion",
                     count        = 1,
                     isBoss       = true,

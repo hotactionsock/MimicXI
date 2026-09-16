@@ -76,10 +76,19 @@ entity.spawnPoints =
     { x = -296.685, y =  23.114, z = -318.141 }
 }
 
-entity.phList =
-{
-    [ID.mob.LEAPING_LIZZY[1] - 1] = { ID.mob.LEAPING_LIZZY[1], ID.mob.LEAPING_LIZZY[2] },
-}
+-- Rock Lizard spawns for Lizzy's actual camp, around { -295.948, 22.538, -367.512 }
+-- (data/zones/south_gustaberg/mobs.yaml - the only ones within ~40 units /
+-- matching elevation of that point; the zone's other ~29 Rock Lizard spawns
+-- are elsewhere and were dropped again after briefly wiring up every one of
+-- them zone-wide, which was unhelpful):
+--   17215863 (-260.662, 22.417, -357.882)  17215866 (-276.306, 20.355, -345.704)
+--   17215865 (-270.019, 20.612, -389.970)  17215867 (-275.441, 20.451, -347.294)
+local ROCK_LIZARD_CAMP_IDS = { 17215863, 17215865, 17215866, 17215867 }
+
+entity.phList = {}
+for _, phId in ipairs(ROCK_LIZARD_CAMP_IDS) do
+    entity.phList[phId] = { ID.mob.LEAPING_LIZZY[1], ID.mob.LEAPING_LIZZY[2] }
+end
 
 entity.onMobDeath = function(mob, player, optParams)
     xi.hunts.checkHunt(mob, player, 200)

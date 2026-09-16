@@ -8,6 +8,7 @@
 --   !squad clear <slot>         -- empty a slot
 --   !squad call [slot|all]      -- summon rostered alts as mimic trusts
 --   !squad dismiss              -- dismiss your mimic trusts
+--   !squad gambit ...           -- author/assign trust AI rule sets (see doGambit below)
 --
 -- permission = 0 (all players)
 -----------------------------------
@@ -346,6 +347,202 @@ local function doSelfJob(player, args)
     msg(player, why or 'Job changed.')
 end
 
+-----------------------------------
+-- Gambits
+-----------------------------------
+
+local GAMBIT_USAGE = 'Usage: !squad gambit list | statuses | new <name> | del <name> | rename <name> <newname> | '
+    .. 'show <name> | add <name> <target> <condition[:arg]> <reaction> <action> | rem <name> <ordinal> | '
+    .. 'assign <character name> <mainJob> <name> | unassign <character name> <mainJob> | '
+    .. 'tpskill <name> <asap|random|opener|closer|closeruntiltp> <random|specific|bestagainsttarget> [wsid]'
+
+local function doGambitList(player)
+    local sets = player:getGambitSets()
+    if #sets == 0 then
+        msg(player, 'You have no gambit sets. Use !squad gambit new <name>.')
+        return
+    end
+    msg(player, 'Gambit sets:')
+    for _, s in ipairs(sets) do
+        msg(player, string.format('  %s (%d/%d rules)', s.name, s.count, xi.gambitRules.MAX_RULES_PER_SET))
+    end
+end
+
+local function doGambitNew(player, args)
+    local name = args[3]
+    if not name then
+        msg(player, 'Usage: !squad gambit new <name>')
+        return
+    end
+    local res = player:createGambitSet(name)
+    msg(player, xi.squad.GAMBITSET_RESULT[res] or string.format('Created gambit set "%s".', name))
+end
+
+local function doGambitDel(player, args)
+    local name = args[3]
+    if not name then
+        msg(player, 'Usage: !squad gambit del <name>')
+        return
+    end
+    player:deleteGambitSet(name)
+    msg(player, string.format('Deleted gambit set "%s" (if it existed).', name))
+end
+
+local function doGambitRename(player, args)
+    local name, newName = args[3], args[4]
+    if not name or not newName then
+        msg(player, 'Usage: !squad gambit rename <name> <newname>')
+        return
+    end
+    local res = player:renameGambitSet(name, newName)
+    msg(player, xi.squad.GAMBITSET_RESULT[res] or string.format('Renamed "%s" to "%s".', name, newName))
+end
+
+local function doGambitShow(player, args)
+    local name = args[3]
+    if not name then
+        msg(player, 'Usage: !squad gambit show <name>')
+        return
+    end
+    local ruleRows = player:getGambitRules(name)
+    if ruleRows == nil or #ruleRows == 0 then
+        msg(player, string.format('"%s" has no rules (or does not exist).', name))
+        return
+    end
+    msg(player, string.format('Gambit set "%s":', name))
+    for _, row in ipairs(ruleRows) do
+        msg(player, string.format('  %d) %s', row.ordinal, xi.gambitRules.describe(row)))
+    end
+end
+
+-- !squad gambit add <name> <target> <condition[:arg]> <reaction> <action>
+local function doGambitAdd(player, args)
+    local name, targetText, condText, reactionText, actionText = args[3], args[4], args[5], args[6], args[7]
+    if not (name and targetText and condText and reactionText and actionText) then
+        msg(player, GAMBIT_USAGE)
+        return
+    end
+
+    local target = xi.gambitRules.TARGETS[string.lower(targetText)]
+    if not target then
+        msg(player, string.format('Unknown target "%s". Try: self, party, target, master, tank.', targetText))
+        return
+    end
+
+    local cond, condWhy = xi.gambitRules.resolveCondition(condText)
+    if not cond then
+        msg(player, condWhy)
+        return
+    end
+
+    local action, actionWhy = xi.gambitRules.resolveAction(reactionText, actionText)
+    if not action then
+        msg(player, actionWhy)
+        return
+    end
+
+    local res = player:addGambitRule(name, target, cond.cond, cond.arg, action.reaction, action.selector, action.actionid)
+    msg(player, xi.squad.GAMBITRULE_ADD_RESULT[res] or 'Rule added.')
+end
+
+local function doGambitRem(player, args)
+    local name, ordinal = args[3], tonumber(args[4])
+    if not name or not ordinal then
+        msg(player, 'Usage: !squad gambit rem <name> <ordinal>')
+        return
+    end
+    local res = player:removeGambitRule(name, ordinal)
+    msg(player, xi.squad.GAMBITRULE_REMOVE_RESULT[res] or 'Rule removed.')
+end
+
+-- !squad gambit assign <character name> <mainJob> <name>
+local function doGambitAssign(player, args)
+    local charName = args[3]
+    local mj        = args[4] and (tonumber(args[4]) or xi.job[string.upper(args[4])])
+    local name      = args[5]
+
+    local alt = charName and xi.squad.findAltByName(player, charName)
+    if not alt or not mj or not name then
+        msg(player, 'Usage: !squad gambit assign <character name> <mainJob> <name>   (job short name or id)')
+        return
+    end
+
+    local res = player:setGambitAssign(alt.charid, mj, name)
+    msg(player, xi.squad.GAMBITASSIGN_RESULT[res] or string.format('%s now uses gambit set "%s" on that job.', alt.name, name))
+end
+
+local function doGambitUnassign(player, args)
+    local charName = args[3]
+    local mj        = args[4] and (tonumber(args[4]) or xi.job[string.upper(args[4])])
+
+    local alt = charName and xi.squad.findAltByName(player, charName)
+    if not alt or not mj then
+        msg(player, 'Usage: !squad gambit unassign <character name> <mainJob>   (job short name or id)')
+        return
+    end
+
+    player:setGambitAssign(alt.charid, mj, '')
+    msg(player, string.format('%s now uses the default gambits on that job.', alt.name))
+end
+
+local function doGambitStatuses(player)
+    msg(player, 'Statuses usable in status:/notstatus: conditions:')
+    local names = {}
+    for _, s in ipairs(xi.gambitRules.STATUSES) do
+        names[#names + 1] = s.name
+    end
+    msg(player, '  ' .. table.concat(names, ', '))
+end
+
+local function doGambitTpSkill(player, args)
+    local name           = args[3]
+    local triggerText    = args[4]
+    local selectorText   = args[5]
+    local wsid           = tonumber(args[6]) or 0
+
+    local trigger  = triggerText and xi.gambitRules.TP_TRIGGERS[string.lower(triggerText)]
+    local selector = selectorText and xi.gambitRules.TP_SELECTORS[string.lower(selectorText)]
+
+    if not name or not trigger or not selector then
+        msg(player, GAMBIT_USAGE)
+        return
+    end
+
+    local ok, why = xi.gambitRules.validateTpSkill(trigger, selector, wsid)
+    if not ok then
+        msg(player, why)
+        return
+    end
+
+    local res = player:setGambitTpSkill(name, trigger, selector, wsid)
+    msg(player, xi.squad.GAMBITSET_UPDATE_RESULT[res] or 'Weaponskill settings updated.')
+end
+
+local gambitDispatch =
+{
+    list     = doGambitList,
+    statuses = doGambitStatuses,
+    tpskill  = doGambitTpSkill,
+    new      = doGambitNew,
+    del      = doGambitDel,
+    rename   = doGambitRename,
+    show     = doGambitShow,
+    add      = doGambitAdd,
+    rem      = doGambitRem,
+    assign   = doGambitAssign,
+    unassign = doGambitUnassign,
+}
+
+local function doGambit(player, args)
+    local sub     = string.lower(args[2] or 'list')
+    local handler = gambitDispatch[sub]
+    if handler then
+        handler(player, args)
+    else
+        msg(player, GAMBIT_USAGE)
+    end
+end
+
 local function doSetJob(player, args)
     local name = args[2]
     local mj   = args[3] and (tonumber(args[3]) or xi.job[string.upper(args[3])])
@@ -387,6 +584,7 @@ local dispatch =
     equip    = function(player, args) doEquip(player, args)    end,
     unequip  = function(player, args) doUnequip(player, args)  end,
     learn    = function(player, args) doLearn(player, args)    end,
+    gambit   = function(player, args) doGambit(player, args)   end,
 }
 
 commandObj.onTrigger = function(player, input)
@@ -397,7 +595,7 @@ commandObj.onTrigger = function(player, input)
     if handler then
         handler(player, args)
     else
-        msg(player, 'Subcommands: list | set <slot> <name> | clear <slot> | call [slot|all] | dismiss | engage 0|1 | setjob <name> <mjob> [sjob] | selfjob <mjob> [sjob] | bags | bag <name> [container] | send <name> <slot> [qty] | fetch <name> <slot> [qty] | gear <name> | gearslot <name> <slot> | equip <name> <slot> <#> | unequip <name> <slot> | learn [name] <slot>')
+        msg(player, 'Subcommands: list | set <slot> <name> | clear <slot> | call [slot|all] | dismiss | engage 0|1 | setjob <name> <mjob> [sjob] | selfjob <mjob> [sjob] | bags | bag <name> [container] | send <name> <slot> [qty] | fetch <name> <slot> [qty] | gear <name> | gearslot <name> <slot> | equip <name> <slot> <#> | unequip <name> <slot> | learn [name] <slot> | gambit ...')
     end
 end
 

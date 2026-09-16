@@ -44,7 +44,12 @@ xi.fate.zones[xi.zone.RUAUN_GARDENS] =
             mobs =
             {
                 {
-                    base        = { 130, 1 },  -- TODO: verify mob_groups (zoneId, groupId)
+                    -- Cross-zone borrow: this zone's mobs.yaml is Gods/elementals/
+                    -- Groundskeepers - no "Kindred" demon-type templates exist locally.
+                    -- Uleguerand Range has the actual Kindred species (overworld, not
+                    -- an instance-locked Dynamis variant).
+                    templateName   = "Kindred_Black_Mage_UR",
+                    templateZoneId = xi.zone.ULEGUERAND_RANGE,
                     name        = string.char(0xA6) .. "Kindred Cleric",
                     count       = 4,
                     spawnPoints =
@@ -56,7 +61,11 @@ xi.fate.zones[xi.zone.RUAUN_GARDENS] =
                     },
                 },
                 {
-                    base        = { 130, 2 },  -- TODO: verify mob_groups (zoneId, groupId)
+                    -- Cross-zone borrow: same reasoning as Kindred Cleric above.
+                    -- Summoner is the closest of Uleguerand's 4 Kindred variants to a
+                    -- creature-commanding "Tamer".
+                    templateName   = "Kindred_Summoner_UR",
+                    templateZoneId = xi.zone.ULEGUERAND_RANGE,
                     name        = string.char(0xA6) .. "Kindred Tamer",
                     count       = 4,
                     spawnPoints =
@@ -132,7 +141,10 @@ xi.fate.zones[xi.zone.RUAUN_GARDENS] =
             mobs =
             {
                 {
-                    base        = { 130, 3 },  -- TODO: verify mob_groups (zoneId, groupId)
+                    -- Cross-zone borrow: no Kindred demon-type template exists locally.
+                    -- Direct "Mage" -> Black_Mage match from Uleguerand Range.
+                    templateName   = "Kindred_Black_Mage_UR",
+                    templateZoneId = xi.zone.ULEGUERAND_RANGE,
                     name        = string.char(0xA6) .. "Kindred Mage",
                     count       = 3,
                     spawnPoints =
@@ -143,7 +155,10 @@ xi.fate.zones[xi.zone.RUAUN_GARDENS] =
                     },
                 },
                 {
-                    base        = { 130, 4 },  -- TODO: verify mob_groups (zoneId, groupId)
+                    -- Cross-zone borrow: no Kindred demon-type template exists locally.
+                    -- Dark Knight's shadow-magic flavour fits "Kindred Shadow" best.
+                    templateName   = "Kindred_Dark_Knight_UR",
+                    templateZoneId = xi.zone.ULEGUERAND_RANGE,
                     name        = string.char(0xA6) .. "Kindred Shadow",
                     count       = 2,
                     spawnPoints =
@@ -242,7 +257,10 @@ xi.fate.zones[xi.zone.RUAUN_GARDENS] =
             mobs =
             {
                 {
-                    base         = { 130, 5 },  -- TODO: verify mob_groups (zoneId, groupId)
+                    -- Despot is one of Ru'Aun's own "ancient, bound" NMs -
+                    -- matches "ancient divine avatar...bound...breaks free"
+                    -- much better than any cross-zone lookup would.
+                    templateName = "Despot",
                     name         = string.char(0xA6) .. "Sky Destroyer",
                     count        = 1,
                     isBoss       = true,
@@ -254,7 +272,11 @@ xi.fate.zones[xi.zone.RUAUN_GARDENS] =
                     },
                 },
                 {
-                    base        = { 130, 6 },  -- TODO: verify mob_groups (zoneId, groupId)
+                    -- Cross-zone borrow: no Kindred demon-type template exists locally.
+                    -- Warrior gives this boss-fight add a distinct frontline look from
+                    -- the two regular-FATE Kindred variants above.
+                    templateName   = "Kindred_Warrior_UR",
+                    templateZoneId = xi.zone.ULEGUERAND_RANGE,
                     name        = string.char(0xA6) .. "Kindred Elite",
                     count       = 4,
                     noCount     = true,

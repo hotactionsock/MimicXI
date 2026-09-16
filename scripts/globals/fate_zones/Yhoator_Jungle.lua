@@ -44,7 +44,9 @@ xi.fate.zones[xi.zone.YHOATOR_JUNGLE] =
             mobs =
             {
                 {
-                    base        = { 124, 1 },  -- TODO: verify mob_groups (zoneId, groupId)
+                    -- No plain "Tonberry Elder" template locally; Tonberry_Hexer
+                    -- (a curse-casting elder-type tonberry) fits the ritual flavour.
+                    templateName = "Tonberry_Hexer",
                     name        = string.char(0xA6) .. "Tonberry Elder",
                     count       = 5,
                     spawnPoints =
@@ -57,7 +59,9 @@ xi.fate.zones[xi.zone.YHOATOR_JUNGLE] =
                     },
                 },
                 {
-                    base        = { 124, 2 },  -- TODO: verify mob_groups (zoneId, groupId)
+                    -- Tonberry_Shadower matches "Assassin" better than any other
+                    -- local tonberry template.
+                    templateName = "Tonberry_Shadower",
                     name        = string.char(0xA6) .. "Berry Assassin",
                     count       = 3,
                     spawnPoints =
@@ -132,7 +136,9 @@ xi.fate.zones[xi.zone.YHOATOR_JUNGLE] =
             mobs =
             {
                 {
-                    base        = { 124, 3 },  -- TODO: verify mob_groups (zoneId, groupId)
+                    -- No "Priest" tonberry locally; Noctonberry_Summoner (a
+                    -- ritual caster) fits "conducting their murderous rite".
+                    templateName = "Noctonberry_Summoner",
                     name        = string.char(0xA6) .. "Berry Priest",
                     count       = 3,
                     spawnPoints =
@@ -143,7 +149,9 @@ xi.fate.zones[xi.zone.YHOATOR_JUNGLE] =
                     },
                 },
                 {
-                    base        = { 124, 4 },  -- TODO: verify mob_groups (zoneId, groupId)
+                    -- Tonberrys_Avatar reads as the most exceptional/legendary
+                    -- local tonberry, fitting "King" best.
+                    templateName = "Tonberrys_Avatar",
                     name        = string.char(0xA6) .. "Tonberry King",
                     count       = 2,
                     spawnPoints =
@@ -242,7 +250,9 @@ xi.fate.zones[xi.zone.YHOATOR_JUNGLE] =
             mobs =
             {
                 {
-                    base         = { 124, 5 },  -- TODO: verify mob_groups (zoneId, groupId)
+                    -- Tonberry_Decimator is the hardest-hitting local tonberry
+                    -- template, matching "Deathbringer"/"Slayer" flavour text.
+                    templateName = "Tonberry_Decimator",
                     name         = string.char(0xA6) .. "Yhoator Slayer",
                     count        = 1,
                     isBoss       = true,
@@ -254,7 +264,8 @@ xi.fate.zones[xi.zone.YHOATOR_JUNGLE] =
                     },
                 },
                 {
-                    base        = { 124, 6 },  -- TODO: verify mob_groups (zoneId, groupId)
+                    -- Noctonberry_Black_Mage fits "Warlock" (arcane caster).
+                    templateName = "Noctonberry_Black_Mage",
                     name        = string.char(0xA6) .. "Berry Warlock",
                     count       = 4,
                     noCount     = true,

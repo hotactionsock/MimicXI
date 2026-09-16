@@ -43,7 +43,9 @@ xi.fate.zones[xi.zone.VALKURM_DUNES] =
             mobs =
             {
                 {
-                    base        = { 103, 1 },  -- TODO: verify mob_groups (zoneId, groupId)
+                    -- No dedicated dune/sand lizard template in this zone's mobs.yaml;
+                    -- Hill_Lizard is the only lizard-family template available locally.
+                    templateName = "Hill_Lizard",
                     name        = string.char(0xA6) .. "Dune Lizard",
                     count       = 6,
                     spawnPoints =
@@ -57,7 +59,8 @@ xi.fate.zones[xi.zone.VALKURM_DUNES] =
                     },
                 },
                 {
-                    base        = { 103, 2 },  -- TODO: verify mob_groups (zoneId, groupId)
+                    -- Hill_Lizard again - the only lizard template in this zone's mobs.yaml.
+                    templateName = "Hill_Lizard",
                     name        = string.char(0xA6) .. "Sand Lizard",
                     count       = 4,
                     spawnPoints =
@@ -157,7 +160,7 @@ xi.fate.zones[xi.zone.VALKURM_DUNES] =
             mobs =
             {
                 {
-                    base         = { 103, 3 },  -- TODO: verify mob_groups (zoneId, groupId)
+                    templateName = "Valkurm_Emperor",
                     name         = string.char(0xA6) .. "Dunes Emperor",
                     count        = 1,
                     isBoss       = true,
@@ -169,7 +172,9 @@ xi.fate.zones[xi.zone.VALKURM_DUNES] =
                     },
                 },
                 {
-                    base        = { 103, 4 },  -- TODO: verify mob_groups (zoneId, groupId)
+                    -- No dedicated fly template; Damselfly is the closest flying-insect
+                    -- template locally available.
+                    templateName = "Damselfly",
                     name        = string.char(0xA6) .. "Dune Fly",
                     count       = 4,
                     noCount     = true,
@@ -250,7 +255,7 @@ xi.fate.zones[xi.zone.VALKURM_DUNES] =
             mobs =
             {
                 {
-                    base        = { 103, 5 },  -- TODO: verify mob_groups (Goblin Gambler)
+                    templateName = "Goblin_Gambler",
                     name        = string.char(0xA6) .. "Goblin Gambler",
                     count       = 5,
                     spawnPoints =
@@ -263,7 +268,9 @@ xi.fate.zones[xi.zone.VALKURM_DUNES] =
                     },
                 },
                 {
-                    base        = { 103, 6 },  -- TODO: verify mob_groups (Goblin Trader)
+                    -- No dedicated "Trader" template; Goblin_Swindler is the closest local
+                    -- match for a goblin who deals with travellers.
+                    templateName = "Goblin_Swindler",
                     name        = string.char(0xA6) .. "Goblin Trader",
                     count       = 4,
                     spawnPoints =
@@ -338,7 +345,9 @@ xi.fate.zones[xi.zone.VALKURM_DUNES] =
             mobs =
             {
                 {
-                    base        = { 103, 7 },  -- TODO: verify mob_groups (Goblin Smithy)
+                    -- No dedicated "Smithy" template; Goblin_Swordmaker is the closest local
+                    -- match for a weapon-crafting goblin.
+                    templateName = "Goblin_Swordmaker",
                     name        = string.char(0xA6) .. "Goblin Smithy",
                     count       = 3,
                     spawnPoints =
@@ -349,7 +358,7 @@ xi.fate.zones[xi.zone.VALKURM_DUNES] =
                     },
                 },
                 {
-                    base        = { 103, 8 },  -- TODO: verify mob_groups (Goblin Mugger)
+                    templateName = "Goblin_Mugger",
                     name        = string.char(0xA6) .. "Goblin Mugger",
                     count       = 2,
                     spawnPoints =
@@ -423,7 +432,7 @@ xi.fate.zones[xi.zone.VALKURM_DUNES] =
             mobs =
             {
                 {
-                    base        = { 103, 9 },  -- TODO: verify mob_groups (Sea Leech)
+                    templateName = "Thread_Leech",
                     name        = string.char(0xA6) .. "Sea Leech",
                     count       = 6,
                     spawnPoints =
@@ -437,7 +446,7 @@ xi.fate.zones[xi.zone.VALKURM_DUNES] =
                     },
                 },
                 {
-                    base        = { 103, 4 },  -- TODO: verify mob_groups (Dune Fly)
+                    templateName = "Damselfly",
                     name        = string.char(0xA6) .. "Dune Fly",
                     count       = 4,
                     spawnPoints =
@@ -537,7 +546,9 @@ xi.fate.zones[xi.zone.VALKURM_DUNES] =
             mobs =
             {
                 {
-                    base         = { 103, 10 }, -- TODO: verify mob_groups (Orobon)
+                    -- No Orobon template in this zone's mobs.yaml; Hippomaritimus is the
+                    -- closest local match for a massive, devouring sea creature.
+                    templateName = "Hippomaritimus",
                     name         = string.char(0xA6) .. "Dune Scourge",
                     count        = 1,
                     isBoss       = true,
@@ -549,7 +560,7 @@ xi.fate.zones[xi.zone.VALKURM_DUNES] =
                     },
                 },
                 {
-                    base        = { 103, 9 },  -- TODO: verify mob_groups (Sea Leech)
+                    templateName = "Thread_Leech",
                     name        = string.char(0xA6) .. "Sea Leech",
                     count       = 4,
                     noCount     = true,
@@ -655,7 +666,7 @@ xi.fate.zones[xi.zone.VALKURM_DUNES] =
             mobs =
             {
                 {
-                    base         = { 103, 10 }, -- TODO: verify mob_groups (Orobon family)
+                    templateName = "Hippomaritimus",
                     name         = string.char(0xA6) .. "Eternal Hunger",
                     count        = 1,
                     isBoss       = true,
@@ -667,7 +678,7 @@ xi.fate.zones[xi.zone.VALKURM_DUNES] =
                     },
                 },
                 {
-                    base        = { 103, 2 },  -- TODO: verify mob_groups (Sand Lizard)
+                    templateName = "Hill_Lizard",
                     name        = string.char(0xA6) .. "Sand Lizard",
                     count       = 5,
                     noCount     = true,

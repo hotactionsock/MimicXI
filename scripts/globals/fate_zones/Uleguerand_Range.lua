@@ -43,7 +43,9 @@ xi.fate.zones[xi.zone.ULEGUERAND_RANGE] =
             mobs =
             {
                 {
-                    base        = { 5, 1 },  -- TODO: verify mob_groups (zoneId, groupId)
+                    -- No drake/wyvern template locally; Nival_Raptor (species raptor)
+                    -- is the closest reptilian predator available.
+                    templateName = "Nival_Raptor",
                     name        = string.char(0xA6) .. "Range Icedrake",
                     count       = 5,
                     spawnPoints =
@@ -56,7 +58,9 @@ xi.fate.zones[xi.zone.ULEGUERAND_RANGE] =
                     },
                 },
                 {
-                    base        = { 5, 2 },  -- TODO: verify mob_groups (zoneId, groupId)
+                    -- No distinct winged-reptile template locally; reuses
+                    -- Nival_Raptor (also used for Range Icedrake in this event).
+                    templateName = "Nival_Raptor",
                     name        = string.char(0xA6) .. "Range Wyvern",
                     count       = 3,
                     spawnPoints =
@@ -156,7 +160,10 @@ xi.fate.zones[xi.zone.ULEGUERAND_RANGE] =
             mobs =
             {
                 {
-                    base         = { 5, 3 },  -- TODO: verify mob_groups (zoneId, groupId)
+                    -- Jormungand (species blue_wyrm, the legendary World Serpent) is a
+                    -- direct fit for a boss flavoured as "an enormous Icedrake of
+                    -- legendary size".
+                    templateName = "Jormungand",
                     name         = string.char(0xA6) .. "Ice Leviathan",
                     count        = 1,
                     isBoss       = true,
@@ -168,7 +175,7 @@ xi.fate.zones[xi.zone.ULEGUERAND_RANGE] =
                     },
                 },
                 {
-                    base        = { 5, 4 },  -- TODO: verify mob_groups (zoneId, groupId)
+                    templateName = "Buffalo",
                     name        = string.char(0xA6) .. "Range Buffalo",
                     count       = 4,
                     noCount     = true,

@@ -584,6 +584,7 @@ public:
     // Parties and Alliances
     auto   getParty() -> sol::table;
     auto   getPartyWithTrusts() -> sol::table;
+    auto   getOwnTrusts() -> sol::table;
     uint8  getPartySize(const sol::object& arg0);
     bool   hasPartyJob(uint8 job);
     auto   getPartyMember(uint8 member, uint8 allianceparty) -> CBaseEntity*;
@@ -799,6 +800,7 @@ public:
 
     auto   spawnTrust(uint16 trustId) -> CBaseEntity*;
     auto   spawnMimicTrust(std::string const& altCharName) -> CBaseEntity*;
+    auto   resummonMimicTrust(uint32 altCharId) -> CBaseEntity*;
     void   clearTrusts();
     void   clearMimicTrusts();
     uint32 getAccountID();
@@ -815,10 +817,29 @@ public:
     uint8  squadBagMove(uint32 srcCharId, uint8 srcContainerId, uint8 srcSlot, uint32 dstCharId, uint8 dstContainerId, uint32 quantity);
     auto   getSquadGear(uint32 charId) -> sol::table;
     auto   getSquadGearCandidates(uint32 charId, uint8 equipSlotId) -> sol::table;
+    auto   getItemMods(uint16 itemId) -> sol::table;
+    auto   getWeaponDamageDelay(uint16 itemId) -> sol::table;
+    auto   getBagItemAugmentMods(uint32 charId, uint8 containerId, uint8 slot) -> sol::table;
+    auto   getWarehouseItemAugmentMods(uint32 rowid) -> sol::table;
     uint8  squadEquip(uint32 charId, uint8 equipSlotId, uint32 srcCharId, uint8 srcContainerId, uint8 srcSlot);
     uint8  squadUnequip(uint32 charId, uint8 equipSlotId);
     uint8  squadLearnScroll(uint32 srcCharId, uint8 srcContainerId, uint8 srcSlot);
+    auto   getSquadWarehouseGearCandidates(uint32 charId, uint8 equipSlotId) -> sol::table;
+    uint8  squadEquipFromWarehouse(uint32 charId, uint8 equipSlotId, uint32 rowid);
+    uint8  squadBagMoveToWarehouse(uint32 charId, uint8 containerId, uint8 slot, uint32 quantity);
+    uint8  squadBagMoveFromWarehouse(uint32 charId, uint8 containerId, uint32 rowid, uint32 quantity);
     uint8  swapOwnJobs(uint8 mjob, uint8 sjob);
+    auto   getGambitSets() -> sol::table;
+    uint8  createGambitSet(const std::string& name);
+    uint8  renameGambitSet(const std::string& name, const std::string& newName);
+    void   deleteGambitSet(const std::string& name);
+    uint8  setGambitTpSkill(const std::string& name, uint8 tpTrigger, uint8 tpSelector, uint16 tpActionId);
+    auto   getGambitRules(const std::string& name) -> sol::table;
+    uint8  addGambitRule(const std::string& name, uint8 target, uint8 cond, uint16 arg, uint8 reaction, uint8 selector, uint16 actionid);
+    uint8  removeGambitRule(const std::string& name, uint8 ordinal);
+    uint8  setGambitAssign(uint32 charId, uint8 mjob, const std::string& name);
+    auto   getGambitAssign(uint32 charId, uint8 mjob) -> std::string;
+    auto   getGambitAssignments() -> sol::table;
     auto   warehouseInfo() -> sol::table;
     auto   warehousePage(uint32 page) -> sol::table;
     uint8  warehousePut(uint8 srcContainerId, uint8 srcSlot, uint16 itemId, uint32 quantity);
@@ -826,6 +847,7 @@ public:
     uint8  warehouseTrash(uint32 rowid);
     auto   warehouseStashAll(uint8 srcContainerId) -> sol::table;
     uint32 getTrustID();
+    uint32 getMimicSourceCharId();
     void   trustPartyMessage(uint32 message_id) const;
     auto   addGambit(uint16 targ, const sol::table& predicates, const sol::table& reactions, const sol::object& retry) -> std::string;
     void   removeGambit(const std::string& id);

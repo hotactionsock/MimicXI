@@ -44,7 +44,9 @@ xi.fate.zones[xi.zone.BEAUCEDINE_GLACIER] =
             mobs =
             {
                 {
-                    base        = { 111, 1 },  -- TODO: verify mob_groups (zoneId, groupId)
+                    -- No "Gigas Bhikkhu" template by that exact name, but Gigas_Monk
+                    -- (hand-to-hand, mnk job) is a direct fit - bhikkhu means "monk".
+                    templateName = "Gigas_Monk",
                     name        = string.char(0xA6) .. "Gigas Bhikkhu",
                     count       = 5,
                     spawnPoints =
@@ -57,7 +59,9 @@ xi.fate.zones[xi.zone.BEAUCEDINE_GLACIER] =
                     },
                 },
                 {
-                    base        = { 111, 2 },  -- TODO: verify mob_groups (zoneId, groupId)
+                    -- No "Gigas Flagman" template locally; Gigas_Overseer (a
+                    -- command/support role) is the closest thematic fit.
+                    templateName = "Gigas_Overseer",
                     name        = string.char(0xA6) .. "Gigas Flagman",
                     count       = 4,
                     spawnPoints =
@@ -133,7 +137,9 @@ xi.fate.zones[xi.zone.BEAUCEDINE_GLACIER] =
             mobs =
             {
                 {
-                    base        = { 111, 3 },  -- TODO: verify mob_groups (zoneId, groupId)
+                    -- No caster-flavoured Gigas template locally; using the
+                    -- Rime_Gigas elemental variant for a more mystic look.
+                    templateName = "Rime_Gigas",
                     name        = string.char(0xA6) .. "Gigas Shaman",
                     count       = 3,
                     spawnPoints =
@@ -144,7 +150,9 @@ xi.fate.zones[xi.zone.BEAUCEDINE_GLACIER] =
                     },
                 },
                 {
-                    base        = { 111, 4 },  -- TODO: verify mob_groups (zoneId, groupId)
+                    -- No "Jarl" template locally; Snow_Gigas gives this chieftain-tier
+                    -- add a distinct look from the Rime_Gigas used for Gigas Shaman.
+                    templateName = "Snow_Gigas",
                     name        = string.char(0xA6) .. "Gigas Jarl",
                     count       = 2,
                     spawnPoints =
@@ -243,7 +251,9 @@ xi.fate.zones[xi.zone.BEAUCEDINE_GLACIER] =
             mobs =
             {
                 {
-                    base         = { 111, 5 },  -- TODO: verify mob_groups (zoneId, groupId)
+                    -- No unique boss template locally; Cold_Gigas is the remaining
+                    -- elemental Gigas variant, kept distinct from this event's adds.
+                    templateName = "Cold_Gigas",
                     name         = string.char(0xA6) .. "Glacier Titan",
                     count        = 1,
                     isBoss       = true,
@@ -255,7 +265,9 @@ xi.fate.zones[xi.zone.BEAUCEDINE_GLACIER] =
                     },
                 },
                 {
-                    base        = { 111, 6 },  -- TODO: verify mob_groups (zoneId, groupId)
+                    -- No wolf-family template in this zone's mobs.yaml; Tundra_Tiger
+                    -- is the closest cold-adapted aggressive predator available.
+                    templateName = "Tundra_Tiger",
                     name        = string.char(0xA6) .. "Glacial Wolf",
                     count       = 4,
                     noCount     = true,

@@ -321,7 +321,7 @@ void CTrustEntity::OnWeaponSkillFinished(CWeaponSkillState& state, action_t& act
     }
     else
     {
-        ActionInterrupts::WeaponSkillOutOfRange(this, PBattleTarget);
+        ActionInterrupts::WeaponSkillOutOfRange(this, PBattleTarget, state.GetTPDelta());
     }
 
     this->processActionEffectFlags(action);

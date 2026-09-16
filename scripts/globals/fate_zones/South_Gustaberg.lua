@@ -41,7 +41,7 @@ xi.fate.zones[xi.zone.SOUTH_GUSTABERG] =
             mobs =
             {
                 {
-                    base        = { 107, 13 },
+                    templateName = "Goblin_Thug",
                     name        = string.char(0xA6) .. "Goblin Thug",
                     count       = 6,
                     spawnPoints =
@@ -51,7 +51,7 @@ xi.fate.zones[xi.zone.SOUTH_GUSTABERG] =
                     },
                 },
                 {
-                    base        = { 107, 16 },
+                    templateName = "Goblin_Weaver",
                     name        = string.char(0xA6) .. "Goblin Weaver",
                     count       = 2,
                     spawnPoints =
@@ -123,7 +123,9 @@ xi.fate.zones[xi.zone.SOUTH_GUSTABERG] =
             mobs =
             {
                 {
-                    base        = { 107, 31 },
+                    -- No plain "Goblin_Digger" template in this zone's mobs.yaml,
+                    -- only Goblin_Digger_near - using it as the closest local fit.
+                    templateName = "Goblin_Digger_near",
                     name        = string.char(0xA6) .. "Goblin Digger",
                     count       = 2,
                     spawnPoints =
@@ -136,7 +138,7 @@ xi.fate.zones[xi.zone.SOUTH_GUSTABERG] =
                     },
                 },
                 {
-                    base        = { 107, 26 },
+                    templateName = "Goblin_Fisher",
                     name        = string.char(0xA6) .. "Goblin Fisher",
                     count       = 2,
                     spawnPoints =
@@ -211,7 +213,7 @@ xi.fate.zones[xi.zone.SOUTH_GUSTABERG] =
             mobs =
             {
                 {
-                    base        = { 107, 23 },
+                    templateName = "Young_Quadav",
                     name        = string.char(0xA6) .. "Young Quadav",
                     count       = 6,
                     spawnPoints =
@@ -225,7 +227,10 @@ xi.fate.zones[xi.zone.SOUTH_GUSTABERG] =
                     },
                 },
                 {
-                    base        = { 107, 24 },
+                    -- No "Purple Quadav" template locally; Amethyst_Quadav's caster-type
+                    -- kit (spell_list, no set melee skill) is the closer thematic match
+                    -- for Purple Quadav's classic -na/status-spell moveset.
+                    templateName = "Amethyst_Quadav",
                     name        = string.char(0xA6) .. "Purple Quadav",
                     count       = 4,
                     spawnPoints =
@@ -325,7 +330,10 @@ xi.fate.zones[xi.zone.SOUTH_GUSTABERG] =
             mobs =
             {
                 {
-                    base         = { 108, 29 },
+                    -- Historically cloned zone 108's Rampaging Ram (cross-zone base) -
+                    -- this zone already has its own ram-family NM, Carnero, so using
+                    -- it locally instead of reaching into another zone's mobs.yaml.
+                    templateName = "Carnero",
                     name         = string.char(0xA6) .. "Rampaging Ram",
                     count        = 1,
                     isBoss       = true,
@@ -337,7 +345,7 @@ xi.fate.zones[xi.zone.SOUTH_GUSTABERG] =
                     },
                 },
                 {
-                    base        = { 107, 12 },
+                    templateName = "Ornery_Sheep",
                     name        = string.char(0xA6) .. "Ornery Sheep",
                     count       = 3,
                     noCount     = true,
@@ -417,7 +425,7 @@ xi.fate.zones[xi.zone.SOUTH_GUSTABERG] =
             mobs =
             {
                 {
-                    base        = { 107, 8 },  -- TODO: verify mob_groups
+                    templateName = "Tunnel_Worm",
                     name        = string.char(0xA6) .. "Tunnel Worm",
                     count       = 5,
                     spawnPoints =
@@ -433,7 +441,10 @@ xi.fate.zones[xi.zone.SOUTH_GUSTABERG] =
                     },
                 },
                 {
-                    base        = { 107, 8 },  -- TODO: verify mob_groups
+                    -- No distinct "Carrion Worm" template in this zone's mobs.yaml -
+                    -- historically shared the exact same base as Tunnel Worm anyway,
+                    -- so this keeps the same (already-identical) look.
+                    templateName = "Tunnel_Worm",
                     name        = string.char(0xA6) .. "Carrion Worm",
                     count       = 3,
                     spawnPoints =
@@ -512,7 +523,7 @@ xi.fate.zones[xi.zone.SOUTH_GUSTABERG] =
             mobs =
             {
                 {
-                    base        = { 107, 23 },
+                    templateName = "Young_Quadav",
                     name        = string.char(0xA6) .. "Young Quadav",
                     count       = 5,
                     spawnPoints =
@@ -529,7 +540,10 @@ xi.fate.zones[xi.zone.SOUTH_GUSTABERG] =
                     },
                 },
                 {
-                    base        = { 107, 24 },
+                    -- No "Purple Quadav" template locally; Amethyst_Quadav's caster-type
+                    -- kit (spell_list, no set melee skill) is the closer thematic match
+                    -- for Purple Quadav's classic -na/status-spell moveset.
+                    templateName = "Amethyst_Quadav",
                     name        = string.char(0xA6) .. "Purple Quadav",
                     count       = 3,
                     spawnPoints =
@@ -608,7 +622,10 @@ xi.fate.zones[xi.zone.SOUTH_GUSTABERG] =
             mobs =
             {
                 {
-                    base        = { 107, 24 },
+                    -- No "Purple Quadav" template locally; Amethyst_Quadav's caster-type
+                    -- kit (spell_list, no set melee skill) is the closer thematic match
+                    -- for Purple Quadav's classic -na/status-spell moveset.
+                    templateName = "Amethyst_Quadav",
                     name        = string.char(0xA6) .. "Purple Quadav",
                     count       = 3,
                     spawnPoints =
@@ -621,7 +638,10 @@ xi.fate.zones[xi.zone.SOUTH_GUSTABERG] =
                     },
                 },
                 {
-                    base        = { 107, 25 },  -- TODO: verify mob_groups (veteran Quadav)
+                    -- No "Sapphire Quadav" template locally; using Amber_Quadav (the
+                    -- other available Quadav variant) to stay visually distinct from
+                    -- the Amethyst_Quadav used for Purple Quadav in this same event.
+                    templateName = "Amber_Quadav",
                     name        = string.char(0xA6) .. "Sapphire Quadav",
                     count       = 2,
                     spawnPoints =
@@ -724,7 +744,10 @@ xi.fate.zones[xi.zone.SOUTH_GUSTABERG] =
             mobs =
             {
                 {
-                    base         = { 107, 25 },  -- TODO: verify mob_groups
+                    -- No "Ironshell" template locally; Amber_Quadav's melee (axe)
+                    -- kit fits "Shieldwarrior" flavour better than the caster-leaning
+                    -- Amethyst_Quadav (used for this event's Purple Quadav adds).
+                    templateName = "Amber_Quadav",
                     name         = string.char(0xA6) .. "Ironshell",
                     count        = 1,
                     isBoss       = true,
@@ -736,7 +759,10 @@ xi.fate.zones[xi.zone.SOUTH_GUSTABERG] =
                     },
                 },
                 {
-                    base        = { 107, 24 },
+                    -- No "Purple Quadav" template locally; Amethyst_Quadav's caster-type
+                    -- kit (spell_list, no set melee skill) is the closer thematic match
+                    -- for Purple Quadav's classic -na/status-spell moveset.
+                    templateName = "Amethyst_Quadav",
                     name        = string.char(0xA6) .. "Purple Quadav",
                     count       = 3,
                     noCount     = true,
@@ -855,7 +881,8 @@ xi.fate.zones[xi.zone.SOUTH_GUSTABERG] =
                     mobs =
                     {
                         {
-                            base        = { 107, 13 },
+                            -- Shares its legacy base with Goblin Thug; same look.
+                            templateName = "Goblin_Thug",
                             name        = string.char(0xA6) .. "Goblin Scout",
                             count       = 3,
                             spawnPoints =
@@ -875,7 +902,8 @@ xi.fate.zones[xi.zone.SOUTH_GUSTABERG] =
                     mobs =
                     {
                         {
-                            base        = { 107, 16 },
+                            -- Shares its legacy base with Goblin Weaver; same look.
+                            templateName = "Goblin_Weaver",
                             name        = string.char(0xA6) .. "Goblin Sapper",
                             count       = 3,
                             spawnPoints =
@@ -895,7 +923,8 @@ xi.fate.zones[xi.zone.SOUTH_GUSTABERG] =
                     mobs =
                     {
                         {
-                            base        = { 107, 13 },
+                            -- Shares its legacy base with Goblin Thug; same look.
+                            templateName = "Goblin_Thug",
                             name        = string.char(0xA6) .. "Goblin Raider",
                             count       = 3,
                             spawnPoints =
@@ -906,7 +935,8 @@ xi.fate.zones[xi.zone.SOUTH_GUSTABERG] =
                             },
                         },
                         {
-                            base        = { 107, 31 },
+                            -- Shares its legacy base with Goblin Digger; closest local look.
+                            templateName = "Goblin_Digger_near",
                             name        = string.char(0xA6) .. "Goblin Chief",
                             count       = 1,
                             isBoss      = true,
@@ -1017,7 +1047,8 @@ xi.fate.zones[xi.zone.SOUTH_GUSTABERG] =
             mobs =
             {
                 {
-                    base        = { 107, 13 },
+                    -- Shares its legacy base with Goblin Thug; same look.
+                    templateName = "Goblin_Thug",
                     name        = string.char(0xA6) .. "Goblin Straggler",
                     count       = 4,
                     noCount     = true,
@@ -1092,7 +1123,11 @@ xi.fate.zones[xi.zone.SOUTH_GUSTABERG] =
             mobs =
             {
                 {
-                    base         = { 111, 29 },  -- Golem family
+                    -- Historically cloned zone 111's Golem family (cross-zone base),
+                    -- but this FATE's own flavour text calls it "a primordial Stone
+                    -- Eater of legendary size" - and this zone already has a
+                    -- Stone_Eater template, a direct local fit.
+                    templateName = "Stone_Eater",
                     name         = string.char(0xA6) .. "Iron Giant",
                     count        = 1,
                     isBoss       = true,

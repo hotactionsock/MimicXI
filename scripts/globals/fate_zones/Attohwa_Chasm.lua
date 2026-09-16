@@ -43,7 +43,10 @@ xi.fate.zones[xi.zone.ATTOHWA_CHASM] =
             mobs =
             {
                 {
-                    base        = { 7, 1 },  -- TODO: verify mob_groups (zoneId, groupId)
+                    -- Cross-zone borrow: no bugard species exists in this zone's own mobs.yaml.
+                    -- Lufaise Meadows has a plain Bugard template - direct family match.
+                    templateName   = "Bugard",
+                    templateZoneId = xi.zone.LUFAISE_MEADOWS,
                     name        = string.char(0xA6) .. "Attohwa Bugard",
                     count       = 5,
                     spawnPoints =
@@ -56,7 +59,7 @@ xi.fate.zones[xi.zone.ATTOHWA_CHASM] =
                     },
                 },
                 {
-                    base        = { 7, 2 },  -- TODO: verify mob_groups (zoneId, groupId)
+                    templateName = "Pit_Antlion",
                     name        = string.char(0xA6) .. "Chasm Antlion",
                     count       = 3,
                     spawnPoints =
@@ -156,7 +159,10 @@ xi.fate.zones[xi.zone.ATTOHWA_CHASM] =
             mobs =
             {
                 {
-                    base         = { 7, 42 },  -- TODO: verify mob_groups (zoneId, groupId)
+                    -- Cross-zone borrow: no bugard species exists in this zone's own mobs.yaml.
+                    -- Al Zahbi's Battering_Bugard is a heavier/tougher look, fitting the boss tier.
+                    templateName   = "Battering_Bugard",
+                    templateZoneId = xi.zone.AL_ZAHBI,
                     name         = string.char(0xA6) .. "Sovereign",
                     count        = 1,
                     isBoss       = true,
@@ -168,7 +174,7 @@ xi.fate.zones[xi.zone.ATTOHWA_CHASM] =
                     },
                 },
                 {
-                    base        = { 7, 4 },  -- TODO: verify mob_groups (zoneId, groupId)
+                    templateName = "Trench_Antlion",
                     name        = string.char(0xA6) .. "Dusk Antlion",
                     count       = 4,
                     noCount     = true,

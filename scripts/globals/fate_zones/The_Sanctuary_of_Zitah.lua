@@ -43,7 +43,9 @@ xi.fate.zones[xi.zone.THE_SANCTUARY_OF_ZITAH] =
             mobs =
             {
                 {
-                    base        = { 121, 1 },  -- TODO: verify mob_groups (zoneId, groupId)
+                    -- No Mandragora-type template in this zone's mobs.yaml;
+                    -- Greenman is the closest small plant-humanoid available.
+                    templateName = "Greenman",
                     name        = string.char(0xA6) .. "Grove Mandra",
                     count       = 5,
                     spawnPoints =
@@ -56,7 +58,9 @@ xi.fate.zones[xi.zone.THE_SANCTUARY_OF_ZITAH] =
                     },
                 },
                 {
-                    base        = { 121, 2 },  -- TODO: verify mob_groups (zoneId, groupId)
+                    -- No sapling template locally; Myxomycete is the closest
+                    -- small undergrowth-type creature available.
+                    templateName = "Myxomycete",
                     name        = string.char(0xA6) .. "Zi'Tah Sapling",
                     count       = 4,
                     spawnPoints =
@@ -157,7 +161,9 @@ xi.fate.zones[xi.zone.THE_SANCTUARY_OF_ZITAH] =
             mobs =
             {
                 {
-                    base         = { 121, 3 },  -- TODO: verify mob_groups (zoneId, groupId)
+                    -- Flavour text calls it outright "an ancient, corrupted
+                    -- Treant" - Guardian_Treant matches directly.
+                    templateName = "Guardian_Treant",
                     name         = string.char(0xA6) .. "Grove Devourer",
                     count        = 1,
                     isBoss       = true,
@@ -169,7 +175,8 @@ xi.fate.zones[xi.zone.THE_SANCTUARY_OF_ZITAH] =
                     },
                 },
                 {
-                    base        = { 121, 4 },  -- TODO: verify mob_groups (zoneId, groupId)
+                    -- Reuses the Zi'Tah Sapling group's Myxomycete template.
+                    templateName = "Myxomycete",
                     name        = string.char(0xA6) .. "Grove Sapling",
                     count       = 4,
                     noCount     = true,

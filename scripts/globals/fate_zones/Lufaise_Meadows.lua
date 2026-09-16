@@ -43,7 +43,9 @@ xi.fate.zones[xi.zone.LUFAISE_MEADOWS] =
             mobs =
             {
                 {
-                    base        = { 24, 1 },  -- TODO: verify mob_groups (zoneId, groupId)
+                    -- No opo-opo/primate template in this zone's mobs.yaml; Abhac is the
+                    -- closest local match for a small trickster that loots and harasses.
+                    templateName = "Abhac",
                     name        = string.char(0xA6) .. "Meadow Opo-opo",
                     count       = 6,
                     spawnPoints =
@@ -57,7 +59,7 @@ xi.fate.zones[xi.zone.LUFAISE_MEADOWS] =
                     },
                 },
                 {
-                    base        = { 24, 2 },  -- TODO: verify mob_groups (zoneId, groupId)
+                    templateName = "Tavnazian_Ram",
                     name        = string.char(0xA6) .. "Meadows Ram",
                     count       = 4,
                     spawnPoints =
@@ -158,7 +160,7 @@ xi.fate.zones[xi.zone.LUFAISE_MEADOWS] =
             mobs =
             {
                 {
-                    base         = { 24, 3 },  -- TODO: verify mob_groups (zoneId, groupId)
+                    templateName = "Tavnazian_Ram",
                     name         = string.char(0xA6) .. "Meadow Titan",
                     count        = 1,
                     isBoss       = true,
@@ -170,7 +172,7 @@ xi.fate.zones[xi.zone.LUFAISE_MEADOWS] =
                     },
                 },
                 {
-                    base        = { 24, 4 },  -- TODO: verify mob_groups (zoneId, groupId)
+                    templateName = "Tavnazian_Ram",
                     name        = string.char(0xA6) .. "Lufaise Ram",
                     count       = 4,
                     noCount     = true,

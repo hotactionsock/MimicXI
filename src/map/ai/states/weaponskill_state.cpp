@@ -94,6 +94,8 @@ auto CWeaponSkillState::GetSkill() const -> CWeaponSkill*
 
 void CWeaponSkillState::SpendCost()
 {
+    const int16 tpBefore = m_PEntity->health.tp;
+
     auto tp = 0;
     if (m_PEntity->StatusEffectContainer->HasStatusEffect(xi::StatusEffect::MeikyoShisui))
     {
@@ -123,7 +125,8 @@ void CWeaponSkillState::SpendCost()
         m_PEntity->addTP(xirand::GetRandomNumber(10, 200));
     }
 
-    m_spent = tp;
+    m_spent    = tp;
+    m_tpDelta  = tpBefore - m_PEntity->health.tp; // what was ACTUALLY taken from the pool, net of every branch above - not the same as m_spent (see the .h comment)
 }
 
 auto CWeaponSkillState::Update(const timer::time_point tick) -> bool
@@ -229,6 +232,11 @@ void CWeaponSkillState::Cleanup(const timer::time_point tick)
 auto CWeaponSkillState::GetSpentTP() const -> int16
 {
     return m_spent;
+}
+
+auto CWeaponSkillState::GetTPDelta() const -> int16
+{
+    return m_tpDelta;
 }
 
 auto CWeaponSkillState::CanChangeState() -> bool

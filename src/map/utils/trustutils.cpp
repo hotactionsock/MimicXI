@@ -815,6 +815,51 @@ namespace
         }
         return cap;
     }
+
+    // Populates the trust's tp_skills list (gambits::CGambitsContainer) with
+    // every weaponskill its current weapon type + skill value can use, the
+    // same eligibility battleutils::CanUseWeaponskill checks for a live PC -
+    // minus the learned-weaponskill unlock check (getUnlockId() != 0 skips
+    // it), since that bitset (CCharEntity::m_LearnedWeaponskills) only exists
+    // on a LIVE character and the mimic's source alt is offline. This is what
+    // TryTrustSkill() (gambits_container.cpp) actually draws from - without
+    // it, ai.tp trigger/select settings have nothing to pick from and no
+    // trust ever attempts a weaponskill, regardless of gambit configuration.
+    // Regular scripted trusts get this list from a curated mob_skill_list
+    // instead (see LoadTrustStatsAndSkills below) - a mimic has no such list,
+    // it has to be derived from the alt's actual weapon + skill.
+    void loadMimicWeaponSkills(CTrustEntity* PTrust, xi::SkillType wSkill, uint16 skillValue, xi::Job mjob)
+    {
+        auto* controller = dynamic_cast<CTrustController*>(PTrust->PAI->GetController());
+        if (!controller)
+        {
+            ShowWarning("trustutils::loadMimicWeaponSkills() - Trust Controller was null.");
+            return;
+        }
+
+        using namespace gambits;
+
+        controller->m_GambitsContainer->tp_trigger = G_TP_TRIGGER::ASAP;
+        controller->m_GambitsContainer->tp_select  = G_SELECT::RANDOM;
+        controller->m_GambitsContainer->tp_skills.clear();
+
+        for (uint16 id = 1; id < MAX_WEAPONSKILL_ID; ++id)
+        {
+            auto* PWeaponSkill = battleutils::GetWeaponSkill(id);
+            if (PWeaponSkill == nullptr || static_cast<xi::SkillType>(PWeaponSkill->getType()) != wSkill ||
+                skillValue < PWeaponSkill->getSkillLevel() || PWeaponSkill->getUnlockId() != 0 ||
+                PWeaponSkill->getJob(mjob) == 0)
+            {
+                continue;
+            }
+
+            controller->m_GambitsContainer->tp_skills.emplace_back(TrustSkill_t{
+                G_REACTION::WS, id,
+                PWeaponSkill->getPrimarySkillchain(), PWeaponSkill->getSecondarySkillchain(), PWeaponSkill->getTertiarySkillchain(),
+                battleutils::isValidSelfTargetWeaponskill(id) ? TARGET_SELF : TARGET_ENEMY,
+            });
+        }
+    }
 } // namespace
 
 auto trustutils::BuildMimicTrust(CCharEntity* PMaster, uint32 altCharId) -> CTrustEntity*
@@ -1016,6 +1061,11 @@ auto trustutils::BuildMimicTrust(CCharEntity* PMaster, uint32 altCharId) -> CTru
     // Job-specific mob behaviour tuning (magic cadence, special-move cooldowns, etc.).
     mobutils::SetupJob(PTrust);
 
+    // Weaponskills the trust can actually use with its current weapon - see
+    // loadMimicWeaponSkills's comment. ai.tp.* gambit config (mgambits) picks
+    // WHEN/WHICH from this list; without it there is nothing to pick from.
+    loadMimicWeaponSkills(PTrust, wSkill, wSkillCap, snapshot.mjob);
+
     ShowInfo("BuildMimicTrust: %s Lv%u/%u job %u/%u hp=%d mp=%d STR=%u look(size=%u race=%u face=%u head=%u body=%u hands=%u legs=%u feet=%u main=%u sub=%u ranged=%u)",
              snapshot.name, snapshot.mlvl, snapshot.slvl,
              static_cast<uint32>(snapshot.mjob), static_cast<uint32>(snapshot.sjob),
@@ -1048,7 +1098,7 @@ auto trustutils::BuildMimicTrust(CCharEntity* PMaster, uint32 altCharId) -> CTru
     auto applyGambitsFn = lua["xi"]["mimicTrust"]["applyGenericGambits"];
     if (applyGambitsFn.valid())
     {
-        auto result = applyGambitsFn(PTrust, static_cast<uint8>(snapshot.mjob));
+        auto result = applyGambitsFn(PTrust, static_cast<uint8>(snapshot.mjob), PMaster, altCharId);
         if (!result.valid())
         {
             sol::error err = result;

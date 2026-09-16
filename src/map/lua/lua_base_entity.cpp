@@ -11797,6 +11797,31 @@ sol::table CLuaBaseEntity::getPartyWithTrusts()
 }
 
 /************************************************************************
+ *  Function: getOwnTrusts()
+ *  Purpose : Returns a Lua table of only this player's own summoned trusts
+ *            (real Trust Magic + mimics) - unlike getPartyWithTrusts(),
+ *            never includes other party members' trusts.
+ *  Example : local trusts = player:getOwnTrusts()
+ ************************************************************************/
+
+sol::table CLuaBaseEntity::getOwnTrusts()
+{
+    if (m_PBaseEntity->objtype != TYPE_PC)
+    {
+        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->getName());
+        return sol::lua_nil;
+    }
+
+    auto table = lua.create_table();
+    for (auto* PTrust : static_cast<CCharEntity*>(m_PBaseEntity)->PTrusts)
+    {
+        table.add(CLuaBaseEntity(PTrust));
+    }
+
+    return table;
+}
+
+/************************************************************************
  *  Function: getPartySize()
  *  Purpose : Returns the count of members in the party
  *  Example : local count = player:getPartySize()
@@ -16300,6 +16325,18 @@ auto CLuaBaseEntity::spawnMimicTrust(std::string const& altCharName) -> CBaseEnt
 
     auto* PChar = static_cast<CCharEntity*>(m_PBaseEntity);
 
+    // "In combat" for squad-summon purposes is broader than IsEngaged(): a
+    // player who has been aggroed (is on any mob's enmity list) but has not
+    // engaged back yet should not be able to freely summon/swap squad
+    // members either - that would sidestep the same protection engaging
+    // is meant to enforce. hasEnmityEXPENSIVE() is the same check backing
+    // the hasEnmity() Lua binding.
+    if (PChar->PAI->IsEngaged() || PChar->hasEnmityEXPENSIVE())
+    {
+        PChar->pushPacket<GP_SERV_COMMAND_SYSTEMMES>(0, 0, MsgStd::CannotBeProcessed);
+        return nullptr;
+    }
+
     auto candidate = mimicutils::CheckMimicEligibility(PChar, altCharName);
     if (candidate.eligibility != mimicutils::MimicEligibility::Ok)
     {
@@ -16308,6 +16345,27 @@ auto CLuaBaseEntity::spawnMimicTrust(std::string const& altCharName) -> CBaseEnt
     }
 
     return trustutils::BuildMimicTrust(PChar, candidate.charId);
+}
+
+/************************************************************************
+ *  Function: resummonMimicTrust(altCharId)
+ *  Purpose : Re-summons a mimic trust that this same player just had
+ *            cleared (e.g. a FATE-driven level sync), skipping the
+ *            player-facing eligibility/engagement gate that spawnMimicTrust
+ *            enforces - this is a system-initiated restore of state the
+ *            player already held a moment ago, not a new player action.
+ *  Example : caster:resummonMimicTrust(altCharId)
+ ************************************************************************/
+
+auto CLuaBaseEntity::resummonMimicTrust(uint32 altCharId) -> CBaseEntity*
+{
+    if (m_PBaseEntity->objtype != TYPE_PC)
+    {
+        ShowWarning("Invalid entity type calling function (%s).", m_PBaseEntity->getName());
+        return nullptr;
+    }
+
+    return trustutils::BuildMimicTrust(static_cast<CCharEntity*>(m_PBaseEntity), altCharId);
 }
 
 /************************************************************************
@@ -16405,6 +16463,14 @@ auto CLuaBaseEntity::getSquadRoster() -> sol::table
  *  Function: setSquadSlot(slot, charid)
  *  Purpose : Assigns (or clears, with charid 0) one squad slot. Rejects a
  *            charid that is not one of this account's own characters.
+ *            If the alt being DISPLACED from this slot is currently out as
+ *            one of the caller's mimic trusts, it is dismissed immediately
+ *            (unconditionally, even mid-combat - see setSquadMemberJob's
+ *            comment for why). Without this, removing a character from the
+ *            squad left its already-summoned trust fighting on indefinitely,
+ *            untracked and frozen at whatever level/job it had at summon
+ *            time - a squad membership change should mean it is not a squad
+ *            member anymore, not "still out, just off the books."
  *  Example : player:setSquadSlot(2, altCharId)
  ************************************************************************/
 
@@ -16428,7 +16494,28 @@ void CLuaBaseEntity::setSquadSlot(uint8 slot, uint32 charId)
         return;
     }
 
+    const auto   oldSquad  = squadutils::GetSquad(PChar->accid);
+    const uint32 oldCharId = oldSquad[slot - 1];
+
     squadutils::SetSquadSlot(PChar->accid, slot, charId);
+
+    if (oldCharId != 0 && oldCharId != charId)
+    {
+        CTrustEntity* POldMimic = nullptr;
+        for (auto* PTrust : PChar->PTrusts)
+        {
+            if (PTrust != nullptr && PTrust->m_MimicSourceCharId == oldCharId)
+            {
+                POldMimic = PTrust;
+                break;
+            }
+        }
+
+        if (POldMimic != nullptr)
+        {
+            PChar->RemoveTrust(POldMimic);
+        }
+    }
 }
 
 /************************************************************************
@@ -16479,10 +16566,15 @@ auto CLuaBaseEntity::getAccountCharacters() -> sol::table
 /************************************************************************
  *  Function: setSquadMemberJob(charid, mjob, sjob)
  *  Purpose : Change an offline alt's active main/sub job. If that alt is
- *            currently out as one of the caller's mimic trusts and the caller
- *            is not engaged, it is dismissed and re-summoned on the new jobs.
- *  Returns : 0 ok, 1 not on account, 2 online, 3 job locked, 4 bad job,
- *            5 changed but the caller is in combat (resummon deferred).
+ *            currently out as one of the caller's mimic trusts, it is
+ *            IMMEDIATELY dismissed and re-summoned on the new jobs -
+ *            deliberately unconditional, even mid-combat (clearMimicTrusts
+ *            already dismisses regardless of engagement, so this is no new
+ *            category of risk): deferring until "after the fight" left a
+ *            trust fighting on its OLD job/level indefinitely for as long
+ *            as the caller stayed engaged - a player-controllable exploit,
+ *            not just staleness.
+ *  Returns : 0 ok, 1 not on account, 2 online, 3 job locked, 4 bad job.
  *  Example : player:setSquadMemberJob(altId, xi.job.WHM, xi.job.SCH)
  ************************************************************************/
 
@@ -16516,11 +16608,6 @@ uint8 CLuaBaseEntity::setSquadMemberJob(uint32 charId, uint8 mjob, uint8 sjob)
     if (PMimic == nullptr)
     {
         return 0; // changed; it will summon on the new jobs next time
-    }
-
-    if (PChar->PAI->IsEngaged())
-    {
-        return 5; // out right now, but in combat - leave it, re-called after the fight
     }
 
     PChar->RemoveTrust(PMimic);
@@ -16610,6 +16697,207 @@ void CLuaBaseEntity::deleteSquadJobPreset(const std::string& name)
         return;
     }
     squadutils::DeleteJobPreset(static_cast<CCharEntity*>(m_PBaseEntity)->accid, name);
+}
+
+/************************************************************************
+ *  Function: getGambitSets()
+ *  Purpose : Owned player-authored gambit rule sets, for listing/editing.
+ *            Row: { setid, name, count, tpTrigger, tpSelector, tpActionId }
+ ************************************************************************/
+
+auto CLuaBaseEntity::getGambitSets() -> sol::table
+{
+    if (m_PBaseEntity->objtype != TYPE_PC)
+    {
+        return sol::lua_nil;
+    }
+
+    const auto sets = squadutils::ListGambitSets(static_cast<CCharEntity*>(m_PBaseEntity)->accid);
+
+    auto table = lua.create_table();
+    for (const auto& s : sets)
+    {
+        auto row            = lua.create_table();
+        row["setid"]        = s.setId;
+        row["name"]         = s.name;
+        row["count"]        = s.ruleCount;
+        row["tpTrigger"]    = s.tpTrigger;
+        row["tpSelector"]   = s.tpSelector;
+        row["tpActionId"]   = s.tpActionId;
+        table.add(row);
+    }
+    return table;
+}
+
+/************************************************************************
+ *  Function: createGambitSet(name)  /  renameGambitSet(name, newName)  /  deleteGambitSet(name)
+ *  Returns (create/rename) : 0 ok, 1 already exists, 2 too many sets, 3 bad name, 4 not found (rename only)
+ ************************************************************************/
+
+uint8 CLuaBaseEntity::createGambitSet(const std::string& name)
+{
+    if (m_PBaseEntity->objtype != TYPE_PC)
+    {
+        return 3;
+    }
+    return static_cast<uint8>(squadutils::CreateGambitSet(static_cast<CCharEntity*>(m_PBaseEntity)->accid, name));
+}
+
+uint8 CLuaBaseEntity::renameGambitSet(const std::string& name, const std::string& newName)
+{
+    if (m_PBaseEntity->objtype != TYPE_PC)
+    {
+        return 3;
+    }
+    return static_cast<uint8>(squadutils::RenameGambitSet(static_cast<CCharEntity*>(m_PBaseEntity)->accid, name, newName));
+}
+
+void CLuaBaseEntity::deleteGambitSet(const std::string& name)
+{
+    if (m_PBaseEntity->objtype != TYPE_PC)
+    {
+        return;
+    }
+    squadutils::DeleteGambitSet(static_cast<CCharEntity*>(m_PBaseEntity)->accid, name);
+}
+
+/************************************************************************
+ *  Function: setGambitTpSkill(name, tpTrigger, tpSelector, tpActionId)
+ *  Purpose : Configures when/how a set's mimic trusts attempt weaponskills
+ *            (see trustutils::loadMimicWeaponSkills / setTrustTPSkillSettings).
+ *  Returns : 0 ok, 3 bad name, 4 not found
+ ************************************************************************/
+
+uint8 CLuaBaseEntity::setGambitTpSkill(const std::string& name, uint8 tpTrigger, uint8 tpSelector, uint16 tpActionId)
+{
+    if (m_PBaseEntity->objtype != TYPE_PC)
+    {
+        return 3;
+    }
+    return static_cast<uint8>(squadutils::SetGambitTpSkill(
+        static_cast<CCharEntity*>(m_PBaseEntity)->accid, name, tpTrigger, tpSelector, tpActionId));
+}
+
+/************************************************************************
+ *  Function: getGambitRules(name)
+ *  Purpose : The ordered rule list of an owned set.
+ *            Row: { ordinal, target, cond, arg, reaction, selector, actionid }
+ ************************************************************************/
+
+auto CLuaBaseEntity::getGambitRules(const std::string& name) -> sol::table
+{
+    if (m_PBaseEntity->objtype != TYPE_PC)
+    {
+        return sol::lua_nil;
+    }
+
+    const auto rules = squadutils::ListGambitRules(static_cast<CCharEntity*>(m_PBaseEntity)->accid, name);
+
+    auto table = lua.create_table();
+    for (const auto& r : rules)
+    {
+        auto row         = lua.create_table();
+        row["ordinal"]   = r.ordinal;
+        row["target"]    = r.target;
+        row["cond"]      = r.cond;
+        row["arg"]       = r.arg;
+        row["reaction"]  = r.reaction;
+        row["selector"]  = r.selector;
+        row["actionid"]  = r.actionid;
+        table.add(row);
+    }
+    return table;
+}
+
+/************************************************************************
+ *  Function: addGambitRule(name, target, cond, arg, reaction, selector, actionid)
+ *          : removeGambitRule(name, ordinal)
+ *  Purpose : Append/remove one rule of an owned set. The caller (Lua, see
+ *            scripts/globals/gambitrules.lua) is responsible for validating
+ *            target/cond/reaction/selector/actionid against the whitelist
+ *            before calling - this layer only enforces ownership and caps.
+ *  Returns : 0 ok, 1 set not found, 2 too many rules (add) / bad ordinal (remove)
+ ************************************************************************/
+
+uint8 CLuaBaseEntity::addGambitRule(const std::string& name, uint8 target, uint8 cond, uint16 arg, uint8 reaction, uint8 selector, uint16 actionid)
+{
+    if (m_PBaseEntity->objtype != TYPE_PC)
+    {
+        return 1;
+    }
+
+    squadutils::GambitRule rule;
+    rule.target   = target;
+    rule.cond     = cond;
+    rule.arg      = arg;
+    rule.reaction = reaction;
+    rule.selector = selector;
+    rule.actionid = actionid;
+
+    return static_cast<uint8>(squadutils::AddGambitRule(static_cast<CCharEntity*>(m_PBaseEntity)->accid, name, rule));
+}
+
+uint8 CLuaBaseEntity::removeGambitRule(const std::string& name, uint8 ordinal)
+{
+    if (m_PBaseEntity->objtype != TYPE_PC)
+    {
+        return 1;
+    }
+    return static_cast<uint8>(squadutils::RemoveGambitRule(static_cast<CCharEntity*>(m_PBaseEntity)->accid, name, ordinal));
+}
+
+/************************************************************************
+ *  Function: setGambitAssign(charid, mjob, name)  /  getGambitAssign(charid, mjob)
+ *  Purpose : Which owned rule set (if any) an account character's mimic
+ *            trust uses while on mjob. An empty name clears the assignment.
+ *  Returns (set) : 0 ok, 1 not on account, 2 bad job, 3 set not found
+ *  Returns (get) : the assigned set's name, or "" if none.
+ ************************************************************************/
+
+uint8 CLuaBaseEntity::setGambitAssign(uint32 charId, uint8 mjob, const std::string& name)
+{
+    if (m_PBaseEntity->objtype != TYPE_PC)
+    {
+        return 1;
+    }
+    return static_cast<uint8>(squadutils::SetGambitAssign(static_cast<CCharEntity*>(m_PBaseEntity)->accid, charId, mjob, name));
+}
+
+auto CLuaBaseEntity::getGambitAssign(uint32 charId, uint8 mjob) -> std::string
+{
+    if (m_PBaseEntity->objtype != TYPE_PC)
+    {
+        return "";
+    }
+    return squadutils::GetGambitAssignName(static_cast<CCharEntity*>(m_PBaseEntity)->accid, charId, mjob);
+}
+
+/************************************************************************
+ *  Function: getGambitAssignments()
+ *  Purpose : Every (charid, mjob) -> setid assignment on the account, for
+ *            the msquad Gambits tab's one-shot refresh.
+ *            Row: { charid, mjob, setid }
+ ************************************************************************/
+
+auto CLuaBaseEntity::getGambitAssignments() -> sol::table
+{
+    if (m_PBaseEntity->objtype != TYPE_PC)
+    {
+        return sol::lua_nil;
+    }
+
+    const auto entries = squadutils::ListGambitAssigns(static_cast<CCharEntity*>(m_PBaseEntity)->accid);
+
+    auto table = lua.create_table();
+    for (const auto& e : entries)
+    {
+        auto row     = lua.create_table();
+        row["charid"] = e.charId;
+        row["mjob"]   = e.mjob;
+        row["setid"]  = e.setId;
+        table.add(row);
+    }
+    return table;
 }
 
 /************************************************************************
@@ -16964,7 +17252,10 @@ uint8 CLuaBaseEntity::squadBagMove(uint32 srcCharId, uint8 srcContainerId, uint8
 /************************************************************************
  *  Function: getSquadGear(charId)
  *  Purpose : The 16 equipment slots of an account character and what it wears.
- *            Row: { equipSlot, itemId, aug }.  itemId 0 = empty.
+ *            Row: { equipSlot, itemId, aug, containerId, invSlot }. itemId 0 =
+ *            empty. containerId/invSlot address the backing char_inventory
+ *            row, the same way a GearCandidate's srcCont/srcSlot do - lets the
+ *            caller re-look-up this exact instance (e.g. its augment stats).
  ************************************************************************/
 
 auto CLuaBaseEntity::getSquadGear(uint32 charId) -> sol::table
@@ -16983,10 +17274,12 @@ auto CLuaBaseEntity::getSquadGear(uint32 charId) -> sol::table
 
     for (const auto& g : squadutils::ListAltGear(charId))
     {
-        auto row         = lua.create_table();
-        row["equipSlot"] = g.equipSlotId;
-        row["itemId"]    = g.itemId;
-        row["aug"]       = g.aug;
+        auto row           = lua.create_table();
+        row["equipSlot"]   = g.equipSlotId;
+        row["itemId"]      = g.itemId;
+        row["aug"]         = g.aug;
+        row["containerId"] = g.containerId;
+        row["invSlot"]     = g.invSlot;
         table.add(row);
     }
     return table;
@@ -17024,6 +17317,127 @@ auto CLuaBaseEntity::getSquadGearCandidates(uint32 charId, uint8 equipSlotId) ->
     return table;
 }
 
+/************************************************************************
+ *  Function: getItemMods(itemId)
+ *  Purpose : Raw item_mods rows for one itemId (base stats, e.g. STR+3).
+ *            Row: { modId, value }. Used by the msquad Gear tab to show a
+ *            stat readout for gear without moving it into inventory first.
+ ************************************************************************/
+
+auto CLuaBaseEntity::getItemMods(uint16 itemId) -> sol::table
+{
+    auto table = lua.create_table();
+    if (m_PBaseEntity->objtype != TYPE_PC)
+    {
+        return table;
+    }
+
+    for (const auto& m : squadutils::ListItemMods(itemId))
+    {
+        auto row     = lua.create_table();
+        row["modId"] = m.modId;
+        row["value"] = m.value;
+        table.add(row);
+    }
+    return table;
+}
+
+/************************************************************************
+ *  Function: getWeaponDamageDelay(itemId)
+ *  Purpose : { isWeapon, damage, delay } for one itemId - item_weapon's own
+ *            columns, not a stat modifier, so not part of getItemMods. Used
+ *            by the msquad Gear tab to show DMG/Delay in a weapon's preview.
+ ************************************************************************/
+
+auto CLuaBaseEntity::getWeaponDamageDelay(uint16 itemId) -> sol::table
+{
+    auto table = lua.create_table();
+    if (m_PBaseEntity->objtype != TYPE_PC)
+    {
+        return table;
+    }
+
+    const auto wd       = squadutils::GetWeaponDamageDelay(itemId);
+    table["isWeapon"]   = wd.isWeapon;
+    table["damage"]     = wd.damage;
+    table["delay"]      = wd.delay;
+    return table;
+}
+
+/************************************************************************
+ *  Function: getBagItemAugmentMods(charId, containerId, slot)
+ *  Purpose : Decoded augment-only stat deltas for one specific item instance
+ *            sitting in an account character's bag/wardrobe slot - or, since
+ *            a worn item's storage is that same char_inventory row, a worn
+ *            slot's backing containerId/invSlot (see getSquadGear). Augments
+ *            are per-instance, unlike base item_mods, so this needs the exact
+ *            slot rather than just an itemId. Row: { modId, value }; empty if
+ *            the item carries no augments (or the slot is empty).
+ ************************************************************************/
+
+auto CLuaBaseEntity::getBagItemAugmentMods(uint32 charId, uint8 containerId, uint8 slot) -> sol::table
+{
+    auto table = lua.create_table();
+    if (m_PBaseEntity->objtype != TYPE_PC)
+    {
+        return table;
+    }
+
+    auto* PChar = static_cast<CCharEntity*>(m_PBaseEntity);
+    if (!squadutils::IsOwnedByAccount(PChar->accid, charId))
+    {
+        return table;
+    }
+
+    squadutils::BagItem row;
+    if (!squadutils::BagReadRow(charId, containerId, slot, row))
+    {
+        return table;
+    }
+
+    for (const auto& m : squadutils::DecodeAugmentMods(row.extra))
+    {
+        auto r     = lua.create_table();
+        r["modId"] = m.modId;
+        r["value"] = m.value;
+        table.add(r);
+    }
+    return table;
+}
+
+/************************************************************************
+ *  Function: getWarehouseItemAugmentMods(rowid)
+ *  Purpose : Decoded augment-only stat deltas for one account_warehouse row.
+ *            Row: { modId, value }; empty if the row doesn't exist / isn't
+ *            on this account, or the item carries no augments.
+ ************************************************************************/
+
+auto CLuaBaseEntity::getWarehouseItemAugmentMods(uint32 rowid) -> sol::table
+{
+    auto table = lua.create_table();
+    if (m_PBaseEntity->objtype != TYPE_PC)
+    {
+        return table;
+    }
+
+    auto* PChar = static_cast<CCharEntity*>(m_PBaseEntity);
+
+    warehouseutils::WarehouseRow row;
+    if (!warehouseutils::ReadRow(PChar->accid, rowid, row))
+    {
+        return table;
+    }
+
+    for (const auto& m : squadutils::DecodeAugmentMods(row.extra))
+    {
+        auto r     = lua.create_table();
+        r["modId"] = m.modId;
+        r["value"] = m.value;
+        table.add(r);
+    }
+    return table;
+}
+
 namespace
 {
     // Shared: after gear changed on an offline alt, if that alt is out as one of
@@ -17047,6 +17461,10 @@ namespace
         }
         if (PChar->PAI->IsEngaged())
         {
+            // Mid-fight: a full rebuild would reset HP/TP/buffs and drop its current
+            // target, so defer the stat rebuild until the fight ends - but the gear
+            // change should still be visible immediately, so refresh just the look.
+            mimicutils::RefreshMimicTrustLook(PMimic);
             return true;
         }
         PChar->RemoveTrust(PMimic);
@@ -17062,6 +17480,13 @@ namespace
  *            whatever offline character currently holds it), writes char_equip
  *            + char_look, and rebuilds the live trust if it is out and the
  *            caller is not in combat.
+ *
+ *            If charId is the caller's own (online) character, this instead
+ *            equips live via the same charutils::EquipItem() path the real
+ *            equip packet uses - the Gear tab is meant to save players from
+ *            leaving it to manage their own gear, not just an alt's. Only
+ *            supported from the caller's own bags (srcCharId == charId);
+ *            an alt's item has to be moved over first (Bags tab).
  *  Returns : 0 ok, 1 not on account, 2 alt online, 3 bad slot / item does not
  *            fit, 4 no item, 5 job/level/race check failed, 6 db error,
  *            8 changed but caller in combat (re-summon deferred).
@@ -17074,6 +17499,31 @@ uint8 CLuaBaseEntity::squadEquip(uint32 charId, uint8 equipSlotId, uint32 srcCha
         return 1;
     }
     auto* PChar = static_cast<CCharEntity*>(m_PBaseEntity);
+
+    if (charId == PChar->id)
+    {
+        if (srcCharId != PChar->id)
+        {
+            return 6; // moving another (offline) character's item straight onto a live equip isn't supported - move it to your own bags first
+        }
+
+        auto* PStorage = PChar->getStorage(srcContainerId);
+        auto* PSrcItem = PStorage != nullptr ? PStorage->GetItem(srcSlot) : nullptr;
+        if (PSrcItem == nullptr || PSrcItem->getID() == 0 || PSrcItem->getID() == 65535)
+        {
+            return 4;
+        }
+        if (dynamic_cast<CItemEquipment*>(PSrcItem) == nullptr)
+        {
+            return 3;
+        }
+
+        charutils::EquipItem(PChar, srcSlot, equipSlotId, srcContainerId);
+        luautils::CheckForGearSet(PChar);
+        PChar->UpdateHealth();
+        PChar->retriggerLatents = true;
+        return 0;
+    }
 
     auto res = squadutils::EquipAltItem(PChar->accid, charId, equipSlotId, srcCharId, srcContainerId, srcSlot);
 
@@ -17143,7 +17593,9 @@ uint8 CLuaBaseEntity::squadEquip(uint32 charId, uint8 equipSlotId, uint32 srcCha
 /************************************************************************
  *  Function: squadUnequip(charId, equipSlotId)
  *  Purpose : Clear one equip slot on an offline alt; the item stays in its
- *            inventory. Rebuilds the live trust as squadEquip does.
+ *            inventory. Rebuilds the live trust as squadEquip does. If
+ *            charId is the caller's own (online) character, unequips live
+ *            instead - see squadEquip.
  *  Returns : as squadEquip (0 ok, 1 not-account, 2 online, 3 bad slot,
  *            6 db error, 8 deferred for combat).
  ************************************************************************/
@@ -17155,6 +17607,19 @@ uint8 CLuaBaseEntity::squadUnequip(uint32 charId, uint8 equipSlotId)
         return 1;
     }
     auto* PChar = static_cast<CCharEntity*>(m_PBaseEntity);
+
+    if (charId == PChar->id)
+    {
+        if (equipSlotId >= 16)
+        {
+            return 3;
+        }
+        charutils::UnequipItem(PChar, equipSlotId);
+        luautils::CheckForGearSet(PChar);
+        PChar->UpdateHealth();
+        PChar->retriggerLatents = true;
+        return 0;
+    }
 
     switch (squadutils::UnequipAltItem(PChar->accid, charId, equipSlotId))
     {
@@ -17292,6 +17757,137 @@ uint8 CLuaBaseEntity::squadLearnScroll(uint32 srcCharId, uint8 srcContainerId, u
         }
     }
 
+    return 0;
+}
+
+/************************************************************************
+ *  Function: getSquadWarehouseGearCandidates(charId, equipSlotId)
+ *  Purpose : Everything in the account's warehouse that charId's real main
+ *            job / level / race can wear in equipSlotId.
+ *            Row: { rowid, itemId, aug }
+ ************************************************************************/
+
+auto CLuaBaseEntity::getSquadWarehouseGearCandidates(uint32 charId, uint8 equipSlotId) -> sol::table
+{
+    auto table = lua.create_table();
+    if (m_PBaseEntity->objtype != TYPE_PC)
+    {
+        return table;
+    }
+
+    auto* PChar = static_cast<CCharEntity*>(m_PBaseEntity);
+    for (const auto& c : squadutils::ListWarehouseGearCandidates(PChar->accid, charId, equipSlotId))
+    {
+        auto row      = lua.create_table();
+        row["rowid"]  = c.rowid;
+        row["itemId"] = c.itemId;
+        row["aug"]    = c.aug;
+        table.add(row);
+    }
+    return table;
+}
+
+/************************************************************************
+ *  Function: squadEquipFromWarehouse(charId, equipSlotId, rowid)
+ *  Purpose : Equip a warehouse row directly onto an offline alt (a trust).
+ *            Relocates it into the alt's inventory, removes it from
+ *            account_warehouse, writes char_equip + char_look, and rebuilds
+ *            the live trust as squadEquip does.
+ *  Returns : 0 ok, 1 not on account, 2 alt online, 3 bad slot / item does not
+ *            fit, 4 no item, 5 job/level/race check failed, 6 db error,
+ *            8 changed but caller in combat (re-summon deferred).
+ ************************************************************************/
+
+uint8 CLuaBaseEntity::squadEquipFromWarehouse(uint32 charId, uint8 equipSlotId, uint32 rowid)
+{
+    if (m_PBaseEntity->objtype != TYPE_PC)
+    {
+        return 1;
+    }
+    auto* PChar = static_cast<CCharEntity*>(m_PBaseEntity);
+
+    switch (squadutils::EquipAltItemFromWarehouse(PChar->accid, charId, equipSlotId, rowid))
+    {
+        case squadutils::GearResult::Ok:
+            break;
+        case squadutils::GearResult::NotOwned:      return 1;
+        case squadutils::GearResult::Online:        return 2;
+        case squadutils::GearResult::BadSlot:       return 3;
+        case squadutils::GearResult::NoItem:        return 4;
+        case squadutils::GearResult::NotEquippable: return 5;
+        default:                                    return 6;
+    }
+
+    warehouseutils::BumpGeneration(PChar->accid);
+
+    return squadResummonMimicIfOut(PChar, charId) ? 8 : 0;
+}
+
+/************************************************************************
+ *  Function: squadBagMoveToWarehouse(charId, containerId, slot, quantity)
+ *  Purpose : Move `quantity` (0 = whole stack) from an offline alt's bag slot
+ *            into the account warehouse.
+ *  Returns : 0 ok, 1 not on account, 2 bad container, 3 alt online (use
+ *            warehousePut for the summoner's own bags), 4 no item, 5 warehouse
+ *            full, 6 bad quantity, 7 db error.
+ ************************************************************************/
+
+uint8 CLuaBaseEntity::squadBagMoveToWarehouse(uint32 charId, uint8 containerId, uint8 slot, uint32 quantity)
+{
+    if (m_PBaseEntity->objtype != TYPE_PC)
+    {
+        return 1;
+    }
+    auto* PChar = static_cast<CCharEntity*>(m_PBaseEntity);
+
+    switch (squadutils::MoveAltBagToWarehouse(PChar->accid, charId, containerId, slot, quantity))
+    {
+        case squadutils::WarehouseBagResult::Ok:
+            break;
+        case squadutils::WarehouseBagResult::NotOwned:     return 1;
+        case squadutils::WarehouseBagResult::BadContainer: return 2;
+        case squadutils::WarehouseBagResult::Online:       return 3;
+        case squadutils::WarehouseBagResult::NoItem:       return 4;
+        case squadutils::WarehouseBagResult::Full:         return 5;
+        case squadutils::WarehouseBagResult::BadQuantity:  return 6;
+        default:                                           return 7;
+    }
+
+    warehouseutils::BumpGeneration(PChar->accid);
+    return 0;
+}
+
+/************************************************************************
+ *  Function: squadBagMoveFromWarehouse(charId, containerId, rowid, quantity)
+ *  Purpose : Move `quantity` (0 = whole row) of a warehouse row into an
+ *            offline alt's bag container.
+ *  Returns : 0 ok, 1 not on account, 2 bad container, 3 alt online (use
+ *            warehouseTake for the summoner's own bags), 4 no item, 5 alt
+ *            container full, 6 bad quantity, 7 db error.
+ ************************************************************************/
+
+uint8 CLuaBaseEntity::squadBagMoveFromWarehouse(uint32 charId, uint8 containerId, uint32 rowid, uint32 quantity)
+{
+    if (m_PBaseEntity->objtype != TYPE_PC)
+    {
+        return 1;
+    }
+    auto* PChar = static_cast<CCharEntity*>(m_PBaseEntity);
+
+    switch (squadutils::MoveWarehouseToAltBag(PChar->accid, charId, containerId, rowid, quantity))
+    {
+        case squadutils::WarehouseBagResult::Ok:
+            break;
+        case squadutils::WarehouseBagResult::NotOwned:     return 1;
+        case squadutils::WarehouseBagResult::BadContainer: return 2;
+        case squadutils::WarehouseBagResult::Online:       return 3;
+        case squadutils::WarehouseBagResult::NoItem:       return 4;
+        case squadutils::WarehouseBagResult::BagFull:      return 5;
+        case squadutils::WarehouseBagResult::BadQuantity:  return 6;
+        default:                                           return 7;
+    }
+
+    warehouseutils::BumpGeneration(PChar->accid);
     return 0;
 }
 
@@ -17721,6 +18317,24 @@ uint32 CLuaBaseEntity::getTrustID()
     }
 
     return static_cast<CTrustEntity*>(m_PBaseEntity)->trustID();
+}
+
+/************************************************************************
+ *  Function: getMimicSourceCharId()
+ *  Purpose : Returns the charid of the offline alt this trust mirrors, or
+ *            0 if this is a normal (non-mimic) trust.
+ *  Example : trust:getMimicSourceCharId()
+ ************************************************************************/
+
+uint32 CLuaBaseEntity::getMimicSourceCharId()
+{
+    if (m_PBaseEntity->objtype != TYPE_TRUST)
+    {
+        ShowWarning("Invalid Entity calling function (%s).", m_PBaseEntity->getName());
+        return 0;
+    }
+
+    return static_cast<CTrustEntity*>(m_PBaseEntity)->m_MimicSourceCharId;
 }
 
 /************************************************************************
@@ -22510,6 +23124,7 @@ void CLuaBaseEntity::Register()
     // Parties and Alliances
     SOL_REGISTER("getParty", CLuaBaseEntity::getParty);
     SOL_REGISTER("getPartyWithTrusts", CLuaBaseEntity::getPartyWithTrusts);
+    SOL_REGISTER("getOwnTrusts", CLuaBaseEntity::getOwnTrusts);
     SOL_REGISTER("getPartySize", CLuaBaseEntity::getPartySize);
     SOL_REGISTER("hasPartyJob", CLuaBaseEntity::hasPartyJob);
     SOL_REGISTER("getPartyMember", CLuaBaseEntity::getPartyMember);
@@ -22777,6 +23392,7 @@ void CLuaBaseEntity::Register()
     // Trust related
     SOL_REGISTER("spawnTrust", CLuaBaseEntity::spawnTrust);
     SOL_REGISTER("spawnMimicTrust", CLuaBaseEntity::spawnMimicTrust);
+    SOL_REGISTER("resummonMimicTrust", CLuaBaseEntity::resummonMimicTrust);
     SOL_REGISTER("clearTrusts", CLuaBaseEntity::clearTrusts);
     SOL_REGISTER("clearMimicTrusts", CLuaBaseEntity::clearMimicTrusts);
     SOL_REGISTER("getAccountID", CLuaBaseEntity::getAccountID);
@@ -22793,10 +23409,29 @@ void CLuaBaseEntity::Register()
     SOL_REGISTER("squadBagMove", CLuaBaseEntity::squadBagMove);
     SOL_REGISTER("getSquadGear", CLuaBaseEntity::getSquadGear);
     SOL_REGISTER("getSquadGearCandidates", CLuaBaseEntity::getSquadGearCandidates);
+    SOL_REGISTER("getItemMods", CLuaBaseEntity::getItemMods);
+    SOL_REGISTER("getWeaponDamageDelay", CLuaBaseEntity::getWeaponDamageDelay);
+    SOL_REGISTER("getBagItemAugmentMods", CLuaBaseEntity::getBagItemAugmentMods);
+    SOL_REGISTER("getWarehouseItemAugmentMods", CLuaBaseEntity::getWarehouseItemAugmentMods);
     SOL_REGISTER("squadEquip", CLuaBaseEntity::squadEquip);
     SOL_REGISTER("squadUnequip", CLuaBaseEntity::squadUnequip);
     SOL_REGISTER("squadLearnScroll", CLuaBaseEntity::squadLearnScroll);
+    SOL_REGISTER("getSquadWarehouseGearCandidates", CLuaBaseEntity::getSquadWarehouseGearCandidates);
+    SOL_REGISTER("squadEquipFromWarehouse", CLuaBaseEntity::squadEquipFromWarehouse);
+    SOL_REGISTER("squadBagMoveToWarehouse", CLuaBaseEntity::squadBagMoveToWarehouse);
+    SOL_REGISTER("squadBagMoveFromWarehouse", CLuaBaseEntity::squadBagMoveFromWarehouse);
     SOL_REGISTER("swapOwnJobs", CLuaBaseEntity::swapOwnJobs);
+    SOL_REGISTER("getGambitSets", CLuaBaseEntity::getGambitSets);
+    SOL_REGISTER("createGambitSet", CLuaBaseEntity::createGambitSet);
+    SOL_REGISTER("renameGambitSet", CLuaBaseEntity::renameGambitSet);
+    SOL_REGISTER("deleteGambitSet", CLuaBaseEntity::deleteGambitSet);
+    SOL_REGISTER("setGambitTpSkill", CLuaBaseEntity::setGambitTpSkill);
+    SOL_REGISTER("getGambitRules", CLuaBaseEntity::getGambitRules);
+    SOL_REGISTER("addGambitRule", CLuaBaseEntity::addGambitRule);
+    SOL_REGISTER("removeGambitRule", CLuaBaseEntity::removeGambitRule);
+    SOL_REGISTER("setGambitAssign", CLuaBaseEntity::setGambitAssign);
+    SOL_REGISTER("getGambitAssign", CLuaBaseEntity::getGambitAssign);
+    SOL_REGISTER("getGambitAssignments", CLuaBaseEntity::getGambitAssignments);
     SOL_REGISTER("warehouseInfo", CLuaBaseEntity::warehouseInfo);
     SOL_REGISTER("warehousePage", CLuaBaseEntity::warehousePage);
     SOL_REGISTER("warehousePut", CLuaBaseEntity::warehousePut);
@@ -22804,6 +23439,7 @@ void CLuaBaseEntity::Register()
     SOL_REGISTER("warehouseTrash", CLuaBaseEntity::warehouseTrash);
     SOL_REGISTER("warehouseStashAll", CLuaBaseEntity::warehouseStashAll);
     SOL_REGISTER("getTrustID", CLuaBaseEntity::getTrustID);
+    SOL_REGISTER("getMimicSourceCharId", CLuaBaseEntity::getMimicSourceCharId);
     SOL_REGISTER("trustPartyMessage", CLuaBaseEntity::trustPartyMessage);
     SOL_REGISTER("addGambit", CLuaBaseEntity::addGambit);
     SOL_REGISTER("removeGambit", CLuaBaseEntity::removeGambit);

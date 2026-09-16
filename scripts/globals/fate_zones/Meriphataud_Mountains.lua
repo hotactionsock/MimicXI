@@ -44,7 +44,9 @@ xi.fate.zones[xi.zone.MERIPHATAUD_MOUNTAINS] =
             mobs =
             {
                 {
-                    base        = { 119, 1 },  -- TODO: verify mob_groups (zoneId, groupId)
+                    -- No "Zealot" template locally; Yagudo_Persecutor is the closest
+                    -- aggressive-enforcer match.
+                    templateName = "Yagudo_Persecutor",
                     name        = string.char(0xA6) .. "Yagudo Zealot",
                     count       = 5,
                     spawnPoints =
@@ -57,7 +59,7 @@ xi.fate.zones[xi.zone.MERIPHATAUD_MOUNTAINS] =
                     },
                 },
                 {
-                    base        = { 119, 2 },  -- TODO: verify mob_groups (zoneId, groupId)
+                    templateName = "Yagudo_Priest",
                     name        = string.char(0xA6) .. "Yagudo Priest",
                     count       = 4,
                     spawnPoints =
@@ -133,7 +135,7 @@ xi.fate.zones[xi.zone.MERIPHATAUD_MOUNTAINS] =
             mobs =
             {
                 {
-                    base        = { 119, 3 },  -- TODO: verify mob_groups (zoneId, groupId)
+                    templateName = "Yagudo_Votary",
                     name        = string.char(0xA6) .. "Yagudo Votary",
                     count       = 3,
                     spawnPoints =
@@ -144,7 +146,9 @@ xi.fate.zones[xi.zone.MERIPHATAUD_MOUNTAINS] =
                     },
                 },
                 {
-                    base        = { 119, 4 },  -- TODO: verify mob_groups (zoneId, groupId)
+                    -- No "Scribe" template locally; Yagudo_Theologist is the closest
+                    -- scholarly/chanting match.
+                    templateName = "Yagudo_Theologist",
                     name        = string.char(0xA6) .. "Yagudo Scribe",
                     count       = 2,
                     spawnPoints =
@@ -243,7 +247,9 @@ xi.fate.zones[xi.zone.MERIPHATAUD_MOUNTAINS] =
             mobs =
             {
                 {
-                    base         = { 119, 5 },  -- TODO: verify mob_groups (zoneId, groupId)
+                    -- This zone's mobs.yaml has no Bomb-family template at all; Fire_Elemental
+                    -- is the closest local match for a volcanic, explosive roller.
+                    templateName = "Fire_Elemental",
                     name         = string.char(0xA6) .. "Peak Detonator",
                     count        = 1,
                     isBoss       = true,
@@ -255,7 +261,7 @@ xi.fate.zones[xi.zone.MERIPHATAUD_MOUNTAINS] =
                     },
                 },
                 {
-                    base        = { 119, 6 },  -- TODO: verify mob_groups (zoneId, groupId)
+                    templateName = "Fire_Elemental",
                     name        = string.char(0xA6) .. "Mountain Bomb",
                     count       = 3,
                     noCount     = true,
@@ -334,7 +340,7 @@ xi.fate.zones[xi.zone.MERIPHATAUD_MOUNTAINS] =
             mobs =
             {
                 {
-                    base        = { 119, 7 },  -- TODO: verify mob_groups (Mountain Raptor)
+                    templateName = "Raptor",
                     name        = string.char(0xA6) .. "Mount Raptor",
                     count       = 7,
                     spawnPoints =
@@ -349,7 +355,7 @@ xi.fate.zones[xi.zone.MERIPHATAUD_MOUNTAINS] =
                     },
                 },
                 {
-                    base        = { 119, 8 },  -- TODO: verify mob_groups (Meriphataud Raptor)
+                    templateName = "Raptor",
                     name        = string.char(0xA6) .. "Peak Raptor",
                     count       = 3,
                     spawnPoints =
@@ -425,7 +431,7 @@ xi.fate.zones[xi.zone.MERIPHATAUD_MOUNTAINS] =
             mobs =
             {
                 {
-                    base        = { 119, 9 },  -- TODO: verify mob_groups (Trail Bomb)
+                    templateName = "Fire_Elemental",
                     name        = string.char(0xA6) .. "Trail Bomb",
                     count       = 7,
                     spawnPoints =
@@ -440,7 +446,7 @@ xi.fate.zones[xi.zone.MERIPHATAUD_MOUNTAINS] =
                     },
                 },
                 {
-                    base        = { 119, 10 },  -- TODO: verify mob_groups (Magma Bomb)
+                    templateName = "Fire_Elemental",
                     name        = string.char(0xA6) .. "Magma Bomb",
                     count       = 3,
                     spawnPoints =
@@ -516,7 +522,7 @@ xi.fate.zones[xi.zone.MERIPHATAUD_MOUNTAINS] =
             mobs =
             {
                 {
-                    base        = { 119, 11 },  -- TODO: verify mob_groups (Volcanic Bomb)
+                    templateName = "Fire_Elemental",
                     name        = string.char(0xA6) .. "Volcanic Bomb",
                     count       = 5,
                     spawnPoints =
@@ -619,7 +625,10 @@ xi.fate.zones[xi.zone.MERIPHATAUD_MOUNTAINS] =
             mobs =
             {
                 {
-                    base         = { 119, 12 },  -- TODO: verify mob_groups (Talon of Oztroja)
+                    -- No dedicated "enforcer" boss template; Yagudos_Avatar is the zone's
+                    -- unique-tier Yagudo entity, fitting a named boss distinct from the
+                    -- regular Persecutor/Theologist adds.
+                    templateName = "Yagudos_Avatar",
                     name         = string.char(0xA6) .. "Oztroja Talon",
                     count        = 1,
                     isBoss       = true,
@@ -631,7 +640,7 @@ xi.fate.zones[xi.zone.MERIPHATAUD_MOUNTAINS] =
                     },
                 },
                 {
-                    base        = { 119, 13 },  -- TODO: verify mob_groups (Oztroja Devotee)
+                    templateName = "Yagudo_Mendicant",
                     name        = string.char(0xA6) .. "Yagudo Devotee",
                     count       = 3,
                     noCount     = true,
@@ -736,7 +745,10 @@ xi.fate.zones[xi.zone.MERIPHATAUD_MOUNTAINS] =
             mobs =
             {
                 {
-                    base         = { 119, 14 },  -- TODO: verify mob_groups (Summit Predator)
+                    -- No hippogryph/wyvern template locally; Daggerclaw_Dracos is the
+                    -- closest large winged predator for "impossibly large wings ...
+                    -- banks into a dive" per this event's flavor text.
+                    templateName = "Daggerclaw_Dracos",
                     name         = string.char(0xA6) .. "Peak Predator",
                     count        = 1,
                     isBoss       = true,

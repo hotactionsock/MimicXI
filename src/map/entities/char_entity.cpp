@@ -1768,7 +1768,7 @@ void CCharEntity::OnWeaponSkillFinished(CWeaponSkillState& state, action_t& acti
     }
     else
     {
-        ActionInterrupts::WeaponSkillOutOfRange(this, PBattleTarget);
+        ActionInterrupts::WeaponSkillOutOfRange(this, PBattleTarget, state.GetTPDelta());
     }
 
     PLatentEffectContainer->CheckLatentsWS(false);

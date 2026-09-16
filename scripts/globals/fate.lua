@@ -203,9 +203,33 @@ xi.fate.addScore = function(player, zoneID, eventIdx, actionType, basePoints)
     player:incrementCharVar(scoreKey(zoneID, eventIdx), points)
 end
 
-xi.fate.onMagic   = function(caster, spell, zoneID, eventIdx)   if caster:isPC() then xi.fate.addScore(caster, zoneID, eventIdx, "magic",   SCORE_MAGIC)   end end
-xi.fate.onAbility = function(player, ability, zoneID, eventIdx)  xi.fate.addScore(player, zoneID, eventIdx, "ability", SCORE_ABILITY) end
-xi.fate.onWS      = function(player, wsID, zoneID, eventIdx)     xi.fate.addScore(player, zoneID, eventIdx, "ws",      SCORE_WS)      end
+-- Resolves the PC who should get FATE credit for an action. Own actions credit
+-- the actor directly; a trust or pet's actions credit its summoning master, so
+-- players who lean on their trusts/pets aren't shut out of Gold-tier scoring.
+local function creditedPlayer(entity)
+    if not entity then return nil end
+    if entity:isPC() then return entity end
+    if entity:isTrust() or entity:isPet() then
+        local master = entity:getMaster()
+        if master and master:isPC() then
+            return master
+        end
+    end
+    return nil
+end
+
+xi.fate.onMagic   = function(caster, spell, zoneID, eventIdx)
+    local credited = creditedPlayer(caster)
+    if credited then xi.fate.addScore(credited, zoneID, eventIdx, "magic", SCORE_MAGIC) end
+end
+xi.fate.onAbility = function(player, ability, zoneID, eventIdx)
+    local credited = creditedPlayer(player)
+    if credited then xi.fate.addScore(credited, zoneID, eventIdx, "ability", SCORE_ABILITY) end
+end
+xi.fate.onWS      = function(player, wsID, zoneID, eventIdx)
+    local credited = creditedPlayer(player)
+    if credited then xi.fate.addScore(credited, zoneID, eventIdx, "ws", SCORE_WS) end
+end
 xi.fate.onMelee   = function(target, zoneID, eventIdx)           end
 
 -- Calls a named function from a FATE mob's zone script, if one exists.
@@ -275,6 +299,40 @@ end
 -----------------------------------
 -- Level sync
 -----------------------------------
+
+-- Snapshots the player's currently-summoned trusts (real Trust Magic + mimics) so they
+-- can be resummoned right after a FATE-driven level sync. LEVEL_RESTRICTION's onEffectGain
+-- (scripts/effects/level_restriction.lua) unconditionally clears all trusts on gain - that's
+-- shared machinery also used by zone caps, Garrison, Expeditionary Force, and quests, so we
+-- don't touch it. Instead FATE captures/restores around its own addStatusEffect calls, which
+-- keeps every other LEVEL_RESTRICTION source (where losing trusts is the intended behavior)
+-- untouched.
+local function snapshotTrusts(player)
+    local snapshot = {}
+    for _, trust in pairs(player:getOwnTrusts()) do
+        local mimicCharId = trust:getMimicSourceCharId()
+        if mimicCharId ~= 0 then
+            table.insert(snapshot, { mimic = mimicCharId })
+        else
+            table.insert(snapshot, { trustID = trust:getTrustID() })
+        end
+    end
+    return snapshot
+end
+
+local function restoreTrusts(player, snapshot)
+    for _, entry in ipairs(snapshot) do
+        if entry.mimic then
+            -- resummonMimicTrust bypasses the player-facing engaged/eligibility gate:
+            -- this is restoring state the player already held a moment ago, not a new
+            -- player-initiated summon, and mid-fight is exactly when this needs to work.
+            player:resummonMimicTrust(entry.mimic)
+        elseif entry.trustID and entry.trustID ~= 0 then
+            player:spawnTrust(entry.trustID)
+        end
+    end
+end
+
 xi.fate.applySync = function(player, zoneID, eventIdx)
     local def = xi.fate.getEventDef(zoneID, eventIdx)
     if def and def.noSync then return end  -- superboss: open to all levels, no restriction
@@ -283,7 +341,11 @@ xi.fate.applySync = function(player, zoneID, eventIdx)
     -- If they were already at level N the restriction has no effect on stats,
     -- but it prevents the engine from letting them play above N if they gain EXP mid-fight.
     if level > 0 and player:getMainLvl() >= level then
-        player:addStatusEffect(xi.effect.LEVEL_RESTRICTION, { power = level, origin = player })
+        local trusts = snapshotTrusts(player)
+        local gained = player:addStatusEffect(xi.effect.LEVEL_RESTRICTION, { power = level, origin = player })
+        if gained then
+            restoreTrusts(player, trusts)
+        end
     end
 end
 
@@ -547,6 +609,10 @@ xi.fate.spawnMobEntry = function(entry, hpPct, dmgPct, eventIdx, zoneID, def)
     mob:setDropID(0)
     DisallowRespawn(mob:getID(), false)
     mob:spawn()
+    print(string.format("[FATE DEBUG] spawnMobEntry: %s id=%d targid=%d pos=(%.2f,%.2f,%.2f) isSpawned=%s isAlive=%s status=%s untargetable=%s",
+        mob:getName(), mob:getID(), mob:getTargID(),
+        mob:getXPos(), mob:getYPos(), mob:getZPos(),
+        tostring(mob:isSpawned()), tostring(mob:isAlive()), tostring(mob:getStatus()), tostring(mob:getUntargetable())))
     mob:setLocalVar("fateEventIdx", eventIdx)
     mob:setLocalVar("fateZoneID",   zoneID)
     mob:setMobLevel(def.level)
@@ -674,7 +740,9 @@ xi.fate.leashMobs = function(zoneID)
             if mob and mob:isSpawned() then
                 local dx = mob:getXPos() - area[1]
                 local dz = mob:getZPos() - area[3]
-                if (dx * dx + dz * dz) > r2 then
+                local outOfLeash = (dx * dx + dz * dz) > r2
+
+                if outOfLeash then
                     local sp = entry.spawnPt
                     DisallowRespawn(mob:getID(), true)
                     DespawnMob(mob:getID())
@@ -737,7 +805,11 @@ xi.fate.onKill = function(mob, player, zoneID, eventIdx)
             if PlayerHasValidSession(playerID) then
                 local p = GetPlayerByID(playerID)
                 if p and p:getMainLvl() >= fateLevel and not p:hasStatusEffect(xi.effect.LEVEL_RESTRICTION) then
-                    p:addStatusEffect(xi.effect.LEVEL_RESTRICTION, { power = fateLevel, origin = p })
+                    local trusts = snapshotTrusts(p)
+                    local gained = p:addStatusEffect(xi.effect.LEVEL_RESTRICTION, { power = fateLevel, origin = p })
+                    if gained then
+                        restoreTrusts(p, trusts)
+                    end
                     p:printToPlayer(
                         string.format("[FATE] Your level has been restricted to %d for this FATE.", fateLevel),
                         xi.msg.channel.SYSTEM_3
@@ -873,7 +945,7 @@ xi.fate.openChest = function(player, npc)
         end
     end
 
-    npc:setAnimation(xi.anim.OPEN_DOOR)
+    npc:setAnimation(xi.animation.OPEN_DOOR)
 
     -- Items are rolled exactly once on first open and stored in char vars.
     -- Re-opens after a full inventory resume from the next pending slot.
@@ -1875,23 +1947,44 @@ local function initFATEEvent(zone, zoneID, idx, eventDef, areaID)
         local aggroType = mobGroup.aggroType  -- captured per-group before inner loop; nil = keep template default
         for n = 1, mobGroup.count do
             local spawnPt
-            if useNavmeshSpawns then
+            -- A mob group's own hand-placed spawnPoints (recorded in-game via
+            -- !pos) is a deliberate per-mob authoring choice and always wins.
+            -- Without this check, any event that also sets area+radius (most
+            -- do, since area is reused for the isInArea participation check)
+            -- would silently discard those curated points in favour of
+            -- navmesh-random placement - and when getRandomNavmeshPoint fails
+            -- to find a point near a tight/enclosed area (caves, ruins), the
+            -- fallback is the SAME area-center coordinate for every mob in
+            -- the group, so all of them stack exactly on top of each other
+            -- and the whole spawn looks like a single mob.
+            if mobGroup.spawnPoints and #mobGroup.spawnPoints > 0 then
+                spawnPt = mobGroup.spawnPoints[((n - 1) % #mobGroup.spawnPoints) + 1]
+            elseif useNavmeshSpawns then
                 local pt = zone:getRandomNavmeshPoint({ x = areaX, y = areaY, z = areaZ }, areaR)
                 spawnPt = pt and { pt.x, pt.y, pt.z, math.random(0, 255) } or { areaX, areaY, areaZ, 0 }
             elseif sharedPool then
                 sharedPoolIdx = sharedPoolIdx + 1
                 spawnPt = sharedPool[((sharedPoolIdx - 1) % #sharedPool) + 1]
-            elseif mobGroup.spawnPoints and #mobGroup.spawnPoints > 0 then
-                spawnPt = mobGroup.spawnPoints[((n - 1) % #mobGroup.spawnPoints) + 1]
             else
                 spawnPt = { 0, 0, 0, 0 }
             end
 
+            -- templateName (a zone mobs.yaml template) is the modern way to
+            -- pick what a FATE mob clones - most zones' mob_groups rows were
+            -- pruned in favour of mobs.yaml, so `base` (groupId/groupZoneId,
+            -- the legacy mob_groups lookup) now resolves to nothing for them.
+            -- A mob group sets ONE of templateName or base, never both;
+            -- unmigrated zones keep using `base` unchanged until they are
+            -- converted. templateZoneId lets a mob borrow another zone's
+            -- template (mirrors the old cross-zone groupZoneId use, e.g. a
+            -- FATE boss cloning a look from a completely different zone).
             local mobEntity = zone:insertDynamicEntity({
                 objtype         = xi.objType.MOB,
                 name            = mobGroup.name,
-                groupId         = mobGroup.base[2],
-                groupZoneId     = mobGroup.base[1],
+                templateName    = mobGroup.templateName,
+                templateZoneId  = mobGroup.templateZoneId,
+                groupId         = mobGroup.base and mobGroup.base[2] or nil,
+                groupZoneId     = mobGroup.base and mobGroup.base[1] or nil,
                 minLevel        = mobGroup.isBoss and eventDef.level or math.max(1, eventDef.level - 2),
                 maxLevel        = mobGroup.isBoss and eventDef.level or math.max(1, eventDef.level - 2),
                 isAggroable     = true,
@@ -1975,22 +2068,39 @@ local function initFATEEvent(zone, zoneID, idx, eventDef, areaID)
                             end
                         end
                     end
+                    -- Counted kills used to be permanent (DisallowRespawn
+                    -- true, no respawn call) - if an event's mob pool has
+                    -- fewer entries than its required kill count, that made
+                    -- the FATE mathematically uncompletable once every entry
+                    -- had died once (this is what left a 9-kill FATE stuck at
+                    -- 7). onKill's counter increments per CALL, not per
+                    -- distinct entry, so letting a counted mob respawn (same
+                    -- as the non-counting path) and be killed again is safe
+                    -- and correctly adds to the total; quickRespawn's own
+                    -- delayed callback already no-ops if the event resolved
+                    -- (isActive false) in the meantime, so this is harmless
+                    -- even on the final required kill.
                     if optParams.isKiller then
+                        -- Position isn't checked here (unlike the noKiller path below, which never
+                        -- checked it either): mob is only ever the dying entity, and its own
+                        -- fateZoneID/fateEventIdx localvars already unambiguously scope this kill to
+                        -- event (zID, i) - the mob can't belong to any other FATE. Gating on
+                        -- isInArea(player, ...) used to silently drop kills whenever combat drifted
+                        -- outside def.area (respawned mobs re-aggroing and chasing the player past the
+                        -- boundary before the next leash tick), which is what let a "10 kills" FATE
+                        -- routinely need 15-16 real kills to complete - the mob died, but the kill
+                        -- never counted toward the objective.
                         local registered = player and player:getCharVar(regKey(zID, i)) > 0
-                        if registered and xi.fate.isInArea(player, zID, i) then
+                        if registered then
                             xi.fate.onKill(mob, player, zID, i)
-                            DisallowRespawn(mob:getID(), true)
-                        else
-                            xi.fate.quickRespawn(mob, zID, i)
                         end
+                        xi.fate.quickRespawn(mob, zID, i)
                     elseif optParams.noKiller then
                         local credited = xi.fate.findRegisteredPlayer(zID, i)
                         if credited then
                             xi.fate.onKill(mob, credited, zID, i)
-                            DisallowRespawn(mob:getID(), true)
-                        else
-                            xi.fate.quickRespawn(mob, zID, i)
                         end
+                        xi.fate.quickRespawn(mob, zID, i)
                     end
                 end,
 
@@ -2244,35 +2354,38 @@ end
 -----------------------------------
 -- Proximity alert on zone-in
 -- Informs players arriving mid-FATE what is currently underway.
+-- Kept to a single line listing names only (no progress/timer/tier detail)
+-- to avoid spamming the log window with one message per active FATE.
 -----------------------------------
+local ZONEIN_NOTIFY_THROTTLE = 15 -- seconds
+
 xi.fate.notifyActiveOnZoneIn = function(player, zoneID)
     local zoneData = xi.fate.zones[zoneID]
     if not zoneData then return end
+
+    -- The client can resend its zone-in packet while a heavy zone is still
+    -- loading; each resend requeues core's AfterZoneIn 4s later
+    -- (src/map/packets/c2s/0x00a_login.cpp), which re-fires afterZoneIn and
+    -- thus this - once per resend. Throttle so a slow load doesn't spam the
+    -- same line once a second (see screenshot report, 2026-09-14).
+    local now = GetSystemTime()
+    if player:getLocalVar('[FATE]ZoneInNotifiedAt') + ZONEIN_NOTIFY_THROTTLE > now then
+        return
+    end
+
+    local names = {}
     for eventIdx, def in ipairs(zoneData.events) do
         if xi.fate.isActive(zoneID, eventIdx) then
-            local remaining = xi.fate.getRemaining(zoneID, eventIdx)
-            local mins      = math.max(1, math.ceil(remaining / 60))
-            local collected = GetVolatileServerVariable(killKey(zoneID, eventIdx))
-            local target    = def.objective and def.objective.count or 0
-            local objType   = def.objective and def.objective.type  or "kill"
-            local progress
-            if objType == "collect" then
-                progress = string.format("%d/%d recovered", collected, target)
-            elseif objType == "defend" then
-                local wave    = GetVolatileServerVariable(sbWaveKey(zoneID, eventIdx))
-                local numWave = def.waves and #def.waves or 1
-                progress = string.format("wave %d/%d underway", wave, numWave)
-            else
-                progress = string.format("%d/%d defeated", collected, target)
-            end
-            local dynTier = def.dynamicDifficulty and GetServerVariable(dynDiffKey(zoneID, eventIdx)) or 0
-            local tierStr = dynTier > 0 and string.format(" [Difficulty +%d]", dynTier) or ""
-            player:printToPlayer(
-                string.format("[FATE] %s is underway! (%s, %dm remaining%s) - speak to the herald to join.",
-                    def.name, progress, mins, tierStr),
-                xi.msg.channel.SYSTEM_3
-            )
+            table.insert(names, def.name)
         end
+    end
+
+    if #names > 0 then
+        player:setLocalVar('[FATE]ZoneInNotifiedAt', now)
+        player:printToPlayer(
+            string.format("[FATE] Active in this zone: %s", table.concat(names, ", ")),
+            xi.msg.channel.SYSTEM_3
+        )
     end
 end
 
@@ -2315,7 +2428,14 @@ xi.fate.tick = function(zone, zoneID)
                     if isCollect then
                         xi.fate.resolve(zoneID, eventIdx, true,  false)  -- collect: always victory
                     else
-                        xi.fate.resolve(zoneID, eventIdx, false, true)   -- others: silent fail
+                        -- Not silent: players who fought and ran out of time
+                        -- still get the failure callout and a pity chest
+                        -- (assignBandsAndRewards/spawnChest both already
+                        -- branch on `victory` and eventDef.rewards.fail
+                        -- already exists for exactly this - silent=true was
+                        -- skipping all of it, so a timed-out FATE announced
+                        -- nothing and paid out nothing).
+                        xi.fate.resolve(zoneID, eventIdx, false, false)
                     end
                 end
             elseif state == STATE_COOLDOWN then

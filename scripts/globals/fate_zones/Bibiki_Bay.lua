@@ -44,7 +44,12 @@ xi.fate.zones[xi.zone.BIBIKI_BAY] =
             mobs =
             {
                 {
-                    base        = { 4, 1 },  -- TODO: verify mob_groups (zoneId, groupId)
+                    -- Cross-zone borrow: no Sahagin templates in this zone's own mobs.yaml
+                    -- (it's Hobgoblins/Goblins/Rarabs/beasts + Kraken). Yuhtunga_Jungle has a
+                    -- full Sahagin roster; Creek_Sahagin (mnk) is a plain frontline trooper,
+                    -- a good fit for a rank-and-file "Diver".
+                    templateName   = "Creek_Sahagin",
+                    templateZoneId = xi.zone.YUHTUNGA_JUNGLE,
                     name        = string.char(0xA6) .. "Sahagin Diver",
                     count       = 5,
                     spawnPoints =
@@ -57,7 +62,10 @@ xi.fate.zones[xi.zone.BIBIKI_BAY] =
                     },
                 },
                 {
-                    base        = { 4, 2 },  -- TODO: verify mob_groups (zoneId, groupId)
+                    -- Cross-zone borrow: River_Sahagin (Yuhtunga_Jungle) is a WHM-job Sahagin,
+                    -- a direct fit for "Priest".
+                    templateName   = "River_Sahagin",
+                    templateZoneId = xi.zone.YUHTUNGA_JUNGLE,
                     name        = string.char(0xA6) .. "Sahagin Priest",
                     count       = 4,
                     spawnPoints =
@@ -133,7 +141,10 @@ xi.fate.zones[xi.zone.BIBIKI_BAY] =
             mobs =
             {
                 {
-                    base        = { 4, 3 },  -- TODO: verify mob_groups (zoneId, groupId)
+                    -- Cross-zone borrow: Brook_Sahagin (Yuhtunga_Jungle, DRG/polearm) is a fast
+                    -- aggressive striker, fitting "Raider" in a strike-force wave.
+                    templateName   = "Brook_Sahagin",
+                    templateZoneId = xi.zone.YUHTUNGA_JUNGLE,
                     name        = string.char(0xA6) .. "Sahagin Raider",
                     count       = 3,
                     spawnPoints =
@@ -144,7 +155,11 @@ xi.fate.zones[xi.zone.BIBIKI_BAY] =
                     },
                 },
                 {
-                    base        = { 4, 4 },  -- TODO: verify mob_groups (zoneId, groupId)
+                    -- Cross-zone borrow: Sahagin_Patriarch (Yuhtunga_Jungle) is this donor
+                    -- zone's own leader-tier Sahagin look, fitting a "Marshal" commanding the
+                    -- strike force.
+                    templateName   = "Sahagin_Patriarch",
+                    templateZoneId = xi.zone.YUHTUNGA_JUNGLE,
                     name        = string.char(0xA6) .. "Bay Marshal",
                     count       = 2,
                     spawnPoints =
@@ -243,7 +258,7 @@ xi.fate.zones[xi.zone.BIBIKI_BAY] =
             mobs =
             {
                 {
-                    base         = { 4, 5 },  -- TODO: verify mob_groups (zoneId, groupId)
+                    templateName = "Kraken",
                     name         = string.char(0xA6) .. "Bay Kraken",
                     count        = 1,
                     isBoss       = true,
@@ -255,7 +270,11 @@ xi.fate.zones[xi.zone.BIBIKI_BAY] =
                     },
                 },
                 {
-                    base        = { 4, 6 },  -- TODO: verify mob_groups (zoneId, groupId)
+                    -- Cross-zone borrow: Rivulet_Sahagin (Yuhtunga_Jungle, WHM) - a distinct
+                    -- template from the Priest above (different id, same role) for the
+                    -- Kraken fight's Sahagin escort.
+                    templateName   = "Rivulet_Sahagin",
+                    templateZoneId = xi.zone.YUHTUNGA_JUNGLE,
                     name        = string.char(0xA6) .. "Bibiki Sahagin",
                     count       = 4,
                     noCount     = true,

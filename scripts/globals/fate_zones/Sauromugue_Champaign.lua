@@ -44,7 +44,12 @@ xi.fate.zones[xi.zone.SAUROMUGUE_CHAMPAIGN] =
             mobs =
             {
                 {
-                    base        = { 120, 1 },  -- TODO: verify mob_groups (zoneId, groupId)
+                    -- Cross-zone borrow: this zone's mobs.yaml has no orc-type
+                    -- templates at all (Yagudo/Goblin/beasts/elementals only).
+                    -- Davoi is the canonical nearby orc stronghold; Cursemaker
+                    -- is its caster-type orc, matching "Hexer".
+                    templateName   = "Orcish_Cursemaker",
+                    templateZoneId = xi.zone.DAVOI,
                     name        = string.char(0xA6) .. "Orcish Hexer",
                     count       = 5,
                     spawnPoints =
@@ -57,7 +62,8 @@ xi.fate.zones[xi.zone.SAUROMUGUE_CHAMPAIGN] =
                     },
                 },
                 {
-                    base        = { 120, 2 },  -- TODO: verify mob_groups (zoneId, groupId)
+                    templateName   = "Orcish_Trooper",  -- Davoi - exact name match
+                    templateZoneId = xi.zone.DAVOI,
                     name        = string.char(0xA6) .. "Orcish Trooper",
                     count       = 5,
                     spawnPoints =
@@ -134,7 +140,10 @@ xi.fate.zones[xi.zone.SAUROMUGUE_CHAMPAIGN] =
             mobs =
             {
                 {
-                    base        = { 120, 3 },  -- TODO: verify mob_groups (zoneId, groupId)
+                    -- Cross-zone borrow, Davoi - Impaler's heavy-armoured look fits
+                    -- a "Warden" holding the vanguard's advance.
+                    templateName   = "Orcish_Impaler",
+                    templateZoneId = xi.zone.DAVOI,
                     name        = string.char(0xA6) .. "Orcish Warden",
                     count       = 3,
                     spawnPoints =
@@ -145,7 +154,8 @@ xi.fate.zones[xi.zone.SAUROMUGUE_CHAMPAIGN] =
                     },
                 },
                 {
-                    base        = { 120, 4 },  -- TODO: verify mob_groups (zoneId, groupId)
+                    templateName   = "Orcish_Veteran",  -- Davoi - rank fits "Captain"
+                    templateZoneId = xi.zone.DAVOI,
                     name        = string.char(0xA6) .. "Orcish Captain",
                     count       = 2,
                     spawnPoints =
@@ -244,7 +254,11 @@ xi.fate.zones[xi.zone.SAUROMUGUE_CHAMPAIGN] =
             mobs =
             {
                 {
-                    base         = { 120, 5 },  -- TODO: verify mob_groups (zoneId, groupId)
+                    -- Cross-zone borrow, Davoi - Beastrider literally rides a mount,
+                    -- a direct match for this FATE's own flavor text ("riding a
+                    -- colossal raptor mount").
+                    templateName   = "Orcish_Beastrider",
+                    templateZoneId = xi.zone.DAVOI,
                     name         = string.char(0xA6) .. "Plains Warlord",
                     count        = 1,
                     isBoss       = true,
@@ -256,7 +270,8 @@ xi.fate.zones[xi.zone.SAUROMUGUE_CHAMPAIGN] =
                     },
                 },
                 {
-                    base        = { 120, 6 },  -- TODO: verify mob_groups (zoneId, groupId)
+                    templateName   = "Orcish_Dreadnought",  -- Davoi - heavy-tier honour guard
+                    templateZoneId = xi.zone.DAVOI,
                     name        = string.char(0xA6) .. "Orcish Elite",
                     count       = 4,
                     noCount     = true,

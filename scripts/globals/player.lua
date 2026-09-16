@@ -203,6 +203,48 @@ xi.player.onGameIn = function(player, firstLogin, zoning)
     -- apply mods from gearsets (scripts/globals/gear_sets.lua)
     xi.gear_sets.checkForGearSet(player)
 
+    -- Treasure Hunter: granted to all jobs via story progression milestones.
+    -- Each milestone below independently grants +1 TH, so they stack regardless
+    -- of the order they were completed in (no cascading "highest tier wins" logic).
+    -- Rank milestones use getRank() per nation, which persists even after a
+    -- character changes nation allegiance -- checks are OR'd across all three
+    -- nations (not summed) so ranking up in multiple nations cannot be used to
+    -- stack duplicate credit for the same milestone.
+    local function reachedRank(rankRequired)
+        return
+            player:getRank(xi.nation.SANDORIA) >= rankRequired or
+            player:getRank(xi.nation.BASTOK)   >= rankRequired or
+            player:getRank(xi.nation.WINDURST) >= rankRequired
+    end
+
+    local thLevel = 0
+
+    if reachedRank(3) then -- Rank 3 (any nation)
+        thLevel = thLevel + 1
+    end
+
+    if reachedRank(6) then -- Rank 6 (any nation)
+        thLevel = thLevel + 1
+    end
+
+    -- Unlocking Ru'Aun Gardens (Rise of the Zilart - The Gate of the Gods)
+    if player:hasCompletedMission(xi.mission.log_id.ZILART, xi.mission.id.zilart.THE_GATE_OF_THE_GODS) then
+        thLevel = thLevel + 1
+    end
+
+    -- Unlocking Al'Taieu (Chains of Promathia - The Warrior's Path)
+    if player:hasCompletedMission(xi.mission.log_id.COP, xi.mission.id.cop.THE_WARRIORS_PATH) then
+        thLevel = thLevel + 1
+    end
+
+    if reachedRank(10) then -- Rank 10 (any nation)
+        thLevel = thLevel + 1
+    end
+
+    if thLevel > 0 then
+        player:addMod(xi.mod.TREASURE_HUNTER, thLevel)
+    end
+
     -- god mode
     if player:getCharVar('GodMode') == 1 then
         player:addStatusEffect(xi.effect.MAX_HP_BOOST, { power = 1000, origin = player })

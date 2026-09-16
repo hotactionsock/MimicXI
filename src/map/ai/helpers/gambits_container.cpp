@@ -1691,6 +1691,18 @@ bool CGambitsContainer::TryTrustSkill()
                 }
                 break;
             }
+            case G_SELECT::SPECIFIC: // Always use one particular weaponskill (mgambits per-set config)
+            {
+                for (auto& skill : tp_skills)
+                {
+                    if (skill.skill_id == tp_value)
+                    {
+                        chosen_skill = skill;
+                        break;
+                    }
+                }
+                break;
+            }
             case G_SELECT::HIGHEST: // Form the best possible skillchain
             {
                 auto* PSCEffect = target->StatusEffectContainer->GetStatusEffect(xi::StatusEffect::Skillchain);
