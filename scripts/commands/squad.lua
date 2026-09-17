@@ -351,7 +351,7 @@ end
 -- Gambits
 -----------------------------------
 
-local GAMBIT_USAGE = 'Usage: !squad gambit list | statuses | new <name> | del <name> | rename <name> <newname> | '
+local GAMBIT_USAGE = 'Usage: !squad gambit list | statuses | targets | conditions | new <name> | del <name> | rename <name> <newname> | '
     .. 'show <name> | add <name> <target> <condition[:arg]> <reaction> <action> | rem <name> <ordinal> | '
     .. 'assign <character name> <mainJob> <name> | unassign <character name> <mainJob> | '
     .. 'tpskill <name> <asap|random|opener|closer|closeruntiltp> <random|specific|bestagainsttarget> [wsid]'
@@ -425,7 +425,7 @@ local function doGambitAdd(player, args)
 
     local target = xi.gambitRules.TARGETS[string.lower(targetText)]
     if not target then
-        msg(player, string.format('Unknown target "%s". Try: self, party, target, master, tank.', targetText))
+        msg(player, string.format('Unknown target "%s". See !squad gambit targets.', targetText))
         return
     end
 
@@ -494,6 +494,20 @@ local function doGambitStatuses(player)
     msg(player, '  ' .. table.concat(names, ', '))
 end
 
+local function doGambitTargets(player)
+    msg(player, 'Available targets:')
+    for _, t in ipairs(xi.gambitRules.TARGET_LIST) do
+        msg(player, string.format('  %-10s %s', t.name, t.label))
+    end
+end
+
+local function doGambitConditions(player)
+    msg(player, 'Available conditions (use name or name:arg):')
+    for _, c in ipairs(xi.gambitRules.CONDITION_LIST) do
+        msg(player, string.format('  %-16s %s', c.name, c.label))
+    end
+end
+
 local function doGambitTpSkill(player, args)
     local name           = args[3]
     local triggerText    = args[4]
@@ -520,17 +534,19 @@ end
 
 local gambitDispatch =
 {
-    list     = doGambitList,
-    statuses = doGambitStatuses,
-    tpskill  = doGambitTpSkill,
-    new      = doGambitNew,
-    del      = doGambitDel,
-    rename   = doGambitRename,
-    show     = doGambitShow,
-    add      = doGambitAdd,
-    rem      = doGambitRem,
-    assign   = doGambitAssign,
-    unassign = doGambitUnassign,
+    list       = doGambitList,
+    statuses   = doGambitStatuses,
+    targets    = doGambitTargets,
+    conditions = doGambitConditions,
+    tpskill    = doGambitTpSkill,
+    new        = doGambitNew,
+    del        = doGambitDel,
+    rename     = doGambitRename,
+    show       = doGambitShow,
+    add        = doGambitAdd,
+    rem        = doGambitRem,
+    assign     = doGambitAssign,
+    unassign   = doGambitUnassign,
 }
 
 local function doGambit(player, args)

@@ -25,11 +25,16 @@ local rules = xi.gambitRules
 -- name -> ai.t value
 rules.TARGETS =
 {
-    self   = ai.t.SELF,
-    party  = ai.t.PARTY,
-    target = ai.t.TARGET,
-    master = ai.t.MASTER,
-    tank   = ai.t.TANK,
+    self      = ai.t.SELF,
+    party     = ai.t.PARTY,
+    target    = ai.t.TARGET,
+    master    = ai.t.MASTER,
+    tank      = ai.t.TANK,
+    melee     = ai.t.MELEE,
+    ranged    = ai.t.RANGED,
+    caster    = ai.t.CASTER,
+    topenmity = ai.t.TOP_ENMITY,
+    partydead = ai.t.PARTY_DEAD,
 }
 
 rules.TARGET_NAME = {}
@@ -42,26 +47,47 @@ end
 -- tables above are unordered pairs() iteration and must not be used for that.
 rules.TARGET_LIST =
 {
-    { name = 'self',   label = 'Self' },
-    { name = 'party',  label = 'Party' },
-    { name = 'target', label = 'Target' },
-    { name = 'master', label = 'Master' },
-    { name = 'tank',   label = 'Tank' },
+    { name = 'self',      label = 'Self' },
+    { name = 'party',     label = 'Party' },
+    { name = 'target',    label = 'Target' },
+    { name = 'master',    label = 'Master' },
+    { name = 'tank',      label = 'Tank' },
+    { name = 'melee',     label = 'Nearest melee ally' },
+    { name = 'ranged',    label = 'Nearest ranged ally' },
+    { name = 'caster',    label = 'Nearest caster ally' },
+    { name = 'topenmity', label = 'Whoever has top enmity' },
+    { name = 'partydead', label = 'A dead party member' },
 }
 
--- name -> { id = ai.c value, arg = 'none' | 'percent' | 'tp' | 'status' }
+-- name -> { id = ai.c value, arg = 'none' | 'percent' | 'tp' | 'status' | 'level' | 'hp' | 'jobability' }
 rules.CONDITIONS =
 {
-    always    = { id = ai.c.ALWAYS,     arg = 'none' },
-    hpplt     = { id = ai.c.HPP_LT,     arg = 'percent' },
-    hppgte    = { id = ai.c.HPP_GTE,    arg = 'percent' },
-    mpplt     = { id = ai.c.MPP_LT,     arg = 'percent' },
-    mppgte    = { id = ai.c.MPP_GTE,    arg = 'percent' },
-    tplt      = { id = ai.c.TP_LT,      arg = 'tp' },
-    tpgte     = { id = ai.c.TP_GTE,     arg = 'tp' },
-    status    = { id = ai.c.STATUS,     arg = 'status' },
-    notstatus = { id = ai.c.NOT_STATUS, arg = 'status' },
-    random    = { id = ai.c.RANDOM,     arg = 'percent' }, -- percent chance to fire
+    always         = { id = ai.c.ALWAYS,             arg = 'none' },
+    hpplt          = { id = ai.c.HPP_LT,             arg = 'percent' },
+    hppgte         = { id = ai.c.HPP_GTE,            arg = 'percent' },
+    mpplt          = { id = ai.c.MPP_LT,             arg = 'percent' },
+    mppgte         = { id = ai.c.MPP_GTE,            arg = 'percent' },
+    tplt           = { id = ai.c.TP_LT,              arg = 'tp' },
+    tpgte          = { id = ai.c.TP_GTE,             arg = 'tp' },
+    status         = { id = ai.c.STATUS,             arg = 'status' },
+    notstatus      = { id = ai.c.NOT_STATUS,         arg = 'status' },
+    random         = { id = ai.c.RANDOM,             arg = 'percent' }, -- percent chance to fire
+    lvllt          = { id = ai.c.LVL_LT,             arg = 'level' },
+    lvlgte         = { id = ai.c.LVL_GTE,            arg = 'level' },
+    hpmissing      = { id = ai.c.HP_MISSING,         arg = 'hp' }, -- absolute HP missing, not a percent
+    hasenmity      = { id = ai.c.HAS_TOP_ENMITY,     arg = 'none' },
+    notenmity      = { id = ai.c.NOT_HAS_TOP_ENMITY, arg = 'none' },
+    scavailable    = { id = ai.c.SC_AVAILABLE,       arg = 'none' },
+    notscavailable = { id = ai.c.NOT_SC_AVAILABLE,   arg = 'none' },
+    mbavailable    = { id = ai.c.MB_AVAILABLE,       arg = 'none' },
+    pthastank      = { id = ai.c.PT_HAS_TANK,        arg = 'none' },
+    ptnotank       = { id = ai.c.NOT_PT_HAS_TANK,    arg = 'none' },
+    jaoncooldown   = { id = ai.c.JA_ON_COOLDOWN,     arg = 'jobability' },
+    readyingws     = { id = ai.c.READYING_WS,        arg = 'none' },
+    readyingms     = { id = ai.c.READYING_MS,        arg = 'none' },
+    readyingja     = { id = ai.c.READYING_JA,        arg = 'none' },
+    castingma      = { id = ai.c.CASTING_MA,         arg = 'none' },
+    castingdebuff  = { id = ai.c.CASTING_DEBUFF,     arg = 'none' },
 }
 
 rules.CONDITION_NAME = {}
@@ -72,16 +98,32 @@ end
 -- Wire order + display labels for the vocab dump.
 rules.CONDITION_LIST =
 {
-    { name = 'always',    label = 'Always' },
-    { name = 'hpplt',     label = 'HP% below' },
-    { name = 'hppgte',    label = 'HP% at or above' },
-    { name = 'mpplt',     label = 'MP% below' },
-    { name = 'mppgte',    label = 'MP% at or above' },
-    { name = 'tplt',      label = 'TP below' },
-    { name = 'tpgte',     label = 'TP at or above' },
-    { name = 'status',    label = 'Has status' },
-    { name = 'notstatus', label = 'Lacks status' },
-    { name = 'random',    label = 'Random chance %' },
+    { name = 'always',         label = 'Always' },
+    { name = 'hpplt',          label = 'HP% below' },
+    { name = 'hppgte',         label = 'HP% at or above' },
+    { name = 'mpplt',          label = 'MP% below' },
+    { name = 'mppgte',         label = 'MP% at or above' },
+    { name = 'tplt',           label = 'TP below' },
+    { name = 'tpgte',          label = 'TP at or above' },
+    { name = 'status',         label = 'Has status' },
+    { name = 'notstatus',      label = 'Lacks status' },
+    { name = 'random',         label = 'Random chance %' },
+    { name = 'lvllt',          label = 'Level below' },
+    { name = 'lvlgte',         label = 'Level at or above' },
+    { name = 'hpmissing',      label = 'HP missing (absolute) at least' },
+    { name = 'hasenmity',      label = 'Has top enmity' },
+    { name = 'notenmity',      label = 'Lacks top enmity' },
+    { name = 'scavailable',    label = 'Skillchain open (not yet closed)' },
+    { name = 'notscavailable', label = 'No skillchain window open' },
+    { name = 'mbavailable',    label = 'Magic burst window open' },
+    { name = 'pthastank',      label = 'Party has a tank' },
+    { name = 'ptnotank',       label = 'Party lacks a tank' },
+    { name = 'jaoncooldown',   label = 'Job ability on cooldown' },
+    { name = 'readyingws',     label = 'Readying a weaponskill' },
+    { name = 'readyingms',     label = 'Readying a mob skill' },
+    { name = 'readyingja',     label = 'Readying a job ability' },
+    { name = 'castingma',      label = 'Casting a spell' },
+    { name = 'castingdebuff',  label = 'Casting a debuff' },
 }
 
 -- Curated status-effect whitelist for the status/notstatus condition. Kept
@@ -244,6 +286,30 @@ local function resolveConditionArg(kind, token)
         return nil, string.format('unknown status "%s" (see !squad gambit statuses)', tostring(token))
     end
 
+    if kind == 'level' then
+        local n = tonumber(token)
+        if n == nil or n < 1 or n > 99 then
+            return nil, 'expected a level 1-99'
+        end
+        return math.floor(n)
+    end
+
+    if kind == 'hp' then
+        local n = tonumber(token)
+        if n == nil or n < 0 or n > 9999 then
+            return nil, 'expected an HP amount 0-9999'
+        end
+        return math.floor(n)
+    end
+
+    if kind == 'jobability' then
+        local id = xi.jobAbility[string.upper(token or '')]
+        if id == nil then
+            return nil, string.format('unknown job ability "%s"', tostring(token))
+        end
+        return id
+    end
+
     return nil, 'unknown condition argument kind'
 end
 
@@ -326,6 +392,12 @@ rules.validateRaw = function(target, cond, arg, reaction, selector, actionid)
         return false, 'TP out of range (0-3000)'
     elseif def.arg == 'status' and rules.STATUS_NAME[arg] == nil then
         return false, 'unknown status'
+    elseif def.arg == 'level' and (arg < 1 or arg > 99) then
+        return false, 'level out of range (1-99)'
+    elseif def.arg == 'hp' and (arg < 0 or arg > 9999) then
+        return false, 'HP out of range (0-9999)'
+    elseif def.arg == 'jobability' and rules.jobAbilityName(arg) == nil then
+        return false, 'unknown job ability'
     end
 
     if reaction == ai.r.MA and selector == ai.s.HIGHEST then
@@ -356,6 +428,8 @@ rules.describe = function(row)
     local def = rules.CONDITIONS[cname]
     if def ~= nil and def.arg == 'status' then
         cond = string.format('%s:%s', cname, rules.STATUS_NAME[row.arg] or ('#' .. row.arg))
+    elseif def ~= nil and def.arg == 'jobability' then
+        cond = string.format('%s:%s', cname, rules.jobAbilityName(row.arg) or ('#' .. row.arg))
     elseif def ~= nil and def.arg ~= 'none' then
         cond = string.format('%s:%d', cname, row.arg)
     end
