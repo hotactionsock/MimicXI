@@ -526,7 +526,7 @@ xi.squad.GAMBITRULE_REMOVE_RESULT =
 {
     [0] = nil, -- ok
     [1] = 'No gambit set with that name.',
-    [2] = 'No rule at that position.',
+    [3] = 'No rule at that position.', -- GambitRuleResult::BadOrdinal
 }
 
 xi.squad.GAMBITASSIGN_RESULT =

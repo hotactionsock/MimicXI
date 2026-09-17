@@ -609,10 +609,6 @@ xi.fate.spawnMobEntry = function(entry, hpPct, dmgPct, eventIdx, zoneID, def)
     mob:setDropID(0)
     DisallowRespawn(mob:getID(), false)
     mob:spawn()
-    print(string.format("[FATE DEBUG] spawnMobEntry: %s id=%d targid=%d pos=(%.2f,%.2f,%.2f) isSpawned=%s isAlive=%s status=%s untargetable=%s",
-        mob:getName(), mob:getID(), mob:getTargID(),
-        mob:getXPos(), mob:getYPos(), mob:getZPos(),
-        tostring(mob:isSpawned()), tostring(mob:isAlive()), tostring(mob:getStatus()), tostring(mob:getUntargetable())))
     mob:setLocalVar("fateEventIdx", eventIdx)
     mob:setLocalVar("fateZoneID",   zoneID)
     mob:setMobLevel(def.level)

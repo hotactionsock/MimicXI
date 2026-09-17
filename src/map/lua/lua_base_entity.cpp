@@ -16816,7 +16816,7 @@ auto CLuaBaseEntity::getGambitRules(const std::string& name) -> sol::table
  *            scripts/globals/gambitrules.lua) is responsible for validating
  *            target/cond/reaction/selector/actionid against the whitelist
  *            before calling - this layer only enforces ownership and caps.
- *  Returns : 0 ok, 1 set not found, 2 too many rules (add) / bad ordinal (remove)
+ *  Returns : 0 ok, 1 set not found, 2 too many rules (add only), 3 bad ordinal (remove only)
  ************************************************************************/
 
 uint8 CLuaBaseEntity::addGambitRule(const std::string& name, uint8 target, uint8 cond, uint16 arg, uint8 reaction, uint8 selector, uint16 actionid)

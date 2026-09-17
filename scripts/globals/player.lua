@@ -241,9 +241,17 @@ xi.player.onGameIn = function(player, firstLogin, zoning)
         thLevel = thLevel + 1
     end
 
+    local previousThLevel = player:getCharVar('storyTreasureHunterLevel')
+
+    if previousThLevel > 0 then
+        player:delMod(xi.mod.TREASURE_HUNTER, previousThLevel)
+    end
+
     if thLevel > 0 then
         player:addMod(xi.mod.TREASURE_HUNTER, thLevel)
     end
+
+    player:setCharVar('storyTreasureHunterLevel', thLevel)
 
     -- god mode
     if player:getCharVar('GodMode') == 1 then
