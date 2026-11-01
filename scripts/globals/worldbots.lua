@@ -1,21 +1,27 @@
 -----------------------------------
--- xi.worldbots - Phase 1 "walking skeleton" for AI-driven world-population bots.
+-- xi.worldbots - AI for world-population bots.
 --
 -- A world bot is a real CCharEntity on a real (throwaway) account, spawned with
 -- no live network socket (see src/map/utils/botutils.h) - not an NPC, not a mob,
--- not a mimic trust. See project memory `project_playerbots_ffxi` for the full
--- design rationale and phase plan.
+-- not a mimic trust. The bot registry lives in the `world_bots` table (C++ side),
+-- so this file holds only a per-bot AI scratch cache: reloading it loses nothing
+-- but in-flight walk state.
 --
--- Phase 1 scope only: keep a spawned bot's session alive and have it loiter near
--- its spawn point. No combat, no travel, no population manager - see the memory
--- entry for what's deliberately deferred. Bots are registered/unregistered via
--- the !worldbot GM command.
+-- Driven by xi.worldbots.onZoneTick, which the engine calls for every AWAKE zone
+-- that contains bots (CZoneEntities::ZoneServer). A zone with no real players
+-- goes dormant and stops ticking, so its bots simply freeze until someone
+-- arrives - no per-zone script hook needed. Session keep-alive is engine-side
+-- (MapSessionContainer::cleanupSessions) and works in dormant zones too.
+--
+-- Current behaviour: loiter around an anchor point. Combat, travel and the
+-- population manager come later.
 -----------------------------------
 xi = xi or {}
 xi.worldbots = xi.worldbots or {}
 
 -- charId -> { lastPositionSaveTime, anchor = {x,y,z}, lastPos, walking, walkOrderAt, idleUntil }
-local bots = {}
+-- Lazily filled on a bot's first tick; never authoritative (see header).
+local states = {}
 
 -- Logs every loiter decision to the map log as [lua] lines. Testing aid only -
 -- keep false: per-bot, per-step output would swamp the log at any real bot count.
@@ -38,48 +44,27 @@ local function distance(a, b)
 end
 
 -----------------------------------
--- Registration (called by the !worldbot GM command, and after a teleport)
+-- Registry helpers (thin wrappers over the C++ world_bots registry)
 -----------------------------------
 
--- Captures the bot's current position as its Loiter anchor - the fixed point
--- its wandering stays bounded to (see loiterStep below). Re-call this after
--- moving a bot (e.g. xi.worldbots.teleportBot) so its wander area follows it.
-xi.worldbots.registerBot = function(charId)
-    local bot    = GetPlayerByID(charId)
-    local anchor = bot and { x = bot:getXPos(), y = bot:getYPos(), z = bot:getZPos() } or nil
-
-    bots[charId] = { lastPositionSaveTime = 0, anchor = anchor }
-end
-
-xi.worldbots.unregisterBot = function(charId)
-    bots[charId] = nil
-end
-
 xi.worldbots.isBot = function(charId)
-    return bots[charId] ~= nil
+    return IsBotCharacter(charId)
 end
 
-xi.worldbots.listBots = function()
-    local ids = {}
-
-    for charId in pairs(bots) do
-        table.insert(ids, charId)
-    end
-
-    return ids
+-- Drops a bot's cached AI state, e.g. after it was despawned or moved, so its
+-- next tick re-reads its anchor from the database.
+xi.worldbots.forget = function(charId)
+    states[charId] = nil
 end
 
 -- Safely relocates a bot - even one stuck mid zone-transition, since a bot has
--- no client to complete that sequence on its own - and re-anchors its Loiter
--- wander area to the new spot. Use this (not setPos) for any GM-driven bot
--- move; see the !bring override in scripts/commands/bring.lua.
+-- no client to complete that sequence on its own - and re-anchors its loiter
+-- area to the new spot. Use this (not setPos) for any GM-driven bot move; see
+-- the !bring override in scripts/commands/bring.lua.
 xi.worldbots.teleportBot = function(charId, x, y, z, rotation, zoneId)
-    local bot = TeleportBotCharacter(charId, zoneId, x, y, z, rotation)
-    if bot then
-        xi.worldbots.registerBot(charId)
-    end
+    xi.worldbots.forget(charId)
 
-    return bot
+    return TeleportBotCharacter(charId, zoneId, x, y, z, rotation)
 end
 
 -----------------------------------
@@ -182,30 +167,27 @@ local function loiterStep(bot, charId, state, now)
 end
 
 -----------------------------------
--- Tick: called from a hooked zone's onZoneTick, same pattern as xi.fate.tick.
--- Keepalive runs every call (cheap - a session lookup, a timestamp write, and a
--- packet-list clear) since MapSessionContainer::cleanupSessions marks a session
--- link-dead just 5 seconds after its last tap; movement/position-save are
--- throttled separately.
+-- Zone tick: called by the engine for each awake zone holding bots, with the
+-- list of bot entities in that zone.
 -----------------------------------
 
-xi.worldbots.tick = function(zone, zoneId)
+xi.worldbots.onZoneTick = function(zone, bots)
     local now = GetSystemTime()
 
-    for charId, state in pairs(bots) do
-        KeepBotSessionAlive(charId)
+    for _, bot in ipairs(bots) do
+        local charId = bot:getID()
+        local state  = states[charId]
 
-        local bot = GetPlayerByID(charId)
-        if bot == nil then
-            -- Session died or was despawned out from under us - stop tracking it.
-            bots[charId] = nil
-        else
-            loiterStep(bot, charId, state, now)
+        if state == nil then
+            state = { lastPositionSaveTime = now, anchor = GetBotAnchor(charId) }
+            states[charId] = state
+        end
 
-            if state.lastPositionSaveTime + POSITION_SAVE_INTERVAL_SEC <= now then
-                state.lastPositionSaveTime = now
-                SaveBotPosition(charId)
-            end
+        loiterStep(bot, charId, state, now)
+
+        if state.lastPositionSaveTime + POSITION_SAVE_INTERVAL_SEC <= now then
+            state.lastPositionSaveTime = now
+            SaveBotPosition(charId)
         end
     end
 end

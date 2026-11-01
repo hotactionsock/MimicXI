@@ -420,4 +420,9 @@ private:
     std::vector<std::unique_ptr<CInstance>> m_InstanceList;
 
     bool HasAnyPlayers() const;
+
+    // Like HasAnyPlayers, but ignores world bots (see botutils). Drives zone
+    // dormancy: a zone holding only bots goes to sleep, freezing its bots until
+    // a real player arrives.
+    bool HasAnyRealPlayers() const;
 };

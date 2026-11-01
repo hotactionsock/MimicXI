@@ -104,6 +104,11 @@ public:
     auto GetMobList() const -> const EntityList_t&;
     bool CharListEmpty() const;
 
+    // World bots (see botutils) sit in the char list like real players. These
+    // let dormancy ignore them and the bot AI tick run only where they are.
+    bool HasRealChars() const;
+    bool HasBotChars() const;
+
     void ForEachChar(FnRef<void(CCharEntity*)> func);
     void ForEachMob(FnRef<void(CMobEntity*)> func);
     void ForEachNpc(FnRef<void(CNpcEntity*)> func);

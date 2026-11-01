@@ -309,15 +309,17 @@ void DespawnMob(uint32 mobid, const sol::object& arg2);                         
 auto GetPlayerByName(const std::string& name) -> CBaseEntity*;
 auto GetPlayerByID(uint32 pid) -> CBaseEntity*;
 
-// World-population bots (Phase 1 "walking skeleton" - see project memory
-// project_playerbots_ffxi). A bot is a real CCharEntity on a real throwaway
+// World-population bots. A bot is a real CCharEntity on a real throwaway
 // account, driven with no live network socket - see src/map/utils/botutils.h.
-auto CreateBotCharacter(uint16 zoneId, uint8 race, uint8 face, const std::string& name) -> uint32;
+auto CreateBotCharacter(uint16 zoneId, float x, float y, float z, uint8 rotation, uint8 race, uint8 face, const std::string& name) -> uint32;
 auto GetBotAppearance(uint32 charId) -> sol::object;
 auto EditBotCharacter(uint32 charId, uint8 race, uint8 face, const std::string& name) -> bool;
 auto SpawnBotCharacter(uint32 charId) -> CBaseEntity*;
 void DespawnBotCharacter(uint32 charId);
-void KeepBotSessionAlive(uint32 charId);
+bool DeleteBotCharacter(uint32 charId);
+bool IsBotCharacter(uint32 charId);
+auto GetBotList() -> sol::table;
+auto GetBotAnchor(uint32 charId) -> sol::object;
 void WalkBotTo(uint32 charId, float x, float y, float z);
 void SaveBotPosition(uint32 charId);
 auto TeleportBotCharacter(uint32 charId, uint16 zoneId, float x, float y, float z, uint8 rotation) -> CBaseEntity*;
@@ -386,6 +388,7 @@ void OnZoneOut(CCharEntity* PChar);
 void AfterZoneIn(CBaseEntity* PChar);
 void OnZoneInitialize(xi::ZoneId ZoneID);
 void OnZoneTick(CZone* PZone);
+void OnWorldBotsZoneTick(CZone* PZone); // xi.worldbots.onZoneTick(zone, bots) for an awake zone holding bots
 
 void OnTriggerAreaEnter(CCharEntity* PChar, const std::unique_ptr<ITriggerArea>& PTriggerArea); // when player enters a trigger area in a zone
 void OnTriggerAreaLeave(CCharEntity* PChar, const std::unique_ptr<ITriggerArea>& PTriggerArea); // when player leaves a trigger area in a zone

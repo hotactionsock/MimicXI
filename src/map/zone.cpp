@@ -948,11 +948,14 @@ void CZone::DecreaseZoneCounter(CCharEntity* PChar)
     {
         m_zoneEntities->DecreaseZoneCounter(PChar);
 
-        if (!HasAnyPlayers())
+        // Dormancy only counts real players - world bots alone don't keep a zone awake.
+        if (!HasAnyRealPlayers())
         {
             m_timeZoneEmpty = timer::now();
         }
-        else
+
+        // ...but anyone still here (bots included) must see this char despawn.
+        if (HasAnyPlayers())
         {
             m_zoneEntities->DespawnPC(PChar);
         }
@@ -992,7 +995,8 @@ void CZone::IncreaseZoneCounter(CCharEntity* PChar)
     // Wake the zone back up if it was slept while empty. The base sync kept the
     // empty-zone timer teardown in ZoneServer() but dropped this restart, leaving
     // any previously-empty zone dead on re-entry (no ticks -> players cannot zone out).
-    if (!zoneTimerToken_.has_value() && !m_zoneEntities->CharListEmpty())
+    // A world bot entering doesn't wake a sleeping zone - only a real player does.
+    if (!zoneTimerToken_.has_value() && HasAnyRealPlayers())
     {
         createZoneTimers();
     }
@@ -1284,7 +1288,7 @@ auto CZone::ZoneServer(timer::time_point tick) -> Task<void>
                          [rawPtr](const auto& el) { return el.get() == rawPtr; }));
     }
 
-    if (zoneTimerToken_.has_value() && !HasAnyPlayers() && m_timeZoneEmpty + 5s < timer::now() && CheckMobsPathedBack())
+    if (zoneTimerToken_.has_value() && !HasAnyRealPlayers() && m_timeZoneEmpty + 5s < timer::now() && CheckMobsPathedBack())
     {
         zoneTimerToken_.reset();
         zoneTimerTriggerAreasToken_.reset();
@@ -1752,6 +1756,22 @@ auto CZone::CheckTriggerAreas() -> Task<void>
 bool CZone::HasAnyPlayers() const
 {
     if (!m_zoneEntities->CharListEmpty())
+    {
+        return true;
+    }
+    for (const auto& PInstance : m_InstanceList)
+    {
+        if (!PInstance->CharListEmpty())
+        {
+            return true;
+        }
+    }
+    return false;
+}
+
+bool CZone::HasAnyRealPlayers() const
+{
+    if (m_zoneEntities->HasRealChars())
     {
         return true;
     }

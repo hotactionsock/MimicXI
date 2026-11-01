@@ -101,6 +101,7 @@
 #include "unitychat.h"
 #include "universal_container.h"
 #include "utils/battleutils.h"
+#include "map_session.h"
 #include "utils/charutils.h"
 #include "utils/gardenutils.h"
 #include "utils/messageutils.h"
@@ -421,6 +422,13 @@ void CCharEntity::pushPacket(std::unique_ptr<CBasicPacket>&& packet)
     TracyZoneScoped;
     TracyZoneString(getName());
     TracyZoneHex16(packet->getType());
+
+    // World bots (see botutils) have no client to ever receive these - drop them
+    // at the source instead of letting the queue grow and draining it later.
+    if (PSession != nullptr && PSession->isBotSession)
+    {
+        return;
+    }
 
     if (isPacketFiltered(packet))
     {

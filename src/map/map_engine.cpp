@@ -56,6 +56,7 @@
 #include "packets/s2c/0x017_chat_std.h"
 
 #include "utils/battleutils.h"
+#include "utils/botutils.h"
 #include "utils/charutils.h"
 #include "utils/fishingutils.h"
 #include "utils/gardenutils.h"
@@ -300,6 +301,10 @@ auto MapEngine::init() -> Task<void>
     if (!config_.isTestServer)
     {
         moduleutils::ReportLuaModuleUsage();
+
+        // World bots never survive a restart (this process's accounts_sessions
+        // rows were cleared above) - bring back every bot left active.
+        botutils::SpawnPersistentBots();
     }
 
     db::enableTimers();

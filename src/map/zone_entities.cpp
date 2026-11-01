@@ -60,6 +60,7 @@
 #include "items/transactions/synth.h"
 #include "packets/s2c/0x05f_music.h"
 #include "utils/battleutils.h"
+#include "utils/botutils.h"
 #include "utils/charutils.h"
 #include "utils/moduleutils.h"
 #include "utils/petutils.h"
@@ -730,6 +731,32 @@ auto CZoneEntities::GetUsedDynamicTargIDsCount() const -> std::size_t
 bool CZoneEntities::CharListEmpty() const
 {
     return m_charList.empty();
+}
+
+bool CZoneEntities::HasRealChars() const
+{
+    FOR_EACH_PAIR_CAST_SECOND(CCharEntity*, PChar, m_charList)
+    {
+        if (!botutils::IsBotEntity(PChar))
+        {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+bool CZoneEntities::HasBotChars() const
+{
+    FOR_EACH_PAIR_CAST_SECOND(CCharEntity*, PChar, m_charList)
+    {
+        if (botutils::IsBotEntity(PChar))
+        {
+            return true;
+        }
+    }
+
+    return false;
 }
 
 void CZoneEntities::ForEachChar(FnRef<void(CCharEntity*)> func)
@@ -1967,6 +1994,14 @@ auto CZoneEntities::ZoneServer(timer::time_point tick) -> Task<void>
     LogWith({ "zone", { { "name", m_zone->getName() }, { "id", m_zone->GetID() } } });
 
     luautils::OnZoneTick(this->m_zone);
+
+    // Drive world-bot AI (xi.worldbots) for bots in this zone. Only runs while
+    // the zone is awake, i.e. while a real player is present - bots in a
+    // dormant zone stay frozen (see CZone::HasAnyRealPlayers).
+    if (HasBotChars())
+    {
+        luautils::OnWorldBotsZoneTick(this->m_zone);
+    }
 
     rebuildSpatialGrid();
 

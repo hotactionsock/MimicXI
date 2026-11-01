@@ -1,8 +1,8 @@
 -----------------------------------
 -- func: worldbot <create name [race] [face]|edit charid [race] [face] [name]|
---                 spawn charid|despawn charid|list>
--- desc: Phase 1 "walking skeleton" testing command for AI-driven world-population
---       bot characters - see project memory `project_playerbots_ffxi`. GM-only.
+--                 spawn charid|despawn charid|delete charid|list>
+-- desc: GM management of AI-driven world-population bot characters (see
+--       src/map/utils/botutils.h and scripts/globals/worldbots.lua).
 -----------------------------------
 ---@type TCommand
 local commandObj = {}
@@ -33,12 +33,13 @@ local RACE_COUNT = 8
 local STANDARD_FACE_COUNT = 16
 
 local function usage(player)
-    player:printToPlayer('!worldbot create <name> [race] [face] - race/face default to random if omitted')
+    player:printToPlayer('!worldbot create <name> [race] [face] - created at your position; race/face random if omitted')
     player:printToPlayer('!worldbot edit <charid> [race] [face] [name] - use "-" to leave a field unchanged')
     player:printToPlayer('  race: 1-8 or a name (humemale, humefemale, elvaanmale, elvaanfemale, tarutarumale, tarutarufemale, mithra, galka)')
     player:printToPlayer('  face: 0-15')
     player:printToPlayer('!worldbot spawn <charid>')
-    player:printToPlayer('!worldbot despawn <charid>')
+    player:printToPlayer('!worldbot despawn <charid> - parks it (not respawned on restart)')
+    player:printToPlayer('!worldbot delete <charid> - permanently deletes the bot and its account')
     player:printToPlayer('!worldbot list')
 end
 
@@ -117,13 +118,13 @@ commandObj.onTrigger = function(player, args)
             return
         end
 
-        local charId = CreateBotCharacter(player:getZoneID(), race, face, name)
+        local charId = CreateBotCharacter(player:getZoneID(), player:getXPos(), player:getYPos(), player:getZPos(), player:getRotPos(), race, face, name)
         if charId == 0 then
             player:printToPlayer('Failed to create bot character - see map server log.')
             return
         end
 
-        player:printToPlayer(string.format('Created bot character "%s" (charid %d, race %d, face %d) in your current zone.', name, charId, race, face))
+        player:printToPlayer(string.format('Created bot character "%s" (charid %d, race %d, face %d) at your position. Use !worldbot spawn %d.', name, charId, race, face, charId))
     elseif sub == 'edit' then
         local charIdArg, raceArg, faceArg, nameArg = rest:match('^(%S*)%s*(%S*)%s*(%S*)%s*(%S*)$')
 
@@ -157,7 +158,7 @@ commandObj.onTrigger = function(player, args)
 
         -- Editing the DB row doesn't change what's already spawned in the world -
         -- despawn first so the new appearance is what shows up next time it's spawned.
-        xi.worldbots.unregisterBot(charId)
+        xi.worldbots.forget(charId)
         DespawnBotCharacter(charId)
 
         if not EditBotCharacter(charId, race, face, name) then
@@ -179,7 +180,6 @@ commandObj.onTrigger = function(player, args)
             return
         end
 
-        xi.worldbots.registerBot(charId)
         player:printToPlayer(string.format('Spawned bot charid %d.', charId))
     elseif sub == 'despawn' then
         local charId = tonumber(rest)
@@ -188,15 +188,37 @@ commandObj.onTrigger = function(player, args)
             return
         end
 
-        xi.worldbots.unregisterBot(charId)
+        if not IsBotCharacter(charId) then
+            player:printToPlayer(string.format('No bot character with charid %d.', charId))
+            return
+        end
+
+        xi.worldbots.forget(charId)
         DespawnBotCharacter(charId)
         player:printToPlayer(string.format('Despawned bot charid %d.', charId))
+    elseif sub == 'delete' then
+        local charId = tonumber(rest)
+        if charId == nil then
+            usage(player)
+            return
+        end
+
+        xi.worldbots.forget(charId)
+        if not DeleteBotCharacter(charId) then
+            player:printToPlayer(string.format('No bot character with charid %d.', charId))
+            return
+        end
+
+        player:printToPlayer(string.format('Deleted bot charid %d and its account.', charId))
     elseif sub == 'list' then
-        local ids = xi.worldbots.listBots()
-        if #ids == 0 then
-            player:printToPlayer('No active world bots.')
+        local bots = GetBotList()
+        if #bots == 0 then
+            player:printToPlayer('No world bots exist.')
         else
-            player:printToPlayer('Active world bots: ' .. table.concat(ids, ', '))
+            for _, bot in ipairs(bots) do
+                local status = bot.spawned and 'spawned' or (bot.active and 'active (not spawned)' or 'parked')
+                player:printToPlayer(string.format('  %d %s - zone %d - %s', bot.charId, bot.name, bot.zoneId, status))
+            end
         end
     else
         usage(player)

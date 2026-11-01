@@ -39,12 +39,13 @@
 #include "utils/charutils.h"
 #include "utils/zoneutils.h"
 
+#include <algorithm>
 #include <format>
 
 namespace botutils
 {
 
-auto CreateBotCharacter(xi::ZoneId zoneId, CharRace race, CharFace face, const std::string& name) -> uint32
+auto CreateBotCharacter(xi::ZoneId zoneId, float x, float y, float z, uint8 rotation, CharRace race, CharFace face, const std::string& name) -> uint32
 {
     uint32 accId = 0;
 
@@ -87,8 +88,8 @@ auto CreateBotCharacter(xi::ZoneId zoneId, CharRace race, CharFace face, const s
 
     // Mirrors loginHelpers::saveCharacter's row set (that helper lives in the
     // login binary and isn't linked into the map server, so it's reproduced here).
-    if (!db::preparedStmt("INSERT INTO chars(charid,accid,charname,pos_zone,nation) VALUES(?, ?, ?, ?, ?)",
-                          charId, accId, name, static_cast<uint16>(zoneId), 0))
+    if (!db::preparedStmt("INSERT INTO chars(charid,accid,charname,pos_zone,pos_rot,pos_x,pos_y,pos_z,nation) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                          charId, accId, name, static_cast<uint16>(zoneId), rotation, x, y, z, 0))
     {
         ShowError("botutils::CreateBotCharacter: unable to create chars row");
         return 0;
@@ -120,6 +121,12 @@ auto CreateBotCharacter(xi::ZoneId zoneId, CharRace race, CharFace face, const s
     db::preparedStmt("DELETE FROM char_inventory WHERE charid = ?", charId);
     db::preparedStmt("INSERT INTO char_inventory(charid) VALUES(?)", charId);
 
+    if (!db::preparedStmt("INSERT INTO world_bots(charid,active,anchor_x,anchor_y,anchor_z) VALUES(?, 0, ?, ?, ?)", charId, x, y, z))
+    {
+        ShowError("botutils::CreateBotCharacter: unable to create world_bots row");
+        return 0;
+    }
+
     return charId;
 }
 
@@ -141,6 +148,12 @@ auto GetBotAppearance(uint32 charId) -> std::optional<BotAppearance>
 
 auto EditBotCharacter(uint32 charId, CharRace race, CharFace face, const std::string& name) -> bool
 {
+    if (!IsBotCharacter(charId))
+    {
+        ShowError("botutils::EditBotCharacter: charid %u is not a registered world bot", charId);
+        return false;
+    }
+
     if (!db::preparedStmt("UPDATE char_look SET race = ?, face = ? WHERE charid = ?",
                           static_cast<uint8>(race), static_cast<uint8>(face), charId))
     {
@@ -162,6 +175,14 @@ auto SpawnBotCharacter(uint32 charId) -> CCharEntity*
     if (g_PMapEngine == nullptr)
     {
         ShowError("botutils::SpawnBotCharacter: no live MapEngine");
+        return nullptr;
+    }
+
+    // Only ever drive characters registered as bots - never a real player's
+    // (offline) character.
+    if (!IsBotCharacter(charId))
+    {
+        ShowError("botutils::SpawnBotCharacter: charid %u is not a registered world bot", charId);
         return nullptr;
     }
 
@@ -257,10 +278,19 @@ auto SpawnBotCharacter(uint32 charId) -> CCharEntity*
     // walks it toward wherever WalkBotTo() points it, at normal walking speed.
     PBotChar->PAI->SetController(std::make_unique<CWorldBotController>(PBotChar));
 
+    db::preparedStmt("UPDATE world_bots SET active = 1 WHERE charid = ?", charId);
+
     return PBotChar;
 }
 
-void DespawnBotCharacter(uint32 charId)
+namespace
+{
+
+// Tears down a bot's live session (if any), mirroring a normal logout -
+// shuttingDown == 1 tells destroySession to clear the accounts_sessions row (see
+// MapSessionContainer::destroySession). Tolerates a null loc.zone, which is the
+// state a bot stuck mid zone-transition is left in. Does not touch world_bots.
+void destroyBotSession(uint32 charId)
 {
     if (g_PMapEngine == nullptr)
     {
@@ -274,32 +304,143 @@ void DespawnBotCharacter(uint32 charId)
         return;
     }
 
-    // shuttingDown == 1 tells destroySession to clear the accounts_sessions row,
-    // same as a real logout - see MapSessionContainer::destroySession.
     session->shuttingDown = 1;
     sessions.destroySession(session);
 }
 
-void KeepBotSessionAlive(uint32 charId)
+} // namespace
+
+void DespawnBotCharacter(uint32 charId)
 {
-    if (g_PMapEngine == nullptr)
+    destroyBotSession(charId);
+    db::preparedStmt("UPDATE world_bots SET active = 0 WHERE charid = ?", charId);
+}
+
+auto DeleteBotCharacter(uint32 charId) -> bool
+{
+    if (!IsBotCharacter(charId))
     {
-        return;
+        return false;
     }
 
-    auto* session = g_PMapEngine->networking().sessions().getSessionByCharId(charId);
-    if (session == nullptr || !session->isBotSession)
+    destroyBotSession(charId);
+
+    uint32 accId = 0;
     {
-        return;
+        const auto rset = db::preparedStmt("SELECT accid FROM chars WHERE charid = ?", charId);
+        FOR_DB_SINGLE_RESULT(rset)
+        {
+            accId = rset->get<uint32>("accid");
+        }
     }
 
-    session->tapLastUpdate();
-
-    // Nothing will ever flush this over a real socket - drain it so it can't
-    // grow unbounded over a long-lived bot session.
-    if (session->PChar)
+    // Deleting the account cascades to `chars` and on to every char_* table via
+    // the account_delete/char_delete triggers - except char_flags, which the
+    // char_delete trigger doesn't cover, so it's cleared by hand. The account
+    // delete must not reference `chars` itself (MariaDB refuses a statement whose
+    // trigger modifies a table the statement already uses), hence the separate
+    // accid lookup. Only ever deletes a throwaway BOT_ account.
+    if (accId != 0)
     {
-        session->PChar->clearPacketList();
+        const auto rset = db::preparedStmt("DELETE FROM accounts WHERE id = ? AND login LIKE 'BOT\\_%'", accId);
+        if (!rset)
+        {
+            ShowError("botutils::DeleteBotCharacter: unable to delete account %u for charid %u", accId, charId);
+            return false;
+        }
+    }
+
+    db::preparedStmt("DELETE FROM char_flags WHERE charid = ?", charId);
+    db::preparedStmt("DELETE FROM world_bots WHERE charid = ?", charId);
+
+    return true;
+}
+
+auto IsBotCharacter(uint32 charId) -> bool
+{
+    const auto rset = db::preparedStmt("SELECT charid FROM world_bots WHERE charid = ?", charId);
+    return rset && rset->rowsCount() > 0;
+}
+
+auto IsBotEntity(const CCharEntity* PChar) -> bool
+{
+    return PChar != nullptr && PChar->PSession != nullptr && PChar->PSession->isBotSession;
+}
+
+auto GetBotList() -> std::vector<BotRecord>
+{
+    std::vector<BotRecord> result;
+
+    const auto rset = db::preparedStmt("SELECT w.charid, w.active, c.charname, c.pos_zone FROM world_bots w "
+                                       "JOIN chars c ON c.charid = w.charid ORDER BY w.charid");
+    FOR_DB_MULTIPLE_RESULTS(rset)
+    {
+        BotRecord record{};
+        record.charId  = rset->get<uint32>("charid");
+        record.active  = rset->get<uint8>("active") != 0;
+        record.name    = rset->get<std::string>("charname");
+        record.zoneId  = rset->get<uint16>("pos_zone");
+        record.spawned = g_PMapEngine != nullptr && g_PMapEngine->networking().sessions().getSessionByCharId(record.charId) != nullptr;
+        result.push_back(std::move(record));
+    }
+
+    return result;
+}
+
+auto GetBotAnchor(uint32 charId) -> std::optional<position_t>
+{
+    const auto rset = db::preparedStmt("SELECT anchor_x, anchor_y, anchor_z FROM world_bots WHERE charid = ?", charId);
+    FOR_DB_SINGLE_RESULT(rset)
+    {
+        position_t anchor{};
+        anchor.x = rset->get<float>("anchor_x");
+        anchor.y = rset->get<float>("anchor_y");
+        anchor.z = rset->get<float>("anchor_z");
+        return anchor;
+    }
+
+    return std::nullopt;
+}
+
+void SetBotAnchor(uint32 charId, float x, float y, float z)
+{
+    db::preparedStmt("UPDATE world_bots SET anchor_x = ?, anchor_y = ?, anchor_z = ? WHERE charid = ?", x, y, z, charId);
+}
+
+void SpawnPersistentBots()
+{
+    // In lazy-loading/multi-process setups only spawn bots whose zone this
+    // process manages; an empty list means this process manages every zone.
+    std::vector<uint16> managedZones;
+    for (const auto& [zoneId, name] : zoneutils::GetManagedZones())
+    {
+        managedZones.push_back(static_cast<uint16>(zoneId));
+    }
+
+    std::vector<uint32> toSpawn;
+
+    const auto rset = db::preparedStmt("SELECT w.charid, c.pos_zone FROM world_bots w JOIN chars c ON c.charid = w.charid WHERE w.active = 1");
+    FOR_DB_MULTIPLE_RESULTS(rset)
+    {
+        const auto zoneId = rset->get<uint16>("pos_zone");
+        if (managedZones.empty() || std::find(managedZones.begin(), managedZones.end(), zoneId) != managedZones.end())
+        {
+            toSpawn.push_back(rset->get<uint32>("charid"));
+        }
+    }
+
+    uint32 spawned = 0;
+    for (const auto charId : toSpawn)
+    {
+        if (SpawnBotCharacter(charId) != nullptr)
+        {
+            ++spawned;
+        }
+    }
+
+    if (!toSpawn.empty())
+    {
+        ShowInfo("botutils: respawned %u of %u active world bot(s)", spawned, static_cast<uint32>(toSpawn.size()));
     }
 }
 
@@ -354,22 +495,13 @@ auto TeleportBotCharacter(uint32 charId, xi::ZoneId zoneId, float x, float y, fl
         return nullptr;
     }
 
-    auto& sessions = g_PMapEngine->networking().sessions();
-    auto* session  = sessions.getSessionByCharId(charId);
-    if (session != nullptr && !session->isBotSession)
+    if (!IsBotCharacter(charId))
     {
-        ShowError("botutils::TeleportBotCharacter: charid %u is not a bot session", charId);
+        ShowError("botutils::TeleportBotCharacter: charid %u is not a registered world bot", charId);
         return nullptr;
     }
 
-    // Clean despawn regardless of current zone/zoning state - destroySession
-    // tolerates a null loc.zone, which is exactly the state a bot stuck mid
-    // zone-transition is left in (it can never complete that sequence itself).
-    if (session != nullptr)
-    {
-        session->shuttingDown = 1;
-        sessions.destroySession(session);
-    }
+    destroyBotSession(charId);
 
     if (!db::preparedStmt("UPDATE chars SET pos_zone = ?, pos_rot = ?, pos_x = ?, pos_y = ?, pos_z = ? WHERE charid = ?",
                           static_cast<uint16>(zoneId), rotation, x, y, z, charId))
@@ -377,6 +509,8 @@ auto TeleportBotCharacter(uint32 charId, xi::ZoneId zoneId, float x, float y, fl
         ShowError("botutils::TeleportBotCharacter: unable to update position for charid %u", charId);
         return nullptr;
     }
+
+    SetBotAnchor(charId, x, y, z);
 
     return SpawnBotCharacter(charId);
 }

@@ -204,6 +204,17 @@ void MapSessionContainer::cleanupSessions(IPP mapIPP)
     {
         auto& map_session_data = it->second;
 
+        // World bots (see botutils) have no client to send keep-alive traffic, so
+        // they'd be marked link-dead after 5s and reaped. Keep them alive here -
+        // this runs for every session regardless of whether the bot's zone is
+        // dormant, so a bot frozen in a sleeping zone keeps its session.
+        if (map_session_data->isBotSession)
+        {
+            map_session_data->tapLastUpdate();
+            ++it;
+            continue;
+        }
+
         auto* PChar = map_session_data->PChar.get();
         auto  now   = earth_time::now();
 
