@@ -924,7 +924,7 @@ void CZone::DecreaseZoneCounter(CCharEntity* PChar)
     {
         // Player is in an in-zone instance layer — clean up from there.
         CInstance* PInstance = PChar->PInstance;
-        if (PInstance->IsLocked() && PChar->isAlive() && PChar->PSession->shuttingDown == 2)
+        if (PInstance->IsLocked() && PChar->isAlive() && PChar->PSession && PChar->PSession->shuttingDown == 2)
         {
             PChar->PSession->shuttingDown = 0;
             PChar->pushPacket<GP_SERV_COMMAND_SYSTEMMES>(0, 0, MsgStd::CouldNotEnter);

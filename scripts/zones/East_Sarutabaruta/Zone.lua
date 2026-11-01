@@ -44,6 +44,7 @@ end
 
 zoneObject.onZoneTick = function(zone)
     xi.fate.tick(zone, zone:getID())
+    xi.worldbots.tick(zone, zone:getID())
 end
 
 zoneObject.onTriggerAreaEnter = function(player, triggerArea)

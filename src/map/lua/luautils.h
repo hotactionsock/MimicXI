@@ -308,6 +308,19 @@ auto SpawnMob(uint32 mobid, const sol::object& arg2, const sol::object& arg3) ->
 void DespawnMob(uint32 mobid, const sol::object& arg2);                                        // Despawn (Fade Out) Mob By Id
 auto GetPlayerByName(const std::string& name) -> CBaseEntity*;
 auto GetPlayerByID(uint32 pid) -> CBaseEntity*;
+
+// World-population bots (Phase 1 "walking skeleton" - see project memory
+// project_playerbots_ffxi). A bot is a real CCharEntity on a real throwaway
+// account, driven with no live network socket - see src/map/utils/botutils.h.
+auto CreateBotCharacter(uint16 zoneId, uint8 race, uint8 face, const std::string& name) -> uint32;
+auto GetBotAppearance(uint32 charId) -> sol::object;
+auto EditBotCharacter(uint32 charId, uint8 race, uint8 face, const std::string& name) -> bool;
+auto SpawnBotCharacter(uint32 charId) -> CBaseEntity*;
+void DespawnBotCharacter(uint32 charId);
+void KeepBotSessionAlive(uint32 charId);
+void WalkBotTo(uint32 charId, float x, float y, float z);
+void SaveBotPosition(uint32 charId);
+auto TeleportBotCharacter(uint32 charId, uint16 zoneId, float x, float y, float z, uint8 rotation) -> CBaseEntity*;
 bool PlayerHasValidSession(uint32 playerId);
 void SendToJailOffline(uint32 playerId, int8 cellId, float posX, float posY, float posZ, uint8 rot);
 void DrawIn(CLuaBaseEntity* PLuaBaseEntity, const sol::table& table, float offset, float degrees);

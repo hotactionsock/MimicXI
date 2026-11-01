@@ -109,3 +109,9 @@ private:
     std::atomic<timer::time_point> watchdogLastUpdate_;
     MapConfig&                     config_;
 };
+
+// Set for the lifetime of a live MapEngine so bot/session-lifecycle code (which
+// isn't reachable through any zone or entity pointer) can get at
+// networking()/scheduler()/config(). Mirrors the g_PZoneList global-pointer
+// convention above. nullptr outside of a running MapEngine (e.g. in xi_test).
+extern MapEngine* g_PMapEngine;

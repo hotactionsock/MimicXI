@@ -78,6 +78,8 @@
 #include <io.h>
 #endif
 
+MapEngine* g_PMapEngine = nullptr;
+
 MapEngine::MapEngine(Application& application, MapConfig& config)
 : application_(application)
 , scheduler_(application_.scheduler())
@@ -85,10 +87,12 @@ MapEngine::MapEngine(Application& application, MapConfig& config)
 , networking_(std::make_unique<MapNetworking>(scheduler_, *mapStatistics_, config))
 , config_(config)
 {
+    g_PMapEngine = this;
 }
 
 MapEngine::~MapEngine()
 {
+    g_PMapEngine = nullptr;
     itemutils::FreeItemList();
     battleutils::FreeWeaponSkillsList();
     battleutils::FreeMobSkillList();

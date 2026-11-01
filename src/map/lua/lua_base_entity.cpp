@@ -63,6 +63,7 @@
 #include "trade_container.h"
 #include "treasure_pool.h"
 #include "weapon_skill.h"
+#include "navmesh/navmesh.h"
 #include "zone.h"
 
 #include "ai/ai_container.h"
@@ -3420,6 +3421,46 @@ auto CLuaBaseEntity::getPos() -> sol::table
     pos["x"]   = m_PBaseEntity->loc.p.x;
     pos["y"]   = m_PBaseEntity->loc.p.y;
     pos["z"]   = m_PBaseEntity->loc.p.z;
+    pos["rot"] = m_PBaseEntity->loc.p.rotation;
+
+    return pos;
+}
+
+/************************************************************************
+ *  Function: getRandomNavMeshPosition()
+ *  Purpose : Returns a random walkable point within radius yalms of the
+ *            entity's current position, or nil if the zone has no navmesh
+ *            or no valid point was found nearby.
+ *  Example : local pos = bot:getRandomNavMeshPosition(8)
+ *  Notes   : Used by world-population bots (Phase 1) to wander without
+ *            clipping through walls/geometry - see xi.worldbots.
+ ************************************************************************/
+
+auto CLuaBaseEntity::getRandomNavMeshPosition(float radius) -> sol::object
+{
+    auto* PZone = m_PBaseEntity->loc.zone;
+    if (PZone == nullptr)
+    {
+        return sol::lua_nil;
+    }
+
+    auto* navMesh = PZone->navMesh();
+    if (navMesh == nullptr)
+    {
+        return sol::lua_nil;
+    }
+
+    const auto maybePos = navMesh->findRandomPosition(m_PBaseEntity->loc.p, radius);
+    if (!maybePos)
+    {
+        return sol::lua_nil;
+    }
+
+    auto pos = lua.create_table();
+
+    pos["x"]   = maybePos->x;
+    pos["y"]   = maybePos->y;
+    pos["z"]   = maybePos->z;
     pos["rot"] = m_PBaseEntity->loc.p.rotation;
 
     return pos;
@@ -22773,6 +22814,7 @@ void CLuaBaseEntity::Register()
     SOL_REGISTER("inMogHouse", CLuaBaseEntity::inMogHouse);
 
     SOL_REGISTER("getPos", CLuaBaseEntity::getPos);
+    SOL_REGISTER("getRandomNavMeshPosition", CLuaBaseEntity::getRandomNavMeshPosition);
     SOL_REGISTER("showPosition", CLuaBaseEntity::showPosition);
     SOL_REGISTER("getXPos", CLuaBaseEntity::getXPos);
     SOL_REGISTER("getYPos", CLuaBaseEntity::getYPos);

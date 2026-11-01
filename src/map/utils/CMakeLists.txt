@@ -9,6 +9,8 @@ set(UTIL_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/blacklistutils.h
     ${CMAKE_CURRENT_SOURCE_DIR}/blueutils.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/blueutils.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/botutils.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/botutils.h
     ${CMAKE_CURRENT_SOURCE_DIR}/charutils.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/charutils.h
     ${CMAKE_CURRENT_SOURCE_DIR}/dataset_loader.h

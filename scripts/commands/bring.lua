@@ -23,6 +23,19 @@ commandObj.onTrigger = function(player, target, forceZone)
         return
     end
 
+    -- World bots (see xi.worldbots) have no client, so the normal cross-zone
+    -- setPos flow below - which relies on the client completing a zone
+    -- transition - never finishes for them; it can even leave them stuck
+    -- mid-transition (findable by neither GetPlayerByName nor a normal
+    -- !bring). Resolve by name via the DB (works even for a bot stuck in that
+    -- limbo state) and route bots through the safe teleport path instead.
+    local botCharId = GetPlayerIDByName(target)
+    if botCharId and botCharId > 0 and xi.worldbots.isBot(botCharId) then
+        xi.worldbots.teleportBot(botCharId, player:getXPos(), player:getYPos(), player:getZPos(), player:getRotPos(), player:getZoneID())
+        player:printToPlayer(string.format('Brought bot "%s" (charid %d).', target, botCharId))
+        return
+    end
+
     local targ = GetPlayerByName(target)
     if targ == nil then
         if not player:bringPlayer(target) then

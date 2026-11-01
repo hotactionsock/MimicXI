@@ -13,5 +13,7 @@ set(AI_CONTROLLER_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/player_controller.h
     ${CMAKE_CURRENT_SOURCE_DIR}/trust_controller.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/trust_controller.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/world_bot_controller.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/world_bot_controller.h
     PARENT_SCOPE
 )

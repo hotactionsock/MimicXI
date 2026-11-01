@@ -65,6 +65,7 @@
 
 #include "persist_batch.h"
 #include "utils/battleutils.h"
+#include "utils/botutils.h"
 
 #include "utils/charutils.h"
 #include "utils/instanceutils.h"
@@ -322,6 +323,15 @@ void init(IPP mapIPP, bool isRunningInCI)
     lua.set_function("DespawnMob", &luautils::DespawnMob);
     lua.set_function("GetPlayerByName", &luautils::GetPlayerByName);
     lua.set_function("GetPlayerByID", &luautils::GetPlayerByID);
+    lua.set_function("CreateBotCharacter", &luautils::CreateBotCharacter);
+    lua.set_function("GetBotAppearance", &luautils::GetBotAppearance);
+    lua.set_function("EditBotCharacter", &luautils::EditBotCharacter);
+    lua.set_function("SpawnBotCharacter", &luautils::SpawnBotCharacter);
+    lua.set_function("DespawnBotCharacter", &luautils::DespawnBotCharacter);
+    lua.set_function("KeepBotSessionAlive", &luautils::KeepBotSessionAlive);
+    lua.set_function("WalkBotTo", &luautils::WalkBotTo);
+    lua.set_function("SaveBotPosition", &luautils::SaveBotPosition);
+    lua.set_function("TeleportBotCharacter", &luautils::TeleportBotCharacter);
     lua.set_function("PlayerHasValidSession", &luautils::PlayerHasValidSession);
     lua.set_function("GetPlayerIDByName", &charutils::getCharIdFromName);
     lua.set_function("SendToJailOffline", &luautils::SendToJailOffline);
@@ -2263,6 +2273,87 @@ CBaseEntity* GetPlayerByID(uint32 pid)
     TracyZoneScoped;
 
     return zoneutils::GetChar(pid);
+}
+
+/************************************************************************
+ *                                                                       *
+ *  World-population bots (Phase 1 "walking skeleton").                  *
+ *                                                                       *
+ ************************************************************************/
+
+uint32 CreateBotCharacter(uint16 zoneId, uint8 race, uint8 face, const std::string& name)
+{
+    TracyZoneScoped;
+
+    return botutils::CreateBotCharacter(static_cast<xi::ZoneId>(zoneId), static_cast<CharRace>(race), static_cast<CharFace>(face), name);
+}
+
+sol::object GetBotAppearance(uint32 charId)
+{
+    TracyZoneScoped;
+
+    const auto appearance = botutils::GetBotAppearance(charId);
+    if (!appearance)
+    {
+        return sol::lua_nil;
+    }
+
+    auto result = lua.create_table();
+
+    result["race"] = static_cast<uint8>(appearance->race);
+    result["face"] = static_cast<uint8>(appearance->face);
+    result["name"] = appearance->name;
+
+    return result;
+}
+
+bool EditBotCharacter(uint32 charId, uint8 race, uint8 face, const std::string& name)
+{
+    TracyZoneScoped;
+
+    return botutils::EditBotCharacter(charId, static_cast<CharRace>(race), static_cast<CharFace>(face), name);
+}
+
+CBaseEntity* SpawnBotCharacter(uint32 charId)
+{
+    TracyZoneScoped;
+
+    return botutils::SpawnBotCharacter(charId);
+}
+
+void DespawnBotCharacter(uint32 charId)
+{
+    TracyZoneScoped;
+
+    botutils::DespawnBotCharacter(charId);
+}
+
+void KeepBotSessionAlive(uint32 charId)
+{
+    TracyZoneScoped;
+
+    botutils::KeepBotSessionAlive(charId);
+}
+
+void WalkBotTo(uint32 charId, float x, float y, float z)
+{
+    TracyZoneScoped;
+
+    botutils::WalkBotTo(charId, x, y, z);
+}
+
+void SaveBotPosition(uint32 charId)
+{
+    TracyZoneScoped;
+
+    botutils::SaveBotPosition(charId);
+}
+
+CBaseEntity* TeleportBotCharacter(uint32 charId, uint16 zoneId, float x, float y, float z, uint8 rotation)
+{
+    TracyZoneScoped;
+
+    return botutils::TeleportBotCharacter(charId, static_cast<xi::ZoneId>(zoneId), x, y, z, rotation);
 }
 
 /************************************************************************

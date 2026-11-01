@@ -232,6 +232,7 @@ public:
     float getZPos();
     uint8 getRotPos();
     void  setRotation(uint8 rotation);
+    auto  getRandomNavMeshPosition(float radius) -> sol::object;
 
     void positionSpecial(std::map<std::string, float> pos, POSMODE mode);
     void setPos(sol::variadic_args va);
