@@ -50,6 +50,7 @@
 #include <array>
 #include <fstream>
 #include <iterator>
+#include <limits>
 #include <unordered_map>
 #include <unordered_set>
 
@@ -141,11 +142,12 @@ auto equippedItems(CCharEntity* PChar) -> std::unordered_set<CItem*>
     return result;
 }
 
-auto equipBestGear(CCharEntity* PChar) -> uint8
+template <typename Slots, typename Scorer>
+auto equipBest(CCharEntity* PChar, const Slots& slots, Scorer&& scoreItem) -> uint8
 {
     uint8 changed = 0;
 
-    for (const auto slot : kManagedSlots)
+    for (const auto slot : slots)
     {
         // A two-handed main weapon blocks the sub slot.
         if (slot == SLOT_SUB)
@@ -221,6 +223,11 @@ auto equipBestGear(CCharEntity* PChar) -> uint8
     }
 
     return changed;
+}
+
+auto equipBestGear(CCharEntity* PChar) -> uint8
+{
+    return equipBest(PChar, kManagedSlots, scoreItem);
 }
 
 // item id -> spell it teaches (0 = not a spell scroll); static data, cached.
@@ -503,6 +510,211 @@ auto GetBotVendors(uint16 zoneId) -> std::vector<position_t>
     return vendors;
 }
 
+namespace
+{
+
+constexpr std::array<SLOTTYPE, 2> kWeaponSlots = { SLOT_MAIN, SLOT_SUB };
+
+// Armour/accessory slots a gear set swaps (weapons, ranged and ammo excluded).
+constexpr std::array<SLOTTYPE, 12> kSetSlots = {
+    SLOT_HEAD, SLOT_BODY, SLOT_HANDS, SLOT_LEGS, SLOT_FEET, SLOT_NECK,
+    SLOT_WAIST, SLOT_EAR1, SLOT_EAR2, SLOT_RING1, SLOT_RING2, SLOT_BACK,
+};
+
+struct PlannedItem
+{
+    uint8  container{};
+    uint8  slot{}; // 0 = nothing planned for this equip slot
+    uint16 itemId{};
+};
+
+using GearSetPlan = std::array<PlannedItem, SLOT_BACK + 1>;
+
+std::unordered_map<uint32, std::unordered_map<std::string, GearSetPlan>> g_gearPlans;
+
+auto weightedScore(CItemEquipment* PItem, const BotGearWeights& weights) -> float
+{
+    float score = 0.0f;
+    for (const auto& [mod, weight] : weights.mods)
+    {
+        score += weight * PItem->getModifier(static_cast<xi::Mod>(mod));
+    }
+
+    if (auto* PWeapon = dynamic_cast<CItemWeapon*>(PItem); PWeapon && weights.weaponDps != 0.0f)
+    {
+        const float delay = std::max<float>(PWeapon->getDelay(), 1.0f);
+        score += weights.weaponDps * PWeapon->getDamage() * 240.0f / delay;
+    }
+
+    // Tie-break: newer gear over equivalent older gear.
+    return score + 0.01f * PItem->getReqLvl();
+}
+
+auto planSet(CCharEntity* PChar, const BotGearWeights& weights) -> GearSetPlan
+{
+    GearSetPlan             plan{};
+    std::unordered_set<CItem*> used;
+
+    for (const auto slot : kSetSlots)
+    {
+        float       bestScore = -std::numeric_limits<float>::infinity();
+        PlannedItem best{};
+        CItem*      bestItem = nullptr;
+
+        for (const auto containerId : kEquipContainers)
+        {
+            auto* PContainer = PChar->getStorage(containerId);
+            if (PContainer == nullptr)
+            {
+                continue;
+            }
+
+            for (uint8 i = 1; i <= PContainer->GetSize(); ++i)
+            {
+                auto* PItem = dynamic_cast<CItemEquipment*>(PContainer->GetItem(i));
+                if (PItem == nullptr || used.contains(PItem) || (PItem->getEquipSlotId() & (1 << slot)) == 0 || !canWear(PChar, PItem))
+                {
+                    continue;
+                }
+
+                const float score = weightedScore(PItem, weights);
+                if (score > bestScore)
+                {
+                    bestScore = score;
+                    best      = { containerId, i, PItem->getID() };
+                    bestItem  = PItem;
+                }
+            }
+        }
+
+        if (bestItem != nullptr)
+        {
+            plan[slot] = best;
+            used.insert(bestItem);
+        }
+    }
+
+    return plan;
+}
+
+// The other half of a paired slot (ears, rings), or the slot itself.
+auto pairedSlot(SLOTTYPE slot) -> SLOTTYPE
+{
+    switch (slot)
+    {
+        case SLOT_EAR1:
+            return SLOT_EAR2;
+        case SLOT_EAR2:
+            return SLOT_EAR1;
+        case SLOT_RING1:
+            return SLOT_RING2;
+        case SLOT_RING2:
+            return SLOT_RING1;
+        default:
+            return slot;
+    }
+}
+
+} // namespace
+
+auto PlanBotGear(uint32 charId, const std::vector<std::pair<std::string, BotGearWeights>>& sets, const std::string& weaponSet) -> uint8
+{
+    auto* PChar = liveBot(charId);
+    if (PChar == nullptr)
+    {
+        return 0;
+    }
+
+    uint8 changed = 0;
+    auto& plans   = g_gearPlans[charId];
+    plans.clear();
+
+    for (const auto& [name, weights] : sets)
+    {
+        if (name == weaponSet)
+        {
+            changed = equipBest(PChar, kWeaponSlots,
+                                [&weights](CItemEquipment* PItem)
+                                {
+                                    return weightedScore(PItem, weights);
+                                });
+        }
+    }
+
+    for (const auto& [name, weights] : sets)
+    {
+        plans[name] = planSet(PChar, weights);
+    }
+
+    return changed;
+}
+
+auto EquipBotGearSet(uint32 charId, const std::string& name) -> uint8
+{
+    auto* PChar = liveBot(charId);
+    if (PChar == nullptr)
+    {
+        return 0;
+    }
+
+    const auto botIt = g_gearPlans.find(charId);
+    if (botIt == g_gearPlans.end())
+    {
+        return 0;
+    }
+
+    const auto setIt = botIt->second.find(name);
+    if (setIt == botIt->second.end())
+    {
+        return 0;
+    }
+
+    uint8 changed = 0;
+    for (const auto slot : kSetSlots)
+    {
+        const auto& planned = setIt->second[slot];
+        if (planned.slot == 0)
+        {
+            continue;
+        }
+
+        auto* PContainer = PChar->getStorage(planned.container);
+        auto* PItem      = PContainer ? PContainer->GetItem(planned.slot) : nullptr;
+        if (PItem == nullptr || PItem->getID() != planned.itemId || PChar->getEquip(slot) == PItem)
+        {
+            continue; // moved/gone since planning, or already on
+        }
+
+        // An earring/ring worn in the paired slot has to come off there first
+        // (the engine won't equip one item into two slots).
+        const auto other = pairedSlot(slot);
+        if (other != slot && PChar->getEquip(other) == PItem)
+        {
+            charutils::UnequipItem(PChar, other, Recalculate::No);
+        }
+
+        charutils::EquipItem(PChar, planned.slot, slot, planned.container);
+        if (PChar->getEquip(slot) == PItem)
+        {
+            ++changed;
+        }
+    }
+
+    if (changed > 0)
+    {
+        luautils::CheckForGearSet(PChar);
+        PChar->UpdateHealth();
+        PChar->retriggerLatents = true;
+    }
+
+    return changed;
+}
+
+void ForgetBotGear(uint32 charId)
+{
+    g_gearPlans.erase(charId);
+}
+
 auto ManageBotInventory(uint32 charId) -> BotInventoryResult
 {
     auto* PChar = liveBot(charId);
@@ -512,8 +724,13 @@ auto ManageBotInventory(uint32 charId) -> BotInventoryResult
     }
 
     BotInventoryResult result;
-    result.learned  = learnScrolls(PChar);
-    result.equipped = equipBestGear(PChar);
+    result.learned = learnScrolls(PChar);
+
+    // Bots with planned gear sets equip through those (PlanBotGear).
+    if (!g_gearPlans.contains(charId))
+    {
+        result.equipped = equipBestGear(PChar);
+    }
 
     return result;
 }

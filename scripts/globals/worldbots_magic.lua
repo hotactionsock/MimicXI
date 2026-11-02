@@ -138,6 +138,9 @@ end
 -- Resolved families: name -> { def, ids = { tier1, tier2, ... } }
 local FAMILIES = nil
 
+-- spellId -> family kind (for picking the gear set to cast in)
+local KIND_BY_ID = {}
+
 local function families()
     if FAMILIES then
         return FAMILIES
@@ -159,6 +162,10 @@ local function families()
             ids    = ids,
             effect = def.effect and xi.effect[def.effect] or nil,
         }
+
+        for _, id in ipairs(ids) do
+            KIND_BY_ID[id] = def.kind
+        end
     end
 
     return FAMILIES
@@ -170,6 +177,7 @@ end
 
 local function magicState(state)
     state.magic = state.magic or { spells = {}, blocked = {}, fails = {}, level = -1, job = -1, readAt = 0, range = -1 }
+    state.magic.owner = state -- the bot's full state, for gear swaps
     return state.magic
 end
 
@@ -253,6 +261,10 @@ end
 
 -- Casts spellId, backing off from it if the engine says no. True if cast.
 local function cast(bot, charId, m, spellId, now)
+    -- The right set for the spell (worldbots_gear.lua); swapped back once the
+    -- cast is over (xi.worldbots.gear.base, from the AI loop).
+    xi.worldbots.gear.forSpell(charId, m.owner, KIND_BY_ID[spellId])
+
     local result = CastBotSpell(charId, spellId)
     if result == CAST_OK then
         m.fails[spellId] = nil

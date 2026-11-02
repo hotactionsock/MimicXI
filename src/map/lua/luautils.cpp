@@ -363,6 +363,8 @@ void init(IPP mapIPP, bool isRunningInCI)
     lua.set_function("CastBotSpell", &luautils::CastBotSpell);
     lua.set_function("SetBotCombatRange", &luautils::SetBotCombatRange);
     lua.set_function("IsBotCasting", &luautils::IsBotCasting);
+    lua.set_function("PlanBotGear", &luautils::PlanBotGear);
+    lua.set_function("EquipBotGearSet", &luautils::EquipBotGearSet);
     lua.set_function("WalkBotTo", &luautils::WalkBotTo);
     lua.set_function("SaveBotPosition", &luautils::SaveBotPosition);
     lua.set_function("SetBotActivity", &luautils::SetBotActivity);
@@ -2746,6 +2748,48 @@ bool IsBotCasting(uint32 charId)
     TracyZoneScoped;
 
     return botutils::IsBotCasting(charId);
+}
+
+// sets = { [name] = { mods = { [xi.mod id] = weight, ... }, weaponDps = weight }, ... };
+// weaponSet = the set whose weights pick the weapons. See botutils::PlanBotGear.
+uint8 PlanBotGear(uint32 charId, sol::table sets, std::string const& weaponSet)
+{
+    TracyZoneScoped;
+
+    std::vector<std::pair<std::string, botutils::BotGearWeights>> parsed;
+    for (const auto& [key, value] : sets)
+    {
+        if (!key.is<std::string>() || !value.is<sol::table>())
+        {
+            continue;
+        }
+
+        botutils::BotGearWeights weights;
+        sol::table               def = value.as<sol::table>();
+        weights.weaponDps            = def.get_or("weaponDps", 0.0f);
+
+        if (sol::optional<sol::table> mods = def["mods"])
+        {
+            for (const auto& [mod, weight] : *mods)
+            {
+                if (mod.is<uint16>() && weight.is<float>())
+                {
+                    weights.mods[mod.as<uint16>()] = weight.as<float>();
+                }
+            }
+        }
+
+        parsed.emplace_back(key.as<std::string>(), std::move(weights));
+    }
+
+    return botutils::PlanBotGear(charId, parsed, weaponSet);
+}
+
+uint8 EquipBotGearSet(uint32 charId, std::string const& name)
+{
+    TracyZoneScoped;
+
+    return botutils::EquipBotGearSet(charId, name);
 }
 
 sol::table GetBotVendors(uint16 zoneId)

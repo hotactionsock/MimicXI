@@ -39,7 +39,8 @@
 -- kill path. In a fight it uses its best weapon skill at 1000 TP, its spells
 -- (cures, buffs, Utsusemi, and by main job enfeebles/nukes/songs/drains - see
 -- worldbots_magic.lua) and job abilities from a per-ability policy
--- (ABILITY_POLICY). Between fights it cures up and pre-buffs; MP users also rest
+-- (ABILITY_POLICY). It swaps gear sets like a player - idle, engaged, weapon
+-- skill, nuke, cure, enfeeble (worldbots_gear.lua). Between fights it cures up and pre-buffs; MP users also rest
 -- for MP, and stand-off casters (BLM, SCH) fight from range while they have MP. If it dies it waits a little, returns to its home point, and its
 -- goal walks it straight back to the same hunt spot.
 --
@@ -869,7 +870,12 @@ local function combatStep(bot, charId, state, now, moving)
     -- Between fights: cure up and put buffs on before resting or pulling.
     if not moving and now >= (state.nextIdleCastAt or 0) then
         state.nextIdleCastAt = now + ACTION_CHECK_SEC
-        if IsBotCasting(charId) or xi.worldbots.magic.idle(bot, charId, state, now) then
+        if IsBotCasting(charId) then
+            return true
+        end
+
+        xi.worldbots.gear.base(bot, charId, state)
+        if xi.worldbots.magic.idle(bot, charId, state, now) then
             return true
         end
     end
@@ -922,6 +928,9 @@ local function combatActions(bot, charId, state, now)
         return
     end
 
+    -- Back into the engaged set after a weapon skill or spell (worldbots_gear.lua).
+    xi.worldbots.gear.base(bot, charId, state)
+
     -- An urgent cure, or shadows gone, beats everything (worldbots_magic.lua).
     if xi.worldbots.magic.urgent(bot, charId, state, now) then
         diag(charId, 'urgent spell')
@@ -929,6 +938,7 @@ local function combatActions(bot, charId, state, now)
     end
 
     if bot:getTP() >= 1000 then
+        xi.worldbots.gear.forWeaponSkill(charId, state)
         local ws = UseBotWeaponSkill(charId)
         if ws ~= 0 then
             diag(charId, 'weapon skill %d', ws)
@@ -1247,6 +1257,7 @@ xi.worldbots.onZoneTick = function(zone, bots)
             if not state.inCombat then
                 state.inCombat  = true
                 state.engagedAt = now
+                xi.worldbots.gear.wear(charId, state, 'engaged')
             end
 
             combatActions(bot, charId, state, now)
@@ -1258,6 +1269,7 @@ xi.worldbots.onZoneTick = function(zone, bots)
             state.nextInventoryCheckAt = now + LOOT_WINDOW_SEC
             state.walking              = false
             state.walkOrderAt          = nil
+            xi.worldbots.gear.wear(charId, state, 'idle')
         end
 
         if state.lootUntil then
@@ -1307,6 +1319,10 @@ xi.worldbots.onZoneTick = function(zone, bots)
             if result.learned > 0 then
                 xi.worldbots.magic.refresh(bot, charId, state, now, true)
             end
+
+            -- Re-plan gear sets from what it carries now, then wear the right one.
+            xi.worldbots.gear.plan(bot, charId, state)
+            xi.worldbots.gear.base(bot, charId, state)
         end
 
         if not zoned and state.lastPositionSaveTime + POSITION_SAVE_INTERVAL_SEC <= now then

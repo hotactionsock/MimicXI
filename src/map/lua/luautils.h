@@ -349,6 +349,8 @@ auto GetBotSpells(uint32 charId) -> sol::table;
 auto CastBotSpell(uint32 charId, uint16 spellId) -> uint8;
 void SetBotCombatRange(uint32 charId, float yalms);
 auto IsBotCasting(uint32 charId) -> bool;
+auto PlanBotGear(uint32 charId, sol::table sets, std::string const& weaponSet) -> uint8;
+auto EquipBotGearSet(uint32 charId, std::string const& name) -> uint8;
 void WalkBotTo(uint32 charId, float x, float y, float z);
 void SaveBotPosition(uint32 charId);
 void SetBotActivity(uint32 charId, uint8 activity, uint32 wakeAt);

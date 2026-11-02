@@ -20,6 +20,7 @@
 */
 
 #include "botutils.h"
+#include "botinventory.h"
 
 #include "common/database.h"
 #include "common/earth_time.h"
@@ -418,6 +419,7 @@ void destroyBotSession(uint32 charId)
     session->shuttingDown = 1;
     sessions.destroySession(session);
     ForgetBotActivity(charId);
+    ForgetBotGear(charId);
 }
 
 } // namespace

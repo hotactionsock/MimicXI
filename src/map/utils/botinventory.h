@@ -25,6 +25,8 @@
 #include "common/types/position.h"
 
 #include <string>
+#include <unordered_map>
+#include <utility>
 #include <vector>
 
 // Inventory management for world bots (see botutils.h). A bot is a real
@@ -45,6 +47,8 @@ struct BotInventoryResult
 // item it can wear in each slot (main, sub, armour, accessories - ranged/ammo
 // are left for combat), and use any spell scroll it can learn but doesn't know.
 // Cheap enough to run on spawn, after receiving items, and every few minutes.
+// Once a bot has gear sets planned (PlanBotGear), equipping is left to those
+// and this only learns scrolls.
 auto ManageBotInventory(uint32 charId) -> BotInventoryResult;
 
 struct BotItemInfo
@@ -88,5 +92,30 @@ auto SellBotItems(uint32 charId) -> BotSaleResult;
 
 // Vendor NPCs (general shops) in a zone: NPCs whose script opens xi.shop.general.
 auto GetBotVendors(uint16 zoneId) -> std::vector<position_t>;
+
+// ---- Gear sets (Phase 3) ---------------------------------------------------
+// A player swaps gear for what they're doing: an idle set, a set for meleeing,
+// one for weapon skills, others for nuking or curing. Bots do the same. The
+// stat weights come from Lua (worldbots_gear.lua, per job) so they can be tuned
+// without a rebuild. Weapons are chosen once, by one set's weights, and never
+// swapped by a set change - in FFXI changing weapons costs your TP.
+
+struct BotGearWeights
+{
+    std::unordered_map<uint16, float> mods;      // xi::Mod id -> weight per point
+    float                             weaponDps{}; // weight on weapon damage x 240 / delay
+};
+
+// Works out each set's best armour from what the bot carries, and equips the
+// best weapons by weaponSet's weights. Run during inventory upkeep (out of
+// combat). Returns the number of weapon slots changed.
+auto PlanBotGear(uint32 charId, const std::vector<std::pair<std::string, BotGearWeights>>& sets, const std::string& weaponSet) -> uint8;
+
+// Puts on a planned set's armour (weapons untouched). Items that have moved or
+// gone since planning are skipped. Returns the number of slots changed.
+auto EquipBotGearSet(uint32 charId, const std::string& name) -> uint8;
+
+// Drops a bot's gear plans (despawn).
+void ForgetBotGear(uint32 charId);
 
 } // namespace botutils
