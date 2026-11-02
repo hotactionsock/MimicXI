@@ -2,15 +2,16 @@
 their life story, read from the bots' activity log (world_bot_log - see
 src/map/utils/botlog.h in the game server).
 
-Pages (public):
-    /bots                   every bot, with what it's doing now
-    /bots/<charid>          one bot: profile, status, stats and its timeline
+Pages (public) - the public site's bots.html / bot.html (site/), built on the
+JSON below; the old /bots URLs redirect there:
+    /bots.html              every bot, with what it's doing now, and a live feed
+    /bot.html?id=<charid>   one bot: profile, status, stats and its timeline
 
 JSON (public, read-only):
     /api/bots                       every bot with its status line
     /api/bots/<charid>              profile, status, stats and recent events
-    /api/bots/<charid>/events       events, newest first (?limit, ?before, ?category)
-    /api/bots/feed                  latest events across all bots (?since=<id>, ?limit)
+    /api/bots/<charid>/events       events, newest first (?limit, ?before, ?since, ?category)
+    /api/bots/feed                  latest events across all bots, with names (?since=<id>, ?limit)
 
 Every log row already carries a ready-to-show sentence; this module adds the
 "what is it doing now" status, worked out from the latest events.
@@ -19,7 +20,7 @@ Every log row already carries a ready-to-show sentence; this module adds the
 import json
 import time
 
-from flask import Blueprint, abort, jsonify, render_template, request
+from flask import Blueprint, abort, jsonify, redirect, request
 
 from db import get_connection
 
@@ -84,13 +85,13 @@ def _zone_name(raw):
 
 
 def _event_row(row):
-    """(id, charid, ts, zone_id, category, event, message, data) -> dict"""
+    """(id, charid, ts, zone_id, category, event, message, data[, charname]) -> dict"""
     try:
         data = json.loads(row[7]) if row[7] else {}
     except ValueError:
         data = {}
 
-    return {
+    event = {
         'id':       row[0],
         'charid':   row[1],
         'ts':       row[2],
@@ -100,6 +101,9 @@ def _event_row(row):
         'message':  row[6],
         'data':     data,
     }
+    if len(row) > 8:
+        event['name'] = row[8]
+    return event
 
 
 def describe_now(events, now=None):
@@ -133,22 +137,25 @@ def describe_now(events, now=None):
 
 
 def _fetch_events(cur, charid=None, limit=50, before=None, category=None, since=None):
-    sql    = 'SELECT id, charid, ts, zone_id, category, event, message, data FROM world_bot_log WHERE 1=1'
+    sql = (
+        'SELECT l.id, l.charid, l.ts, l.zone_id, l.category, l.event, l.message, l.data, c.charname'
+        ' FROM world_bot_log l LEFT JOIN chars c ON c.charid = l.charid WHERE 1=1'
+    )
     params = []
     if charid is not None:
-        sql += ' AND charid = ?'
+        sql += ' AND l.charid = ?'
         params.append(charid)
     if before:
-        sql += ' AND id < ?'
+        sql += ' AND l.id < ?'
         params.append(before)
     if since:
-        sql += ' AND id > ?'
+        sql += ' AND l.id > ?'
         params.append(since)
     if category:
-        sql += ' AND category = ?'
+        sql += ' AND l.category = ?'
         params.append(category)
 
-    sql += ' ORDER BY id DESC LIMIT ?'
+    sql += ' ORDER BY l.id DESC LIMIT ?'
     params.append(max(1, min(int(limit), 200)))
 
     cur.execute(sql, tuple(params))
@@ -158,10 +165,11 @@ def _fetch_events(cur, charid=None, limit=50, before=None, category=None, since=
 def _bot_profiles(cur, charid=None):
     sql = (
         'SELECT c.charid, c.charname, c.nation, cs.mjob, cs.sjob, cs.mlvl, cs.slvl, z.name, w.active, w.career_job,'
-        ' (s.charid IS NOT NULL) AS online'
+        ' (s.charid IS NOT NULL) AS online, cl.race, cl.face'
         ' FROM world_bots w'
         ' INNER JOIN chars c ON c.charid = w.charid'
         ' LEFT JOIN char_stats cs ON cs.charid = w.charid'
+        ' LEFT JOIN char_look cl ON cl.charid = w.charid'
         ' LEFT JOIN zone_settings z ON z.zoneid = c.pos_zone'
         ' LEFT JOIN accounts_sessions s ON s.charid = w.charid'
     )
@@ -189,6 +197,8 @@ def _bot_profiles(cur, charid=None):
             'active':     bool(r[8]),
             'career':     _job(r[9]),
             'online':     bool(r[10]),
+            'race':       r[11],
+            'face':       r[12],
         })
 
     return profiles
@@ -309,6 +319,7 @@ def api_bot_events(charid):
         cur, charid=charid,
         limit=args.get('limit', default=50, type=int),
         before=args.get('before', type=int),
+        since=args.get('since', type=int),
         category=args.get('category') or None,
     ))
     return jsonify({'events': events})
@@ -316,26 +327,14 @@ def api_bot_events(charid):
 
 # ── Pages ────────────────────────────────────────────────────────────────────
 
-@bots.app_template_filter('ago')
-def ago_filter(ts):
-    if not ts:
-        return ''
-    seconds = max(0, int(time.time()) - int(ts))
-    for unit, size in (('day', 86400), ('hour', 3600), ('minute', 60)):
-        if seconds >= size:
-            n = seconds // size
-            return '{} {}{} ago'.format(n, unit, '' if n == 1 else 's')
-    return 'just now'
-
+# The pages live on the public site (site/bots.html, site/bot.html); these
+# keep the old URLs working.
 
 @bots.route('/bots')
 def bots_page():
-    return render_template('bots.html', bots=_with_connection(_all_bots))
+    return redirect('/bots.html')
 
 
 @bots.route('/bots/<int:charid>')
 def bot_page(charid):
-    bot = _with_connection(lambda cur: _one_bot(cur, charid))
-    if bot is None:
-        abort(404)
-    return render_template('bot.html', bot=bot)
+    return redirect('/bot.html?id={}'.format(charid))

@@ -1,0 +1,241 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Adventurer — MimicXI</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="bots.css">
+  <script>window.MIMIC_API_BASE = "";</script>
+</head>
+<body data-screen-label="Bot">
+
+  <section class="bots-shell">
+    <div class="container">
+
+      <a class="back-link" href="bots.html">← All adventurers</a>
+
+      <div id="bot-root">
+        <div class="bots-loading">Finding this adventurer…</div>
+      </div>
+
+    </div>
+  </section>
+
+  <script src="shell.js"></script>
+  <script src="tweaks.js"></script>
+  <script src="bots-common.js"></script>
+  <script>
+    (function () {
+      const B = window.MimicBots;
+      const REFRESH_MS = 10000;
+      const PAGE_SIZE  = 50;
+
+      const charid = parseInt(new URLSearchParams(location.search).get("id"), 10);
+      const root   = document.getElementById("bot-root");
+
+      let bot      = null;
+      let events   = [];      // newest first, the full loaded history
+      let category = "";      // timeline filter ("" = everything)
+      let newestId = 0;
+      let oldestId = 0;
+      let moreToLoad = true;
+
+      if (!charid) {
+        root.innerHTML = `<div class="bots-loading">No adventurer chosen. <a href="bots.html">See them all</a>.</div>`;
+        return;
+      }
+
+      // ── Profile ──────────────────────────────────────────────────────────
+      function renderProfile() {
+        const s      = bot.status || {};
+        const sub    = bot.sub_job ? ` / ${B.esc(bot.sub_job)} ${bot.sub_level}` : "";
+        const career = bot.career && bot.career !== bot.main_job
+          ? `<span class="profile-fact">Working towards <strong>${B.esc(bot.career)}</strong></span>` : "";
+        const st     = bot.stats || {};
+        const stat   = (num, label) => `<div class="stat"><div class="num">${num}</div><div class="label">${label}</div></div>`;
+        // Every character starts with the six basic jobs at level 1 - only show
+        // jobs it has actually levelled, plus whatever it's on now.
+        const jobs   = (bot.jobs || [])
+          .filter(j => j.level > 1 || j.abbr === bot.main_abbr)
+          .sort((a, b) => b.level - a.level);
+
+        document.title = `${bot.name} — MimicXI`;
+
+        document.getElementById("profile").innerHTML = `
+          <div class="profile-card">
+            ${B.avatar(bot, "profile-avatar")}
+            <div class="profile-body">
+              <div class="profile-name-row">
+                <h1 class="profile-name">${B.esc(bot.name)}</h1>
+                <span class="bot-presence ${bot.online ? "is-online" : ""}"></span>
+                <span class="profile-presence">${bot.online ? "In the world" : "Resting"}</span>
+              </div>
+              <div class="profile-facts">
+                <span class="profile-fact"><span class="job-chip">${B.esc(bot.main_abbr || "?")}</span> ${B.esc(bot.main_job)} ${bot.main_level}${sub}</span>
+                ${bot.nation ? `<span class="profile-fact">${B.esc(bot.nation)}</span>` : ""}
+                <span class="profile-fact">${B.esc(bot.zone)}</span>
+                ${career}
+              </div>
+              <p class="profile-now ${s.stale ? "is-stale" : ""}">
+                <span class="now-label">Now</span> ${B.esc(s.text || "")}
+                ${s.since ? `<time class="now-time" data-ts="${s.since}">${B.ago(s.since)}</time>` : ""}
+              </p>
+            </div>
+          </div>
+
+          <div class="stat-row profile-stats">
+            ${stat((st.monsters_defeated || 0).toLocaleString(), "Monsters defeated")}
+            ${stat((st.exp_earned || 0).toLocaleString(), "EXP earned")}
+            ${stat(st.level_ups || 0, "Levels gained")}
+            ${stat(st.deaths || 0, "Defeats")}
+            ${stat(st.items_obtained || 0, "Items found")}
+            ${stat(st.parties || 0, "Parties")}
+          </div>
+
+          ${jobs.length ? `
+          <div class="profile-jobs">
+            <h2 class="section-label">Jobs</h2>
+            <div class="job-bars">
+              ${jobs.map(j => `
+                <div class="job-bar" title="${B.esc(j.job)} ${j.level}">
+                  <span class="job-chip">${B.esc(j.abbr)}</span>
+                  <span class="job-track"><span class="job-fill" style="width:${Math.min(100, j.level / 99 * 100)}%"></span></span>
+                  <span class="job-level">${j.level}</span>
+                </div>`).join("")}
+            </div>
+          </div>` : ""}`;
+      }
+
+      // ── Timeline ─────────────────────────────────────────────────────────
+      function dayLabel(ts) {
+        const d     = new Date(ts * 1000);
+        const today = new Date();
+        const yday  = new Date(Date.now() - 86400000);
+        if (d.toDateString() === today.toDateString()) return "Today";
+        if (d.toDateString() === yday.toDateString()) return "Yesterday";
+        return d.toLocaleDateString(undefined, { weekday: "long", day: "numeric", month: "long" });
+      }
+
+      function clock(ts) {
+        return new Date(ts * 1000).toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" });
+      }
+
+      function renderFilters() {
+        const present = [...new Set(events.map(e => e.category))];
+        const chips = [["", "Everything"]].concat(present.map(c => [c, B.categoryLabel(c)]));
+        document.getElementById("timeline-filters").innerHTML = chips.map(([value, label]) =>
+          `<button type="button" class="filter-chip ${value === category ? "is-active" : ""}" data-cat="${B.esc(value)}">${B.esc(label)}</button>`
+        ).join("");
+      }
+
+      function renderTimeline(freshIds) {
+        const shown = events.filter(e => !category || e.category === category);
+        const list  = document.getElementById("timeline");
+
+        if (!shown.length) {
+          list.innerHTML = `<li class="feed-empty">Nothing recorded here yet.</li>`;
+        } else {
+          let lastDay = "";
+          list.innerHTML = shown.map(e => {
+            const day  = dayLabel(e.ts);
+            const head = day !== lastDay ? `<li class="timeline-day">${B.esc(day)}</li>` : "";
+            lastDay = day;
+            return `${head}
+              <li class="timeline-item ${freshIds && freshIds.has(e.id) ? "is-new" : ""}">
+                <time class="timeline-clock" title="${B.ago(e.ts)}">${clock(e.ts)}</time>
+                <span class="feed-cat cat-${B.esc(e.category)}">${B.esc(B.categoryLabel(e.category))}</span>
+                <span class="timeline-msg">${B.esc(e.message)}</span>
+              </li>`;
+          }).join("");
+        }
+
+        document.getElementById("load-older").style.display = moreToLoad ? "" : "none";
+      }
+
+      async function loadOlder() {
+        const button = document.getElementById("load-older");
+        button.disabled = true;
+        try {
+          const d = await B.getJson(`/api/bots/${charid}/events?limit=${PAGE_SIZE}&before=${oldestId}`);
+          const older = d.events || [];
+          events = events.concat(older);
+          if (older.length) oldestId = older[older.length - 1].id;
+          moreToLoad = older.length === PAGE_SIZE;
+          renderFilters();
+          renderTimeline();
+        } finally {
+          button.disabled = false;
+        }
+      }
+
+      // ── Loading and live updates ─────────────────────────────────────────
+      async function loadAll() {
+        try {
+          bot = await B.getJson(`/api/bots/${charid}`);
+        } catch (e) {
+          root.innerHTML = `<div class="bots-loading">We couldn't find that adventurer. <a href="bots.html">See them all</a>.</div>`;
+          return;
+        }
+
+        events     = bot.events || [];
+        newestId   = events.length ? events[0].id : 0;
+        oldestId   = events.length ? events[events.length - 1].id : 0;
+        moreToLoad = events.length >= PAGE_SIZE;
+
+        root.innerHTML = `
+          <div id="profile"></div>
+          <div class="timeline-wrap">
+            <div class="timeline-head">
+              <h2 class="section-label">Their story</h2>
+              <span class="feed-live"><span class="live-dot"></span>Live</span>
+            </div>
+            <div class="timeline-filters" id="timeline-filters"></div>
+            <ol class="timeline" id="timeline"></ol>
+            <button type="button" class="btn btn-ghost load-older" id="load-older">Show older entries</button>
+          </div>`;
+
+        renderProfile();
+        renderFilters();
+        renderTimeline();
+
+        document.getElementById("timeline-filters").addEventListener("click", ev => {
+          const chip = ev.target.closest(".filter-chip");
+          if (!chip) return;
+          category = chip.dataset.cat;
+          renderFilters();
+          renderTimeline();
+        });
+        document.getElementById("load-older").addEventListener("click", loadOlder);
+
+        setInterval(refresh, REFRESH_MS);
+      }
+
+      // Profile and status every tick; new timeline entries appended live.
+      async function refresh() {
+        try {
+          const [profile, fresh] = await Promise.all([
+            B.getJson(`/api/bots/${charid}`),
+            B.getJson(`/api/bots/${charid}/events?since=${newestId}&limit=100`),
+          ]);
+          bot = profile;
+          renderProfile();
+
+          const added = fresh.events || [];
+          if (added.length) {
+            newestId = Math.max(newestId, ...added.map(e => e.id));
+            events = added.concat(events);
+            renderFilters();
+            renderTimeline(new Set(added.map(e => e.id)));
+          }
+        } catch (e) { /* try again next tick */ }
+      }
+
+      loadAll();
+    })();
+  </script>
+</body>
+</html>

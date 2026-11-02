@@ -1,0 +1,203 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Adventurers — MimicXI</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="bots.css">
+  <script>window.MIMIC_API_BASE = "";</script>
+</head>
+<body data-screen-label="Bots">
+
+  <section class="page-hero">
+    <div class="container">
+      <span class="eyebrow">The living world</span>
+      <h1>Adventurers of Vana'diel</h1>
+      <p class="lede">Vana'diel is never empty. These adventurers level, form parties, hunt notorious monsters and chase better gear around the clock. Follow any of them to see their story unfold.</p>
+    </div>
+  </section>
+
+  <section class="bots-shell">
+    <div class="container">
+
+      <div class="stat-row bots-stats" id="bots-stats">
+        <div class="stat"><div class="num" id="stat-total">–</div><div class="label">Adventurers</div></div>
+        <div class="stat"><div class="num" id="stat-online">–</div><div class="label">Out in the world</div></div>
+        <div class="stat"><div class="num" id="stat-avg">–</div><div class="label">Average level</div></div>
+        <div class="stat"><div class="num" id="stat-top">–</div><div class="label">Highest level</div></div>
+      </div>
+
+      <div class="bots-layout">
+        <div class="bots-main">
+          <div class="bots-toolbar">
+            <input type="search" id="bot-search" class="bots-input" placeholder="Find an adventurer…" aria-label="Find an adventurer by name">
+            <select id="bot-job" class="bots-input" aria-label="Filter by job">
+              <option value="">All jobs</option>
+            </select>
+            <select id="bot-sort" class="bots-input" aria-label="Sort">
+              <option value="recent">Most recently active</option>
+              <option value="level">Highest level</option>
+              <option value="name">Name</option>
+            </select>
+          </div>
+
+          <div id="bots-grid" class="bots-grid" aria-live="polite">
+            <div class="bots-loading">Gathering adventurers…</div>
+          </div>
+        </div>
+
+        <aside class="bots-feed" aria-label="Live activity">
+          <div class="feed-head">
+            <h2>Live from the field</h2>
+            <span class="feed-live"><span class="live-dot"></span>Live</span>
+          </div>
+          <ol class="feed-list" id="feed-list">
+            <li class="feed-empty">Listening for news…</li>
+          </ol>
+        </aside>
+      </div>
+
+    </div>
+  </section>
+
+  <script src="shell.js"></script>
+  <script src="tweaks.js"></script>
+  <script src="bots-common.js"></script>
+  <script>
+    (function () {
+      const B = window.MimicBots;
+      const LIST_REFRESH_MS = 30000;
+      const FEED_REFRESH_MS = 8000;
+      const FEED_MAX        = 60;
+
+      let bots     = [];
+      let feedLast = 0;
+
+      // ── Bot list ─────────────────────────────────────────────────────────
+      function renderStats() {
+        const levels = bots.map(b => b.main_level || 0);
+        const online = bots.filter(b => b.online).length;
+        const avg    = levels.length ? Math.round(levels.reduce((a, b) => a + b, 0) / levels.length) : 0;
+        B.setText("stat-total", bots.length.toLocaleString());
+        B.setText("stat-online", online.toLocaleString());
+        B.setText("stat-avg", levels.length ? avg : "–");
+        B.setText("stat-top", levels.length ? Math.max(...levels) : "–");
+      }
+
+      function fillJobFilter() {
+        const select  = document.getElementById("bot-job");
+        const current = select.value;
+        const jobs    = [...new Set(bots.map(b => b.main_job).filter(Boolean))].sort();
+        select.innerHTML = `<option value="">All jobs</option>` +
+          jobs.map(j => `<option value="${B.esc(j)}">${B.esc(j)}</option>`).join("");
+        select.value = jobs.includes(current) ? current : "";
+      }
+
+      function card(b) {
+        const sub    = b.sub_abbr ? ` / ${B.esc(b.sub_abbr)} ${b.sub_level}` : "";
+        const career = b.career && b.career !== b.main_job ? `<span class="bot-career">Aiming for ${B.esc(b.career)}</span>` : "";
+        const status = b.status || {};
+        return `
+          <a class="bot-card" href="bot.html?id=${b.charid}">
+            ${B.avatar(b, "bot-avatar")}
+            <div class="bot-card-body">
+              <div class="bot-card-top">
+                <span class="bot-name">${B.esc(b.name)}</span>
+                <span class="bot-presence ${b.online ? "is-online" : ""}" title="${b.online ? "In the world" : "Resting"}"></span>
+              </div>
+              <div class="bot-job">
+                <span class="job-chip">${B.esc(b.main_abbr || "?")}</span>
+                <span>Lv ${b.main_level}${sub}</span>
+                ${career}
+              </div>
+              <div class="bot-status ${status.stale ? "is-stale" : ""}">${B.esc(status.text || "")}</div>
+              <div class="bot-meta">${B.esc(b.zone || "")}${status.since ? ` · ${B.ago(status.since)}` : ""}</div>
+            </div>
+          </a>`;
+      }
+
+      function renderGrid() {
+        const grid  = document.getElementById("bots-grid");
+        const query = document.getElementById("bot-search").value.trim().toLowerCase();
+        const job   = document.getElementById("bot-job").value;
+        const sort  = document.getElementById("bot-sort").value;
+
+        let list = bots.filter(b =>
+          (!query || b.name.toLowerCase().includes(query)) &&
+          (!job || b.main_job === job));
+
+        const recent = b => (b.status && b.status.since) || 0;
+        list.sort(sort === "level" ? (a, b) => (b.main_level - a.main_level) || a.name.localeCompare(b.name)
+                : sort === "name"  ? (a, b) => a.name.localeCompare(b.name)
+                :                    (a, b) => recent(b) - recent(a));
+
+        if (!bots.length) {
+          grid.innerHTML = `<div class="bots-loading">No adventurers yet - check back soon.</div>`;
+        } else if (!list.length) {
+          grid.innerHTML = `<div class="bots-loading">Nobody matches that search.</div>`;
+        } else {
+          grid.innerHTML = list.map(card).join("");
+        }
+      }
+
+      async function loadBots() {
+        try {
+          const d = await B.getJson("/api/bots");
+          bots = d.bots || [];
+          renderStats();
+          fillJobFilter();
+          renderGrid();
+        } catch (e) {
+          if (!bots.length) {
+            document.getElementById("bots-grid").innerHTML = `<div class="bots-loading">Couldn't reach the server. Retrying…</div>`;
+          }
+        }
+      }
+
+      ["bot-search", "bot-job", "bot-sort"].forEach(id =>
+        document.getElementById(id).addEventListener("input", renderGrid));
+
+      // ── Live feed ────────────────────────────────────────────────────────
+      function feedItem(e, fresh) {
+        return `
+          <li class="feed-item ${fresh ? "is-new" : ""}">
+            <span class="feed-cat cat-${B.esc(e.category)}">${B.esc(B.categoryLabel(e.category))}</span>
+            <p class="feed-msg">${B.linkName(e)}</p>
+            <time class="feed-time" data-ts="${e.ts}">${B.ago(e.ts)}</time>
+          </li>`;
+      }
+
+      async function loadFeed() {
+        try {
+          const first = feedLast === 0;
+          const d     = await B.getJson(first ? "/api/bots/feed?limit=30" : `/api/bots/feed?since=${feedLast}&limit=50`);
+          const events = d.events || [];
+          if (!events.length) {
+            if (first) document.getElementById("feed-list").innerHTML = `<li class="feed-empty">All quiet for now.</li>`;
+            return;
+          }
+
+          feedLast = Math.max(feedLast, ...events.map(e => e.id));
+          const list = document.getElementById("feed-list");
+          const empty = list.querySelector(".feed-empty");
+          if (empty) empty.remove();
+
+          // Newest first, as the API returns them.
+          list.insertAdjacentHTML("afterbegin", events.map(e => feedItem(e, !first)).join(""));
+          while (list.children.length > FEED_MAX) list.lastElementChild.remove();
+        } catch (e) { /* keep the feed as it is; try again next tick */ }
+      }
+
+      loadBots();
+      loadFeed();
+      setInterval(loadBots, LIST_REFRESH_MS);
+      setInterval(loadFeed, FEED_REFRESH_MS);
+      setInterval(() => B.refreshTimes(document), 30000);
+    })();
+  </script>
+</body>
+</html>
