@@ -103,6 +103,8 @@ private:
     Maybe<Scheduler::Token> flushStatisticsToken_;
     Maybe<Scheduler::Token> persistSweepToken_;
     Maybe<Scheduler::Token> botAwakeZonesToken_;
+    Maybe<Scheduler::Token> botLogFlushToken_;
+    Maybe<Scheduler::Token> botLogPruneToken_;
 
     std::unique_ptr<MapStatistics> mapStatistics_;
     std::unique_ptr<MapNetworking> networking_;

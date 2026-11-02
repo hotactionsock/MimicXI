@@ -68,6 +68,7 @@
 #include "utils/botcombat.h"
 #include "utils/botinventory.h"
 #include "utils/botjobs.h"
+#include "utils/botlog.h"
 #include "utils/botparty.h"
 #include "utils/botutils.h"
 
@@ -383,6 +384,10 @@ void init(IPP mapIPP, bool isRunningInCI)
     lua.set_function("FormBotParty", &luautils::FormBotParty);
     lua.set_function("LeaveBotParty", &luautils::LeaveBotParty);
     lua.set_function("GetBotParty", &luautils::GetBotParty);
+    lua.set_function("LogBotEvent", &luautils::LogBotEvent);
+    lua.set_function("TakeBotHuntProgress", &luautils::TakeBotHuntProgress);
+    lua.set_function("GetBotZoneName", &luautils::GetBotZoneName);
+    lua.set_function("GetBotLog", &luautils::GetBotLog);
     lua.set_function("WalkBotTo", &luautils::WalkBotTo);
     lua.set_function("SaveBotPosition", &luautils::SaveBotPosition);
     lua.set_function("SetBotActivity", &luautils::SetBotActivity);
@@ -2737,6 +2742,7 @@ sol::table GetBotWeaponSkills(uint32 charId)
         auto row          = lua.create_table();
         row["id"]         = ws.id;
         row["skillLevel"] = ws.skillLevel;
+        row["name"]       = ws.name;
         row["properties"] = lua.create_table_with(1, ws.properties[0], 2, ws.properties[1], 3, ws.properties[2]);
         table.add(row);
     }
@@ -2808,6 +2814,7 @@ sol::table GetBotSpells(uint32 charId)
         row["onEnemy"] = spell.onEnemy;
         row["ready"]   = spell.ready;
         row["element"] = spell.element;
+        row["name"]    = spell.name;
         table.add(row);
     }
 
@@ -3033,6 +3040,97 @@ sol::object GetBotParty(uint32 charId)
         row["dead"]     = member.dead;
         row["engaged"]  = member.engaged;
         row["targetId"] = member.targetId;
+        table.add(row);
+    }
+
+    return table;
+}
+
+// level 1-3 (milestone/notable/detail), category, event key, message, and an
+// optional flat table of facts (strings, numbers, booleans) stored as JSON.
+// See botutils::LogBotEvent.
+void LogBotEvent(uint32 charId, uint8 level, std::string const& category, std::string const& event, std::string const& message, sol::optional<sol::table> data)
+{
+    TracyZoneScoped;
+
+    const auto logLevel = static_cast<botutils::BotLogLevel>(std::clamp<uint8>(level, 1, 3));
+    if (!botutils::BotLogEnabled(logLevel))
+    {
+        return;
+    }
+
+    std::string json = "{";
+    if (data)
+    {
+        bool first = true;
+        for (const auto& [key, value] : *data)
+        {
+            if (!key.is<std::string>())
+            {
+                continue;
+            }
+
+            std::string encoded;
+            if (value.get_type() == sol::type::number)
+            {
+                const double number = value.as<double>();
+                encoded             = number == static_cast<double>(static_cast<int64>(number)) ? std::to_string(static_cast<int64>(number)) : fmt::format("{}", number);
+            }
+            else if (value.get_type() == sol::type::boolean)
+            {
+                encoded = value.as<bool>() ? "true" : "false";
+            }
+            else if (value.get_type() == sol::type::string)
+            {
+                encoded = "\"" + botutils::JsonEscape(value.as<std::string>()) + "\"";
+            }
+            else
+            {
+                continue;
+            }
+
+            json += fmt::format("{}\"{}\":{}", first ? "" : ",", botutils::JsonEscape(key.as<std::string>()), encoded);
+            first = false;
+        }
+    }
+
+    json += "}";
+    botutils::LogBotEvent(charId, logLevel, category, event, message, json);
+}
+
+// { kills, exp } since the last call - see botutils::TakeBotHuntProgress.
+sol::table TakeBotHuntProgress(uint32 charId)
+{
+    TracyZoneScoped;
+
+    const auto progress = botutils::TakeBotHuntProgress(charId);
+    return lua.create_table_with("kills", progress.kills, "exp", progress.exp);
+}
+
+// A zone's name as a person writes it ("Valkurm Dunes"), or its id as text.
+std::string GetBotZoneName(uint16 zoneId)
+{
+    TracyZoneScoped;
+
+    auto* PZone = zoneutils::GetZone(static_cast<xi::ZoneId>(zoneId));
+    return PZone ? botutils::HumanName(PZone->getName()) : std::to_string(zoneId);
+}
+
+// The bot's most recent log lines (newest first): { { ts, message }, ... }.
+sol::table GetBotLog(uint32 charId, sol::optional<uint16> limit)
+{
+    TracyZoneScoped;
+
+    botutils::FlushBotLog(); // include anything still queued
+
+    auto table = lua.create_table();
+    const auto rset = db::preparedStmt("SELECT ts, message FROM world_bot_log WHERE charid = ? ORDER BY id DESC LIMIT ?", charId,
+                                       static_cast<uint32>(std::clamp<uint16>(limit.value_or(10), 1, 50)));
+    FOR_DB_MULTIPLE_RESULTS(rset)
+    {
+        auto row       = lua.create_table();
+        row["ts"]      = rset->get<uint32>("ts");
+        row["message"] = rset->get<std::string>("message");
         table.add(row);
     }
 

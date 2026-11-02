@@ -33,6 +33,10 @@
 #include "treasure_pool.h"
 #include "utils/charutils.h"
 #include "utils/itemutils.h"
+#include "utils/botlog.h"
+#include "utils/botutils.h"
+
+#include <format>
 
 static constexpr timer::duration treasure_checktime = 3s;
 static constexpr timer::duration treasure_livetime  = 5min;
@@ -615,6 +619,17 @@ void CTreasurePool::treasureWon(CCharEntity* winner, uint8 SlotID)
     }
 
     m_PoolItems[SlotID].TimeStamp = std::nullopt;
+
+    // World bots record what they find (botutils activity log).
+    if (botutils::IsBotEntity(winner))
+    {
+        if (const auto* PItem = xi::items::lookup(m_PoolItems[SlotID].ID))
+        {
+            const auto name = botutils::HumanName(PItem->getName());
+            botutils::LogBotEvent(winner->id, botutils::BotLogLevel::Notable, "item", "obtained", std::format("{} obtained {}", winner->getName(), name),
+                                  std::format(R"({{"item_id":{},"item":"{}"}})", m_PoolItems[SlotID].ID, botutils::JsonEscape(name)));
+        }
+    }
 
     for (const auto& member : m_Members)
     {

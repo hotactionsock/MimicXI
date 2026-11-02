@@ -103,6 +103,7 @@
 
 #include "battleutils.h"
 #include "blueutils.h"
+#include "botlog.h"
 #include "botutils.h"
 #include "charutils.h"
 #include "mimicutils.h"
@@ -4941,6 +4942,12 @@ void AddExperiencePoints(bool expFromRaise, bool awardRegionPoints, bool fromScr
     if (!expFromRaise && !fromScripts)
     {
         exp = (uint32)(exp * settings::get<float>("map.EXP_RATE"));
+    }
+
+    // World bots: tally hunt progress for their activity log's hunt summaries.
+    if (!expFromRaise && exp > 0 && botutils::IsBotEntity(PChar))
+    {
+        botutils::NoteBotHunt(PChar->id, exp, !fromScripts && PMob != nullptr && PMob->objtype == TYPE_MOB);
     }
 
     // Mimic trusts progress the real alt character 1:1 with every EXP source the

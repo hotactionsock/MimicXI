@@ -21,6 +21,7 @@
 
 #include "botcombat.h"
 
+#include "botlog.h"
 #include "botutils.h"
 
 #include "common/logging.h"
@@ -53,6 +54,7 @@
 #include "utils/battleutils.h"
 #include "weapon_skill.h"
 
+#include <format>
 #include <list>
 
 namespace botutils
@@ -413,7 +415,8 @@ auto GetBotSpells(uint32 charId) -> std::vector<BotSpell>
                            static_cast<uint8>(PSpell->getSpellGroup()),
                            PSpell->canTargetEnemy(),
                            !onCooldown,
-                           static_cast<uint8>(PSpell->getElement()) });
+                           static_cast<uint8>(PSpell->getElement()),
+                           HumanName(PSpell->getName()) });
     }
 
     return result;
@@ -626,7 +629,16 @@ auto UseBotItem(uint32 charId, uint16 itemId) -> bool
         path->Clear();
     }
 
-    return controller->UseItem(EntityId(PChar), LOC_INVENTORY, slot);
+    auto*      PItem = PChar->getStorage(LOC_INVENTORY)->GetItem(slot);
+    const auto name  = PItem ? HumanName(PItem->getName()) : std::string();
+    if (!controller->UseItem(EntityId(PChar), LOC_INVENTORY, slot))
+    {
+        return false;
+    }
+
+    LogBotEvent(charId, BotLogLevel::Detail, "item", "used", std::format("{} used {}", PChar->getName(), name),
+                std::format(R"({{"item_id":{},"item":"{}"}})", itemId, JsonEscape(name)));
+    return true;
 }
 
 auto BotHasItem(uint32 charId, uint16 itemId) -> bool
@@ -706,6 +718,7 @@ auto GetBotWeaponSkills(uint32 charId) -> std::vector<BotWeaponSkill>
         {
             result.push_back({ PSkill->getID(),
                                static_cast<uint16>(PSkill->getSkillLevel()),
+                               HumanName(PSkill->getName()),
                                { PSkill->getPrimarySkillchain(), PSkill->getSecondarySkillchain(), PSkill->getTertiarySkillchain() } });
         }
     }

@@ -513,7 +513,12 @@ local function tryBurst(bot, charId, m, profile, now)
         end
     end
 
-    return bestId ~= nil and cast(bot, charId, m, bestId, now)
+    if bestId ~= nil and cast(bot, charId, m, bestId, now) then
+        xi.worldbots.log.magicBurst(bot, m.spells[bestId].name or tostring(bestId))
+        return true
+    end
+
+    return false
 end
 
 local function tryDrains(bot, charId, m, profile, now)

@@ -20,6 +20,7 @@
 */
 
 #include "botinventory.h"
+#include "botlog.h"
 
 #include "botutils.h"
 
@@ -47,6 +48,7 @@
 #include "common/utils.h"
 
 #include <algorithm>
+#include <format>
 #include <array>
 #include <fstream>
 #include <iterator>
@@ -210,6 +212,10 @@ auto equipBest(CCharEntity* PChar, const Slots& slots, Scorer&& scoreItem) -> ui
             if (PChar->getEquip(slot) == PCandidate)
             {
                 ++changed;
+
+                const auto name = HumanName(PCandidate->getName());
+                LogBotEvent(PChar->id, BotLogLevel::Notable, "gear", "equipped", std::format("{} equipped {}", PChar->getName(), name),
+                            std::format(R"({{"item_id":{},"item":"{}","slot":{}}})", PCandidate->getID(), JsonEscape(name), static_cast<uint8>(slot)));
             }
         }
     }
@@ -293,6 +299,13 @@ auto learnScrolls(CCharEntity* PChar) -> uint8
         {
             charutils::SaveSpell(PChar, spellId);
             ++learned;
+
+            if (auto* PSpell = spell::GetSpell(static_cast<SpellID>(spellId)))
+            {
+                const auto name = HumanName(PSpell->getName());
+                LogBotEvent(PChar->id, BotLogLevel::Notable, "magic", "learned_spell", std::format("{} learned {}", PChar->getName(), name),
+                            std::format(R"({{"spell_id":{},"spell":"{}"}})", spellId, JsonEscape(name)));
+            }
         }
     }
 
@@ -401,9 +414,19 @@ auto TossBotJunk(uint32 charId, uint32 maxValue, uint8 wantFree) -> uint8
 
         auto tx = ItemClaimTransaction::start(PChar);
         auto* PItem = PInventory->GetItem(slot);
-        if (tx && PItem && tx->take(LOC_INVENTORY, slot, PItem->getQuantity()) && tx->commit())
+        if (PItem == nullptr)
+        {
+            continue;
+        }
+
+        const auto itemId   = PItem->getID();
+        const auto quantity = PItem->getQuantity();
+        const auto name     = HumanName(PItem->getName());
+        if (tx && tx->take(LOC_INVENTORY, slot, quantity) && tx->commit())
         {
             ++tossed;
+            LogBotEvent(PChar->id, BotLogLevel::Detail, "item", "tossed", std::format("{} threw away {} x{}", PChar->getName(), name, quantity),
+                        std::format(R"({{"item_id":{},"item":"{}","quantity":{}}})", itemId, JsonEscape(name), quantity));
         }
     }
 
@@ -465,6 +488,13 @@ auto SellBotItems(uint32 charId) -> BotSaleResult
             ++result.sold;
             result.gil += gil;
         }
+    }
+
+    if (result.sold > 0)
+    {
+        LogBotEvent(PChar->id, BotLogLevel::Notable, "item", "sold",
+                    std::format("{} sold {} stack{} of loot to a vendor for {} gil", PChar->getName(), result.sold, result.sold == 1 ? "" : "s", result.gil),
+                    std::format(R"({{"stacks":{},"gil":{}}})", result.sold, result.gil));
     }
 
     return result;
@@ -627,6 +657,21 @@ auto PlanBotGear(uint32 charId, const std::vector<std::pair<std::string, BotGear
 
     uint8 changed = 0;
     auto& plans   = g_gearPlans[charId];
+
+    // Items already in some set, to log only genuinely new gear afterwards.
+    const bool                 hadPlans = !plans.empty();
+    std::unordered_set<uint16> before;
+    for (const auto& [name, plan] : plans)
+    {
+        for (const auto& item : plan)
+        {
+            if (item.slot != 0)
+            {
+                before.insert(item.itemId);
+            }
+        }
+    }
+
     plans.clear();
 
     for (const auto& [name, weights] : sets)
@@ -644,6 +689,30 @@ auto PlanBotGear(uint32 charId, const std::vector<std::pair<std::string, BotGear
     for (const auto& [name, weights] : sets)
     {
         plans[name] = planSet(PChar, weights);
+    }
+
+    if (hadPlans)
+    {
+        std::unordered_set<uint16> logged;
+        for (const auto& [setName, plan] : plans)
+        {
+            for (const auto& item : plan)
+            {
+                if (item.slot == 0 || before.contains(item.itemId) || logged.contains(item.itemId))
+                {
+                    continue;
+                }
+
+                logged.insert(item.itemId);
+                if (auto* PItem = PChar->getStorage(item.container)->GetItem(item.slot))
+                {
+                    const auto itemName = HumanName(PItem->getName());
+                    LogBotEvent(PChar->id, BotLogLevel::Notable, "gear", "new_gear",
+                                std::format("{} added {} to their {} gear", PChar->getName(), itemName, setName),
+                                std::format(R"({{"item_id":{},"item":"{}","set":"{}"}})", item.itemId, JsonEscape(itemName), JsonEscape(setName)));
+                }
+            }
+        }
     }
 
     return changed;

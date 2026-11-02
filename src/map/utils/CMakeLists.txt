@@ -13,6 +13,8 @@ set(UTIL_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/botcombat.h
     ${CMAKE_CURRENT_SOURCE_DIR}/botjobs.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/botjobs.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/botlog.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/botlog.h
     ${CMAKE_CURRENT_SOURCE_DIR}/botparty.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/botparty.h
     ${CMAKE_CURRENT_SOURCE_DIR}/botinventory.cpp

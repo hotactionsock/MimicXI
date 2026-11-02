@@ -150,6 +150,7 @@ function jobs.career(bot, charId, state)
     if career == 0 then
         career = pickCareer(bot:getMainJob())
         SetBotCareerJob(charId, career)
+        xi.worldbots.log.career(bot, career)
     end
 
     state.careerJob = career

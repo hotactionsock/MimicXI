@@ -26,6 +26,7 @@
 
 #include <array>
 #include <optional>
+#include <string>
 #include <utility>
 #include <vector>
 
@@ -79,6 +80,7 @@ struct BotWeaponSkill
 {
     uint16               id;
     uint16               skillLevel;  // skill needed - a rough strength proxy (higher = stronger)
+    std::string          name;        // as a person writes it ("Fast Blade")
     std::array<uint8, 3> properties;  // SKILLCHAIN_ELEMENT properties (0 = none)
 };
 
@@ -140,6 +142,7 @@ struct BotSpell
     bool   onEnemy; // can target an enemy (otherwise self/party)
     bool   ready;   // off recast
     uint8  element; // ELEMENT (fire, ice, ... - for magic bursts)
+    std::string name; // as a person writes it ("Cure II")
 };
 
 // Spells the bot knows and can cast at its current main/sub job levels - the

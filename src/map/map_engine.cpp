@@ -56,6 +56,7 @@
 #include "packets/s2c/0x017_chat_std.h"
 
 #include "utils/battleutils.h"
+#include "utils/botlog.h"
 #include "utils/botutils.h"
 #include "utils/charutils.h"
 #include "utils/fishingutils.h"
@@ -93,6 +94,9 @@ MapEngine::MapEngine(Application& application, MapConfig& config)
 
 MapEngine::~MapEngine()
 {
+    // Don't lose the last few seconds of bot activity on shutdown.
+    botutils::FlushBotLog();
+
     g_PMapEngine = nullptr;
     itemutils::FreeItemList();
     battleutils::FreeWeaponSkillsList();
@@ -289,6 +293,23 @@ auto MapEngine::init() -> Task<void>
                 co_return;
             });
 
+        // World bots: write the activity log in batches, and prune old rows.
+        botLogFlushToken_ = scheduler_.intervalOnMainThread(
+            kBotLogFlushInterval,
+            []() -> Task<void>
+            {
+                botutils::FlushBotLog();
+                co_return;
+            });
+
+        botLogPruneToken_ = scheduler_.intervalOnMainThread(
+            kBotLogPruneInterval,
+            []() -> Task<void>
+            {
+                botutils::PruneBotLog();
+                co_return;
+            });
+
         persistSweepToken_ = scheduler_.intervalOnMainThread(
             kPersistSweepInterval,
             [this]() -> Task<void>
@@ -314,6 +335,7 @@ auto MapEngine::init() -> Task<void>
 
         // World bots never survive a restart (this process's accounts_sessions
         // rows were cleared above) - bring back every bot left active.
+        botutils::PruneBotLog();
         botutils::SpawnPersistentBots();
     }
 

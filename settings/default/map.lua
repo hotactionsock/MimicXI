@@ -314,4 +314,14 @@ xi.settings.map =
     -- a slot than this, the busiest go first and the rest take turns.
     -- 0 = no limit.
     WORLDBOTS_MAX_AWAKE_ZONES = 32,
+
+    -- World bots: activity log (world_bot_log) - what each bot does, for a website.
+    -- 0 = off, 1 = milestones (created, level-ups, job changes, deaths),
+    -- 2 = + notable (gear and spells gained, items obtained/sold, travel,
+    -- parties, hunt summaries), 3 = + detail (junk tossed, items used,
+    -- skillchains, magic bursts).
+    WORLDBOTS_LOG_LEVEL = 2,
+
+    -- Delete activity log rows older than this many days (0 = keep forever).
+    WORLDBOTS_LOG_RETENTION_DAYS = 90,
 }

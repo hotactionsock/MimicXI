@@ -98,18 +98,19 @@ local function partners(bot, charId)
     return result
 end
 
--- Best weapon skill to close the target's open window with, or nil.
+-- Best weapon skill to close the target's open window with: id, name and the
+-- skillchain it makes - or nil.
 local function bestCloser(charId, now, preferred)
-    local best, bestTier = nil, 0
+    local best, bestTier, bestName, bestElement = nil, 0, nil, 0
     for _, ws in ipairs(weaponSkillsOf(charId, now)) do
         local result = PredictBotSkillchain(charId, ws.id)
         local tier   = result.tier + ((preferred == ws.id and result.tier > 0) and 0.5 or 0)
         if tier > bestTier then
-            best, bestTier = ws.id, tier
+            best, bestTier, bestName, bestElement = ws.id, tier, ws.name, result.element
         end
     end
 
-    return best
+    return best, bestName, bestElement
 end
 
 -- Decides the weapon skill for a party member with 1000+ TP.
@@ -132,11 +133,13 @@ function skillchain.decide(bot, charId, state, now)
     if window and window.remainingMs > WINDOW_MIN_LEFT_MS then
         if window.ageMs >= WINDOW_OPENS_MS then
             local preferred = (plan and plan.closer == charId) and plan.ws or nil
-            local closer    = bestCloser(charId, now, preferred)
+            local closer, closerName, element = bestCloser(charId, now, preferred)
             if closer then
                 if plan and plan.closer == charId then
                     record.chainPlan = nil
                 end
+
+                xi.worldbots.log.skillchain(bot, closerName or tostring(closer), element)
 
                 return closer
             end

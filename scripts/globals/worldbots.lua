@@ -466,6 +466,12 @@ local function setGoal(charId, state, kind, zoneId)
     clearMovement(state)
     state.goal = { kind = kind, zoneId = zoneId, settled = false }
     diag(charId, 'new goal: %s in zone %d', kind, zoneId)
+
+    -- Activity log: trips somewhere else ("set off for Valkurm Dunes to train").
+    local bot = GetPlayerByID(charId)
+    if bot then
+        xi.worldbots.log.goal(bot, kind, zoneId)
+    end
 end
 
 -- Picks where to level: usually stays if the current zone suits, otherwise a
@@ -655,6 +661,7 @@ local function relocateStep(bot, charId, state, now, currentPos, moving)
         if walk.purpose == 'homepoint' then
             if distance(currentPos, walk.target) <= HOMEPOINT_REACH_YALMS then
                 bot:setHomePoint()
+                xi.worldbots.log.homePoint(bot)
                 diag(charId, 'home point set')
             end
 
@@ -997,6 +1004,12 @@ local function combatActions(bot, charId, state, now)
 
     state.nextActionAt = now + ACTION_CHECK_SEC
 
+    -- Remember who it's fighting (for "was defeated by ..." in the log).
+    local foe = bot:getTarget()
+    if foe then
+        state.lastFoe = xi.worldbots.log.humanName(foe:getName())
+    end
+
     -- Mid-cast: nothing else can happen until the spell finishes.
     if IsBotCasting(charId) then
         return
@@ -1072,6 +1085,12 @@ local function deathStep(charId, state, now)
         leaveCircles(charId)
         clearMovement(state)
         diag(charId, 'died')
+
+        local bot = GetPlayerByID(charId)
+        if bot then
+            xi.worldbots.log.died(bot, state.lastFoe)
+        end
+
         return
     end
 
@@ -1381,6 +1400,8 @@ xi.worldbots.onZoneTick = function(zone, bots)
         -- Arrived from another zone: keep the goal (that's the point of the
         -- trip), drop everything else - the new anchor was written by the move.
         if state.zoneId ~= nil and state.zoneId ~= zoneId then
+            xi.worldbots.log.arrived(bot, state.zoneId, zoneId)
+
             local goal   = state.goal
             local resume = state.resumeGoal
             xi.worldbots.forget(charId)
@@ -1400,6 +1421,9 @@ xi.worldbots.onZoneTick = function(zone, bots)
 
         -- Castable spells and the job's stand-off range (re-read on level-up/job change).
         xi.worldbots.magic.refresh(bot, charId, state, now)
+
+        -- Activity log: level-ups and periodic hunt summaries (worldbots_log.lua).
+        xi.worldbots.log.tick(bot, state, now)
 
         local currentPos = { x = bot:getXPos(), y = bot:getYPos(), z = bot:getZPos() }
         local moving     = state.lastPos ~= nil and distance(currentPos, state.lastPos) > 0.05

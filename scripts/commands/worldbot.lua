@@ -86,6 +86,7 @@ local function usage(player)
     player:printToPlayer('!worldbot party <charid> - its party, roles and camp')
     player:printToPlayer('!worldbot party form <leaderid> <id> [id...] - put bots in a party (first = leader)')
     player:printToPlayer('!worldbot party disband <charid> - break up that bot\'s party')
+    player:printToPlayer('!worldbot log <charid> [count] - its latest activity log lines (default 10, max 50)')
     player:printToPlayer('!worldbot travel <charid> <zoneid> - route across zone lines to that zone')
     player:printToPlayer('!worldbot goal <charid> [level|home] - show the goal, or give it a new one')
     player:printToPlayer('!worldbot goal all <level|home> - give every spawned bot in your zone that goal')
@@ -506,6 +507,23 @@ commandObj.onTrigger = function(player, args)
             end
 
             player:printToPlayer(xi.worldbots.party.describe(charId, now) or 'That bot is not spawned.')
+        end
+    elseif sub == 'log' then
+        local idToken, countToken = (rest or ''):match('^(%S+)%s*(%S*)$')
+        local charId = tonumber(idToken)
+        if not charId then
+            usage(player)
+            return
+        end
+
+        local lines = GetBotLog(charId, tonumber(countToken) or 10)
+        if #lines == 0 then
+            player:printToPlayer('No activity logged for that bot (check map.WORLDBOTS_LOG_LEVEL).')
+        else
+            -- Oldest first, so it reads top to bottom.
+            for i = #lines, 1, -1 do
+                player:printToPlayer(string.format('  [%s] %s', os.date('%m-%d %H:%M', lines[i].ts), lines[i].message))
+            end
         end
     elseif sub == 'zones' then
         local zones = GetBotAwakeZones()

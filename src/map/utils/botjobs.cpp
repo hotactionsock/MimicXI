@@ -21,7 +21,10 @@
 
 #include "botjobs.h"
 
+#include "botlog.h"
 #include "botutils.h"
+
+#include <format>
 
 #include "common/database.h"
 #include "common/logging.h"
@@ -120,6 +123,17 @@ auto UnlockBotJob(uint32 charId, uint8 job) -> bool
 
     charutils::SaveCharJob(PChar, static_cast<xi::Job>(levelJob));
     PChar->pushPacket<GP_SERV_COMMAND_JOB_INFO>(PChar);
+
+    if (job == 0)
+    {
+        LogBotEvent(charId, BotLogLevel::Milestone, "job", "unlocked_subjob", std::format("{} can now use support jobs", PChar->getName()));
+    }
+    else
+    {
+        LogBotEvent(charId, BotLogLevel::Milestone, "job", "unlocked_job", std::format("{} unlocked the {} job", PChar->getName(), JobFullName(job)),
+                    std::format(R"({{"job":{}}})", job));
+    }
+
     return true;
 }
 
@@ -153,7 +167,18 @@ auto ChangeBotJobs(uint32 charId, uint8 mainJob, uint8 subJob) -> bool
 
     PChar->m_moghouseID = savedMogHouse;
 
-    return PChar->GetMJob() != beforeMain || PChar->GetSJob() != beforeSub;
+    const bool changed = PChar->GetMJob() != beforeMain || PChar->GetSJob() != beforeSub;
+    if (changed)
+    {
+        const auto main = static_cast<uint8>(PChar->GetMJob());
+        const auto sub  = static_cast<uint8>(PChar->GetSJob());
+        LogBotEvent(charId, BotLogLevel::Milestone, "job", "changed_job",
+                    sub != 0 ? std::format("{} changed jobs to {} {} / {} {}", PChar->getName(), JobFullName(main), PChar->GetMLevel(), JobFullName(sub), PChar->GetSLevel())
+                             : std::format("{} changed jobs to {} {}", PChar->getName(), JobFullName(main), PChar->GetMLevel()),
+                    std::format(R"({{"main":{},"main_level":{},"sub":{},"sub_level":{}}})", main, PChar->GetMLevel(), sub, PChar->GetSLevel()));
+    }
+
+    return changed;
 }
 
 auto GetBotCareerJob(uint32 charId) -> uint8

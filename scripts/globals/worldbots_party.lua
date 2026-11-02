@@ -376,6 +376,19 @@ local function formParty(chosen, now, keepFirstAsLeader)
         end
     end
 
+    -- Activity log: who joined whose party, as what.
+    local leaderBot = GetPlayerByID(leader.charId)
+    for _, id in ipairs(members) do
+        local member = GetPlayerByID(id)
+        if member and leaderBot then
+            if id == leader.charId then
+                xi.worldbots.log.formedParty(member, #members)
+            else
+                xi.worldbots.log.joinedParty(member, leaderBot:getName(), record.roles[id] or 'damage', #members)
+            end
+        end
+    end
+
     return record
 end
 
@@ -481,8 +494,14 @@ end
 
 -- Breaks the party up and sends everyone back to their own goals.
 function party.disband(record, now)
-    local api = xi.worldbots.internal
+    local api     = xi.worldbots.internal
+    local minutes = math.floor((now - record.formedAt) / 60)
     for _, id in ipairs(record.members) do
+        local member = GetPlayerByID(id)
+        if member and member:getPartySize() > 1 then
+            xi.worldbots.log.leftParty(member, 'the party broke up', minutes)
+        end
+
         LeaveBotParty(id)
         local state = api.getState(id, now)
         if state.goal and (state.goal.kind == 'party' or state.goal.kind == 'level') then
@@ -613,6 +632,7 @@ local function memberStep(bot, charId, state, now, moving, record)
     if now >= (state.nextPartyCheckAt or 0) then
         state.nextPartyCheckAt = now + CHECK_INTERVAL_SEC
         if xi.worldbots.jobs.plan(bot, charId, state) then
+            xi.worldbots.log.leftParty(bot, 'to change jobs', math.floor((now - record.formedAt) / 60))
             LeaveBotParty(charId)
             memberOf[charId] = nil
             state.goal = nil

@@ -62,6 +62,8 @@ static constexpr auto kMainThreadBacklogThreshold = 200ms;
 // The rate at which we cleanup timed-out and finished sessions
 static constexpr auto kSessionCleanupInterval = 5s;
 static constexpr auto kBotAwakeZonesInterval  = 5s; // botutils::UpdateBotAwakeZones
+static constexpr auto kBotLogFlushInterval    = 5s; // botutils::FlushBotLog
+static constexpr auto kBotLogPruneInterval    = 6h; // botutils::PruneBotLog
 
 // The rate at which we force Lua garbage collections
 static constexpr auto kGarbageCollectionInterval = 15min;

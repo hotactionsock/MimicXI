@@ -21,6 +21,7 @@
 
 #include "botutils.h"
 #include "botinventory.h"
+#include "botlog.h"
 
 #include "common/database.h"
 #include "common/earth_time.h"
@@ -52,6 +53,7 @@
 #include "utils/zoneutils.h"
 
 #include <algorithm>
+#include <array>
 #include <limits>
 #include <unordered_map>
 #include <unordered_set>
@@ -177,6 +179,18 @@ auto CreateBotCharacter(xi::ZoneId zoneId, float x, float y, float z, uint8 rota
     {
         ShowError("botutils::CreateBotCharacter: unable to create world_bots row");
         return 0;
+    }
+
+    {
+        static const std::array<const char*, 3> nations = { "San d'Oria", "Bastok", "Windurst" };
+
+        auto*      PZone    = zoneutils::GetZone(zoneId);
+        const auto zoneName = PZone ? HumanName(PZone->getName()) : std::to_string(static_cast<uint16>(zoneId));
+        LogBotEvent(charId, BotLogLevel::Milestone, "lifecycle", "created",
+                    std::format("{} began their adventure in {} as a {} of {}", name, zoneName, JobFullName(static_cast<uint8>(job)),
+                                nations.at(std::min<uint8>(nation, 2))),
+                    std::format(R"({{"zone_id":{},"zone":"{}","job":{},"nation":{},"race":{}}})", static_cast<uint16>(zoneId), JsonEscape(zoneName),
+                                static_cast<uint8>(job), nation, static_cast<uint8>(race)));
     }
 
     return charId;
@@ -391,6 +405,7 @@ auto SpawnBotCharacter(uint32 charId) -> CCharEntity*
     ensureCityHomePoint(PBotChar);
 
     db::preparedStmt("UPDATE world_bots SET active = 1 WHERE charid = ?", charId);
+    LogBotEvent(charId, BotLogLevel::Detail, "lifecycle", "spawned", std::format("{} logged in", PBotChar->getName()));
 
     return PBotChar;
 }
@@ -435,6 +450,15 @@ auto DeleteBotCharacter(uint32 charId) -> bool
     if (!IsBotCharacter(charId))
     {
         return false;
+    }
+
+    // The log outlives the bot: it's its history.
+    {
+        const auto rset = db::preparedStmt("SELECT charname FROM chars WHERE charid = ?", charId);
+        FOR_DB_SINGLE_RESULT(rset)
+        {
+            LogBotEvent(charId, BotLogLevel::Milestone, "lifecycle", "retired", std::format("{} retired", rset->get<std::string>("charname")));
+        }
     }
 
     destroyBotSession(charId);
