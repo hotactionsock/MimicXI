@@ -184,6 +184,10 @@ struct BotLevelingZone
 // partySize widens what counts as prey (see IsBotPrey).
 auto GetBotLevelingZones(uint8 level, xi::ZoneId fromZone, uint8 maxHops, uint8 partySize = 1) -> std::vector<BotLevelingZone>;
 
+// Zones reachable from fromZone within maxHops over bot-usable zone lines
+// (fromZone itself at 0 hops): { zoneId, hops }.
+auto GetBotReachableZones(xi::ZoneId fromZone, uint8 maxHops) -> std::vector<std::pair<uint16, uint8>>;
+
 // A random suitable mob spawn point in zoneId for `level`, or nullopt.
 auto GetBotHuntSpot(xi::ZoneId zoneId, uint8 level, uint8 partySize = 1) -> std::optional<position_t>;
 

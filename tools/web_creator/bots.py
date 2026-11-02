@@ -59,6 +59,11 @@ STATUS_TEMPLATES = {
     'left':         'Back on their own',
     'changed_job':  'Getting used to a new job',
     'hired':        'Adventuring with {player}',
+    'nm_camp':      'Hunting the notorious {nm} in {zone}',
+    'nm_defeated':  'Just defeated the notorious {nm}',
+    'goal_shop':    'Heading to {zone} to go shopping',
+    'goal_nm':      'On the way to {zone} to hunt a notorious monster',
+    'bought':       'Shopping in town',
     'dismissed':    'Back on their own',
     'left_for_player': 'Joining a player\'s party',
     'sold':         'Selling loot in town',
@@ -112,7 +117,7 @@ def describe_now(events, now=None):
             continue
 
         zone = e['data'].get('zone') or 'somewhere'
-        text = template.format(zone=zone, player=e['data'].get('player') or 'a player')
+        text = template.format(zone=zone, player=e['data'].get('player') or 'a player', nm=e['data'].get('nm') or 'monster')
 
         # "In Valkurm Dunes" after "set off for Valkurm Dunes to train" = training there.
         if e['event'] == 'arrived':

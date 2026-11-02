@@ -119,6 +119,7 @@ local GOAL_PHRASES =
     zone  = 'set off for %s',
     sell  = 'headed to %s to sell their loot',
     shop  = 'headed to %s to go shopping',
+    nm    = 'set off for %s to hunt a notorious monster',
     jobs  = 'headed to %s to change jobs',
     party = 'set off to meet their party in %s',
 }
@@ -185,6 +186,27 @@ function log.dismissed(bot, playerName, reason, minutes)
     log.event(bot, log.NOTABLE, 'party', 'dismissed',
         string.format('%s left %s\'s party after %d minute%s (%s)', bot:getName(), playerName, minutes, minutes == 1 and '' or 's', reason),
         { player = playerName, reason = reason, minutes = minutes })
+end
+
+local NM_METHODS =
+{
+    up      = 'it is up now',
+    lottery = 'camping its placeholders',
+    window  = 'waiting for its spawn window',
+    pop     = 'bringing the item that calls it',
+}
+
+function log.nmCamp(bot, nmName, itemName, zoneName, mode)
+    log.event(bot, log.NOTABLE, 'combat', 'nm_camp',
+        string.format('%s went after %s in %s for its %s (%s)', bot:getName(), nmName, zoneName, itemName, NM_METHODS[mode] or mode),
+        { nm = nmName, item = itemName, zone = zoneName, method = mode })
+end
+
+function log.nmResult(bot, nmName, outcome)
+    local level = outcome == 'defeated' and log.MILESTONE or log.NOTABLE
+    local text  = outcome == 'defeated' and string.format('%s defeated the notorious monster %s', bot:getName(), nmName) or
+        string.format('%s stopped hunting %s (%s)', bot:getName(), nmName, outcome)
+    log.event(bot, level, 'combat', outcome == 'defeated' and 'nm_defeated' or 'nm_ended', text, { nm = nmName, outcome = outcome })
 end
 
 function log.skillchain(bot, wsName, element)

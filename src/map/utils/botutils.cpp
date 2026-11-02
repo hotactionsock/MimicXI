@@ -1090,6 +1090,17 @@ auto GetBotLevelingZones(uint8 level, xi::ZoneId fromZone, uint8 maxHops, uint8 
     return result;
 }
 
+auto GetBotReachableZones(xi::ZoneId fromZone, uint8 maxHops) -> std::vector<std::pair<uint16, uint8>>
+{
+    std::vector<std::pair<uint16, uint8>> result;
+    for (const auto& [zoneId, reach] : reachableZones(static_cast<uint16>(fromZone), maxHops))
+    {
+        result.emplace_back(zoneId, reach.hops);
+    }
+
+    return result;
+}
+
 auto GetBotHuntSpot(xi::ZoneId zoneId, uint8 level, uint8 partySize) -> std::optional<position_t>
 {
     ensureHuntData();

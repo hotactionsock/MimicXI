@@ -549,6 +549,11 @@ local function pickGoal(bot, charId, state, zoneId)
         end
     end
 
+    -- An NM nearby drops an upgrade it can get: camp it (worldbots_nm.lua).
+    if xi.worldbots.nm.maybeCamp(bot, charId, state, now) then
+        return true
+    end
+
     if not inParty and math.random() < GOAL_HOME_CHANCE then
         local home = GetBotHomeZone(bot:getNation(), zoneId)
         if home ~= 0 then
@@ -580,6 +585,10 @@ local function pickSettleSpot(bot, state)
         state.goal.spot = state.goal.spot or GetBotHuntSpot(bot:getZoneID(),
             xi.worldbots.party.huntLevel(bot, bot:getID(), GetSystemTime()), xi.worldbots.party.huntSize(bot))
         return state.goal.spot
+    end
+
+    if state.goal.kind == 'nm' then
+        return xi.worldbots.nm.campSpot(state)
     end
 
     if state.goal.kind == 'home' then
@@ -1277,7 +1286,7 @@ local function plan(bot, charId, state, now, zoneId)
 
     -- Arrived in the goal zone but not settled: walk to a sensible spot. Outside
     -- of levelling, that's a social spot if the zone has any (cities).
-    if not goal.settled and goal.kind ~= 'level' and goal.kind ~= 'stay' and goal.kind ~= 'sell' then
+    if not goal.settled and goal.kind ~= 'level' and goal.kind ~= 'stay' and goal.kind ~= 'sell' and goal.kind ~= 'nm' then
         if goToSocialSpot(bot, charId, state) then
             return
         end
@@ -1511,6 +1520,8 @@ xi.worldbots.onZoneTick = function(zone, bots)
 
         if state.inCombat or combatStep(bot, charId, state, now, moving) then
             -- fighting, resting or closing in on prey this tick
+        elseif xi.worldbots.nm.step(bot, charId, state, now, zoneId) then
+            -- camping an NM: killing placeholders, popping it, or going for it (worldbots_nm.lua)
         elseif xi.worldbots.party.step(bot, charId, state, now, moving) then
             -- a party member following, assisting or resting (worldbots_party.lua)
         elseif state.travel then

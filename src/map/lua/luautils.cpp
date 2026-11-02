@@ -69,6 +69,7 @@
 #include "utils/botinventory.h"
 #include "utils/botjobs.h"
 #include "utils/botlog.h"
+#include "utils/botnm.h"
 #include "utils/botparty.h"
 #include "utils/botutils.h"
 
@@ -385,6 +386,11 @@ void init(IPP mapIPP, bool isRunningInCI)
     lua.set_function("LeaveBotParty", &luautils::LeaveBotParty);
     lua.set_function("GetBotParty", &luautils::GetBotParty);
     lua.set_function("GetBotShops", &luautils::GetBotShops);
+    lua.set_function("GetBotNMTargets", &luautils::GetBotNMTargets);
+    lua.set_function("IsRealPlayerNearMob", &luautils::IsRealPlayerNearMob);
+    lua.set_function("GetBotMobStatus", &luautils::GetBotMobStatus);
+    lua.set_function("GetBotForcedPops", &luautils::GetBotForcedPops);
+    lua.set_function("TradeBotItemToNpc", &luautils::TradeBotItemToNpc);
     lua.set_function("BrowseBotShop", &luautils::BrowseBotShop);
     lua.set_function("BuyBotShopItem", &luautils::BuyBotShopItem);
     lua.set_function("EvaluateBotGearItem", &luautils::EvaluateBotGearItem);
@@ -3054,6 +3060,106 @@ sol::object GetBotParty(uint32 charId)
     }
 
     return table;
+}
+
+// NMs worth camping for this bot, best upgrade first - see botutils::GetBotNMTargets.
+sol::table GetBotNMTargets(uint32 charId, uint8 maxHops)
+{
+    TracyZoneScoped;
+
+    auto table = lua.create_table();
+    for (const auto& nm : botutils::GetBotNMTargets(charId, maxHops))
+    {
+        auto row            = lua.create_table();
+        row["mobId"]        = nm.mobId;
+        row["name"]         = nm.name;
+        row["zoneId"]       = nm.zoneId;
+        row["hops"]         = nm.hops;
+        row["minLevel"]     = nm.minLevel;
+        row["maxLevel"]     = nm.maxLevel;
+        row["con"]          = nm.con;
+        row["lottery"]      = nm.lottery;
+        row["windowed"]     = nm.windowed;
+        row["scripted"]     = nm.scripted;
+        row["spawned"]      = nm.spawned;
+        row["claimed"]      = nm.claimed;
+        row["respawnSec"]   = nm.respawnSec;
+        row["x"]            = nm.pos.x;
+        row["y"]            = nm.pos.y;
+        row["z"]            = nm.pos.z;
+        row["bestGain"]     = nm.bestGain;
+        row["bestItemId"]   = nm.bestItemId;
+        row["bestItemName"] = nm.bestItemName;
+        table.add(row);
+    }
+
+    return table;
+}
+
+// { found, alive, claimed, ours, x, y, z, distance } - see botutils::GetBotMobStatus.
+sol::table GetBotMobStatus(uint32 charId, uint32 mobId)
+{
+    TracyZoneScoped;
+
+    const auto s = botutils::GetBotMobStatus(charId, mobId);
+    auto       t = lua.create_table();
+    t["found"]    = s.found;
+    t["alive"]    = s.alive;
+    t["claimed"]  = s.claimed;
+    t["ours"]     = s.ours;
+    t["x"]        = s.pos.x;
+    t["y"]        = s.pos.y;
+    t["z"]        = s.pos.z;
+    t["distance"] = s.distance;
+    return t;
+}
+
+bool IsRealPlayerNearMob(uint32 mobId, uint16 zoneId, float radius)
+{
+    TracyZoneScoped;
+
+    return botutils::IsRealPlayerNearMob(mobId, zoneId, radius);
+}
+
+// { { npcId, x, y, z, mobKeys = {...}, itemKeys = {...} }, ... } - see botutils::GetBotForcedPops.
+sol::table GetBotForcedPops(uint16 zoneId)
+{
+    TracyZoneScoped;
+
+    auto table = lua.create_table();
+    for (const auto& pop : botutils::GetBotForcedPops(zoneId))
+    {
+        auto row  = lua.create_table();
+        row["npcId"] = pop.npcId;
+        row["x"]     = pop.pos.x;
+        row["y"]     = pop.pos.y;
+        row["z"]     = pop.pos.z;
+
+        auto mobs = lua.create_table();
+        for (const auto& key : pop.mobKeys)
+        {
+            mobs.add(key);
+        }
+
+        auto items = lua.create_table();
+        for (const auto& key : pop.itemKeys)
+        {
+            items.add(key);
+        }
+
+        row["mobKeys"]  = mobs;
+        row["itemKeys"] = items;
+        table.add(row);
+    }
+
+    return table;
+}
+
+bool TradeBotItemToNpc(uint32 charId, uint32 npcId, uint16 itemId, uint32 quantity)
+{
+    TracyZoneScoped;
+
+    return botutils::TradeBotItemToNpc(charId, npcId, itemId, quantity);
 }
 
 // { { npcId, x, y, z }, ... } - general shops in a zone (botutils::GetBotShops).
