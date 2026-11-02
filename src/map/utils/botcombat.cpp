@@ -79,10 +79,10 @@ auto isFightable(CMobEntity* PMob) -> bool
            PMob->PMaster == nullptr && PMob->allegiance == xi::Allegiance::Mob;
 }
 
-// Easy Prey .. Even Match by the engine's /check, same as zone scoring.
-auto suitsLevel(CMobEntity* PMob, uint8 level) -> bool
+// Prey for a group of partySize by the engine's /check, same as zone scoring.
+auto suitsLevel(CMobEntity* PMob, uint8 level, uint8 partySize = 1) -> bool
 {
-    return IsBotPrey(level, PMob->GetMLevel() + PMob->getMod(xi::Mod::EXP_LVL_MOD));
+    return IsBotPrey(level, PMob->GetMLevel() + PMob->getMod(xi::Mod::EXP_LVL_MOD), partySize);
 }
 
 auto isAttacking(CMobEntity* PMob, CCharEntity* PChar) -> bool
@@ -126,7 +126,7 @@ auto FindBotAttacker(uint32 charId) -> std::optional<BotTarget>
     return findAttacker(PChar);
 }
 
-auto FindBotTarget(uint32 charId, float radius) -> std::optional<BotTarget>
+auto FindBotTarget(uint32 charId, float radius, uint8 partySize) -> std::optional<BotTarget>
 {
     auto* PChar = liveBot(charId);
     if (PChar == nullptr)
@@ -145,7 +145,7 @@ auto FindBotTarget(uint32 charId, float radius) -> std::optional<BotTarget>
     // clang-format off
     PChar->loc.zone->GetZoneEntities()->ForEachMob([&](CMobEntity* PMob)
     {
-        if (!isFightable(PMob) || PMob->m_Type != xi::MobType::Normal || !suitsLevel(PMob, level))
+        if (!isFightable(PMob) || PMob->m_Type != xi::MobType::Normal || !suitsLevel(PMob, level, partySize))
         {
             return;
         }
@@ -473,7 +473,7 @@ void SetBotCombatRange(uint32 charId, float yalms)
 
 // ---- Travel safety ----------------------------------------------------------
 
-auto ScanBotThreats(uint32 charId, float radius) -> std::vector<BotThreat>
+auto ScanBotThreats(uint32 charId, float radius, uint8 partySize) -> std::vector<BotThreat>
 {
     std::vector<BotThreat> result;
 
@@ -509,7 +509,7 @@ auto ScanBotThreats(uint32 charId, float radius) -> std::vector<BotThreat>
         }
 
         // Prey it would happily fight anyway, and Too Weak mobs don't aggro.
-        if (suitsLevel(PMob, level) || charutils::CheckMob(level, PMob) <= EMobDifficulty::TooWeak)
+        if (suitsLevel(PMob, level, partySize) || charutils::CheckMob(level, PMob) <= EMobDifficulty::TooWeak)
         {
             return;
         }

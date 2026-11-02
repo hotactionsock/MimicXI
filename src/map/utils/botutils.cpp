@@ -937,11 +937,11 @@ void ensureHuntData()
 }
 
 // A mob suits a bot if any level it can spawn at is prey for the bot.
-auto suitsLevel(const HuntMob& mob, uint8 level) -> bool
+auto suitsLevel(const HuntMob& mob, uint8 level, uint8 partySize) -> bool
 {
     for (int mobLevel = mob.minLevel; mobLevel <= mob.maxLevel; ++mobLevel)
     {
-        if (IsBotPrey(level, mobLevel))
+        if (IsBotPrey(level, mobLevel, partySize))
         {
             return true;
         }
@@ -985,10 +985,23 @@ auto nearestHomeCity(uint8 nation, uint16 from) -> std::pair<uint16, uint8>
 
 } // namespace
 
-auto IsBotPrey(uint8 botLevel, int32 mobLevel) -> bool
+auto IsBotPrey(uint8 botLevel, int32 mobLevel, uint8 partySize) -> bool
 {
+    auto lowest  = EMobDifficulty::EasyPrey;
+    auto highest = EMobDifficulty::EvenMatch;
+    if (partySize >= 5)
+    {
+        lowest  = EMobDifficulty::EvenMatch;
+        highest = EMobDifficulty::VeryTough;
+    }
+    else if (partySize >= 3)
+    {
+        lowest  = EMobDifficulty::DecentChallenge;
+        highest = EMobDifficulty::Tough;
+    }
+
     const auto con = charutils::CheckMobLevel(botLevel, mobLevel);
-    return con >= EMobDifficulty::EasyPrey && con <= EMobDifficulty::EvenMatch;
+    return con >= lowest && con <= highest;
 }
 
 auto GetBotRouteNextLine(xi::ZoneId fromZone, xi::ZoneId toZone) -> std::optional<BotRouteHop>
@@ -1018,7 +1031,7 @@ auto GetBotRouteNextLine(xi::ZoneId fromZone, xi::ZoneId toZone) -> std::optiona
     return std::nullopt;
 }
 
-auto GetBotLevelingZones(uint8 level, xi::ZoneId fromZone, uint8 maxHops) -> std::vector<BotLevelingZone>
+auto GetBotLevelingZones(uint8 level, xi::ZoneId fromZone, uint8 maxHops, uint8 partySize) -> std::vector<BotLevelingZone>
 {
     ensureHuntData();
 
@@ -1032,7 +1045,7 @@ auto GetBotLevelingZones(uint8 level, xi::ZoneId fromZone, uint8 maxHops) -> std
         }
 
         const auto suitable = static_cast<uint32>(std::count_if(it->second.begin(), it->second.end(),
-                                                                [level](const HuntMob& mob) { return suitsLevel(mob, level); }));
+                                                                [level, partySize](const HuntMob& mob) { return suitsLevel(mob, level, partySize); }));
         if (suitable > 0)
         {
             result.push_back({ zoneId, suitable, reach.hops });
@@ -1053,7 +1066,7 @@ auto GetBotLevelingZones(uint8 level, xi::ZoneId fromZone, uint8 maxHops) -> std
     return result;
 }
 
-auto GetBotHuntSpot(xi::ZoneId zoneId, uint8 level) -> std::optional<position_t>
+auto GetBotHuntSpot(xi::ZoneId zoneId, uint8 level, uint8 partySize) -> std::optional<position_t>
 {
     ensureHuntData();
 
@@ -1066,7 +1079,7 @@ auto GetBotHuntSpot(xi::ZoneId zoneId, uint8 level) -> std::optional<position_t>
     std::vector<const HuntMob*> suitable;
     for (const auto& mob : it->second)
     {
-        if (suitsLevel(mob, level))
+        if (suitsLevel(mob, level, partySize))
         {
             suitable.push_back(&mob);
         }

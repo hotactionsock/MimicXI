@@ -155,10 +155,12 @@ void ProcessPendingZoneLines(CZone* PZone);
 // their level range and spawn point - read from the engine's loaded mob lists
 // (the source of truth since mobs moved to data/zones/*/mobs.yaml).
 
-// What a solo bot hunts: "Easy Prey" through "Even Match" by the engine's own
-// /check (charutils::CheckMobLevel) - the same verdict a player sees. Parties
-// will widen this upward to tougher prey later.
-auto IsBotPrey(uint8 botLevel, int32 mobLevel) -> bool;
+// What a bot hunts, by the engine's own /check (charutils::CheckMobLevel) - the
+// same verdict a player sees - and the size of its group:
+//   solo or a pair:  Easy Prey .. Even Match
+//   3-4 members:     Decent Challenge .. Tough
+//   5-6 members:     Even Match .. Very Tough
+auto IsBotPrey(uint8 botLevel, int32 mobLevel, uint8 partySize = 1) -> bool;
 
 struct BotRouteHop
 {
@@ -179,10 +181,11 @@ struct BotLevelingZone
 
 // Zones within maxHops of fromZone that have huntable mobs suiting `level`,
 // best first (more suitable spawns, fewer hops). At most 8.
-auto GetBotLevelingZones(uint8 level, xi::ZoneId fromZone, uint8 maxHops) -> std::vector<BotLevelingZone>;
+// partySize widens what counts as prey (see IsBotPrey).
+auto GetBotLevelingZones(uint8 level, xi::ZoneId fromZone, uint8 maxHops, uint8 partySize = 1) -> std::vector<BotLevelingZone>;
 
 // A random suitable mob spawn point in zoneId for `level`, or nullopt.
-auto GetBotHuntSpot(xi::ZoneId zoneId, uint8 level) -> std::optional<position_t>;
+auto GetBotHuntSpot(xi::ZoneId zoneId, uint8 level, uint8 partySize = 1) -> std::optional<position_t>;
 
 // A live bot's current home point: (zone, position), or nullopt.
 auto GetBotHomePoint(uint32 charId) -> std::optional<std::pair<uint16, position_t>>;

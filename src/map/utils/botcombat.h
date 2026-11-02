@@ -46,8 +46,9 @@ struct BotTarget
 
 // The mob a bot should fight, if any: first anything currently attacking it,
 // otherwise the nearest unclaimed, idle, normal (non-NM) mob within `radius`
-// that's prey for the bot (Easy Prey .. Even Match, see botutils::IsBotPrey).
-auto FindBotTarget(uint32 charId, float radius) -> std::optional<BotTarget>;
+// that's prey for the bot (Easy Prey .. Even Match solo; tougher for a party of
+// partySize - see botutils::IsBotPrey).
+auto FindBotTarget(uint32 charId, float radius, uint8 partySize = 1) -> std::optional<BotTarget>;
 
 // Like FindBotTarget, but only mobs already attacking the bot. Cheap enough to
 // check while travelling, so bots fight back instead of being chased across zones.
@@ -149,7 +150,7 @@ struct BotThreat
 // want to fight (tougher than prey - see IsBotPrey), nearest first. Uses the
 // same aggression checks a mob's own aggro routine does (aggressive, not
 // neutral, not busy, not underground) and its detection mods.
-auto ScanBotThreats(uint32 charId, float radius) -> std::vector<BotThreat>;
+auto ScanBotThreats(uint32 charId, float radius, uint8 partySize = 1) -> std::vector<BotThreat>;
 
 // Uses the first itemId in the bot's inventory on itself (Silent Oil, Prism
 // Powder, potions...) through CPlayerController::UseItem. Returns true if the

@@ -83,6 +83,9 @@ local function usage(player)
     player:printToPlayer('!worldbot zones - zones holding bots: awake/asleep, and why')
     player:printToPlayer('!worldbot jobs <charid> - career job, current jobs and levels')
     player:printToPlayer('!worldbot career <charid> <job> - set its career job (e.g. PLD or 7)')
+    player:printToPlayer('!worldbot party <charid> - its party, roles and camp')
+    player:printToPlayer('!worldbot party form <leaderid> <id> [id...] - put bots in a party (first = leader)')
+    player:printToPlayer('!worldbot party disband <charid> - break up that bot\'s party')
     player:printToPlayer('!worldbot travel <charid> <zoneid> - route across zone lines to that zone')
     player:printToPlayer('!worldbot goal <charid> [level|home] - show the goal, or give it a new one')
     player:printToPlayer('!worldbot goal all <level|home> - give every spawned bot in your zone that goal')
@@ -470,6 +473,40 @@ commandObj.onTrigger = function(player, args)
 
         xi.worldbots.setCareer(charId, job)
         player:printToPlayer(string.format('Bot %d career set to job %d; it changes jobs at its next goal.', charId, job))
+    elseif sub == 'party' then
+        local action, args2 = (rest or ''):match('^(%S+)%s*(.*)$')
+        local now = GetSystemTime()
+
+        if action == 'form' then
+            local ids = {}
+            for token in (args2 or ''):gmatch('%S+') do
+                local id = tonumber(token)
+                if id and IsBotCharacter(id) then
+                    table.insert(ids, id)
+                end
+            end
+
+            local record = #ids >= 2 and xi.worldbots.party.forceForm(ids, now) or nil
+            player:printToPlayer(record and xi.worldbots.party.describe(ids[1], now) or 'Could not form a party (need 2+ spawned bots not already in a party).')
+        elseif action == 'disband' then
+            local charId = tonumber(args2)
+            local bot    = charId and GetPlayerByID(charId)
+            local record = bot and xi.worldbots.party.get(bot, charId, now)
+            if record then
+                xi.worldbots.party.disband(record, now)
+                player:printToPlayer('Party disbanded.')
+            else
+                player:printToPlayer('That bot is not in a party.')
+            end
+        else
+            local charId = tonumber(action)
+            if not charId then
+                usage(player)
+                return
+            end
+
+            player:printToPlayer(xi.worldbots.party.describe(charId, now) or 'That bot is not spawned.')
+        end
     elseif sub == 'zones' then
         local zones = GetBotAwakeZones()
         if #zones == 0 then

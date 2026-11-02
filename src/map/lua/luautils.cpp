@@ -68,6 +68,7 @@
 #include "utils/botcombat.h"
 #include "utils/botinventory.h"
 #include "utils/botjobs.h"
+#include "utils/botparty.h"
 #include "utils/botutils.h"
 
 #include "utils/charutils.h"
@@ -375,6 +376,9 @@ void init(IPP mapIPP, bool isRunningInCI)
     lua.set_function("ChangeBotJobs", &luautils::ChangeBotJobs);
     lua.set_function("GetBotCareerJob", &luautils::GetBotCareerJob);
     lua.set_function("SetBotCareerJob", &luautils::SetBotCareerJob);
+    lua.set_function("FormBotParty", &luautils::FormBotParty);
+    lua.set_function("LeaveBotParty", &luautils::LeaveBotParty);
+    lua.set_function("GetBotParty", &luautils::GetBotParty);
     lua.set_function("WalkBotTo", &luautils::WalkBotTo);
     lua.set_function("SaveBotPosition", &luautils::SaveBotPosition);
     lua.set_function("SetBotActivity", &luautils::SetBotActivity);
@@ -2493,12 +2497,12 @@ sol::object GetBotRouteNextLine(uint16 fromZone, uint16 toZone)
     return row;
 }
 
-sol::table GetBotLevelingZones(uint8 level, uint16 fromZone, uint8 maxHops)
+sol::table GetBotLevelingZones(uint8 level, uint16 fromZone, uint8 maxHops, sol::optional<uint8> partySize)
 {
     TracyZoneScoped;
 
     auto table = lua.create_table();
-    for (const auto& zone : botutils::GetBotLevelingZones(level, static_cast<xi::ZoneId>(fromZone), maxHops))
+    for (const auto& zone : botutils::GetBotLevelingZones(level, static_cast<xi::ZoneId>(fromZone), maxHops, partySize.value_or(1)))
     {
         auto row        = lua.create_table();
         row["zoneId"]   = zone.zoneId;
@@ -2510,11 +2514,11 @@ sol::table GetBotLevelingZones(uint8 level, uint16 fromZone, uint8 maxHops)
     return table;
 }
 
-sol::object GetBotHuntSpot(uint16 zoneId, uint8 level)
+sol::object GetBotHuntSpot(uint16 zoneId, uint8 level, sol::optional<uint8> partySize)
 {
     TracyZoneScoped;
 
-    const auto spot = botutils::GetBotHuntSpot(static_cast<xi::ZoneId>(zoneId), level);
+    const auto spot = botutils::GetBotHuntSpot(static_cast<xi::ZoneId>(zoneId), level, partySize.value_or(1));
     if (!spot)
     {
         return sol::lua_nil;
@@ -2610,11 +2614,11 @@ auto botTargetToLua(const std::optional<botutils::BotTarget>& target) -> sol::ob
 
 } // namespace
 
-sol::object FindBotTarget(uint32 charId, float radius)
+sol::object FindBotTarget(uint32 charId, float radius, sol::optional<uint8> partySize)
 {
     TracyZoneScoped;
 
-    return botTargetToLua(botutils::FindBotTarget(charId, radius));
+    return botTargetToLua(botutils::FindBotTarget(charId, radius, partySize.value_or(1)));
 }
 
 sol::object FindBotAttacker(uint32 charId)
@@ -2762,12 +2766,12 @@ bool IsBotCasting(uint32 charId)
 
 // { { mobId, x, y, z, distance, sight, sound, trueDetection, sightRange, soundRange }, ... }
 // nearest first - see botutils::ScanBotThreats.
-sol::table ScanBotThreats(uint32 charId, float radius)
+sol::table ScanBotThreats(uint32 charId, float radius, sol::optional<uint8> partySize)
 {
     TracyZoneScoped;
 
     auto table = lua.create_table();
-    for (const auto& threat : botutils::ScanBotThreats(charId, radius))
+    for (const auto& threat : botutils::ScanBotThreats(charId, radius, partySize.value_or(1)))
     {
         auto row             = lua.create_table();
         row["mobId"]         = threat.mobId;
@@ -2898,6 +2902,68 @@ uint8 GetBotCareerJob(uint32 charId)
     TracyZoneScoped;
 
     return botutils::GetBotCareerJob(charId);
+}
+
+// memberIds = { charId, ... } - see botutils::FormBotParty. Returns how many joined.
+uint8 FormBotParty(uint32 leaderId, sol::table memberIds)
+{
+    TracyZoneScoped;
+
+    std::vector<uint32> ids;
+    for (const auto& [_, value] : memberIds)
+    {
+        if (value.is<uint32>())
+        {
+            ids.push_back(value.as<uint32>());
+        }
+    }
+
+    return botutils::FormBotParty(leaderId, ids);
+}
+
+void LeaveBotParty(uint32 charId)
+{
+    TracyZoneScoped;
+
+    botutils::LeaveBotParty(charId);
+}
+
+// { { charId, isBot, isLeader, mainJob, subJob, level, hpp, mpp, tp, zoneId, x, y, z,
+//     dead, engaged, targetId }, ... }, or nil if not in a party. See botutils::GetBotParty.
+sol::object GetBotParty(uint32 charId)
+{
+    TracyZoneScoped;
+
+    const auto party = botutils::GetBotParty(charId);
+    if (!party)
+    {
+        return sol::lua_nil;
+    }
+
+    auto table = lua.create_table();
+    for (const auto& member : *party)
+    {
+        auto row        = lua.create_table();
+        row["charId"]   = member.charId;
+        row["isBot"]    = member.isBot;
+        row["isLeader"] = member.isLeader;
+        row["mainJob"]  = member.mainJob;
+        row["subJob"]   = member.subJob;
+        row["level"]    = member.level;
+        row["hpp"]      = member.hpp;
+        row["mpp"]      = member.mpp;
+        row["tp"]       = member.tp;
+        row["zoneId"]   = member.zoneId;
+        row["x"]        = member.pos.x;
+        row["y"]        = member.pos.y;
+        row["z"]        = member.pos.z;
+        row["dead"]     = member.dead;
+        row["engaged"]  = member.engaged;
+        row["targetId"] = member.targetId;
+        table.add(row);
+    }
+
+    return table;
 }
 
 void SetBotCareerJob(uint32 charId, uint8 job)

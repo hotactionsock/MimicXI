@@ -57,6 +57,10 @@
 -- wear and uses any spell scroll it can learn (ManageBotInventory - engine-side,
 -- through the same equip/learn rules a player has).
 --
+-- Parties (worldbots_party.lua): from level 10 bots look for parties while
+-- levelling; a matchmaker forms balanced bot parties that camp tougher prey,
+-- the leader pulls when everyone's ready, members follow and assist.
+--
 -- Travel safety: while walking anywhere it Sneaks/Invisibles past mobs too
 -- strong to fight, or waits for them to roam off (worldbots_travel.lua).
 --
@@ -467,7 +471,10 @@ end
 -- Picks where to level: usually stays if the current zone suits, otherwise a
 -- weighted pick among suitable zones, favouring more mobs and fewer hops.
 local function pickLevelingZone(bot, zoneId)
-    local zones = GetBotLevelingZones(bot:getMainLvl(), zoneId, GOAL_MAX_HOPS)
+    -- A party hunts tougher prey, aimed at its lowest member's level.
+    local now   = GetSystemTime()
+    local zones = GetBotLevelingZones(xi.worldbots.party.huntLevel(bot, bot:getID(), now), zoneId, GOAL_MAX_HOPS,
+        xi.worldbots.party.huntSize(bot))
     local total = 0
     local candidates = {}
 
@@ -506,6 +513,15 @@ local function pickGoal(bot, charId, state, zoneId)
         if want then
             local home = GetBotHomeZone(bot:getNation(), zoneId)
             if home ~= 0 then
+                -- A job change means leaving (or, as leader, ending) the party.
+                local record = xi.worldbots.party.get(bot, charId, GetSystemTime())
+                if record and record.leaderId == charId then
+                    xi.worldbots.party.disband(record, GetSystemTime())
+                elseif record then
+                    LeaveBotParty(charId)
+                end
+
+                xi.worldbots.party.stopSeeking(charId)
                 setGoal(charId, state, 'jobs', home)
                 state.goal.jobs = want
                 return true
@@ -513,7 +529,8 @@ local function pickGoal(bot, charId, state, zoneId)
         end
     end
 
-    if math.random() < GOAL_HOME_CHANCE then
+    local inParty = bot:getPartySize() > 1
+    if not inParty and math.random() < GOAL_HOME_CHANCE then
         local home = GetBotHomeZone(bot:getNation(), zoneId)
         if home ~= 0 then
             setGoal(charId, state, 'home', home)
@@ -524,6 +541,12 @@ local function pickGoal(bot, charId, state, zoneId)
     local levelZone = pickLevelingZone(bot, zoneId)
     if levelZone then
         setGoal(charId, state, 'level', levelZone)
+
+        -- Keep levelling solo, but look for a party meanwhile (worldbots_party.lua).
+        if not inParty then
+            xi.worldbots.party.maybeSeek(bot, charId, GetSystemTime())
+        end
+
         return true
     end
 
@@ -535,7 +558,8 @@ end
 local function pickSettleSpot(bot, state)
     if state.goal.kind == 'level' then
         -- Remember it, so after a death or a sell trip it returns to the same place.
-        state.goal.spot = state.goal.spot or GetBotHuntSpot(bot:getZoneID(), bot:getMainLvl())
+        state.goal.spot = state.goal.spot or GetBotHuntSpot(bot:getZoneID(),
+            xi.worldbots.party.huntLevel(bot, bot:getID(), GetSystemTime()), xi.worldbots.party.huntSize(bot))
         return state.goal.spot
     end
 
@@ -935,10 +959,15 @@ local function combatStep(bot, charId, state, now, moving)
         return true
     end
 
+    -- A party leader only pulls once everyone's here and rested.
+    if not xi.worldbots.party.readyToPull(bot, charId, now) then
+        return true
+    end
+
     if now >= (state.nextTargetCheckAt or 0) then
         state.nextTargetCheckAt = now + TARGET_CHECK_SEC
 
-        local target = FindBotTarget(charId, HUNT_RADIUS)
+        local target = FindBotTarget(charId, HUNT_RADIUS, xi.worldbots.party.huntSize(bot))
         if target then
             if target.distance <= ENGAGE_RANGE then
                 EngageBotTarget(charId, target.mobId)
@@ -1327,6 +1356,9 @@ xi.worldbots.onZoneTick = function(zone, bots)
     local now    = GetSystemTime()
     local zoneId = zone:getID()
 
+    -- Group party seekers (throttled globally - whichever zone ticks first).
+    xi.worldbots.party.matchmake(now)
+
     for _, bot in ipairs(bots) do
         local charId = bot:getID()
         local state  = getState(charId, now)
@@ -1394,6 +1426,8 @@ xi.worldbots.onZoneTick = function(zone, bots)
 
         if state.inCombat or combatStep(bot, charId, state, now, moving) then
             -- fighting, resting or closing in on prey this tick
+        elseif xi.worldbots.party.step(bot, charId, state, now, moving) then
+            -- a party member following, assisting or resting (worldbots_party.lua)
         elseif state.travel then
             -- Sneak/Invisible past danger, or wait for it to roam off (worldbots_travel.lua).
             if not xi.worldbots.travel.step(bot, charId, state, now) then
@@ -1450,5 +1484,12 @@ xi.worldbots.onZoneTick = function(zone, bots)
         ::continue::
     end
 end
+
+-- For the worldbots_* modules: shared access to the AI scratch state.
+xi.worldbots.internal =
+{
+    getState = getState,
+    setGoal  = setGoal,
+}
 
 return xi.worldbots
