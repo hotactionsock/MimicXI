@@ -359,6 +359,10 @@ void init(IPP mapIPP, bool isRunningInCI)
     lua.set_function("UseBotWeaponSkill", &luautils::UseBotWeaponSkill);
     lua.set_function("GetBotAbilities", &luautils::GetBotAbilities);
     lua.set_function("UseBotAbility", &luautils::UseBotAbility);
+    lua.set_function("GetBotSpells", &luautils::GetBotSpells);
+    lua.set_function("CastBotSpell", &luautils::CastBotSpell);
+    lua.set_function("SetBotCombatRange", &luautils::SetBotCombatRange);
+    lua.set_function("IsBotCasting", &luautils::IsBotCasting);
     lua.set_function("WalkBotTo", &luautils::WalkBotTo);
     lua.set_function("SaveBotPosition", &luautils::SaveBotPosition);
     lua.set_function("SetBotActivity", &luautils::SetBotActivity);
@@ -2699,6 +2703,49 @@ bool UseBotAbility(uint32 charId, uint16 abilityId)
     TracyZoneScoped;
 
     return botutils::UseBotAbility(charId, abilityId);
+}
+
+// { { id, mpCost, skill, group, onEnemy, ready }, ... } - see botutils::GetBotSpells.
+sol::table GetBotSpells(uint32 charId)
+{
+    TracyZoneScoped;
+
+    auto table = lua.create_table();
+    for (const auto& spell : botutils::GetBotSpells(charId))
+    {
+        auto row       = lua.create_table();
+        row["id"]      = spell.id;
+        row["mpCost"]  = spell.mpCost;
+        row["skill"]   = spell.skill;
+        row["group"]   = spell.group;
+        row["onEnemy"] = spell.onEnemy;
+        row["ready"]   = spell.ready;
+        table.add(row);
+    }
+
+    return table;
+}
+
+// 0 cast, 1 not ready, 2 no MP, 3 no/out-of-range target, 4 invalid - see botutils::BotCastResult.
+uint8 CastBotSpell(uint32 charId, uint16 spellId)
+{
+    TracyZoneScoped;
+
+    return static_cast<uint8>(botutils::CastBotSpell(charId, spellId));
+}
+
+void SetBotCombatRange(uint32 charId, float yalms)
+{
+    TracyZoneScoped;
+
+    botutils::SetBotCombatRange(charId, yalms);
+}
+
+bool IsBotCasting(uint32 charId)
+{
+    TracyZoneScoped;
+
+    return botutils::IsBotCasting(charId);
 }
 
 sol::table GetBotVendors(uint16 zoneId)

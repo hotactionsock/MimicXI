@@ -90,4 +90,45 @@ auto UseBotAbility(uint32 charId, uint16 abilityId) -> bool;
 // false if the bot isn't a live, dead bot.
 auto HomepointBot(uint32 charId) -> bool;
 
+// ---- Spellcasting (Phase 3) -------------------------------------------------
+
+struct BotSpell
+{
+    uint16 id;
+    uint16 mpCost;
+    uint8  skill;   // xi::SkillType (healing, enhancing, enfeebling, elemental, ...)
+    uint8  group;   // SPELLGROUP (white, black, song, ninjutsu, ...)
+    bool   onEnemy; // can target an enemy (otherwise self/party)
+    bool   ready;   // off recast
+};
+
+// Spells the bot knows and can cast at its current main/sub job levels - the
+// same job/level gate a player's spell list uses (spell::CanUseSpell). Not
+// cheap (runs the spell checks for every learned spell): xi.worldbots caches
+// it and refreshes after level-ups and inventory checks. `ready` is a snapshot.
+auto GetBotSpells(uint32 charId) -> std::vector<BotSpell>;
+
+enum class BotCastResult : uint8
+{
+    Cast      = 0, // started casting
+    NotReady  = 1, // on recast, or the bot can't act right now (already casting, stunned...)
+    NoMP      = 2, // not enough MP
+    NoTarget  = 3, // enemy spell with no battle target, or target out of range
+    Invalid   = 4, // not a live bot, unknown spell, or one it can't cast
+};
+
+// Casts spellId through CPlayerController::Cast (the player path: recast, MP,
+// silence, range and target checks all apply). Enemy spells go at the bot's
+// current battle target, everything else at the bot itself. Stops any walk
+// first - moving interrupts a spell.
+auto CastBotSpell(uint32 charId, uint16 spellId) -> BotCastResult;
+
+// True while the bot is casting (it can't act otherwise until it finishes).
+auto IsBotCasting(uint32 charId) -> bool;
+
+// How close a bot closes in on its battle target. 0 (the default) = melee
+// range; anything else = stay about that many yalms away (casters), only
+// moving in if the target is further than that. See CWorldBotController.
+void SetBotCombatRange(uint32 charId, float yalms);
+
 } // namespace botutils

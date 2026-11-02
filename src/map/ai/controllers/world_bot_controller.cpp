@@ -23,6 +23,7 @@
 
 #include "ai/ai_container.h"
 #include "ai/helpers/pathfind.h"
+#include "ai/states/magic_state.h"
 #include "common/utils.h"
 #include "entities/char_entity.h"
 #include "utils/botutils.h"
@@ -55,6 +56,16 @@ auto CWorldBotController::Tick(const timer::time_point tick) -> Task<void>
     {
         wanderTarget_.reset();
         if (PChar->PAI->PathFind)
+        {
+            PChar->PAI->PathFind->Clear();
+        }
+        co_return;
+    }
+
+    // Casting: hold still - moving would interrupt the spell.
+    if (PChar->PAI->IsCurrentState<CMagicState>())
+    {
+        if (PChar->PAI->PathFind && PChar->PAI->PathFind->IsFollowingPath())
         {
             PChar->PAI->PathFind->Clear();
         }
@@ -112,7 +123,9 @@ void CWorldBotController::tickCombatMovement()
 
     wanderTarget_.reset();
 
-    const float range = PChar->GetMeleeRange(PTarget);
+    // Casters stand off at their combat range; everyone else closes to melee.
+    const float melee = PChar->GetMeleeRange(PTarget);
+    const float range = combatRange_ > melee ? combatRange_ : melee;
     const float dist  = distance(PChar->loc.p, PTarget->loc.p);
 
     if (dist <= range - 0.3f)
@@ -142,6 +155,16 @@ void CWorldBotController::tickCombatMovement()
 void CWorldBotController::SetWanderTarget(const position_t& dest)
 {
     wanderTarget_ = dest;
+}
+
+void CWorldBotController::ClearWanderTarget()
+{
+    wanderTarget_.reset();
+}
+
+void CWorldBotController::SetCombatRange(float yalms)
+{
+    combatRange_ = std::max(yalms, 0.0f);
 }
 
 auto CWorldBotController::SenseDue(const timer::time_point now) -> bool

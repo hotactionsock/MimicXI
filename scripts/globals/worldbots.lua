@@ -36,8 +36,11 @@
 -- Combat (level goals): at its hunt spot a bot fights nearby mobs that suit
 -- its level, always fights back when attacked (even mid-travel), rests with
 -- /heal when hurt, and lots its loot. EXP and level-ups come from the normal
--- kill path. In a fight it uses its best weapon skill at 1000 TP and job
--- abilities from a per-ability policy (ABILITY_POLICY). If it dies it waits a little, returns to its home point, and its
+-- kill path. In a fight it uses its best weapon skill at 1000 TP, its spells
+-- (cures, buffs, Utsusemi, and by main job enfeebles/nukes/songs/drains - see
+-- worldbots_magic.lua) and job abilities from a per-ability policy
+-- (ABILITY_POLICY). Between fights it cures up and pre-buffs; MP users also rest
+-- for MP, and stand-off casters (BLM, SCH) fight from range while they have MP. If it dies it waits a little, returns to its home point, and its
 -- goal walks it straight back to the same hunt spot.
 --
 -- Home point: a bot starts with a random crystal in its starting city (set
@@ -845,7 +848,10 @@ local function combatStep(bot, charId, state, now, moving)
     end
 
     if state.healing then
-        if bot:getHPP() >= REST_UNTIL_HPP then
+        if
+            bot:getHPP() >= REST_UNTIL_HPP and
+            xi.worldbots.magic.restedMP(bot, state)
+        then
             SetBotHealing(charId, false)
             state.healing = false
         else
@@ -860,7 +866,18 @@ local function combatStep(bot, charId, state, now, moving)
         return false
     end
 
-    if bot:getHPP() < REST_BELOW_HPP then
+    -- Between fights: cure up and put buffs on before resting or pulling.
+    if not moving and now >= (state.nextIdleCastAt or 0) then
+        state.nextIdleCastAt = now + ACTION_CHECK_SEC
+        if IsBotCasting(charId) or xi.worldbots.magic.idle(bot, charId, state, now) then
+            return true
+        end
+    end
+
+    if
+        bot:getHPP() < REST_BELOW_HPP or
+        xi.worldbots.magic.wantsRest(bot, state)
+    then
         if not moving then
             diag(charId, 'resting')
             SetBotHealing(charId, true)
@@ -890,8 +907,9 @@ local function combatStep(bot, charId, state, now, moving)
     return false
 end
 
--- In a fight: weapon skill at 1000 TP, otherwise a job ability its policy
--- says fits right now. At most one action per check.
+-- In a fight, at most one action per check, in this order: an urgent cure or
+-- shadows, a weapon skill at 1000 TP, the job's spells, then a job ability its
+-- policy says fits right now.
 local function combatActions(bot, charId, state, now)
     if now < (state.nextActionAt or 0) then
         return
@@ -899,12 +917,29 @@ local function combatActions(bot, charId, state, now)
 
     state.nextActionAt = now + ACTION_CHECK_SEC
 
+    -- Mid-cast: nothing else can happen until the spell finishes.
+    if IsBotCasting(charId) then
+        return
+    end
+
+    -- An urgent cure, or shadows gone, beats everything (worldbots_magic.lua).
+    if xi.worldbots.magic.urgent(bot, charId, state, now) then
+        diag(charId, 'urgent spell')
+        return
+    end
+
     if bot:getTP() >= 1000 then
         local ws = UseBotWeaponSkill(charId)
         if ws ~= 0 then
             diag(charId, 'weapon skill %d', ws)
             return
         end
+    end
+
+    -- The job's spell rotation: cures, songs, enfeebles, nukes, drains, buffs.
+    if xi.worldbots.magic.combat(bot, charId, state, now) then
+        diag(charId, 'spell')
+        return
     end
 
     local engagedFor = now - (state.engagedAt or now)
@@ -1194,6 +1229,9 @@ xi.worldbots.onZoneTick = function(zone, bots)
         -- Uses last tick's decisions - one tick of lag is fine for zone sleep.
         reportActivity(bot, charId, state, now, zoneId)
 
+        -- Castable spells and the job's stand-off range (re-read on level-up/job change).
+        xi.worldbots.magic.refresh(bot, charId, state, now)
+
         local currentPos = { x = bot:getXPos(), y = bot:getYPos(), z = bot:getZPos() }
         local moving     = state.lastPos ~= nil and distance(currentPos, state.lastPos) > 0.05
         state.lastPos    = currentPos
@@ -1264,6 +1302,10 @@ xi.worldbots.onZoneTick = function(zone, bots)
             local result = ManageBotInventory(charId)
             if result.equipped > 0 or result.learned > 0 then
                 diag(charId, 'inventory: equipped %d, learned %d', result.equipped, result.learned)
+            end
+
+            if result.learned > 0 then
+                xi.worldbots.magic.refresh(bot, charId, state, now, true)
             end
         end
 

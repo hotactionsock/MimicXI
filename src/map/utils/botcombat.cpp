@@ -30,6 +30,8 @@
 
 #include "ai/ai_container.h"
 #include "ai/controllers/world_bot_controller.h"
+#include "ai/helpers/pathfind.h"
+#include "ai/states/magic_state.h"
 #include "entities/char_entity.h"
 #include "entities/mob_entity.h"
 #include "item_container.h"
@@ -45,6 +47,7 @@
 #include "ability.h"
 #include "items/item_weapon.h"
 #include "recast_container.h"
+#include "spell.h"
 #include "utils/battleutils.h"
 #include "weapon_skill.h"
 
@@ -359,6 +362,113 @@ auto HomepointBot(uint32 charId) -> bool
     const auto pos         = PChar->profile.home_point.p;
 
     return TeleportBotCharacter(charId, destination, pos.x, pos.y, pos.z, pos.rotation) != nullptr;
+}
+
+// ---- Spellcasting -----------------------------------------------------------
+
+auto GetBotSpells(uint32 charId) -> std::vector<BotSpell>
+{
+    std::vector<BotSpell> result;
+
+    auto* PChar = liveBot(charId);
+    if (PChar == nullptr)
+    {
+        return result;
+    }
+
+    for (uint16 id = 1; id < 1024; ++id)
+    {
+        if (!PChar->m_SpellList[id])
+        {
+            continue;
+        }
+
+        auto* PSpell = spell::GetSpell(static_cast<SpellID>(id));
+        if (PSpell == nullptr || PSpell->getSpellGroup() == SPELLGROUP_TRUST || !spell::CanUseSpell(PChar, PSpell))
+        {
+            continue;
+        }
+
+        const bool onCooldown = PChar->PRecastContainer->HasRecast(RECAST_MAGIC, static_cast<Recast>(id), 0s);
+
+        result.push_back({ id,
+                           PSpell->getMPCost(),
+                           static_cast<uint8>(PSpell->getSkillType()),
+                           static_cast<uint8>(PSpell->getSpellGroup()),
+                           PSpell->canTargetEnemy(),
+                           !onCooldown });
+    }
+
+    return result;
+}
+
+auto CastBotSpell(uint32 charId, uint16 spellId) -> BotCastResult
+{
+    auto* PChar = liveBot(charId);
+    if (PChar == nullptr || PChar->isDead() || spellId == 0 || spellId >= 1024 || !PChar->m_SpellList[spellId])
+    {
+        return BotCastResult::Invalid;
+    }
+
+    auto* PSpell     = spell::GetSpell(static_cast<SpellID>(spellId));
+    auto* controller = dynamic_cast<CWorldBotController*>(PChar->PAI->GetController());
+    if (PSpell == nullptr || controller == nullptr || !spell::CanUseSpell(PChar, PSpell))
+    {
+        return BotCastResult::Invalid;
+    }
+
+    if (PChar->PRecastContainer->HasRecast(RECAST_MAGIC, static_cast<Recast>(spellId), 0s) || PChar->PAI->IsCurrentState<CMagicState>())
+    {
+        return BotCastResult::NotReady;
+    }
+
+    if (PSpell->hasMPCost() && PChar->health.mp < PSpell->getMPCost())
+    {
+        return BotCastResult::NoMP;
+    }
+
+    CBattleEntity* PTarget = PChar;
+    if (PSpell->canTargetEnemy())
+    {
+        PTarget = PChar->GetBattleTarget();
+        if (PTarget == nullptr || distance(PChar->loc.p, PTarget->loc.p) > PSpell->getRange())
+        {
+            return BotCastResult::NoTarget;
+        }
+    }
+
+    // Moving interrupts a spell: stop any walk, and face an enemy target.
+    controller->ClearWanderTarget();
+    if (auto* path = PChar->PAI->PathFind.get())
+    {
+        path->Clear();
+        if (PTarget != PChar)
+        {
+            path->LookAt(PTarget->loc.p);
+        }
+    }
+
+    return controller->Cast(EntityId(PTarget), static_cast<SpellID>(spellId)) ? BotCastResult::Cast : BotCastResult::NotReady;
+}
+
+auto IsBotCasting(uint32 charId) -> bool
+{
+    auto* PChar = liveBot(charId);
+    return PChar != nullptr && PChar->PAI->IsCurrentState<CMagicState>();
+}
+
+void SetBotCombatRange(uint32 charId, float yalms)
+{
+    auto* PChar = liveBot(charId);
+    if (PChar == nullptr)
+    {
+        return;
+    }
+
+    if (auto* controller = dynamic_cast<CWorldBotController*>(PChar->PAI->GetController()))
+    {
+        controller->SetCombatRange(yalms);
+    }
 }
 
 } // namespace botutils

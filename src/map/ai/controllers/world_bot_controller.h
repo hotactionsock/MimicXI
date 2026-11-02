@@ -45,6 +45,12 @@ public:
     // Tick() calls via the navmesh/pathfind - safe to call again mid-walk to
     // redirect. Cleared automatically once reached or found unreachable.
     void SetWanderTarget(const position_t& dest);
+    void ClearWanderTarget();
+
+    // How close to stay to the battle target: 0 = melee range (default),
+    // otherwise about this many yalms (casters standing off). See
+    // botutils::SetBotCombatRange.
+    void SetCombatRange(float yalms);
 
     // Zone line the bot walked into since the last call (0 = none), consumed by
     // botutils::ProcessPendingZoneLines at the start of the zone tick - the bot
@@ -62,6 +68,8 @@ private:
     position_t chaseAim_{}; // where the current chase path was aimed (re-path when the target moves off it)
 
     std::optional<position_t> wanderTarget_;
+
+    float combatRange_{ 0.0f };
 
     // Zone-line area tracking: a crossing fires only on ENTERING an area (like a
     // real client), so a bot that spawns standing inside one - e.g. arriving
