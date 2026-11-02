@@ -83,6 +83,78 @@ auto zoneOf(uint32 charId) -> uint16
 
 } // namespace
 
+namespace
+{
+
+// The log's text columns are utf8mb4, and one invalid byte fails the whole
+// batch insert. Names come from item/mob/spell data that isn't guaranteed to be
+// clean UTF-8, so anything that isn't a well-formed sequence becomes '?'. The
+// first few repairs are reported (with the offending bytes) so the bad source
+// data can be found and fixed.
+auto toValidUtf8(const std::string& text, const char* what) -> std::string
+{
+    std::string out;
+    out.reserve(text.size());
+    bool repaired = false;
+
+    for (std::size_t i = 0; i < text.size();)
+    {
+        const auto c   = static_cast<unsigned char>(text[i]);
+        std::size_t len = 0;
+        if (c < 0x80)
+        {
+            len = 1;
+        }
+        else if (c >= 0xC2 && c <= 0xDF)
+        {
+            len = 2;
+        }
+        else if (c >= 0xE0 && c <= 0xEF)
+        {
+            len = 3;
+        }
+        else if (c >= 0xF0 && c <= 0xF4)
+        {
+            len = 4;
+        }
+
+        bool ok = len > 0 && i + len <= text.size();
+        for (std::size_t k = 1; ok && k < len; ++k)
+        {
+            ok = (static_cast<unsigned char>(text[i + k]) & 0xC0) == 0x80;
+        }
+
+        if (ok)
+        {
+            out.append(text, i, len);
+            i += len;
+        }
+        else
+        {
+            out.push_back('?');
+            repaired = true;
+            ++i;
+        }
+    }
+
+    static uint32 reports = 0;
+    if (repaired && reports < 5)
+    {
+        ++reports;
+        std::string hex;
+        for (const auto ch : text)
+        {
+            hex += std::format("{:02X}", static_cast<unsigned char>(ch));
+        }
+
+        ShowWarning("botutils::LogBotEvent: invalid UTF-8 in bot log %s, repaired: \"%s\" (bytes %s)", what, out, hex);
+    }
+
+    return out;
+}
+
+} // namespace
+
 auto BotLogEnabled(BotLogLevel level) -> bool
 {
     return static_cast<uint8>(level) <= settings::get<uint8>("map.WORLDBOTS_LOG_LEVEL");
@@ -101,7 +173,8 @@ void LogBotEvent(uint32 charId, BotLogLevel level, const std::string& category, 
         g_pending.erase(g_pending.begin()); // keep the newest
     }
 
-    g_pending.push_back({ charId, earth_time::timestamp(), zoneOf(charId), category, event, message, dataJson.empty() ? "{}" : dataJson });
+    g_pending.push_back({ charId, earth_time::timestamp(), zoneOf(charId), category, event, toValidUtf8(message, "message"),
+                          dataJson.empty() ? "{}" : toValidUtf8(dataJson, "data") });
 }
 
 void FlushBotLog()
@@ -129,15 +202,47 @@ void FlushBotLog()
             }
         });
 
-    if (!ok)
+    if (ok)
     {
-        ShowError("botutils::FlushBotLog: could not write %u bot log rows; keeping them for the next flush", static_cast<uint32>(rows.size()));
-        rows.insert(rows.end(), g_pending.begin(), g_pending.end());
-        g_pending.swap(rows);
-        if (g_pending.size() > kMaxPending)
+        return;
+    }
+
+    // The batch failed. Write rows one at a time, so a single bad row can't
+    // block the log forever: rows that still fail are dropped. If none at all
+    // can be written (database down?), keep them all for the next flush.
+    std::vector<LogRow> unwritten;
+    std::size_t         written = 0;
+    for (auto& row : rows)
+    {
+        if (db::preparedStmt("INSERT INTO world_bot_log (charid, ts, zone_id, category, event, message, data) VALUES (?, ?, ?, ?, ?, ?, ?)",
+                             row.charId, row.ts, row.zoneId, row.category, row.event, row.message, row.data))
         {
-            g_pending.erase(g_pending.begin(), g_pending.begin() + static_cast<std::ptrdiff_t>(g_pending.size() - kMaxPending));
+            ++written;
         }
+        else
+        {
+            unwritten.push_back(std::move(row));
+        }
+    }
+
+    // (A lone row that fails is the bad row - drop it too.)
+    if (written > 0 || unwritten.size() == 1)
+    {
+        if (!unwritten.empty())
+        {
+            ShowError("botutils::FlushBotLog: dropped %u bot log row(s) the database rejected (first: \"%s\")",
+                      static_cast<uint32>(unwritten.size()), unwritten.front().message);
+        }
+
+        return;
+    }
+
+    ShowError("botutils::FlushBotLog: could not write %u bot log rows; keeping them for the next flush", static_cast<uint32>(unwritten.size()));
+    unwritten.insert(unwritten.end(), g_pending.begin(), g_pending.end());
+    g_pending.swap(unwritten);
+    if (g_pending.size() > kMaxPending)
+    {
+        g_pending.erase(g_pending.begin(), g_pending.begin() + static_cast<std::ptrdiff_t>(g_pending.size() - kMaxPending));
     }
 }
 

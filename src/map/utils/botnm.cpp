@@ -214,7 +214,7 @@ auto GetBotMobStatus(uint32 charId, uint32 mobId) -> BotMobStatus
     BotMobStatus status{};
 
     auto* PChar = liveBot(charId);
-    auto* PMob  = PChar ? dynamic_cast<CMobEntity*>(PChar->loc.zone->GetEntity(static_cast<uint16>(mobId & 0xFFF), TYPE_MOB)) : nullptr;
+    auto* PMob  = PChar ? dynamic_cast<CMobEntity*>(PChar->loc.zone->GetEntity(EntityTargId(mobId), TYPE_MOB)) : nullptr;
     if (PMob == nullptr || PMob->id != mobId)
     {
         return status;
@@ -249,7 +249,7 @@ auto GetBotMobStatus(uint32 charId, uint32 mobId) -> BotMobStatus
 auto IsRealPlayerNearMob(uint32 mobId, uint16 zoneId, float radius) -> bool
 {
     auto* PZone = zoneutils::GetZone(static_cast<xi::ZoneId>(zoneId));
-    auto* PMob  = PZone ? dynamic_cast<CMobEntity*>(PZone->GetEntity(static_cast<uint16>(mobId & 0xFFF), TYPE_MOB)) : nullptr;
+    auto* PMob  = PZone ? dynamic_cast<CMobEntity*>(PZone->GetEntity(EntityTargId(mobId), TYPE_MOB)) : nullptr;
     if (PMob == nullptr || PMob->id != mobId)
     {
         return false;
@@ -341,7 +341,7 @@ auto TradeBotItemToNpc(uint32 charId, uint32 npcId, uint16 itemId, uint32 quanti
         return false;
     }
 
-    auto* PNpc = PChar->loc.zone->GetEntity(static_cast<uint16>(npcId & 0xFFF), TYPE_NPC);
+    auto* PNpc = PChar->loc.zone->GetEntity(EntityTargId(npcId), TYPE_NPC);
     if (PNpc == nullptr || PNpc->id != npcId)
     {
         return false;

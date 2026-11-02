@@ -82,6 +82,17 @@ auto DeleteBotCharacter(uint32 charId) -> bool;
 // True if charId is registered in `world_bots` (spawned or not).
 auto IsBotCharacter(uint32 charId) -> bool;
 
+// The zone targid of an entity from its full id. Static entities (zone mobs,
+// NPCs) have id = 0x01000000 | zone << 12 | targid; dynamic ones (FATE mobs and
+// other insertDynamicEntity spawns, targid 0x700-0x8FF) are offset by 0x100 -
+// see CZoneEntities::AssignDynamicTargIDandLongID. `id & 0xFFF` alone is wrong
+// for those. Callers still check the found entity's id matches.
+inline auto EntityTargId(uint32 id) -> uint16
+{
+    const auto low = static_cast<uint16>(id & 0xFFF);
+    return (low >= 0x800 && low <= 0x9FF) ? static_cast<uint16>(low - 0x100) : low;
+}
+
 // True if PChar is a live bot session (cheap - no database access).
 auto IsBotEntity(const CCharEntity* PChar) -> bool;
 
@@ -176,11 +187,13 @@ struct BotLevelingZone
 {
     uint16 zoneId;
     uint32 suitable; // huntable mob spawns whose level range suits the bot
-    uint8  hops;     // zone hops from the bot's current zone (0 = here)
+    uint8  hops;      // zone hops from the bot's current zone (0 = here)
+    uint32 dangerous; // aggressive mob spawns that outclass the bot (or its party)
 };
 
 // Zones within maxHops of fromZone that have huntable mobs suiting `level`,
-// best first (more suitable spawns, fewer hops). At most 8.
+// best first (more suitable spawns, fewer hops, fewer dangerous aggressive
+// mobs). At most 8.
 // partySize widens what counts as prey (see IsBotPrey).
 auto GetBotLevelingZones(uint8 level, xi::ZoneId fromZone, uint8 maxHops, uint8 partySize = 1) -> std::vector<BotLevelingZone>;
 
@@ -188,7 +201,9 @@ auto GetBotLevelingZones(uint8 level, xi::ZoneId fromZone, uint8 maxHops, uint8 
 // (fromZone itself at 0 hops): { zoneId, hops }.
 auto GetBotReachableZones(xi::ZoneId fromZone, uint8 maxHops) -> std::vector<std::pair<uint16, uint8>>;
 
-// A random suitable mob spawn point in zoneId for `level`, or nullopt.
+// A suitable mob spawn point in zoneId for `level` to camp at, or nullopt:
+// among the safest camps (fewest outclassing aggressive mobs nearby), picked
+// at random weighted by how much prey is around it.
 auto GetBotHuntSpot(xi::ZoneId zoneId, uint8 level, uint8 partySize = 1) -> std::optional<position_t>;
 
 // A live bot's current home point: (zone, position), or nullopt.

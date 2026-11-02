@@ -178,9 +178,37 @@ local SPOT_REACH_YALMS           = 4  -- close enough to a relocation spot to se
 -- Goals
 local GOAL_DWELL_MIN_SEC         = 20 * 60 -- how long a bot stays once settled
 local GOAL_DWELL_MAX_SEC         = 45 * 60
-local GOAL_HOME_CHANCE           = 0.15    -- chance a new goal is "go home" rather than "level"
-local GOAL_STAY_CHANCE           = 0.75    -- chance to keep levelling where it is, if the zone suits
-local GOAL_MAX_HOPS              = 6       -- don't plan levelling trips further than this
+local GOAL_MAX_HOPS              = 6       -- don't plan levelling trips further than this (any level)
+local BOT_GIL                    = 999999999 -- bots are kept at the gil cap
+local GIL_CHECK_SEC              = 60        -- how often to top it back up
+local BRING_PAUSE_SEC            = 30      -- after !bring / a GM teleport, wait this long before picking a goal
+local CAMP_LEASH_YALMS           = 45      -- while levelling, only pull prey this close to the camp
+
+-- How a bot's priorities shift with level. A fresh character does nothing but
+-- level, close to home and away from anything aggressive that outclasses it;
+-- city visits, longer trips and riskier zones come with levels.
+--   homeChance   - chance a new goal is "go home" rather than "level"
+--   stayChance   - chance to keep levelling where it is, if the zone suits
+--   maxHops      - furthest levelling trip it plans (widened if nothing's in reach)
+--   dangerWeight - how much each outclassing aggressive mob spawn counts
+--                  against a zone (vs. each suitable prey spawn for it)
+local LEVEL_TIERS =
+{
+    { below = 6,   homeChance = 0,    stayChance = 0.95, maxHops = 2, dangerWeight = 6 },
+    { below = 11,  homeChance = 0,    stayChance = 0.90, maxHops = 3, dangerWeight = 4 },
+    { below = 21,  homeChance = 0.08, stayChance = 0.80, maxHops = 4, dangerWeight = 3 },
+    { below = 256, homeChance = 0.15, stayChance = 0.75, maxHops = 6, dangerWeight = 2 },
+}
+
+local function levelTier(level)
+    for _, tier in ipairs(LEVEL_TIERS) do
+        if level < tier.below then
+            return tier
+        end
+    end
+
+    return LEVEL_TIERS[#LEVEL_TIERS]
+end
 local GOAL_MIN_SUITABLE          = 6       -- suitable mob spawns for a zone to count as a levelling zone
 local GOAL_RETRY_SEC             = 60      -- after a failed plan, wait before trying again
 local JOBS_RETRY_SEC             = 30 * 60 -- after a failed job change, wait this long before trying again
@@ -475,22 +503,34 @@ local function setGoal(charId, state, kind, zoneId)
 end
 
 -- Picks where to level: usually stays if the current zone suits, otherwise a
--- weighted pick among suitable zones, favouring more mobs and fewer hops.
+-- weighted pick among suitable zones, favouring more prey, fewer hops and -
+-- far more so at low levels - fewer aggressive mobs that outclass the bot.
 local function pickLevelingZone(bot, zoneId)
     -- A party hunts tougher prey, aimed at its lowest member's level.
     local now   = GetSystemTime()
-    local zones = GetBotLevelingZones(xi.worldbots.party.huntLevel(bot, bot:getID(), now), zoneId, GOAL_MAX_HOPS,
-        xi.worldbots.party.huntSize(bot))
+    local level = xi.worldbots.party.huntLevel(bot, bot:getID(), now)
+    local size  = xi.worldbots.party.huntSize(bot)
+    local tier  = levelTier(level)
+
+    -- Close to home first; only look further if nothing's in reach.
+    local zones = GetBotLevelingZones(level, zoneId, tier.maxHops, size)
+    if #zones == 0 and tier.maxHops < GOAL_MAX_HOPS then
+        zones = GetBotLevelingZones(level, zoneId, GOAL_MAX_HOPS, size)
+    end
+
     local total = 0
     local candidates = {}
 
     for _, z in ipairs(zones) do
         if z.suitable >= GOAL_MIN_SUITABLE then
-            if z.zoneId == zoneId and math.random() < GOAL_STAY_CHANCE then
+            -- 1 = nothing dangerous; falls fast as dangerous spawns outnumber prey.
+            local safety = z.suitable / (z.suitable + tier.dangerWeight * (z.dangerous or 0))
+
+            if z.zoneId == zoneId and safety >= 0.5 and math.random() < tier.stayChance then
                 return zoneId
             end
 
-            local weight = z.suitable / (1 + z.hops)
+            local weight = z.suitable / (1 + z.hops) * safety * safety
             total = total + weight
             table.insert(candidates, { zoneId = z.zoneId, weight = weight })
         end
@@ -554,7 +594,9 @@ local function pickGoal(bot, charId, state, zoneId)
         return true
     end
 
-    if not inParty and math.random() < GOAL_HOME_CHANCE then
+    -- City visits are for bots with a few levels behind them - a fresh
+    -- character just levels.
+    if not inParty and math.random() < levelTier(bot:getMainLvl()).homeChance then
         local home = GetBotHomeZone(bot:getNation(), zoneId)
         if home ~= 0 then
             setGoal(charId, state, 'home', home)
@@ -687,7 +729,13 @@ end
 
 local function relocateStep(bot, charId, state, now, currentPos, moving)
     local walk   = state.walk
-    local reach  = walk.purpose == 'chat' and 1 or SPOT_REACH_YALMS
+    -- Chat circles and shop counters need standing close; anywhere else, near enough.
+    local reach  = SPOT_REACH_YALMS
+    if walk.purpose == 'chat' then
+        reach = 1
+    elseif walk.purpose == 'vendor' or walk.purpose == 'shop' then
+        reach = 1.5
+    end
     local result = walkStep(charId, state, walk, now, currentPos, moving, reach)
 
     if result == 'arrived' or result == 'stuck' then
@@ -1020,6 +1068,16 @@ local function combatStep(bot, charId, state, now, moving)
         state.nextTargetCheckAt = now + TARGET_CHECK_SEC
 
         local target = FindBotTarget(charId, HUNT_RADIUS, xi.worldbots.party.huntSize(bot))
+
+        -- Levelling at a camp: stay there. Prey further out is left alone (the
+        -- bot drifts back to camp instead), so it doesn't chase mob after mob
+        -- across the zone into whatever lives beyond. Attackers are always
+        -- fought back.
+        local camp = state.goal and state.goal.kind == 'level' and state.goal.settled and state.goal.spot
+        if target and camp and not target.attacking and distance(target, camp) > CAMP_LEASH_YALMS then
+            target = nil
+        end
+
         if target then
             if target.distance <= ENGAGE_RANGE then
                 EngageBotTarget(charId, target.mobId)
@@ -1279,7 +1337,9 @@ local function plan(bot, charId, state, now, zoneId)
         end
 
         local zone   = bot:getZone()
-        state.walk         = newPlan(zone and zone:getRandomNavmeshPoint(vendor, 3) or vendor)
+        -- vendor is already the floor in front of the counter (GetBotVendors) -
+        -- only a small scatter, so bots don't stack on one spot.
+        state.walk         = newPlan(zone and zone:getRandomNavmeshPoint(vendor, 0.5) or vendor)
         state.walk.purpose = 'vendor'
         return
     end
@@ -1340,7 +1400,9 @@ xi.worldbots.teleportBot = function(charId, x, y, z, rotation, zoneId)
             lastPositionSaveTime = now,
             anchor = { x = x, y = y, z = z },
             zoneId = zoneId,
-            goal   = { kind = 'stay', zoneId = zoneId, settled = true, untilTime = now + dwellTime() },
+            -- A short pause where it was put (so a GM can see it arrive), then
+            -- back to its own life: a fresh goal from wherever it now is.
+            goal   = { kind = 'stay', zoneId = zoneId, settled = true, untilTime = now + BRING_PAUSE_SEC },
         }
     end
 
@@ -1479,6 +1541,15 @@ xi.worldbots.onZoneTick = function(zone, bots)
 
         -- Player invites, hired-bot level sync and leaving, the /sea entry (worldbots_hire.lua).
         xi.worldbots.hire.tick(bot, charId, state, now)
+
+        -- Bots carry the gil cap, so money never stops them buying gear
+        -- upgrades and supplies (worldbots_shop.lua).
+        if now >= (state.nextGilCheckAt or 0) then
+            state.nextGilCheckAt = now + GIL_CHECK_SEC
+            if bot:getGil() < BOT_GIL then
+                bot:setGil(BOT_GIL)
+            end
+        end
 
         local currentPos = { x = bot:getXPos(), y = bot:getYPos(), z = bot:getZPos() }
         local moving     = state.lastPos ~= nil and distance(currentPos, state.lastPos) > 0.05

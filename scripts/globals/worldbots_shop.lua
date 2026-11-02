@@ -92,7 +92,9 @@ function shop.next(bot, charId, state, now)
     end
 
     local zone = bot:getZone()
-    local spot = zone and zone:getRandomNavmeshPoint(target, 2) or target
+    -- target is already the floor in front of the counter (GetBotShops) - only
+    -- a small scatter, so bots don't stack on one spot.
+    local spot = zone and zone:getRandomNavmeshPoint(target, 0.5) or target
     state.walk = { target = spot, attempts = 0, bestDist = math.huge, purpose = 'shop' }
     state.walking, state.walkOrderAt = false, nil
     return true

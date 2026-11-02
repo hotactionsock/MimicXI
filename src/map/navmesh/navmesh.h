@@ -47,4 +47,14 @@ public:
     virtual auto findFurthestValidPoint(const position_t& startPosition, const position_t& endPosition) const -> Maybe<position_t> = 0;
     virtual auto snapToValidPosition(position_t& position) const -> void                                                           = 0;
     virtual auto moveAlongSurface(const position_t& start, const position_t& end, position_t& result) const -> bool                = 0;
+
+    // The highest point (smallest FFXI y - y is inverted) of every navmesh
+    // polygon the path from start to end crosses, or nullopt if there's no
+    // complete path. Unlike findPath's waypoints this sees everything walked
+    // over - e.g. a shop counter the path climbs. Diagnostic/planning use only;
+    // a mesh without polygons (NullNavMesh) has no answer.
+    virtual auto pathPeak([[maybe_unused]] const position_t& start, [[maybe_unused]] const position_t& end) -> Maybe<float>
+    {
+        return std::nullopt;
+    }
 };

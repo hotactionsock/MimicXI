@@ -2532,7 +2532,8 @@ sol::table GetBotLevelingZones(uint8 level, uint16 fromZone, uint8 maxHops, sol:
         auto row        = lua.create_table();
         row["zoneId"]   = zone.zoneId;
         row["suitable"] = zone.suitable;
-        row["hops"]     = zone.hops;
+        row["hops"]      = zone.hops;
+        row["dangerous"] = zone.dangerous;
         table.add(row);
     }
 

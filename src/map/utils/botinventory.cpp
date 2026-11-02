@@ -53,6 +53,7 @@
 #include "common/utils.h"
 
 #include <algorithm>
+#include <cmath>
 #include <format>
 #include <array>
 #include <fstream>
@@ -365,6 +366,107 @@ auto lootValue(CItem* PItem) -> uint32
 
 std::unordered_map<uint16, std::vector<position_t>> g_vendors;
 
+// A public place in the zone to judge reachability from: the zone line or
+// city landmark (home point, Mog House exit, auction house) nearest `around`.
+auto publicReference(CZone* PZone, const position_t& around) -> Maybe<position_t>
+{
+    Maybe<position_t> best;
+    float             bestDist = std::numeric_limits<float>::max();
+    const auto        consider = [&](const position_t& pos)
+    {
+        const float d = distance(pos, around, true);
+        if (d < bestDist)
+        {
+            bestDist = d;
+            best     = pos;
+        }
+    };
+
+    for (const auto& line : GetBotZoneLines(PZone->GetID()))
+    {
+        consider(line.origin);
+    }
+
+    for (const auto& spot : GetBotSocialSpots(PZone->GetID()))
+    {
+        consider(spot.pos);
+    }
+
+    if (best)
+    {
+        if (const auto floor = PZone->navMesh()->findClosestValidPoint(*best))
+        {
+            return floor;
+        }
+    }
+
+    return best;
+}
+
+// Where a customer stands to talk to a shop NPC. Shopkeepers stand behind
+// their counters, and the navmesh often covers the counter top (and joins it to
+// the floor behind) - walking to the NPC's own position ends with the bot on
+// the counter. Instead: a walkable floor point a few yalms from the NPC, at its
+// own floor height, that can be walked to from the public part of the zone
+// without climbing over anything (pathPeak) - i.e. the customer side, not the
+// shopkeeper's side. Tried from the way the NPC faces outward, around both
+// sides. Falls back to the NPC position.
+auto customerSpot(CZone* PZone, const CBaseEntity* PNpc) -> position_t
+{
+    const position_t& npc = PNpc->loc.p;
+    if (PZone == nullptr || PZone->navMesh() == nullptr)
+    {
+        return npc;
+    }
+
+    constexpr float kMaxClimb = 0.5f; // a path rising this far above both its ends is climbing something
+
+    const auto reference = publicReference(PZone, npc);
+    const auto walkable  = [&](const position_t& spot) -> bool
+    {
+        if (!reference)
+        {
+            return true; // nothing to judge by - trust the height check alone
+        }
+
+        const auto peak = PZone->navMesh()->pathPeak(*reference, spot);
+        return peak && *peak >= std::min(reference->y, spot.y) - kMaxClimb;
+    };
+
+    constexpr std::array<float, 3> kDistances  = { 2.5f, 3.5f, 4.0f }; // + walk slack, inside the 6y shop reach
+    constexpr std::array<int, 9>   kTurns      = { 0, 16, -16, 32, -32, 64, -64, 96, -96 }; // rotation units (256 = full turn)
+    constexpr float                kMaxSnap    = 1.0f;                                       // the floor must be right there
+    constexpr float                kMaxHeight  = 0.6f;                                       // same floor as the NPC
+
+    for (const int turn : kTurns)
+    {
+        const auto  rotation = static_cast<uint8>(npc.rotation + turn);
+        const float radians  = 2.0f * static_cast<float>(M_PI) - rotationToRadian(rotation);
+
+        for (const float dist : kDistances)
+        {
+            position_t probe = npc;
+            probe.x += cosf(radians) * dist;
+            probe.z += sinf(radians) * dist;
+
+            const auto floor = PZone->navMesh()->findClosestValidPoint(probe);
+            if (!floor)
+            {
+                continue;
+            }
+
+            if (distance(*floor, probe, true) <= kMaxSnap && std::abs(floor->y - npc.y) <= kMaxHeight && walkable(*floor))
+            {
+                position_t spot = *floor;
+                spot.rotation   = worldAngle(spot, npc); // facing the shopkeeper
+                return spot;
+            }
+        }
+    }
+
+    return npc;
+}
+
 auto withinVendorReach(CCharEntity* PChar) -> bool
 {
     for (const auto& pos : GetBotVendors(static_cast<uint16>(PChar->getZone())))
@@ -535,7 +637,7 @@ auto GetBotVendors(uint16 zoneId) -> std::vector<position_t>
             const std::string script((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
             if (script.find("xi.shop.general") != std::string::npos)
             {
-                vendors.push_back(PNpc->loc.p);
+                vendors.push_back(customerSpot(PZone, PNpc));
             }
         });
         // clang-format on
@@ -839,7 +941,7 @@ auto GetBotShops(uint16 zoneId) -> std::vector<BotShop>
             const std::string script((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
             if (script.find("xi.shop.general(") != std::string::npos || script.find("xi.shop.nation(") != std::string::npos)
             {
-                shops.push_back({ PNpc->id, PNpc->loc.p });
+                shops.push_back({ PNpc->id, customerSpot(PZone, PNpc) });
             }
         });
         // clang-format on
@@ -859,7 +961,7 @@ auto BrowseBotShop(uint32 charId, uint32 npcId) -> std::vector<BotShopItem>
         return result;
     }
 
-    auto* PNpc = PChar->loc.zone->GetEntity(static_cast<uint16>(npcId & 0xFFF), TYPE_NPC);
+    auto* PNpc = PChar->loc.zone->GetEntity(EntityTargId(npcId), TYPE_NPC);
     if (PNpc == nullptr || PNpc->id != npcId || distance(PChar->loc.p, PNpc->loc.p) > kShopReachYalms)
     {
         return result;

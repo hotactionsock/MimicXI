@@ -52,6 +52,7 @@ public:
     auto findFurthestValidPoint(const position_t& startPosition, const position_t& endPosition) const -> Maybe<position_t> override;
     auto snapToValidPosition(position_t& position) const -> void override;
     auto moveAlongSurface(const position_t& start, const position_t& end, position_t& result) const -> bool override;
+    auto pathPeak(const position_t& start, const position_t& end) -> Maybe<float> override;
 
     [[nodiscard]] static auto detourStatusString(const uint32 status) -> std::string;
 

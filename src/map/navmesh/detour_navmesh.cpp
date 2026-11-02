@@ -30,6 +30,7 @@
 #include <algorithm>
 #include <common/types/maybe.h>
 #include <fstream>
+#include <limits>
 #include <vector>
 
 namespace
@@ -405,6 +406,56 @@ auto DetourNavMesh::findPath(const position_t& start, const position_t& end) -> 
     }
 
     return PathResult{ std::move(outPoints), isPartial };
+}
+
+auto DetourNavMesh::pathPeak(const position_t& start, const position_t& end) -> Maybe<float>
+{
+    TracyZoneScoped;
+
+    if (navMesh_ == nullptr)
+    {
+        return std::nullopt;
+    }
+
+    const auto filter    = makeFilter();
+    const auto startPoly = lookupPoly(toDetour(start), polyPickExt, filter);
+    const auto endPoly   = lookupPoly(toDetour(end), polyPickExt, filter);
+    if (!startPoly || !endPoly)
+    {
+        return std::nullopt;
+    }
+
+    int32          pathPolyCount = 0;
+    const dtStatus status        = navMeshQuery_.findPath(startPoly->ref, endPoly->ref, startPoly->nearest.data(), endPoly->nearest.data(), &filter,
+                                                          navMeshQueryPolyData_.data(), &pathPolyCount, static_cast<int>(kPathPolyLimit));
+    if (dtStatusFailed(status) || (status & DT_PARTIAL_RESULT) != 0 || pathPolyCount <= 0)
+    {
+        return std::nullopt;
+    }
+
+    // Detour's Y is up (FFXI's y negated), so the peak is the largest Detour Y.
+    float peak = -std::numeric_limits<float>::max();
+    for (int32 i = 0; i < pathPolyCount; ++i)
+    {
+        const dtMeshTile* tile = nullptr;
+        const dtPoly*     poly = nullptr;
+        if (dtStatusFailed(navMesh_->getTileAndPolyByRef(navMeshQueryPolyData_[i], &tile, &poly)))
+        {
+            continue;
+        }
+
+        for (uint8 v = 0; v < poly->vertCount; ++v)
+        {
+            peak = std::max(peak, tile->verts[poly->verts[v] * 3 + 1]);
+        }
+    }
+
+    if (peak == -std::numeric_limits<float>::max())
+    {
+        return std::nullopt;
+    }
+
+    return -peak;
 }
 
 auto DetourNavMesh::findRandomPosition(const position_t& start, float maxRadius) const -> Maybe<position_t>

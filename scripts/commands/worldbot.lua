@@ -51,22 +51,8 @@ local STARTING_CITIES =
     { 'WINDURST_WATERS', 'PORT_WINDURST', 'WINDURST_WOODS' },         -- Windurst
 }
 
--- Random two-to-three syllable names, FFXI style (letters only, 3-15 chars).
-local NAME_ONSETS = { 'b', 'c', 'd', 'f', 'g', 'h', 'j', 'k', 'l', 'm', 'n', 'p', 'r', 's', 't', 'v', 'z', 'br', 'ch', 'dr', 'gr', 'kr', 'sh', 'th', 'tr', 'st', '' }
-local NAME_VOWELS = { 'a', 'e', 'i', 'o', 'u', 'a', 'e', 'ai', 'ia', 'ou', 'y' }
-local NAME_CODAS  = { '', '', '', 'n', 'r', 's', 'l', 'th', 'x', 'm', 'k', 'd' }
-
-local function randomName()
-    local name = ''
-    for _ = 1, math.random(2, 3) do
-        name = name .. NAME_ONSETS[math.random(#NAME_ONSETS)] .. NAME_VOWELS[math.random(#NAME_VOWELS)]
-    end
-
-    name = name .. NAME_CODAS[math.random(#NAME_CODAS)]
-    name = name:sub(1, 12)
-
-    return name:sub(1, 1):upper() .. name:sub(2)
-end
+-- Bot names: Final Fantasy series favourites with player-style fallbacks
+-- (see scripts/globals/worldbots_names.lua).
 
 local function usage(player)
     player:printToPlayer('!worldbot create <name> [race] [face] - created at your position; race/face random if omitted')
@@ -278,11 +264,12 @@ commandObj.onTrigger = function(player, args)
                 zoneId, x, y, z = xi.zone[cities[math.random(1, #cities)]], 0, 0, 0
             end
 
-            -- A random name can clash with an existing character - retry a few times.
+            -- A name can clash with an existing character - try candidates in turn.
             local charId = 0
-            for _ = 1, 10 do
-                charId = CreateBotCharacter(zoneId, x, y, z, math.random(0, 255),
-                    resolveRace(nil), resolveFace(nil), randomName(), STARTING_JOBS[math.random(#STARTING_JOBS)], math.random(0, 2))
+            local race, face = resolveRace(nil), resolveFace(nil)
+            local job, size  = STARTING_JOBS[math.random(#STARTING_JOBS)], math.random(0, 2)
+            for _, name in ipairs(xi.worldbotsNames.candidates(12)) do
+                charId = CreateBotCharacter(zoneId, x, y, z, math.random(0, 255), race, face, name, job, size)
                 if charId ~= 0 then
                     break
                 end

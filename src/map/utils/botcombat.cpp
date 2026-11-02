@@ -182,7 +182,7 @@ auto EngageBotTarget(uint32 charId, uint32 mobId) -> bool
     }
 
     auto* controller = dynamic_cast<CWorldBotController*>(PChar->PAI->GetController());
-    auto* PMob       = dynamic_cast<CMobEntity*>(PChar->loc.zone->GetEntity(static_cast<uint16>(mobId & 0xFFF), TYPE_MOB));
+    auto* PMob       = dynamic_cast<CMobEntity*>(PChar->loc.zone->GetEntity(EntityTargId(mobId), TYPE_MOB));
     if (controller == nullptr || PMob == nullptr || PMob->id != mobId)
     {
         return false;

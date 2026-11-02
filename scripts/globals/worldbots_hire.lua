@@ -1,10 +1,10 @@
 -----------------------------------
 -- xi.worldbots.hire - players hiring bots (Phase 5).
 --
--- Finding bots: every bot that isn't in a party shows in /sea as seeking a
--- party (the /invite flag), with a comment like "Lv24 White Mage looking for a
--- party". Players can also just /pcmd add a bot they see in the world. Bots
--- never invite players.
+-- Finding bots: players /pcmd add a bot they see in the world (or find in
+-- /sea). Bots don't flag themselves as seeking a party - real players don't
+-- all sit with the flag on, and a whole server of them looks fake. Bots never
+-- invite players.
 --
 -- Accepting: a bot accepts any real player's invite (a bot in a bots-only
 -- party leaves it first - engine-side, FreeBotForPlayerInvite). It then plays
@@ -26,7 +26,6 @@ xi.worldbots.hire = xi.worldbots.hire or {}
 local hire = xi.worldbots.hire
 
 local CHECK_INTERVAL_SEC  = 2  -- how often to look for invites / check the hire
-local SEEK_REFRESH_SEC    = 60 -- how often to refresh the /sea comment
 
 local function partyHasRealPlayer(engine)
     for _, m in ipairs(engine or {}) do
@@ -74,23 +73,13 @@ local function updateSync(bot, charId, state)
     end
 end
 
--- The /sea entry: seeking a party when free, nothing when in one.
+-- Bots keep the seeking-party (/invite) flag off. Cleared once per bot after
+-- it spawns, in case an older build left it set (it's saved with the character).
 local function updateSeeking(bot, charId, state, now)
-    local free = bot:getPartySize() <= 1 and not bot:isDead()
-    if free then
-        if state.seekingShown and now < (state.seekRefreshAt or 0) then
-            return
-        end
-
-        state.seekRefreshAt = now + SEEK_REFRESH_SEC
-        local comment = string.format('Lv%d %s looking for a party', GetBotTrueLevel(charId), xi.worldbots.log.jobName(bot:getMainJob()))
-        if comment ~= state.seekingShown then
-            SetBotSeekingParty(charId, true, comment)
-            state.seekingShown = comment
-        end
-    elseif state.seekingShown then
+    if not state.seekingCleared then
         SetBotSeekingParty(charId, false, '')
-        state.seekingShown = nil
+        state.seekingCleared = true
+        state.seekingShown   = nil
     end
 end
 

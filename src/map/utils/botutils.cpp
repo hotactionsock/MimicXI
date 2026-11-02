@@ -923,7 +923,11 @@ struct HuntMob
     uint8      minLevel;
     uint8      maxLevel;
     position_t spawnPoint;
+    bool       aggressive; // attacks on sight/sound - a danger to bots it outclasses
 };
+
+// A camp is judged by what lives within this many yalms of it.
+constexpr float kCampRadius = 30.0f;
 
 bool                                             g_huntBuilt = false;
 std::unordered_map<uint16, std::vector<HuntMob>> g_hunt;
@@ -952,7 +956,7 @@ void ensureHuntData()
                 return;
             }
 
-            mobs.push_back({ PMob->m_minLevel, std::max(PMob->m_minLevel, PMob->m_maxLevel), PMob->m_SpawnPoint });
+            mobs.push_back({ PMob->m_minLevel, std::max(PMob->m_minLevel, PMob->m_maxLevel), PMob->m_SpawnPoint, PMob->m_Aggro });
         });
     });
     // clang-format on
@@ -972,6 +976,29 @@ auto suitsLevel(const HuntMob& mob, uint8 level, uint8 partySize) -> bool
     }
 
     return false;
+}
+
+// The con range a bot (or party of partySize) hunts: see IsBotPrey.
+auto preyBand(uint8 partySize) -> std::pair<EMobDifficulty, EMobDifficulty>
+{
+    if (partySize >= 5)
+    {
+        return { EMobDifficulty::EvenMatch, EMobDifficulty::VeryTough };
+    }
+
+    if (partySize >= 3)
+    {
+        return { EMobDifficulty::DecentChallenge, EMobDifficulty::Tough };
+    }
+
+    return { EMobDifficulty::EasyPrey, EMobDifficulty::EvenMatch };
+}
+
+// A mob that would attack the bot unprovoked and outclasses what it can fight:
+// an aggressive mob tougher than its prey band even at its lowest level.
+auto threatens(const HuntMob& mob, uint8 level, uint8 partySize) -> bool
+{
+    return mob.aggressive && charutils::CheckMobLevel(level, mob.minLevel) > preyBand(partySize).second;
 }
 
 // ---- home cities ----
@@ -1011,20 +1038,8 @@ auto nearestHomeCity(uint8 nation, uint16 from) -> std::pair<uint16, uint8>
 
 auto IsBotPrey(uint8 botLevel, int32 mobLevel, uint8 partySize) -> bool
 {
-    auto lowest  = EMobDifficulty::EasyPrey;
-    auto highest = EMobDifficulty::EvenMatch;
-    if (partySize >= 5)
-    {
-        lowest  = EMobDifficulty::EvenMatch;
-        highest = EMobDifficulty::VeryTough;
-    }
-    else if (partySize >= 3)
-    {
-        lowest  = EMobDifficulty::DecentChallenge;
-        highest = EMobDifficulty::Tough;
-    }
-
-    const auto con = charutils::CheckMobLevel(botLevel, mobLevel);
+    const auto [lowest, highest] = preyBand(partySize);
+    const auto con               = charutils::CheckMobLevel(botLevel, mobLevel);
     return con >= lowest && con <= highest;
 }
 
@@ -1068,18 +1083,38 @@ auto GetBotLevelingZones(uint8 level, xi::ZoneId fromZone, uint8 maxHops, uint8 
             continue;
         }
 
-        const auto suitable = static_cast<uint32>(std::count_if(it->second.begin(), it->second.end(),
-                                                                [level, partySize](const HuntMob& mob) { return suitsLevel(mob, level, partySize); }));
+        uint32 suitable  = 0;
+        uint32 dangerous = 0;
+        for (const auto& mob : it->second)
+        {
+            if (suitsLevel(mob, level, partySize))
+            {
+                ++suitable;
+            }
+            else if (threatens(mob, level, partySize))
+            {
+                ++dangerous;
+            }
+        }
+
         if (suitable > 0)
         {
-            result.push_back({ zoneId, suitable, reach.hops });
+            result.push_back({ zoneId, suitable, reach.hops, dangerous });
         }
     }
 
+    // More prey, fewer hops - and a zone crawling with aggressive mobs that
+    // outclass the bot counts for much less, however much prey it has.
+    const auto score = [](const BotLevelingZone& z)
+    {
+        const float safety = static_cast<float>(z.suitable) / static_cast<float>(z.suitable + 2 * z.dangerous);
+        return static_cast<float>(z.suitable) / (1 + z.hops) * safety;
+    };
+
     std::sort(result.begin(), result.end(),
-              [](const BotLevelingZone& a, const BotLevelingZone& b)
+              [&](const BotLevelingZone& a, const BotLevelingZone& b)
               {
-                  return static_cast<float>(a.suitable) / (1 + a.hops) > static_cast<float>(b.suitable) / (1 + b.hops);
+                  return score(a) > score(b);
               });
 
     if (result.size() > 8)
@@ -1112,11 +1147,16 @@ auto GetBotHuntSpot(xi::ZoneId zoneId, uint8 level, uint8 partySize) -> std::opt
     }
 
     std::vector<const HuntMob*> suitable;
+    std::vector<const HuntMob*> threats;
     for (const auto& mob : it->second)
     {
         if (suitsLevel(mob, level, partySize))
         {
             suitable.push_back(&mob);
+        }
+        else if (threatens(mob, level, partySize))
+        {
+            threats.push_back(&mob);
         }
     }
 
@@ -1125,7 +1165,60 @@ auto GetBotHuntSpot(xi::ZoneId zoneId, uint8 level, uint8 partySize) -> std::opt
         return std::nullopt;
     }
 
-    return suitable[xirand::GetRandomNumber<std::size_t>(suitable.size())]->spawnPoint;
+    // A good camp is a safe one first - the fewest outclassing aggressive mobs
+    // within kCampRadius - and then a busy one: more prey around it.
+    struct Camp
+    {
+        const HuntMob* mob;
+        uint32         threats;
+        uint32         prey;
+    };
+
+    std::vector<Camp> camps;
+    camps.reserve(suitable.size());
+    uint32 fewestThreats = std::numeric_limits<uint32>::max();
+    for (const auto* mob : suitable)
+    {
+        Camp camp{ mob, 0, 0 };
+        for (const auto* threat : threats)
+        {
+            camp.threats += distance(mob->spawnPoint, threat->spawnPoint, true) <= kCampRadius ? 1 : 0;
+        }
+
+        for (const auto* other : suitable)
+        {
+            camp.prey += distance(mob->spawnPoint, other->spawnPoint, true) <= kCampRadius ? 1 : 0;
+        }
+
+        fewestThreats = std::min(fewestThreats, camp.threats);
+        camps.push_back(camp);
+    }
+
+    // Weighted by prey among the safest camps, so bots spread over the good
+    // camps rather than all piling into the single best one.
+    uint32 totalPrey = 0;
+    for (const auto& camp : camps)
+    {
+        totalPrey += camp.threats == fewestThreats ? camp.prey : 0;
+    }
+
+    auto roll = xirand::GetRandomNumber<uint32>(totalPrey);
+    for (const auto& camp : camps)
+    {
+        if (camp.threats != fewestThreats)
+        {
+            continue;
+        }
+
+        if (roll < camp.prey)
+        {
+            return camp.mob->spawnPoint;
+        }
+
+        roll -= camp.prey;
+    }
+
+    return suitable.front()->spawnPoint;
 }
 
 auto GetBotSocialSpots(xi::ZoneId zoneId) -> std::vector<BotSocialSpot>
