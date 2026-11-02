@@ -11,6 +11,8 @@ set(UTIL_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/blueutils.h
     ${CMAKE_CURRENT_SOURCE_DIR}/botcombat.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/botcombat.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/botjobs.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/botjobs.h
     ${CMAKE_CURRENT_SOURCE_DIR}/botinventory.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/botinventory.h
     ${CMAKE_CURRENT_SOURCE_DIR}/botutils.cpp

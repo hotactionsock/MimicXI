@@ -14,6 +14,9 @@ SET SQL_MODE="NO_AUTO_VALUE_ON_ZERO";
 --   active   - 1 = should be in the world: respawned automatically when the
 --              map server starts. 0 = parked (despawned by a GM).
 --   anchor_* - centre of the bot's loiter area, in its current zone.
+--   career_job - the main job this bot is working towards for life (xi.job id;
+--              0 = not chosen yet). It may level a basic job or a subjob first
+--              (see scripts/globals/worldbots_jobs.lua).
 --
 
 DROP TABLE IF EXISTS `world_bots`;
@@ -23,6 +26,7 @@ CREATE TABLE IF NOT EXISTS `world_bots` (
   `anchor_x` float(7,3)          NOT NULL DEFAULT 0,
   `anchor_y` float(7,3)          NOT NULL DEFAULT 0,
   `anchor_z` float(7,3)          NOT NULL DEFAULT 0,
+  `career_job` tinyint(2) unsigned NOT NULL DEFAULT 0,
   PRIMARY KEY (`charid`),
   KEY `active` (`active`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;

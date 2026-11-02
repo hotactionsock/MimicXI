@@ -176,6 +176,7 @@ local GOAL_STAY_CHANCE           = 0.75    -- chance to keep levelling where it 
 local GOAL_MAX_HOPS              = 6       -- don't plan levelling trips further than this
 local GOAL_MIN_SUITABLE          = 6       -- suitable mob spawns for a zone to count as a levelling zone
 local GOAL_RETRY_SEC             = 60      -- after a failed plan, wait before trying again
+local JOBS_RETRY_SEC             = 30 * 60 -- after a failed job change, wait this long before trying again
 
 -- Social spots (cities)
 local SOCIAL_SPOT_WEIGHTS        = { ah = 3, mog = 3, hp = 2 }
@@ -495,6 +496,20 @@ local function pickLevelingZone(bot, zoneId)
 end
 
 local function pickGoal(bot, charId, state, zoneId)
+    -- Time for a job change (career unlocked, subjob to level or swap)? Head
+    -- home to the Mog House first (worldbots_jobs.lua).
+    if GetSystemTime() >= (state.jobsRetryAt or 0) then
+        local want = xi.worldbots.jobs.plan(bot, charId, state)
+        if want then
+            local home = GetBotHomeZone(bot:getNation(), zoneId)
+            if home ~= 0 then
+                setGoal(charId, state, 'jobs', home)
+                state.goal.jobs = want
+                return true
+            end
+        end
+    end
+
     if math.random() < GOAL_HOME_CHANCE then
         local home = GetBotHomeZone(bot:getNation(), zoneId)
         if home ~= 0 then
@@ -616,6 +631,24 @@ local function relocateStep(bot, charId, state, now, currentPos, moving)
                 diag(charId, 'home point set')
             end
 
+            return
+        end
+
+        if walk.purpose == 'mog' then
+            local want = state.goal and state.goal.jobs
+            if want and xi.worldbots.jobs.apply(charId, want) then
+                diag(charId, 'changed jobs to %d/%d', want.main, want.sub)
+
+                -- New job: new spells, new stand-off range, new gear sets.
+                xi.worldbots.magic.refresh(bot, charId, state, now, true)
+                xi.worldbots.gear.plan(bot, charId, state)
+                xi.worldbots.gear.base(bot, charId, state)
+            else
+                diag(charId, 'job change failed')
+                state.jobsRetryAt = now + JOBS_RETRY_SEC
+            end
+
+            state.goal = nil -- pick a new (levelling) goal next
             return
         end
 
@@ -1080,6 +1113,30 @@ local function plan(bot, charId, state, now, zoneId)
     end
 
     -- Sell trip: walk to the nearest vendor (selling happens on arrival).
+    if goal.kind == 'jobs' then
+        local here = { x = bot:getXPos(), y = bot:getYPos(), z = bot:getZPos() }
+        local mogs = {}
+        for _, spot in ipairs(getSocialSpots(zoneId)) do
+            if spot.kind == 'mog' then
+                table.insert(mogs, spot)
+            end
+        end
+
+        local mog = nearestOf(mogs, here)
+        if mog == nil then
+            -- No Mog House here after all - try again later.
+            diag(charId, 'no Mog House in zone %d for a job change', zoneId)
+            state.goal        = nil
+            state.jobsRetryAt = now + JOBS_RETRY_SEC
+            return
+        end
+
+        local zone         = bot:getZone()
+        state.walk         = newPlan(zone and zone:getRandomNavmeshPoint(mog, 2) or mog)
+        state.walk.purpose = 'mog'
+        return
+    end
+
     if goal.kind == 'sell' then
         local vendor = nearestOf(GetBotVendors(zoneId), { x = bot:getXPos(), y = bot:getYPos(), z = bot:getZPos() })
         if vendor == nil then
@@ -1194,6 +1251,29 @@ xi.worldbots.setGoal = function(charId, kind, destZoneId)
     setGoal(charId, state, kind, target)
 
     return state.goal
+end
+
+-- One-line job summary for !worldbot jobs (nil if charId isn't a live bot).
+xi.worldbots.describeJobs = function(charId)
+    local bot = GetPlayerByID(charId)
+    if bot == nil then
+        return nil
+    end
+
+    return xi.worldbots.jobs.describe(bot, charId, getState(charId, GetSystemTime()))
+end
+
+-- Sets a bot's career job (GM override); it changes jobs at its next goal.
+xi.worldbots.setCareer = function(charId, job)
+    SetBotCareerJob(charId, job)
+    local state = states[charId]
+    if state then
+        state.careerJob   = job
+        state.jobsRetryAt = nil
+        if state.goal and state.goal.settled then
+            state.goal.untilTime = GetSystemTime() -- re-plan now
+        end
+    end
 end
 
 xi.worldbots.getGoal = function(charId)

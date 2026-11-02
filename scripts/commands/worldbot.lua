@@ -69,6 +69,8 @@ local function usage(player)
     player:printToPlayer('!worldbot delete all - permanently deletes every bot (bot accounts only)')
     player:printToPlayer('!worldbot list')
     player:printToPlayer('!worldbot zones - zones holding bots: awake/asleep, and why')
+    player:printToPlayer('!worldbot jobs <charid> - career job, current jobs and levels')
+    player:printToPlayer('!worldbot career <charid> <job> - set its career job (e.g. PLD or 7)')
     player:printToPlayer('!worldbot travel <charid> <zoneid> - route across zone lines to that zone')
     player:printToPlayer('!worldbot goal <charid> [level|home] - show the goal, or give it a new one')
     player:printToPlayer('!worldbot goal all <level|home> - give every spawned bot in your zone that goal')
@@ -406,6 +408,26 @@ commandObj.onTrigger = function(player, args)
                 player:printToPlayer(string.format('  line %d -> zone %d at (%.1f, %.1f, %.1f)', line.id, line.zoneId, line.x, line.y, line.z))
             end
         end
+    elseif sub == 'jobs' then
+        local charId = tonumber(rest)
+        if not charId then
+            usage(player)
+            return
+        end
+
+        local text = xi.worldbots.describeJobs(charId)
+        player:printToPlayer(text or 'That bot is not spawned.')
+    elseif sub == 'career' then
+        local charIdToken, jobToken = (rest or ''):match('^(%S+)%s+(%S+)$')
+        local charId = tonumber(charIdToken)
+        local job    = tonumber(jobToken) or (jobToken and xi.job[string.upper(jobToken)])
+        if not charId or not job or job <= 0 or not IsBotCharacter(charId) then
+            usage(player)
+            return
+        end
+
+        xi.worldbots.setCareer(charId, job)
+        player:printToPlayer(string.format('Bot %d career set to job %d; it changes jobs at its next goal.', charId, job))
     elseif sub == 'zones' then
         local zones = GetBotAwakeZones()
         if #zones == 0 then

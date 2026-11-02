@@ -67,6 +67,7 @@
 #include "utils/battleutils.h"
 #include "utils/botcombat.h"
 #include "utils/botinventory.h"
+#include "utils/botjobs.h"
 #include "utils/botutils.h"
 
 #include "utils/charutils.h"
@@ -365,6 +366,11 @@ void init(IPP mapIPP, bool isRunningInCI)
     lua.set_function("IsBotCasting", &luautils::IsBotCasting);
     lua.set_function("PlanBotGear", &luautils::PlanBotGear);
     lua.set_function("EquipBotGearSet", &luautils::EquipBotGearSet);
+    lua.set_function("GetBotJobInfo", &luautils::GetBotJobInfo);
+    lua.set_function("UnlockBotJob", &luautils::UnlockBotJob);
+    lua.set_function("ChangeBotJobs", &luautils::ChangeBotJobs);
+    lua.set_function("GetBotCareerJob", &luautils::GetBotCareerJob);
+    lua.set_function("SetBotCareerJob", &luautils::SetBotCareerJob);
     lua.set_function("WalkBotTo", &luautils::WalkBotTo);
     lua.set_function("SaveBotPosition", &luautils::SaveBotPosition);
     lua.set_function("SetBotActivity", &luautils::SetBotActivity);
@@ -2790,6 +2796,67 @@ uint8 EquipBotGearSet(uint32 charId, std::string const& name)
     TracyZoneScoped;
 
     return botutils::EquipBotGearSet(charId, name);
+}
+
+// { mainJob, subJob, subjobUnlocked, levels = { [job] = level }, unlocked = { [job] = bool } },
+// or nil if charId isn't a live bot. See botutils::GetBotJobInfo.
+sol::object GetBotJobInfo(uint32 charId)
+{
+    TracyZoneScoped;
+
+    const auto info = botutils::GetBotJobInfo(charId);
+    if (!info)
+    {
+        return sol::lua_nil;
+    }
+
+    auto table              = lua.create_table();
+    table["mainJob"]        = info->mainJob;
+    table["subJob"]         = info->subJob;
+    table["subjobUnlocked"] = info->subjobUnlocked;
+
+    auto levels   = lua.create_table();
+    auto unlocked = lua.create_table();
+    for (uint8 job = 1; job < MAX_JOBTYPE && job < info->levels.size(); ++job)
+    {
+        levels[job]   = info->levels[job];
+        unlocked[job] = info->unlocked[job];
+    }
+
+    table["levels"]   = levels;
+    table["unlocked"] = unlocked;
+    return table;
+}
+
+bool UnlockBotJob(uint32 charId, uint8 job)
+{
+    TracyZoneScoped;
+
+    return botutils::UnlockBotJob(charId, job);
+}
+
+bool ChangeBotJobs(uint32 charId, uint8 mainJob, uint8 subJob)
+{
+    TracyZoneScoped;
+
+    return botutils::ChangeBotJobs(charId, mainJob, subJob);
+}
+
+uint8 GetBotCareerJob(uint32 charId)
+{
+    TracyZoneScoped;
+
+    return botutils::GetBotCareerJob(charId);
+}
+
+void SetBotCareerJob(uint32 charId, uint8 job)
+{
+    TracyZoneScoped;
+
+    if (botutils::IsBotCharacter(charId))
+    {
+        botutils::SetBotCareerJob(charId, job);
+    }
 }
 
 sol::table GetBotVendors(uint16 zoneId)
