@@ -37,8 +37,8 @@ local BASIC_JOBS = { 'WAR', 'MNK', 'WHM', 'BLM', 'RDM', 'THF' }
 local CAREER_WEIGHTS =
 {
     WAR = 10, MNK = 8, THF = 7, PLD = 8, NIN = 6, DRK = 8, SAM = 7, DRG = 6,
-    WHM = 9, RDM = 8, BRD = 5, RUN = 5,
-    BLM = 0, SCH = 0, SMN = 0, RNG = 0, COR = 0, DNC = 0, GEO = 0,
+    WHM = 9, RDM = 8, BRD = 5, RUN = 5, BLM = 8,
+    SCH = 0, SMN = 0, RNG = 0, COR = 0, DNC = 0, GEO = 0,
     BLU = 0, PUP = 0, BST = 0,
 }
 
