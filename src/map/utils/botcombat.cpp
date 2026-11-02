@@ -46,6 +46,7 @@
 #include "zone_entities.h"
 #include "ability.h"
 #include "items/item_weapon.h"
+#include "party.h"
 #include "recast_container.h"
 #include "spell.h"
 #include "utils/battleutils.h"
@@ -402,7 +403,7 @@ auto GetBotSpells(uint32 charId) -> std::vector<BotSpell>
     return result;
 }
 
-auto CastBotSpell(uint32 charId, uint16 spellId) -> BotCastResult
+auto CastBotSpell(uint32 charId, uint16 spellId, uint32 targetId) -> BotCastResult
 {
     auto* PChar = liveBot(charId);
     if (PChar == nullptr || PChar->isDead() || spellId == 0 || spellId >= 1024 || !PChar->m_SpellList[spellId])
@@ -432,6 +433,30 @@ auto CastBotSpell(uint32 charId, uint16 spellId) -> BotCastResult
     {
         PTarget = PChar->GetBattleTarget();
         if (PTarget == nullptr || distance(PChar->loc.p, PTarget->loc.p) > PSpell->getRange())
+        {
+            return BotCastResult::NoTarget;
+        }
+    }
+    else if (targetId != 0 && targetId != PChar->id)
+    {
+        // A party member: the spell must allow it, and they must be here.
+        if ((PSpell->getValidTarget() & TARGET_PLAYER_PARTY) == 0 || PChar->PParty == nullptr)
+        {
+            return BotCastResult::Invalid;
+        }
+
+        PTarget = nullptr;
+        for (auto* PMember : PChar->PParty->members)
+        {
+            if (PMember != nullptr && PMember->id == targetId)
+            {
+                PTarget = PMember;
+                break;
+            }
+        }
+
+        if (PTarget == nullptr || PTarget->isDead() || PTarget->loc.zone != PChar->loc.zone ||
+            distance(PChar->loc.p, PTarget->loc.p) > PSpell->getRange())
         {
             return BotCastResult::NoTarget;
         }

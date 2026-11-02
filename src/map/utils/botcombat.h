@@ -120,9 +120,10 @@ enum class BotCastResult : uint8
 
 // Casts spellId through CPlayerController::Cast (the player path: recast, MP,
 // silence, range and target checks all apply). Enemy spells go at the bot's
-// current battle target, everything else at the bot itself. Stops any walk
-// first - moving interrupts a spell.
-auto CastBotSpell(uint32 charId, uint16 spellId) -> BotCastResult;
+// current battle target. Other spells go at the bot itself, or - with a
+// targetId - at that party member, if the spell can target party members and
+// they're alive and in range. Stops any walk first - moving interrupts a spell.
+auto CastBotSpell(uint32 charId, uint16 spellId, uint32 targetId = 0) -> BotCastResult;
 
 // True while the bot is casting (it can't act otherwise until it finishes).
 auto IsBotCasting(uint32 charId) -> bool;

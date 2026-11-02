@@ -63,7 +63,8 @@ local CURE_TIER_MISSING_HP   = { 0, 60, 140, 300, 500, 650 }
 
 -- kind: 'cure', 'buff' (self, keyed by effect), 'shadows', 'enfeeble' (enemy,
 --       keyed by effect), 'nuke', 'drain', 'aspir', 'song' (self, in combat),
---       'travel' (Sneak/Invisible - only cast by worldbots_travel.lua)
+--       'travel' (Sneak/Invisible - only cast by worldbots_travel.lua),
+--       'enmity' (Flash - only cast by a party tank, worldbots_roles.lua)
 -- prebuff: cast between fights when missing (otherwise in-combat upkeep only)
 local FAMILY_DEFS =
 {
@@ -101,6 +102,8 @@ local FAMILY_DEFS =
 
     sneak     = { kind = 'travel', effect = 'SNEAK',     spells = { 'SNEAK' } },
     invisible = { kind = 'travel', effect = 'INVISIBLE', spells = { 'INVISIBLE' } },
+
+    flash     = { kind = 'enmity', spells = { 'FLASH' } },
 
     drain     = { kind = 'drain', spells = { 'DRAIN', 'DRAIN_II', 'DRAIN_III' } },
     aspir     = { kind = 'aspir', spells = { 'ASPIR', 'ASPIR_II', 'ASPIR_III' } },
@@ -277,12 +280,13 @@ local function bestOf(bot, m, family, now, maxTier)
 end
 
 -- Casts spellId, backing off from it if the engine says no. True if cast.
-local function cast(bot, charId, m, spellId, now)
+-- targetId (optional): a party member to cast on, instead of self/enemy.
+local function cast(bot, charId, m, spellId, now, targetId)
     -- The right set for the spell (worldbots_gear.lua); swapped back once the
     -- cast is over (xi.worldbots.gear.base, from the AI loop).
     xi.worldbots.gear.forSpell(charId, m.owner, KIND_BY_ID[spellId])
 
-    local result = CastBotSpell(charId, spellId)
+    local result = CastBotSpell(charId, spellId, targetId or 0)
     if result == CAST_OK then
         m.fails[spellId] = nil
         return true
@@ -618,6 +622,45 @@ function magic.partyRest(bot, charId, state, now)
 
     bot:disengage()
     return true
+end
+
+-- Cures a party member (or itself), the tier sized to their missing HP.
+-- True if it started casting.
+function magic.cureMember(bot, charId, state, now, member)
+    local m       = magicState(state)
+    local missing = member:getMaxHP() - member:getHP()
+    local tier    = 1
+    for i, need in ipairs(CURE_TIER_MISSING_HP) do
+        if missing >= need then
+            tier = i
+        end
+    end
+
+    local id = bestOf(bot, m, families().cure, now, tier)
+    return id ~= nil and cast(bot, charId, m, id, now, member:getID())
+end
+
+-- Puts a buff family (Protect, Haste, Refresh...) on a party member who lacks
+-- it. True if it started casting.
+function magic.buffMember(bot, charId, state, now, member, name)
+    local m      = magicState(state)
+    local family = families()[name]
+    if
+        family == nil or
+        family.effect == nil or
+        member:hasStatusEffect(family.effect)
+    then
+        return false
+    end
+
+    local id = bestOf(bot, m, family, now)
+    return id ~= nil and cast(bot, charId, m, id, now, member:getID())
+end
+
+-- Does the bot know any spell of this family?
+function magic.knows(state, name)
+    local family = families()[name]
+    return family ~= nil and knowsAny(magicState(state), family)
 end
 
 -- Should the bot rest (/heal) for MP? Only bots that actually use MP for

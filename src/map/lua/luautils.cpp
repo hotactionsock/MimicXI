@@ -2743,11 +2743,12 @@ sol::table GetBotSpells(uint32 charId)
 }
 
 // 0 cast, 1 not ready, 2 no MP, 3 no/out-of-range target, 4 invalid - see botutils::BotCastResult.
-uint8 CastBotSpell(uint32 charId, uint16 spellId)
+// targetId (optional): a party member to cast on.
+uint8 CastBotSpell(uint32 charId, uint16 spellId, sol::optional<uint32> targetId)
 {
     TracyZoneScoped;
 
-    return static_cast<uint8>(botutils::CastBotSpell(charId, spellId));
+    return static_cast<uint8>(botutils::CastBotSpell(charId, spellId, targetId.value_or(0)));
 }
 
 void SetBotCombatRange(uint32 charId, float yalms)

@@ -346,7 +346,7 @@ auto UseBotWeaponSkill(uint32 charId) -> uint16;
 auto GetBotAbilities(uint32 charId) -> sol::table;
 auto UseBotAbility(uint32 charId, uint16 abilityId) -> bool;
 auto GetBotSpells(uint32 charId) -> sol::table;
-auto CastBotSpell(uint32 charId, uint16 spellId) -> uint8;
+auto CastBotSpell(uint32 charId, uint16 spellId, sol::optional<uint32> targetId) -> uint8;
 void SetBotCombatRange(uint32 charId, float yalms);
 auto IsBotCasting(uint32 charId) -> bool;
 auto ScanBotThreats(uint32 charId, float radius, sol::optional<uint8> partySize) -> sol::table;

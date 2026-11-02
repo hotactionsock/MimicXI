@@ -941,7 +941,10 @@ local function combatStep(bot, charId, state, now, moving)
         end
 
         xi.worldbots.gear.base(bot, charId, state)
-        if xi.worldbots.magic.idle(bot, charId, state, now) then
+        if
+            xi.worldbots.magic.idle(bot, charId, state, now) or
+            xi.worldbots.roles.act(bot, charId, state, now, false)
+        then
             return true
         end
     end
@@ -1012,6 +1015,13 @@ local function combatActions(bot, charId, state, now)
     if xi.worldbots.magic.partyRest(bot, charId, state, now) then
         diag(charId, 'out of MP in a party - resting')
         state.healing = true -- /heal starts once disengaged (combatStep)
+        return
+    end
+
+    -- The bot's party role: tank holds hate, healer triages, support buffs,
+    -- damage holds back while it has hate (worldbots_roles.lua).
+    if xi.worldbots.roles.act(bot, charId, state, now, true) then
+        diag(charId, 'party role action')
         return
     end
 

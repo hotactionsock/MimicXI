@@ -305,15 +305,29 @@ local function compose(anchor, candidates)
     return chosen
 end
 
--- Forms a party from chosen seekers: leader = highest level (longest wait on ties).
-local function formParty(chosen, now)
-    table.sort(chosen, function(a, b)
-        if a.level ~= b.level then
-            return a.level > b.level
+-- Forms a party from chosen seekers. The leader pulls, so it's the tank (a
+-- designated one if need be); otherwise the highest level, longest wait on ties.
+local function formParty(chosen, now, keepFirstAsLeader)
+    if not keepFirstAsLeader then
+        local list = {}
+        for _, c in ipairs(chosen) do
+            table.insert(list, { charId = c.charId, job = c.job })
         end
 
-        return a.since < b.since
-    end)
+        local planned = designateRoles(list)
+        table.sort(chosen, function(a, b)
+            local aTank, bTank = planned[a.charId] == 'tank', planned[b.charId] == 'tank'
+            if aTank ~= bTank then
+                return aTank
+            end
+
+            if a.level ~= b.level then
+                return a.level > b.level
+            end
+
+            return a.since < b.since
+        end)
+    end
 
     local leader    = chosen[1]
     local memberIds = {}
@@ -456,20 +470,9 @@ function party.forceForm(charIds, now)
         return nil
     end
 
-    -- Keep the GM's choice of leader: give it the top level for sorting.
-    chosen[1].level = 255
-    local record = formParty(chosen, now)
+    -- Keep the GM's choice of leader.
+    local record = formParty(chosen, now, true)
     if record then
-        -- Restore the real minimum level.
-        local minLevel = 99
-        for _, id in ipairs(record.members) do
-            local bot = GetPlayerByID(id)
-            if bot then
-                minLevel = math.min(minLevel, bot:getMainLvl())
-            end
-        end
-
-        record.level = minLevel
         sendToCamp(record, now)
     end
 
@@ -669,6 +672,22 @@ local function memberStep(bot, charId, state, now, moving, record)
 
         if state.healing then
             return true -- combatStep's resting branch handles getting up
+        end
+
+        -- Its role between fights: cures, party buffs (worldbots_roles.lua).
+        if IsBotCasting(charId) then
+            return true
+        end
+
+        if not moving and now >= (state.nextRoleActAt or 0) then
+            state.nextRoleActAt = now + 1
+            xi.worldbots.gear.base(bot, charId, state)
+            if
+                xi.worldbots.magic.idle(bot, charId, state, now) or
+                xi.worldbots.roles.act(bot, charId, state, now, false)
+            then
+                return true
+            end
         end
 
         local dx, dz = leader.x - bot:getXPos(), leader.z - bot:getZPos()
