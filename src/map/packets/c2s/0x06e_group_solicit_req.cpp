@@ -32,6 +32,8 @@
 #include "utils/blacklistutils.h"
 #include "utils/jailutils.h"
 #include "utils/zoneutils.h"
+#include "utils/botparty.h"
+#include "utils/botutils.h"
 
 auto GP_CLI_COMMAND_GROUP_SOLICIT_REQ::validate(MapSession* PSession, const CCharEntity* PChar) const -> PacketValidationResult
 {
@@ -88,6 +90,12 @@ void GP_CLI_COMMAND_GROUP_SOLICIT_REQ::process(MapSession* PSession, CCharEntity
                 if (PInvitee)
                 {
                     ShowDebug("%s sent party invite to %s", PInviter->getName(), PInvitee->getName());
+
+                    // A world bot in a bots-only party drops it for a player's invite.
+                    if (!botutils::IsBotEntity(PInviter))
+                    {
+                        botutils::FreeBotForPlayerInvite(PInvitee);
+                    }
 
                     // make sure invitee isn't dead or in jail, they aren't a party member and don't already have an invite pending, and your party is not full
                     if (PInvitee->isDead() || jailutils::InPrison(PInvitee) || PInvitee->InvitePending.UniqueNo != 0 || PInvitee->PParty != nullptr)

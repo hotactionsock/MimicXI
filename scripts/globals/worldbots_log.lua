@@ -170,6 +170,22 @@ function log.leftParty(bot, reason, minutes)
         { reason = reason, minutes = minutes })
 end
 
+function log.hired(bot, playerName)
+    log.event(bot, log.NOTABLE, 'party', 'hired', string.format('%s joined %s\'s party', bot:getName(), playerName),
+        { player = playerName, level = bot:getMainLvl(), job = bot:getMainJob() })
+end
+
+function log.synced(bot, level, playerName)
+    log.event(bot, log.DETAIL, 'party', 'synced', string.format('%s was level-synced to %d to match %s', bot:getName(), level, playerName),
+        { level = level, player = playerName })
+end
+
+function log.dismissed(bot, playerName, reason, minutes)
+    log.event(bot, log.NOTABLE, 'party', 'dismissed',
+        string.format('%s left %s\'s party after %d minute%s (%s)', bot:getName(), playerName, minutes, minutes == 1 and '' or 's', reason),
+        { player = playerName, reason = reason, minutes = minutes })
+end
+
 function log.skillchain(bot, wsName, element)
     log.event(bot, log.DETAIL, 'combat', 'skillchain',
         string.format('%s closed %s with %s', bot:getName(), log.skillchainName(element), wsName),

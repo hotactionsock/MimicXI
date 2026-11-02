@@ -1425,6 +1425,9 @@ xi.worldbots.onZoneTick = function(zone, bots)
         -- Activity log: level-ups and periodic hunt summaries (worldbots_log.lua).
         xi.worldbots.log.tick(bot, state, now)
 
+        -- Player invites, hired-bot level sync and leaving, the /sea entry (worldbots_hire.lua).
+        xi.worldbots.hire.tick(bot, charId, state, now)
+
         local currentPos = { x = bot:getXPos(), y = bot:getYPos(), z = bot:getZPos() }
         local moving     = state.lastPos ~= nil and distance(currentPos, state.lastPos) > 0.05
         state.lastPos    = currentPos

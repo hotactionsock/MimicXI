@@ -58,6 +58,9 @@ STATUS_TEMPLATES = {
     'formed':       'Leading a party',
     'left':         'Back on their own',
     'changed_job':  'Getting used to a new job',
+    'hired':        'Adventuring with {player}',
+    'dismissed':    'Back on their own',
+    'left_for_player': 'Joining a player\'s party',
     'sold':         'Selling loot in town',
     'created':      'Just starting out in {zone}',
 }
@@ -109,7 +112,7 @@ def describe_now(events, now=None):
             continue
 
         zone = e['data'].get('zone') or 'somewhere'
-        text = template.format(zone=zone)
+        text = template.format(zone=zone, player=e['data'].get('player') or 'a player')
 
         # "In Valkurm Dunes" after "set off for Valkurm Dunes to train" = training there.
         if e['event'] == 'arrived':

@@ -25,6 +25,7 @@
 #include "common/types/position.h"
 
 #include <optional>
+#include <string>
 #include <vector>
 
 // Parties for world bots (see botutils.h). Bots form real engine parties
@@ -32,6 +33,8 @@
 // party buffs and level sync all work exactly as for players. Who partners
 // with whom, and how a party plays, is xi.worldbots policy
 // (scripts/globals/worldbots_party.lua). Bots never invite players.
+class CCharEntity;
+
 namespace botutils
 {
 
@@ -64,5 +67,38 @@ struct BotPartyMember
 // The bot's party (itself included), or nullopt if it isn't in one. Members
 // on other map processes are left out.
 auto GetBotParty(uint32 charId) -> std::optional<std::vector<BotPartyMember>>;
+
+// ---- Hired by players (Phase 5) ----------------------------------------------
+
+// Called by the invite handler (GP_CLI_COMMAND_GROUP_SOLICIT_REQ) when a real
+// player invites a bot: a bot in a bots-only party leaves it so it can accept
+// - players come first. No-op for anyone else.
+void FreeBotForPlayerInvite(CCharEntity* PInvitee);
+
+// The charid of whoever has a party invite pending for this bot (0 = none),
+// and whether that inviter is itself a bot.
+struct BotInvite
+{
+    uint32 inviterId{};
+    bool   inviterIsBot{};
+};
+
+auto GetBotPendingInvite(uint32 charId) -> BotInvite;
+
+// Answers the pending invite through the real response handler
+// (GP_CLI_COMMAND_GROUP_SOLICIT_RES). True if the bot ended up in a party.
+auto AnswerBotInvite(uint32 charId, bool accept) -> bool;
+
+// Level sync for a hired bot: caps its level at `level` with the Level
+// Restriction effect (EXP is then earned for the capped level, as with level
+// sync). 0 removes the cap. Only ever touches a cap it set itself.
+void SetBotLevelSync(uint32 charId, uint8 level);
+
+// The bot's real main-job level (not capped by level sync).
+auto GetBotTrueLevel(uint32 charId) -> uint8;
+
+// Shows the bot in /sea as seeking a party (the /invite flag) with an
+// "EXP party: seeking party" comment, or clears both.
+void SetBotSeekingParty(uint32 charId, bool seeking, const std::string& comment);
 
 } // namespace botutils

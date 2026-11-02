@@ -628,8 +628,12 @@ local function memberStep(bot, charId, state, now, moving, record)
         return false
     end
 
-    -- Wants a job change: leave the party first (it then plans as normal).
-    if now >= (state.nextPartyCheckAt or 0) then
+    -- Wants a job change: leave the party first (it then plans as normal) -
+    -- unless a player hired it: it stays until the player lets it go.
+    if
+        not xi.worldbots.hire.isHired(state) and
+        now >= (state.nextPartyCheckAt or 0)
+    then
         state.nextPartyCheckAt = now + CHECK_INTERVAL_SEC
         if xi.worldbots.jobs.plan(bot, charId, state) then
             xi.worldbots.log.leftParty(bot, 'to change jobs', math.floor((now - record.formedAt) / 60))
@@ -654,25 +658,42 @@ local function memberStep(bot, charId, state, now, moving, record)
     state.goal.untilTime = now + 24 * 60 * 60 -- the party decides when it ends
     state.travel, state.walk = nil, nil
 
-    -- Assist: fight what the leader fights.
-    if leader.engaged and leader.targetId ~= 0 then
+    -- Assist: fight what the leader fights - or, if the leader isn't fighting
+    -- (say, a mage player standing back), what another member in this zone is
+    -- fighting, players first.
+    local fighter = (leader.engaged and leader.targetId ~= 0) and leader or nil
+    if fighter == nil then
+        for _, m in ipairs(engine) do
+            if
+                m.charId ~= charId and
+                m.engaged and
+                m.targetId ~= 0 and
+                m.zoneId == bot:getZoneID() and
+                (fighter == nil or (fighter.isBot and not m.isBot))
+            then
+                fighter = m
+            end
+        end
+    end
+
+    if fighter then
         if state.healing then
             SetBotHealing(charId, false)
             state.healing = false
         end
 
-        local dx, dz = leader.x - bot:getXPos(), leader.z - bot:getZPos()
+        local dx, dz = fighter.x - bot:getXPos(), fighter.z - bot:getZPos()
         if math.sqrt(dx * dx + dz * dz) <= ASSIST_RANGE_YALMS then
             local target = bot:getTarget()
             if
                 not bot:isEngaged() or
                 target == nil or
-                target:getID() ~= leader.targetId
+                target:getID() ~= fighter.targetId
             then
-                EngageBotTarget(charId, leader.targetId)
+                EngageBotTarget(charId, fighter.targetId)
             end
         else
-            WalkBotTo(charId, leader.x, leader.y, leader.z)
+            WalkBotTo(charId, fighter.x, fighter.y, fighter.z)
         end
 
         return true

@@ -384,6 +384,11 @@ void init(IPP mapIPP, bool isRunningInCI)
     lua.set_function("FormBotParty", &luautils::FormBotParty);
     lua.set_function("LeaveBotParty", &luautils::LeaveBotParty);
     lua.set_function("GetBotParty", &luautils::GetBotParty);
+    lua.set_function("GetBotPendingInvite", &luautils::GetBotPendingInvite);
+    lua.set_function("AnswerBotInvite", &luautils::AnswerBotInvite);
+    lua.set_function("SetBotLevelSync", &luautils::SetBotLevelSync);
+    lua.set_function("GetBotTrueLevel", &luautils::GetBotTrueLevel);
+    lua.set_function("SetBotSeekingParty", &luautils::SetBotSeekingParty);
     lua.set_function("LogBotEvent", &luautils::LogBotEvent);
     lua.set_function("TakeBotHuntProgress", &luautils::TakeBotHuntProgress);
     lua.set_function("GetBotZoneName", &luautils::GetBotZoneName);
@@ -3044,6 +3049,48 @@ sol::object GetBotParty(uint32 charId)
     }
 
     return table;
+}
+
+// { inviterId, inviterIsBot } for a pending party invite, or nil.
+sol::object GetBotPendingInvite(uint32 charId)
+{
+    TracyZoneScoped;
+
+    const auto invite = botutils::GetBotPendingInvite(charId);
+    if (invite.inviterId == 0)
+    {
+        return sol::lua_nil;
+    }
+
+    return lua.create_table_with("inviterId", invite.inviterId, "inviterIsBot", invite.inviterIsBot);
+}
+
+bool AnswerBotInvite(uint32 charId, bool accept)
+{
+    TracyZoneScoped;
+
+    return botutils::AnswerBotInvite(charId, accept);
+}
+
+void SetBotLevelSync(uint32 charId, uint8 level)
+{
+    TracyZoneScoped;
+
+    botutils::SetBotLevelSync(charId, level);
+}
+
+uint8 GetBotTrueLevel(uint32 charId)
+{
+    TracyZoneScoped;
+
+    return botutils::GetBotTrueLevel(charId);
+}
+
+void SetBotSeekingParty(uint32 charId, bool seeking, sol::optional<std::string> comment)
+{
+    TracyZoneScoped;
+
+    botutils::SetBotSeekingParty(charId, seeking, comment.value_or(""));
 }
 
 // level 1-3 (milestone/notable/detail), category, event key, message, and an

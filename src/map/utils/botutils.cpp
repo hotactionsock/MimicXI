@@ -1328,6 +1328,12 @@ auto botDemand(CCharEntity* PChar, timer::time_point now, uint32 unixNow) -> flo
         state.lastProgress = now;
     }
 
+    // A party invite waiting: the zone has to tick for the AI to answer it.
+    if (PChar->InvitePending.UniqueNo != 0)
+    {
+        return 1.0f;
+    }
+
     switch (state.activity)
     {
         case BotActivity::Unknown:
