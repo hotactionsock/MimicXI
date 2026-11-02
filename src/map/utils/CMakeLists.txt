@@ -9,6 +9,10 @@ set(UTIL_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/blacklistutils.h
     ${CMAKE_CURRENT_SOURCE_DIR}/blueutils.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/blueutils.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/botcombat.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/botcombat.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/botinventory.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/botinventory.h
     ${CMAKE_CURRENT_SOURCE_DIR}/botutils.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/botutils.h
     ${CMAKE_CURRENT_SOURCE_DIR}/charutils.cpp

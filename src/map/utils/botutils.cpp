@@ -25,6 +25,8 @@
 #include "common/ipp.h"
 #include "common/logging.h"
 #include "common/macros.h"
+#include "common/utils.h"
+#include "common/xirand.h"
 
 #include "ai/ai_container.h"
 #include "ai/controllers/world_bot_controller.h"
@@ -35,18 +37,48 @@
 #include "packet_system.h"
 #include "packets/basic.h"
 #include "packets/c2s/0x00a_login.h"
+#include "zone.h"
+#include "zone_entities.h"
+#include "navmesh/navmesh.h"
+#include "entities/mob_entity.h"
+#include "entities/npc_entity.h"
 
 #include "utils/charutils.h"
 #include "utils/zoneutils.h"
 
 #include <algorithm>
+#include <limits>
+#include <unordered_map>
+#include <cmath>
 #include <format>
 
 namespace botutils
 {
 
-auto CreateBotCharacter(xi::ZoneId zoneId, float x, float y, float z, uint8 rotation, CharRace race, CharFace face, const std::string& name) -> uint32
+namespace
 {
+
+constexpr uint8 kNationCount = 3; // San d'Oria, Bastok, Windurst - see kHomeCities
+
+// Defined with the world-map helpers further down.
+auto nearestHomeCity(uint8 nation, uint16 from) -> std::pair<uint16, uint8>;
+void ensureCityHomePoint(CCharEntity* PChar);
+
+} // namespace
+
+auto CreateBotCharacter(xi::ZoneId zoneId, float x, float y, float z, uint8 rotation, CharRace race, CharFace face, const std::string& name,
+                        xi::Job job, uint8 size) -> uint32
+{
+    // Names are unique, as for real characters. Checked before anything is
+    // written so a clash (e.g. a random name in a mass create) leaves no orphans.
+    {
+        const auto rset = db::preparedStmt("SELECT charid FROM chars WHERE charname = ? LIMIT 1", name);
+        if (rset && rset->rowsCount() > 0)
+        {
+            return 0;
+        }
+    }
+
     uint32 accId = 0;
 
     {
@@ -88,21 +120,35 @@ auto CreateBotCharacter(xi::ZoneId zoneId, float x, float y, float z, uint8 rota
 
     // Mirrors loginHelpers::saveCharacter's row set (that helper lives in the
     // login binary and isn't linked into the map server, so it's reproduced here).
+    // Nation = whichever nation's city is the fewest zone hops from where the
+    // bot is created, so a bot made in Gustaberg calls Bastok home.
+    uint8 nation     = 0;
+    uint8 nationHops = std::numeric_limits<uint8>::max();
+    for (uint8 n = 0; n < kNationCount; ++n)
+    {
+        const auto [city, hops] = nearestHomeCity(n, static_cast<uint16>(zoneId));
+        if (city != 0 && hops < nationHops)
+        {
+            nation     = n;
+            nationHops = hops;
+        }
+    }
+
     if (!db::preparedStmt("INSERT INTO chars(charid,accid,charname,pos_zone,pos_rot,pos_x,pos_y,pos_z,nation) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?)",
-                          charId, accId, name, static_cast<uint16>(zoneId), rotation, x, y, z, 0))
+                          charId, accId, name, static_cast<uint16>(zoneId), rotation, x, y, z, nation))
     {
         ShowError("botutils::CreateBotCharacter: unable to create chars row");
         return 0;
     }
 
     if (!db::preparedStmt("INSERT INTO char_look(charid,face,race,size) VALUES(?, ?, ?, ?)",
-                          charId, static_cast<uint8>(face), static_cast<uint8>(race), static_cast<uint16>(CharSize::Small)))
+                          charId, static_cast<uint8>(face), static_cast<uint8>(race), static_cast<uint16>(std::min<uint8>(size, 2))))
     {
         ShowError("botutils::CreateBotCharacter: unable to create char_look row");
         return 0;
     }
 
-    if (!db::preparedStmt("INSERT INTO char_stats(charid,mjob) VALUES(?, ?)", charId, static_cast<uint8>(xi::Job::WAR)))
+    if (!db::preparedStmt("INSERT INTO char_stats(charid,mjob) VALUES(?, ?)", charId, static_cast<uint8>(job)))
     {
         ShowError("botutils::CreateBotCharacter: unable to create char_stats row");
         return 0;
@@ -169,6 +215,60 @@ auto EditBotCharacter(uint32 charId, CharRace race, CharFace face, const std::st
 
     return true;
 }
+
+namespace
+{
+
+// The engine loads a character's look (char_look) separately from its gear and
+// never reconciles the two - harmless for real players, whose race can't change,
+// but a bot edited to another race keeps the old race's gear models on show
+// while LoadEquip (correctly) refuses to put that gear on. Rebuild the visible
+// equipment slots from what's actually equipped, before the bot is spawned to
+// anyone. Empty slots covered by another item (e.g. a robe hiding the head) are
+// left alone - that item owns their look.
+void reconcileLook(CCharEntity* PChar)
+{
+    uint16 covered = 0;
+    for (uint8 slot = SLOT_HEAD; slot <= SLOT_FEET; ++slot)
+    {
+        if (auto* PItem = PChar->getEquip(static_cast<SLOTTYPE>(slot)))
+        {
+            const auto lookMask = PItem->getRemoveSlotLookId();
+            covered |= lookMask > 0 ? lookMask : PItem->getRemoveSlotId();
+        }
+    }
+
+    const auto lookFor = [&](SLOTTYPE slot, uint16 current) -> uint16
+    {
+        if (auto* PItem = PChar->getEquip(slot))
+        {
+            return PItem->getModelId();
+        }
+
+        return (covered & (1 << slot)) ? current : 0;
+    };
+
+    look_t look = PChar->look;
+
+    look.head   = lookFor(SLOT_HEAD, look.head);
+    look.body   = lookFor(SLOT_BODY, look.body);
+    look.hands  = lookFor(SLOT_HANDS, look.hands);
+    look.legs   = lookFor(SLOT_LEGS, look.legs);
+    look.feet   = lookFor(SLOT_FEET, look.feet);
+    look.main   = lookFor(SLOT_MAIN, look.main);
+    look.sub    = lookFor(SLOT_SUB, look.sub);
+    look.ranged = lookFor(SLOT_RANGED, look.ranged);
+
+    if (look.head != PChar->look.head || look.body != PChar->look.body || look.hands != PChar->look.hands ||
+        look.legs != PChar->look.legs || look.feet != PChar->look.feet || look.main != PChar->look.main ||
+        look.sub != PChar->look.sub || look.ranged != PChar->look.ranged)
+    {
+        PChar->look = look;
+        PChar->setPersist(CharPersist::Look);
+    }
+}
+
+} // namespace
 
 auto SpawnBotCharacter(uint32 charId) -> CCharEntity*
 {
@@ -244,6 +344,8 @@ auto SpawnBotCharacter(uint32 charId) -> CCharEntity*
         return nullptr;
     }
 
+    reconcileLook(PChar.get());
+
     // Real login relies on the destination zone already being loaded (a real
     // client can only have gotten there by zoning through it); a bot has no such
     // guarantee, so load it explicitly first.
@@ -277,6 +379,10 @@ auto SpawnBotCharacter(uint32 charId) -> CCharEntity*
     // packets - a bot never sends any) with one that owns a real CPathFind and
     // walks it toward wherever WalkBotTo() points it, at normal walking speed.
     PBotChar->PAI->SetController(std::make_unique<CWorldBotController>(PBotChar));
+
+    // After the login handler ran (a first login's charCreate sets the home
+    // point wherever the character stands - for a bot, out in the field).
+    ensureCityHomePoint(PBotChar);
 
     db::preparedStmt("UPDATE world_bots SET active = 1 WHERE charid = ?", charId);
 
@@ -513,6 +619,621 @@ auto TeleportBotCharacter(uint32 charId, xi::ZoneId zoneId, float x, float y, fl
     SetBotAnchor(charId, x, y, z);
 
     return SpawnBotCharacter(charId);
+}
+
+namespace
+{
+
+constexpr float kZoneLineReachYalms     = 20.0f;
+constexpr float kZoneLineMinRadius      = 2.5f;
+constexpr float kZoneLineMaxRadius      = 10.0f;
+constexpr float kZoneLineDefaultRadius  = 4.0f;
+constexpr float kZoneLineVerticalYalms  = 6.0f;
+constexpr float kReverseLineMatchYalms  = 40.0f;
+
+auto isBotUsableZoneLine(const zoneLine_t& line) -> bool
+{
+    // Mog House entrances (zmr* classic cities, zms* WoTG [S] + Adoulin) - see
+    // GP_CLI_COMMAND_MAPRECT. Their "destination" is the player's own Mog House.
+    const auto* tag = reinterpret_cast<const char*>(&line.zoneLineId);
+    if (tag[0] == 'z' && tag[1] == 'm' && (tag[2] == 'r' || tag[2] == 's'))
+    {
+        return false;
+    }
+
+    if (line.destinationZoneId == line.originZoneId)
+    {
+        return false;
+    }
+
+    // Only zones this process hosts (GetZone is null otherwise), and never into
+    // instanced content.
+    auto* PDestination = zoneutils::GetZone(line.destinationZoneId);
+    if (PDestination == nullptr)
+    {
+        return false;
+    }
+
+    return (PDestination->GetTypeMask() & xi::ZoneType::Instanced) == xi::ZoneType::Unknown;
+}
+
+// See FindBotZoneLineAt: half the width of the return line's arrival box.
+auto zoneLineRadius(const zoneLine_t& line) -> float
+{
+    auto* PDestination = zoneutils::GetZone(line.destinationZoneId);
+    if (PDestination == nullptr)
+    {
+        return kZoneLineDefaultRadius;
+    }
+
+    const zoneLine_t* reverse     = nullptr;
+    float             reverseDist = kReverseLineMatchYalms;
+
+    for (const auto* candidate : PDestination->GetZoneLines())
+    {
+        if (candidate != nullptr && candidate->destinationZoneId == line.originZoneId)
+        {
+            const float d = distance(candidate->destinationPos, line.originPos, true);
+            if (d < reverseDist)
+            {
+                reverse     = candidate;
+                reverseDist = d;
+            }
+        }
+    }
+
+    if (reverse == nullptr)
+    {
+        return kZoneLineDefaultRadius;
+    }
+
+    return std::clamp(std::max(reverse->destinationScaleX, reverse->destinationScaleZ) * 0.5f, kZoneLineMinRadius, kZoneLineMaxRadius);
+}
+
+} // namespace
+
+auto FindBotZoneLineAt(CZone* PZone, const position_t& pos) -> uint32
+{
+    if (PZone == nullptr)
+    {
+        return 0;
+    }
+
+    for (const auto* line : PZone->GetZoneLines())
+    {
+        if (line == nullptr || std::abs(pos.y - line->originPos.y) > kZoneLineVerticalYalms)
+        {
+            continue;
+        }
+
+        if (distance(pos, line->originPos, true) <= zoneLineRadius(*line) && isBotUsableZoneLine(*line))
+        {
+            return line->zoneLineId;
+        }
+    }
+
+    return 0;
+}
+
+void TickBotSenses(CZone* PZone)
+{
+    if (PZone == nullptr)
+    {
+        return;
+    }
+
+    const auto now = timer::now();
+
+    // Collect first: SpawnMOBs can engage mobs, which shouldn't happen mid-iteration.
+    std::vector<CCharEntity*> due;
+
+    // clang-format off
+    PZone->GetZoneEntities()->ForEachChar([&](CCharEntity* PChar)
+    {
+        if (!IsBotEntity(PChar) || PChar->isDead() || PChar->PAI == nullptr)
+        {
+            return;
+        }
+
+        if (auto* controller = dynamic_cast<CWorldBotController*>(PChar->PAI->GetController()); controller && controller->SenseDue(now))
+        {
+            due.push_back(PChar);
+        }
+    });
+    // clang-format on
+
+    for (auto* PChar : due)
+    {
+        PZone->SpawnMOBs(PChar);
+    }
+}
+
+void ProcessPendingZoneLines(CZone* PZone)
+{
+    if (PZone == nullptr)
+    {
+        return;
+    }
+
+    // Collect first: crossing removes the bot from this zone's char list.
+    std::vector<std::pair<uint32, uint32>> crossings;
+
+    // clang-format off
+    PZone->GetZoneEntities()->ForEachChar([&](CCharEntity* PChar)
+    {
+        if (!IsBotEntity(PChar) || PChar->PAI == nullptr)
+        {
+            return;
+        }
+
+        if (auto* controller = dynamic_cast<CWorldBotController*>(PChar->PAI->GetController()))
+        {
+            if (const auto lineId = controller->TakePendingZoneLine(); lineId != 0)
+            {
+                crossings.emplace_back(PChar->id, lineId);
+            }
+        }
+    });
+    // clang-format on
+
+    for (const auto& [charId, lineId] : crossings)
+    {
+        ZoneBotThroughLine(charId, lineId);
+    }
+}
+
+auto GetBotZoneLines(xi::ZoneId zoneId) -> std::vector<BotZoneLine>
+{
+    std::vector<BotZoneLine> result;
+
+    auto* PZone = zoneutils::GetZone(zoneId);
+    if (PZone == nullptr)
+    {
+        return result;
+    }
+
+    for (const auto* line : PZone->GetZoneLines())
+    {
+        if (line != nullptr && isBotUsableZoneLine(*line))
+        {
+            result.push_back({ line->zoneLineId, static_cast<uint16>(line->destinationZoneId), line->originPos, zoneLineRadius(*line) });
+        }
+    }
+
+    return result;
+}
+
+namespace
+{
+
+// ---- zone-line graph ----
+
+struct GraphEdge
+{
+    uint32 lineId;
+    uint16 destinationZoneId;
+};
+
+bool                                            g_graphBuilt = false;
+std::unordered_map<uint16, std::vector<GraphEdge>> g_graph;
+
+void ensureGraph()
+{
+    if (g_graphBuilt)
+    {
+        return;
+    }
+
+    // clang-format off
+    zoneutils::ForEachZone([](CZone* PZone)
+    {
+        auto& edges = g_graph[static_cast<uint16>(PZone->GetID())];
+        for (const auto& line : GetBotZoneLines(PZone->GetID()))
+        {
+            edges.push_back({ line.zoneLineId, line.destinationZoneId });
+        }
+    });
+    // clang-format on
+
+    g_graphBuilt = true;
+}
+
+struct Reach
+{
+    uint8  hops;
+    uint32 firstLineId; // zone line out of the start zone on a shortest route (0 for the start)
+};
+
+// Breadth-first search over the zone-line graph from `from`, up to maxHops.
+auto reachableZones(uint16 from, uint8 maxHops) -> std::unordered_map<uint16, Reach>
+{
+    ensureGraph();
+
+    std::unordered_map<uint16, Reach> reached;
+    std::vector<uint16>               frontier{ from };
+    reached[from] = { 0, 0 };
+
+    for (uint8 hops = 1; hops <= maxHops && !frontier.empty(); ++hops)
+    {
+        std::vector<uint16> next;
+        for (const auto zoneId : frontier)
+        {
+            const auto it = g_graph.find(zoneId);
+            if (it == g_graph.end())
+            {
+                continue;
+            }
+
+            for (const auto& edge : it->second)
+            {
+                if (reached.contains(edge.destinationZoneId))
+                {
+                    continue;
+                }
+
+                const uint32 firstLine           = zoneId == from ? edge.lineId : reached[zoneId].firstLineId;
+                reached[edge.destinationZoneId] = { hops, firstLine };
+                next.push_back(edge.destinationZoneId);
+            }
+        }
+        frontier = std::move(next);
+    }
+
+    return reached;
+}
+
+constexpr uint8 kMaxRouteHops = 40;
+
+// ---- huntable mobs ----
+
+struct HuntMob
+{
+    uint8      minLevel;
+    uint8      maxLevel;
+    position_t spawnPoint;
+};
+
+bool                                             g_huntBuilt = false;
+std::unordered_map<uint16, std::vector<HuntMob>> g_hunt;
+
+void ensureHuntData()
+{
+    if (g_huntBuilt)
+    {
+        return;
+    }
+
+    // clang-format off
+    zoneutils::ForEachZone([](CZone* PZone)
+    {
+        if ((PZone->GetTypeMask() & xi::ZoneType::Instanced) != xi::ZoneType::Unknown)
+        {
+            return;
+        }
+
+        auto& mobs = g_hunt[static_cast<uint16>(PZone->GetID())];
+        PZone->GetZoneEntities()->ForEachMob([&](CMobEntity* PMob)
+        {
+            if (PMob->m_Type != xi::MobType::Normal || PMob->m_SpawnType != xi::SpawnType::Normal ||
+                PMob->m_RespawnTime <= timer::duration::zero() || PMob->PMaster != nullptr || PMob->m_minLevel == 0)
+            {
+                return;
+            }
+
+            mobs.push_back({ PMob->m_minLevel, std::max(PMob->m_minLevel, PMob->m_maxLevel), PMob->m_SpawnPoint });
+        });
+    });
+    // clang-format on
+
+    g_huntBuilt = true;
+}
+
+// A mob suits a bot if any level it can spawn at is prey for the bot.
+auto suitsLevel(const HuntMob& mob, uint8 level) -> bool
+{
+    for (int mobLevel = mob.minLevel; mobLevel <= mob.maxLevel; ++mobLevel)
+    {
+        if (IsBotPrey(level, mobLevel))
+        {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+// ---- home cities ----
+
+const std::vector<std::vector<xi::ZoneId>> kHomeCities = {
+    { xi::ZoneId::SouthernSanDoria, xi::ZoneId::NorthernSanDoria, xi::ZoneId::PortSanDoria },
+    { xi::ZoneId::BastokMines, xi::ZoneId::BastokMarkets, xi::ZoneId::PortBastok },
+    { xi::ZoneId::WindurstWaters, xi::ZoneId::WindurstWalls, xi::ZoneId::PortWindurst, xi::ZoneId::WindurstWoods },
+};
+
+// Hops from `from` to the nearest city of `nation`, plus that city (0 = none).
+auto nearestHomeCity(uint8 nation, uint16 from) -> std::pair<uint16, uint8>
+{
+    if (nation >= kHomeCities.size())
+    {
+        return { 0, 0 };
+    }
+
+    const auto reached = reachableZones(from, kMaxRouteHops);
+
+    uint16 best     = 0;
+    uint8  bestHops = std::numeric_limits<uint8>::max();
+    for (const auto zoneId : kHomeCities[nation])
+    {
+        const auto it = reached.find(static_cast<uint16>(zoneId));
+        if (it != reached.end() && it->second.hops < bestHops)
+        {
+            best     = static_cast<uint16>(zoneId);
+            bestHops = it->second.hops;
+        }
+    }
+
+    return { best, bestHops };
+}
+
+} // namespace
+
+auto IsBotPrey(uint8 botLevel, int32 mobLevel) -> bool
+{
+    const auto con = charutils::CheckMobLevel(botLevel, mobLevel);
+    return con >= EMobDifficulty::EasyPrey && con <= EMobDifficulty::EvenMatch;
+}
+
+auto GetBotRouteNextLine(xi::ZoneId fromZone, xi::ZoneId toZone) -> std::optional<BotRouteHop>
+{
+    const auto from = static_cast<uint16>(fromZone);
+    const auto to   = static_cast<uint16>(toZone);
+    if (from == to)
+    {
+        return std::nullopt;
+    }
+
+    const auto reached = reachableZones(from, kMaxRouteHops);
+    const auto it      = reached.find(to);
+    if (it == reached.end())
+    {
+        return std::nullopt;
+    }
+
+    for (const auto& line : GetBotZoneLines(fromZone))
+    {
+        if (line.zoneLineId == it->second.firstLineId)
+        {
+            return BotRouteHop{ line, it->second.hops };
+        }
+    }
+
+    return std::nullopt;
+}
+
+auto GetBotLevelingZones(uint8 level, xi::ZoneId fromZone, uint8 maxHops) -> std::vector<BotLevelingZone>
+{
+    ensureHuntData();
+
+    std::vector<BotLevelingZone> result;
+    for (const auto& [zoneId, reach] : reachableZones(static_cast<uint16>(fromZone), maxHops))
+    {
+        const auto it = g_hunt.find(zoneId);
+        if (it == g_hunt.end())
+        {
+            continue;
+        }
+
+        const auto suitable = static_cast<uint32>(std::count_if(it->second.begin(), it->second.end(),
+                                                                [level](const HuntMob& mob) { return suitsLevel(mob, level); }));
+        if (suitable > 0)
+        {
+            result.push_back({ zoneId, suitable, reach.hops });
+        }
+    }
+
+    std::sort(result.begin(), result.end(),
+              [](const BotLevelingZone& a, const BotLevelingZone& b)
+              {
+                  return static_cast<float>(a.suitable) / (1 + a.hops) > static_cast<float>(b.suitable) / (1 + b.hops);
+              });
+
+    if (result.size() > 8)
+    {
+        result.resize(8);
+    }
+
+    return result;
+}
+
+auto GetBotHuntSpot(xi::ZoneId zoneId, uint8 level) -> std::optional<position_t>
+{
+    ensureHuntData();
+
+    const auto it = g_hunt.find(static_cast<uint16>(zoneId));
+    if (it == g_hunt.end())
+    {
+        return std::nullopt;
+    }
+
+    std::vector<const HuntMob*> suitable;
+    for (const auto& mob : it->second)
+    {
+        if (suitsLevel(mob, level))
+        {
+            suitable.push_back(&mob);
+        }
+    }
+
+    if (suitable.empty())
+    {
+        return std::nullopt;
+    }
+
+    return suitable[xirand::GetRandomNumber<std::size_t>(suitable.size())]->spawnPoint;
+}
+
+auto GetBotSocialSpots(xi::ZoneId zoneId) -> std::vector<BotSocialSpot>
+{
+    std::vector<BotSocialSpot> result;
+
+    auto* PZone = zoneutils::GetZone(zoneId);
+    if (PZone == nullptr)
+    {
+        return result;
+    }
+
+    for (const auto* line : PZone->GetZoneLines())
+    {
+        const auto* tag = reinterpret_cast<const char*>(&line->zoneLineId);
+        if (tag[0] == 'z' && tag[1] == 'm' && (tag[2] == 'r' || tag[2] == 's'))
+        {
+            result.push_back({ "mog", line->originPos });
+        }
+    }
+
+    // clang-format off
+    PZone->GetZoneEntities()->ForEachNpc([&](CNpcEntity* PNpc)
+    {
+        if (PNpc->status != xi::Status::Normal)
+        {
+            return;
+        }
+
+        const auto& name = PNpc->getName();
+        if (name.starts_with("Auction_Counter"))
+        {
+            result.push_back({ "ah", PNpc->loc.p });
+        }
+        else if (name.starts_with("HomePoint#"))
+        {
+            result.push_back({ "hp", PNpc->loc.p });
+        }
+    });
+    // clang-format on
+
+    return result;
+}
+
+auto GetBotHomePoint(uint32 charId) -> std::optional<std::pair<uint16, position_t>>
+{
+    if (g_PMapEngine == nullptr)
+    {
+        return std::nullopt;
+    }
+
+    auto* session = g_PMapEngine->networking().sessions().getSessionByCharId(charId);
+    if (session == nullptr || !session->isBotSession || !session->PChar)
+    {
+        return std::nullopt;
+    }
+
+    const auto& home = session->PChar->profile.home_point;
+    return std::make_pair(static_cast<uint16>(home.destination), home.p);
+}
+
+auto GetBotHomeZone(uint8 nation, xi::ZoneId fromZone) -> uint16
+{
+    return nearestHomeCity(nation, static_cast<uint16>(fromZone)).first;
+}
+
+namespace
+{
+
+// A home point belongs in a city. charCreate's first-login setHomePoint puts it
+// wherever the character stands - fine for a real player (they start in town),
+// but a bot created in the field would "home point" straight back to its hunt
+// area. If the home point isn't in a city, set it to a random Home Point
+// crystal in the bot's starting city (its nation's city nearest where it is).
+// After that it only changes when the bot itself picks a more convenient
+// crystal for where it levels - see xi.worldbots.
+void ensureCityHomePoint(CCharEntity* PChar)
+{
+    const auto home = PChar->profile.home_point.destination;
+    for (const auto& cities : kHomeCities)
+    {
+        if (std::find(cities.begin(), cities.end(), home) != cities.end())
+        {
+            return;
+        }
+    }
+
+    const auto current = static_cast<uint16>(PChar->getZone());
+    const auto city    = nearestHomeCity(PChar->profile.nation, current).first;
+    if (city == 0)
+    {
+        return;
+    }
+
+    std::vector<position_t> crystals;
+    for (const auto& spot : GetBotSocialSpots(static_cast<xi::ZoneId>(city)))
+    {
+        if (spot.kind == "hp")
+        {
+            crystals.push_back(spot.pos);
+        }
+    }
+
+    if (crystals.empty())
+    {
+        return;
+    }
+
+    // Any crystal in its starting city - it only moves later if the bot picks a
+    // more convenient one for where it wants to level (xi.worldbots).
+    position_t crystal = crystals[xirand::GetRandomNumber<std::size_t>(crystals.size())];
+
+    // Stand beside the crystal rather than inside it.
+    if (auto* PCity = zoneutils::GetZone(static_cast<xi::ZoneId>(city)); PCity && PCity->navMesh())
+    {
+        if (const auto standable = PCity->navMesh()->findRandomPosition(crystal, 3.0f))
+        {
+            crystal = *standable;
+        }
+    }
+
+    PChar->profile.home_point.destination = static_cast<xi::ZoneId>(city);
+    PChar->profile.home_point.p           = crystal;
+
+    // Same write as the setHomePoint binding.
+    db::preparedStmt("UPDATE chars SET home_zone = ?, home_rot = ?, home_x = ?, home_y = ?, home_z = ? WHERE charid = ? LIMIT 1",
+                     city, crystal.rotation, crystal.x, crystal.y, crystal.z, PChar->id);
+}
+
+} // namespace
+
+auto ZoneBotThroughLine(uint32 charId, uint32 zoneLineId) -> CCharEntity*
+{
+    if (g_PMapEngine == nullptr)
+    {
+        return nullptr;
+    }
+
+    auto* session = g_PMapEngine->networking().sessions().getSessionByCharId(charId);
+    if (session == nullptr || !session->isBotSession || !session->PChar || session->PChar->loc.zone == nullptr)
+    {
+        return nullptr;
+    }
+
+    auto* PChar = session->PChar.get();
+    auto* line  = PChar->loc.zone->GetZoneLine(zoneLineId);
+    if (line == nullptr || !isBotUsableZoneLine(*line))
+    {
+        ShowWarning("botutils::ZoneBotThroughLine: zone line %u is not usable by bots in zone %u", zoneLineId, PChar->getZone());
+        return nullptr;
+    }
+
+    if (distance(PChar->loc.p, line->originPos, true) > kZoneLineReachYalms)
+    {
+        ShowWarning("botutils::ZoneBotThroughLine: %s too far from zone line %u (%.1fy)", PChar->getName(), zoneLineId,
+                    distance(PChar->loc.p, line->originPos, true));
+        return nullptr;
+    }
+
+    // Copy what's needed before the teleport destroys PChar.
+    const auto destinationZoneId = line->destinationZoneId;
+    const auto arrival           = line->nextSpawnPosition();
+
+    return TeleportBotCharacter(charId, destinationZoneId, arrival.x, arrival.y, arrival.z, arrival.rotation);
 }
 
 } // namespace botutils

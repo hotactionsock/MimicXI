@@ -25,6 +25,7 @@
 #include "entities/char_entity.h"
 
 #include <optional>
+#include <utility>
 #include <string>
 #include <vector>
 
@@ -47,8 +48,12 @@ struct BotAppearance
 // at (x,y,z,rotation) in zoneId, and registers it in `world_bots` (inactive,
 // anchored at that same spot). Writes the same set of rows real character
 // creation does (chars, char_look, char_stats, char_exp, char_jobs, etc.) - a
-// real character, not a synthetic stat block. Returns the new charId, or 0.
-auto CreateBotCharacter(xi::ZoneId zoneId, float x, float y, float z, uint8 rotation, CharRace race, CharFace face, const std::string& name) -> uint32;
+// real character, not a synthetic stat block. job is its starting main job
+// (charCreate hands out that job's starting gear on first login), size the
+// model size (0 small, 1 medium, 2 large). Returns the new charId, or 0 - also
+// 0, with nothing written, if the name is already taken.
+auto CreateBotCharacter(xi::ZoneId zoneId, float x, float y, float z, uint8 rotation, CharRace race, CharFace face, const std::string& name,
+                        xi::Job job, uint8 size) -> uint32;
 
 // Reads back a bot character's current race/face/name, or nullopt if charId
 // doesn't exist. Used by the !worldbot edit command so unspecified fields can
@@ -110,6 +115,102 @@ void WalkBotTo(uint32 charId, float x, float y, float z);
 // a real player's periodic position save - so a server restart respawns it near
 // where it left off. No-op if charId isn't a live bot.
 void SaveBotPosition(uint32 charId);
+
+// A zone line a bot can use: walk to `origin` (the centre of the zone-line box in
+// the bot's current zone), then ZoneBotThroughLine to cross it.
+struct BotZoneLine
+{
+    uint32     zoneLineId;
+    uint16     destinationZoneId;
+    position_t origin;
+    float      radius; // approximate trigger-area radius around origin (see FindBotZoneLineAt)
+};
+
+// Zone lines in zoneId that bots may use. Excludes Mog House lines, lines back
+// into the same zone, instanced destinations, and destinations this map process
+// doesn't host (bots can't hand off across map processes).
+auto GetBotZoneLines(xi::ZoneId zoneId) -> std::vector<BotZoneLine>;
+
+// The usable zone line whose trigger area contains pos, or 0. Trigger boxes
+// aren't stored server-side, only their centre; the box width is estimated from
+// the return line's arrival box (which sits just in front of this trigger box
+// at about the same width). Cheap - zones have only a handful of lines.
+auto FindBotZoneLineAt(CZone* PZone, const position_t& pos) -> uint32;
+
+// Refreshes each bot's nearby-mob list via CZone::SpawnMOBs, about once a
+// second - what a real client's position packets (GP_CLI_COMMAND_POS) trigger.
+// That refresh is where mob aggro is checked (CZoneEntities::tapMobAggro), so
+// without it aggressive mobs would never notice bots. Called from the zone tick.
+void TickBotSenses(CZone* PZone);
+
+// Moves every bot in PZone that walked into a zone line (see
+// CWorldBotController::TakePendingZoneLine) across it. Called at the start of
+// the zone tick, outside any entity's own tick.
+void ProcessPendingZoneLines(CZone* PZone);
+
+// ---- World map / goals ----------------------------------------------------
+// The zone-line graph (zones connected by bot-usable zone lines) is built once,
+// lazily, from the loaded zones. So is a per-zone list of "huntable" mobs:
+// normal (non-NM, non-battlefield), normally-spawning, respawning mobs, with
+// their level range and spawn point - read from the engine's loaded mob lists
+// (the source of truth since mobs moved to data/zones/*/mobs.yaml).
+
+// What a solo bot hunts: "Easy Prey" through "Even Match" by the engine's own
+// /check (charutils::CheckMobLevel) - the same verdict a player sees. Parties
+// will widen this upward to tougher prey later.
+auto IsBotPrey(uint8 botLevel, int32 mobLevel) -> bool;
+
+struct BotRouteHop
+{
+    BotZoneLine line; // the zone line to take out of the current zone
+    uint8       hops; // total zone hops to the destination, including this one
+};
+
+// Next zone line to take from fromZone toward toZone, or nullopt if toZone is
+// unreachable over bot-usable zone lines (or is fromZone itself).
+auto GetBotRouteNextLine(xi::ZoneId fromZone, xi::ZoneId toZone) -> std::optional<BotRouteHop>;
+
+struct BotLevelingZone
+{
+    uint16 zoneId;
+    uint32 suitable; // huntable mob spawns whose level range suits the bot
+    uint8  hops;     // zone hops from the bot's current zone (0 = here)
+};
+
+// Zones within maxHops of fromZone that have huntable mobs suiting `level`,
+// best first (more suitable spawns, fewer hops). At most 8.
+auto GetBotLevelingZones(uint8 level, xi::ZoneId fromZone, uint8 maxHops) -> std::vector<BotLevelingZone>;
+
+// A random suitable mob spawn point in zoneId for `level`, or nullopt.
+auto GetBotHuntSpot(xi::ZoneId zoneId, uint8 level) -> std::optional<position_t>;
+
+// A live bot's current home point: (zone, position), or nullopt.
+auto GetBotHomePoint(uint32 charId) -> std::optional<std::pair<uint16, position_t>>;
+
+// The nearest (by zone hops) city zone of `nation` (0 San d'Oria, 1 Bastok,
+// 2 Windurst) from fromZone, or 0 if none is reachable.
+auto GetBotHomeZone(uint8 nation, xi::ZoneId fromZone) -> uint16;
+
+// Social spots in a zone where bots like to hang around, mostly in cities:
+//   "mog"  - Mog House entrances (the zmr*/zms* zone-line centres)
+//   "ah"   - Auction Counter NPCs
+//   "hp"   - Home Point NPCs (only ones currently shown - some are content-gated)
+// Empty for zones without any.
+struct BotSocialSpot
+{
+    std::string kind;
+    position_t  pos;
+};
+
+auto GetBotSocialSpots(xi::ZoneId zoneId) -> std::vector<BotSocialSpot>;
+
+// Moves a bot through zone line zoneLineId of its current zone, arriving where a
+// real player crossing that line would (zoneLine_t::nextSpawnPosition), and
+// re-anchors it there. The bot must be within reach of the line's origin - the
+// same kind of proximity check the real client handler (0x05E) applies. Returns
+// the bot's new entity, or nullptr if it isn't a live bot, the line isn't usable,
+// or it's too far away.
+auto ZoneBotThroughLine(uint32 charId, uint32 zoneLineId) -> CCharEntity*;
 
 // Instantly and safely relocates a bot to (x,y,z,rotation) in zoneId, even
 // across zones or out of a stuck mid-zone-transition state (a bot has no

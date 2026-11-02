@@ -249,6 +249,7 @@ public:
 
     const std::string& getName();
     zoneLine_t*        GetZoneLine(uint32 zoneLineID);
+    auto               GetZoneLines() const -> const zoneLineList_t&;
 
     uint16 GetSoloBattleMusic() const;
     uint16 GetPartyBattleMusic() const;

@@ -1,6 +1,9 @@
 -----------------------------------
 -- func: worldbot <create name [race] [face]|edit charid [race] [face] [name]|
---                 spawn charid|despawn charid|delete charid|list>
+--                 spawn charid|despawn charid|delete charid|list|
+--                 travel charid zoneid|goal charid [level|home]|lines|
+--                 give charid itemid [qty]|inv charid|gear charid|
+--                 populate count|delete all>
 -- desc: GM management of AI-driven world-population bot characters (see
 --       src/map/utils/botutils.h and scripts/globals/worldbots.lua).
 -----------------------------------
@@ -32,15 +35,46 @@ local RACE_COUNT = 8
 -- custom client DATs, so they're never picked randomly, only if typed explicitly.
 local STANDARD_FACE_COUNT = 16
 
+-- The six jobs a new character can start as (WAR, MNK, WHM, BLM, RDM, THF).
+local STARTING_JOBS = { 1, 2, 3, 4, 5, 6 }
+
+local POPULATE_MAX = 50
+
+-- Random two-to-three syllable names, FFXI style (letters only, 3-15 chars).
+local NAME_ONSETS = { 'b', 'c', 'd', 'f', 'g', 'h', 'j', 'k', 'l', 'm', 'n', 'p', 'r', 's', 't', 'v', 'z', 'br', 'ch', 'dr', 'gr', 'kr', 'sh', 'th', 'tr', 'st', '' }
+local NAME_VOWELS = { 'a', 'e', 'i', 'o', 'u', 'a', 'e', 'ai', 'ia', 'ou', 'y' }
+local NAME_CODAS  = { '', '', '', 'n', 'r', 's', 'l', 'th', 'x', 'm', 'k', 'd' }
+
+local function randomName()
+    local name = ''
+    for _ = 1, math.random(2, 3) do
+        name = name .. NAME_ONSETS[math.random(#NAME_ONSETS)] .. NAME_VOWELS[math.random(#NAME_VOWELS)]
+    end
+
+    name = name .. NAME_CODAS[math.random(#NAME_CODAS)]
+    name = name:sub(1, 12)
+
+    return name:sub(1, 1):upper() .. name:sub(2)
+end
+
 local function usage(player)
     player:printToPlayer('!worldbot create <name> [race] [face] - created at your position; race/face random if omitted')
     player:printToPlayer('!worldbot edit <charid> [race] [face] [name] - use "-" to leave a field unchanged')
     player:printToPlayer('  race: 1-8 or a name (humemale, humefemale, elvaanmale, elvaanfemale, tarutarumale, tarutarufemale, mithra, galka)')
     player:printToPlayer('  face: 0-15')
+    player:printToPlayer('!worldbot populate <count> - create+spawn that many random bots here, levelling in this zone')
     player:printToPlayer('!worldbot spawn <charid>')
     player:printToPlayer('!worldbot despawn <charid> - parks it (not respawned on restart)')
     player:printToPlayer('!worldbot delete <charid> - permanently deletes the bot and its account')
+    player:printToPlayer('!worldbot delete all - permanently deletes every bot (bot accounts only)')
     player:printToPlayer('!worldbot list')
+    player:printToPlayer('!worldbot travel <charid> <zoneid> - route across zone lines to that zone')
+    player:printToPlayer('!worldbot goal <charid> [level|home] - show the goal, or give it a new one')
+    player:printToPlayer('!worldbot goal all <level|home> - give every spawned bot in your zone that goal')
+    player:printToPlayer('!worldbot lines - zone lines bots can use in your current zone')
+    player:printToPlayer('!worldbot give <charid> <itemid> [qty] - give an item (then equips/learns it if useful)')
+    player:printToPlayer('!worldbot inv <charid> - list its items (* = equipped)')
+    player:printToPlayer('!worldbot gear <charid> - equip best gear and learn scrolls now')
 end
 
 -- Resolves a race token (nil, a race name, or a number) to a valid CharRace id,
@@ -118,9 +152,10 @@ commandObj.onTrigger = function(player, args)
             return
         end
 
-        local charId = CreateBotCharacter(player:getZoneID(), player:getXPos(), player:getYPos(), player:getZPos(), player:getRotPos(), race, face, name)
+        local charId = CreateBotCharacter(player:getZoneID(), player:getXPos(), player:getYPos(), player:getZPos(), player:getRotPos(), race, face, name,
+            STARTING_JOBS[math.random(#STARTING_JOBS)], math.random(0, 2))
         if charId == 0 then
-            player:printToPlayer('Failed to create bot character - see map server log.')
+            player:printToPlayer('Failed to create bot character (name taken?) - see map server log.')
             return
         end
 
@@ -196,6 +231,49 @@ commandObj.onTrigger = function(player, args)
         xi.worldbots.forget(charId)
         DespawnBotCharacter(charId)
         player:printToPlayer(string.format('Despawned bot charid %d.', charId))
+    elseif sub == 'populate' then
+        local count = tonumber(rest)
+        if count == nil or count < 1 then
+            usage(player)
+            return
+        end
+
+        count = math.min(math.floor(count), POPULATE_MAX)
+
+        local zoneId  = player:getZoneID()
+        local created = 0
+        local leveling = 0
+
+        for _ = 1, count do
+            -- A random name can clash with an existing character - retry a few times.
+            local charId = 0
+            for _ = 1, 10 do
+                charId = CreateBotCharacter(zoneId, player:getXPos(), player:getYPos(), player:getZPos(), math.random(0, 255),
+                    resolveRace(nil), resolveFace(nil), randomName(), STARTING_JOBS[math.random(#STARTING_JOBS)], math.random(0, 2))
+                if charId ~= 0 then
+                    break
+                end
+            end
+
+            if charId ~= 0 and SpawnBotCharacter(charId) ~= nil then
+                created = created + 1
+                if xi.worldbots.setGoal(charId, 'level', zoneId) then
+                    leveling = leveling + 1
+                end
+            end
+        end
+
+        player:printToPlayer(string.format('Created and spawned %d/%d bot(s); %d levelling in this zone.', created, count, leveling))
+    elseif sub == 'delete' and rest == 'all' then
+        local count = 0
+        for _, bot in ipairs(GetBotList()) do
+            xi.worldbots.forget(bot.charId)
+            if DeleteBotCharacter(bot.charId) then
+                count = count + 1
+            end
+        end
+
+        player:printToPlayer(string.format('Deleted %d bot(s) and their accounts.', count))
     elseif sub == 'delete' then
         local charId = tonumber(rest)
         if charId == nil then
@@ -210,6 +288,123 @@ commandObj.onTrigger = function(player, args)
         end
 
         player:printToPlayer(string.format('Deleted bot charid %d and its account.', charId))
+    elseif sub == 'travel' then
+        local charIdArg, zoneArg = rest:match('^(%S*)%s*(%S*)$')
+        local charId     = tonumber(charIdArg)
+        local destZoneId = tonumber(zoneArg)
+        if charId == nil or destZoneId == nil then
+            usage(player)
+            return
+        end
+
+        local goal, reason = xi.worldbots.setGoal(charId, 'zone', destZoneId)
+        if goal == nil then
+            player:printToPlayer(string.format('Bot %d cannot travel: %s.', charId, reason))
+            return
+        end
+
+        player:printToPlayer(string.format('Bot %d travelling to zone %d.', charId, goal.zoneId))
+    elseif sub == 'goal' then
+        local charIdArg, kindArg = rest:match('^(%S*)%s*(%S*)$')
+
+        -- !worldbot goal all <kind>: every spawned bot in the GM's zone.
+        if charIdArg == 'all' and kindArg ~= '' then
+            local count = 0
+            for _, bot in ipairs(GetBotList()) do
+                if bot.spawned and bot.zoneId == player:getZoneID() and xi.worldbots.setGoal(bot.charId, kindArg, nil) then
+                    count = count + 1
+                end
+            end
+
+            player:printToPlayer(string.format('Gave %d bot(s) in this zone the goal: %s.', count, kindArg))
+            return
+        end
+
+        local charId = tonumber(charIdArg)
+        if charId == nil then
+            usage(player)
+            return
+        end
+
+        if kindArg == '' then
+            local goal = xi.worldbots.getGoal(charId)
+            if goal == nil then
+                player:printToPlayer(string.format('Bot %d has no goal yet.', charId))
+            else
+                local remaining = goal.untilTime and math.max(0, goal.untilTime - GetSystemTime()) or nil
+                player:printToPlayer(string.format('Bot %d: %s in zone %d - %s', charId, goal.kind, goal.zoneId,
+                    goal.settled and string.format('settled, %d min left', math.floor((remaining or 0) / 60)) or 'on the way'))
+            end
+
+            return
+        end
+
+        local goal, reason = xi.worldbots.setGoal(charId, kindArg, nil)
+        if goal == nil then
+            player:printToPlayer(string.format('Bot %d: cannot set goal: %s.', charId, reason))
+            return
+        end
+
+        player:printToPlayer(string.format('Bot %d: new goal %s in zone %d.', charId, goal.kind, goal.zoneId))
+    elseif sub == 'give' then
+        local charIdArg, itemArg, qtyArg = rest:match('^(%S*)%s*(%S*)%s*(%S*)$')
+        local charId = tonumber(charIdArg)
+        local itemId = tonumber(itemArg)
+        local qty    = tonumber(qtyArg) or 1
+        if charId == nil or itemId == nil then
+            usage(player)
+            return
+        end
+
+        local bot = GetPlayerByID(charId)
+        if bot == nil or not IsBotCharacter(charId) then
+            player:printToPlayer(string.format('Bot %d is not spawned.', charId))
+            return
+        end
+
+        if not bot:addItem(itemId, qty, true) then
+            player:printToPlayer(string.format('Bot %d could not take item %d (inventory full or invalid item).', charId, itemId))
+            return
+        end
+
+        local result = ManageBotInventory(charId)
+        player:printToPlayer(string.format('Gave bot %d item %d x%d - equipped %d, learned %d.', charId, itemId, qty, result.equipped, result.learned))
+    elseif sub == 'gear' then
+        local charId = tonumber(rest)
+        if charId == nil then
+            usage(player)
+            return
+        end
+
+        local result = ManageBotInventory(charId)
+        player:printToPlayer(string.format('Bot %d: equipped %d, learned %d.', charId, result.equipped, result.learned))
+    elseif sub == 'inv' then
+        local charId = tonumber(rest)
+        if charId == nil then
+            usage(player)
+            return
+        end
+
+        local items = GetBotItems(charId)
+        if #items == 0 then
+            player:printToPlayer(string.format('Bot %d has no items (or is not spawned).', charId))
+            return
+        end
+
+        local SLOT_NAMES = { [0] = 'main', 'sub', 'range', 'ammo', 'head', 'body', 'hands', 'legs', 'feet', 'neck', 'waist', 'ear1', 'ear2', 'ring1', 'ring2', 'back' }
+        for _, item in ipairs(items) do
+            local equipped = item.equipSlot >= 0 and string.format(' * %s', SLOT_NAMES[item.equipSlot] or '?') or ''
+            player:printToPlayer(string.format('  [%d:%d] %s (%d) x%d%s', item.container, item.slot, item.name, item.itemId, item.quantity, equipped))
+        end
+    elseif sub == 'lines' then
+        local lines = xi.worldbots.zoneLines(player:getZoneID())
+        if #lines == 0 then
+            player:printToPlayer('No zone lines bots can use in this zone.')
+        else
+            for _, line in ipairs(lines) do
+                player:printToPlayer(string.format('  line %d -> zone %d at (%.1f, %.1f, %.1f)', line.id, line.zoneId, line.x, line.y, line.z))
+            end
+        end
     elseif sub == 'list' then
         local bots = GetBotList()
         if #bots == 0 then

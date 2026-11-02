@@ -65,6 +65,8 @@
 
 #include "persist_batch.h"
 #include "utils/battleutils.h"
+#include "utils/botcombat.h"
+#include "utils/botinventory.h"
 #include "utils/botutils.h"
 
 #include "utils/charutils.h"
@@ -332,6 +334,31 @@ void init(IPP mapIPP, bool isRunningInCI)
     lua.set_function("IsBotCharacter", &luautils::IsBotCharacter);
     lua.set_function("GetBotList", &luautils::GetBotList);
     lua.set_function("GetBotAnchor", &luautils::GetBotAnchor);
+    lua.set_function("GetBotZoneLines", &luautils::GetBotZoneLines);
+    lua.set_function("ZoneBotThroughLine", &luautils::ZoneBotThroughLine);
+    lua.set_function("SetBotAnchor", &luautils::SetBotAnchor);
+    lua.set_function("GetBotRouteNextLine", &luautils::GetBotRouteNextLine);
+    lua.set_function("GetBotLevelingZones", &luautils::GetBotLevelingZones);
+    lua.set_function("GetBotHuntSpot", &luautils::GetBotHuntSpot);
+    lua.set_function("GetBotHomeZone", &luautils::GetBotHomeZone);
+    lua.set_function("GetBotHomePoint", &luautils::GetBotHomePoint);
+    lua.set_function("GetBotSocialSpots", &luautils::GetBotSocialSpots);
+    lua.set_function("ManageBotInventory", &luautils::ManageBotInventory);
+    lua.set_function("GetBotItems", &luautils::GetBotItems);
+    lua.set_function("FindBotTarget", &luautils::FindBotTarget);
+    lua.set_function("FindBotAttacker", &luautils::FindBotAttacker);
+    lua.set_function("EngageBotTarget", &luautils::EngageBotTarget);
+    lua.set_function("SetBotHealing", &luautils::SetBotHealing);
+    lua.set_function("LotBotTreasure", &luautils::LotBotTreasure);
+    lua.set_function("HomepointBot", &luautils::HomepointBot);
+    lua.set_function("GetBotFreeSlots", &luautils::GetBotFreeSlots);
+    lua.set_function("TossBotJunk", &luautils::TossBotJunk);
+    lua.set_function("GetBotSellableValue", &luautils::GetBotSellableValue);
+    lua.set_function("SellBotItems", &luautils::SellBotItems);
+    lua.set_function("GetBotVendors", &luautils::GetBotVendors);
+    lua.set_function("UseBotWeaponSkill", &luautils::UseBotWeaponSkill);
+    lua.set_function("GetBotAbilities", &luautils::GetBotAbilities);
+    lua.set_function("UseBotAbility", &luautils::UseBotAbility);
     lua.set_function("WalkBotTo", &luautils::WalkBotTo);
     lua.set_function("SaveBotPosition", &luautils::SaveBotPosition);
     lua.set_function("TeleportBotCharacter", &luautils::TeleportBotCharacter);
@@ -2284,11 +2311,18 @@ CBaseEntity* GetPlayerByID(uint32 pid)
  *                                                                       *
  ************************************************************************/
 
-uint32 CreateBotCharacter(uint16 zoneId, float x, float y, float z, uint8 rotation, uint8 race, uint8 face, const std::string& name)
+uint32 CreateBotCharacter(uint16 zoneId, float x, float y, float z, uint8 rotation, uint8 race, uint8 face, const std::string& name, uint8 job, uint8 size)
 {
     TracyZoneScoped;
 
-    return botutils::CreateBotCharacter(static_cast<xi::ZoneId>(zoneId), x, y, z, rotation, static_cast<CharRace>(race), static_cast<CharFace>(face), name);
+    // Only the six starting jobs - the ones a new character can begin as.
+    if (job < static_cast<uint8>(xi::Job::WAR) || job > static_cast<uint8>(xi::Job::THF))
+    {
+        job = static_cast<uint8>(xi::Job::WAR);
+    }
+
+    return botutils::CreateBotCharacter(static_cast<xi::ZoneId>(zoneId), x, y, z, rotation, static_cast<CharRace>(race), static_cast<CharFace>(face), name,
+                                        static_cast<xi::Job>(job), size);
 }
 
 sol::object GetBotAppearance(uint32 charId)
@@ -2381,6 +2415,323 @@ sol::object GetBotAnchor(uint32 charId)
     result["z"] = anchor->z;
 
     return result;
+}
+
+sol::table GetBotZoneLines(uint16 zoneId)
+{
+    TracyZoneScoped;
+
+    auto table = lua.create_table();
+    for (const auto& line : botutils::GetBotZoneLines(static_cast<xi::ZoneId>(zoneId)))
+    {
+        auto row      = lua.create_table();
+        row["id"]     = line.zoneLineId;
+        row["zoneId"] = line.destinationZoneId;
+        row["x"]      = line.origin.x;
+        row["y"]      = line.origin.y;
+        row["z"]      = line.origin.z;
+        row["radius"] = line.radius;
+        table.add(row);
+    }
+
+    return table;
+}
+
+// Returns a plain bool rather than the new entity: the old entity is destroyed by
+// the move, and callers shouldn't touch either within the same tick.
+bool ZoneBotThroughLine(uint32 charId, uint32 zoneLineId)
+{
+    TracyZoneScoped;
+
+    return botutils::ZoneBotThroughLine(charId, zoneLineId) != nullptr;
+}
+
+void SetBotAnchor(uint32 charId, float x, float y, float z)
+{
+    TracyZoneScoped;
+
+    botutils::SetBotAnchor(charId, x, y, z);
+}
+
+sol::object GetBotRouteNextLine(uint16 fromZone, uint16 toZone)
+{
+    TracyZoneScoped;
+
+    const auto hop = botutils::GetBotRouteNextLine(static_cast<xi::ZoneId>(fromZone), static_cast<xi::ZoneId>(toZone));
+    if (!hop)
+    {
+        return sol::lua_nil;
+    }
+
+    auto row      = lua.create_table();
+    row["id"]     = hop->line.zoneLineId;
+    row["zoneId"] = hop->line.destinationZoneId;
+    row["x"]      = hop->line.origin.x;
+    row["y"]      = hop->line.origin.y;
+    row["z"]      = hop->line.origin.z;
+    row["radius"] = hop->line.radius;
+    row["hops"]   = hop->hops;
+
+    return row;
+}
+
+sol::table GetBotLevelingZones(uint8 level, uint16 fromZone, uint8 maxHops)
+{
+    TracyZoneScoped;
+
+    auto table = lua.create_table();
+    for (const auto& zone : botutils::GetBotLevelingZones(level, static_cast<xi::ZoneId>(fromZone), maxHops))
+    {
+        auto row        = lua.create_table();
+        row["zoneId"]   = zone.zoneId;
+        row["suitable"] = zone.suitable;
+        row["hops"]     = zone.hops;
+        table.add(row);
+    }
+
+    return table;
+}
+
+sol::object GetBotHuntSpot(uint16 zoneId, uint8 level)
+{
+    TracyZoneScoped;
+
+    const auto spot = botutils::GetBotHuntSpot(static_cast<xi::ZoneId>(zoneId), level);
+    if (!spot)
+    {
+        return sol::lua_nil;
+    }
+
+    auto result = lua.create_table();
+    result["x"] = spot->x;
+    result["y"] = spot->y;
+    result["z"] = spot->z;
+
+    return result;
+}
+
+sol::object GetBotHomePoint(uint32 charId)
+{
+    TracyZoneScoped;
+
+    const auto home = botutils::GetBotHomePoint(charId);
+    if (!home)
+    {
+        return sol::lua_nil;
+    }
+
+    auto result      = lua.create_table();
+    result["zoneId"] = home->first;
+    result["x"]      = home->second.x;
+    result["y"]      = home->second.y;
+    result["z"]      = home->second.z;
+
+    return result;
+}
+
+uint16 GetBotHomeZone(uint8 nation, uint16 fromZone)
+{
+    TracyZoneScoped;
+
+    return botutils::GetBotHomeZone(nation, static_cast<xi::ZoneId>(fromZone));
+}
+
+sol::table ManageBotInventory(uint32 charId)
+{
+    TracyZoneScoped;
+
+    const auto result = botutils::ManageBotInventory(charId);
+
+    auto table        = lua.create_table();
+    table["equipped"] = result.equipped;
+    table["learned"]  = result.learned;
+
+    return table;
+}
+
+sol::table GetBotItems(uint32 charId)
+{
+    TracyZoneScoped;
+
+    auto table = lua.create_table();
+    for (const auto& item : botutils::GetBotItems(charId))
+    {
+        auto row         = lua.create_table();
+        row["container"] = item.container;
+        row["slot"]      = item.slot;
+        row["itemId"]    = item.itemId;
+        row["name"]      = item.name;
+        row["quantity"]  = item.quantity;
+        row["equipSlot"] = item.equipSlot;
+        table.add(row);
+    }
+
+    return table;
+}
+
+namespace
+{
+
+auto botTargetToLua(const std::optional<botutils::BotTarget>& target) -> sol::object
+{
+    if (!target)
+    {
+        return sol::lua_nil;
+    }
+
+    auto row         = lua.create_table();
+    row["mobId"]     = target->mobId;
+    row["x"]         = target->pos.x;
+    row["y"]         = target->pos.y;
+    row["z"]         = target->pos.z;
+    row["distance"]  = target->distance;
+    row["attacking"] = target->attacking;
+
+    return row;
+}
+
+} // namespace
+
+sol::object FindBotTarget(uint32 charId, float radius)
+{
+    TracyZoneScoped;
+
+    return botTargetToLua(botutils::FindBotTarget(charId, radius));
+}
+
+sol::object FindBotAttacker(uint32 charId)
+{
+    TracyZoneScoped;
+
+    return botTargetToLua(botutils::FindBotAttacker(charId));
+}
+
+bool EngageBotTarget(uint32 charId, uint32 mobId)
+{
+    TracyZoneScoped;
+
+    return botutils::EngageBotTarget(charId, mobId);
+}
+
+void SetBotHealing(uint32 charId, bool on)
+{
+    TracyZoneScoped;
+
+    botutils::SetBotHealing(charId, on);
+}
+
+uint8 LotBotTreasure(uint32 charId)
+{
+    TracyZoneScoped;
+
+    return botutils::LotBotTreasure(charId);
+}
+
+bool HomepointBot(uint32 charId)
+{
+    TracyZoneScoped;
+
+    return botutils::HomepointBot(charId);
+}
+
+uint8 GetBotFreeSlots(uint32 charId)
+{
+    TracyZoneScoped;
+
+    return botutils::GetBotFreeSlots(charId);
+}
+
+uint8 TossBotJunk(uint32 charId, uint32 maxValue, uint8 wantFree)
+{
+    TracyZoneScoped;
+
+    return botutils::TossBotJunk(charId, maxValue, wantFree);
+}
+
+uint32 GetBotSellableValue(uint32 charId)
+{
+    TracyZoneScoped;
+
+    return botutils::GetBotSellableValue(charId);
+}
+
+sol::table SellBotItems(uint32 charId)
+{
+    TracyZoneScoped;
+
+    const auto result = botutils::SellBotItems(charId);
+
+    auto table    = lua.create_table();
+    table["sold"] = result.sold;
+    table["gil"]  = result.gil;
+
+    return table;
+}
+
+uint16 UseBotWeaponSkill(uint32 charId)
+{
+    TracyZoneScoped;
+
+    return botutils::UseBotWeaponSkill(charId);
+}
+
+sol::table GetBotAbilities(uint32 charId)
+{
+    TracyZoneScoped;
+
+    auto table = lua.create_table();
+    for (const auto& ability : botutils::GetBotAbilities(charId))
+    {
+        auto row       = lua.create_table();
+        row["id"]      = ability.id;
+        row["ready"]   = ability.ready;
+        row["onEnemy"] = ability.onEnemy;
+        table.add(row);
+    }
+
+    return table;
+}
+
+bool UseBotAbility(uint32 charId, uint16 abilityId)
+{
+    TracyZoneScoped;
+
+    return botutils::UseBotAbility(charId, abilityId);
+}
+
+sol::table GetBotVendors(uint16 zoneId)
+{
+    TracyZoneScoped;
+
+    auto table = lua.create_table();
+    for (const auto& pos : botutils::GetBotVendors(zoneId))
+    {
+        auto row = lua.create_table();
+        row["x"] = pos.x;
+        row["y"] = pos.y;
+        row["z"] = pos.z;
+        table.add(row);
+    }
+
+    return table;
+}
+
+sol::table GetBotSocialSpots(uint16 zoneId)
+{
+    TracyZoneScoped;
+
+    auto table = lua.create_table();
+    for (const auto& spot : botutils::GetBotSocialSpots(static_cast<xi::ZoneId>(zoneId)))
+    {
+        auto row    = lua.create_table();
+        row["kind"] = spot.kind;
+        row["x"]    = spot.pos.x;
+        row["y"]    = spot.pos.y;
+        row["z"]    = spot.pos.z;
+        table.add(row);
+    }
+
+    return table;
 }
 
 void WalkBotTo(uint32 charId, float x, float y, float z)

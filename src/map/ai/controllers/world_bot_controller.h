@@ -46,6 +46,29 @@ public:
     // redirect. Cleared automatically once reached or found unreachable.
     void SetWanderTarget(const position_t& dest);
 
+    // Zone line the bot walked into since the last call (0 = none), consumed by
+    // botutils::ProcessPendingZoneLines at the start of the zone tick - the bot
+    // can't be moved to another zone from inside its own Tick().
+    auto TakePendingZoneLine() -> uint32;
+
+    // True about once a second (and then not again until the next interval) -
+    // paces botutils::TickBotSenses like a real client's position updates.
+    auto SenseDue(timer::time_point now) -> bool;
+
 private:
+    void checkZoneLineArea(bool allowCrossing = true);
+    void tickCombatMovement();
+
+    position_t chaseAim_{}; // where the current chase path was aimed (re-path when the target moves off it)
+
     std::optional<position_t> wanderTarget_;
+
+    // Zone-line area tracking: a crossing fires only on ENTERING an area (like a
+    // real client), so a bot that spawns standing inside one - e.g. arriving
+    // next to the return line - doesn't bounce straight back through it.
+    uint32 currentZoneLineArea_{ 0 };
+    bool   zoneLineAreaKnown_{ false };
+    uint32 pendingZoneLine_{ 0 };
+
+    timer::time_point nextSense_{};
 };

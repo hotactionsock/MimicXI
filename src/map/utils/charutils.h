@@ -99,6 +99,7 @@ void UpdateSubJob(CCharEntity* PChar);
 void SetLevelRestriction(CCharEntity* PChar, uint8 lvl);
 
 EMobDifficulty CheckMob(uint8 charlvl, CBattleEntity* PMob);
+EMobDifficulty CheckMobLevel(uint8 charlvl, int32 moblvl); // same /check result from levels alone (world bots score zones with it)
 
 uint32 GetBaseExp(uint8 charlvl, int16 moblvl);
 uint32 GetExpNEXTLevel(uint8 charlvl);

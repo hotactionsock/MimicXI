@@ -364,6 +364,11 @@ zoneLine_t* CZone::GetZoneLine(uint32 zoneLineID)
     return nullptr;
 }
 
+auto CZone::GetZoneLines() const -> const zoneLineList_t&
+{
+    return m_zoneLineList;
+}
+
 // Spawns players across 8 fixed slots along the target zoneline area.
 // Spacing is calculated from the documented invisible box representing the zoneline
 auto zoneLine_t::nextSpawnPosition() -> position_t

@@ -4268,8 +4268,11 @@ void SetExpDifficultyCurve(std::vector<std::pair<uint16, EMobDifficulty>>& curve
 
 EMobDifficulty CheckMob(uint8 charlvl, CBattleEntity* PMob)
 {
-    auto moblvl = PMob ? PMob->GetMLevel() + PMob->getMod(xi::Mod::EXP_LVL_MOD) : -1;
+    return CheckMobLevel(charlvl, PMob ? PMob->GetMLevel() + PMob->getMod(xi::Mod::EXP_LVL_MOD) : -1);
+}
 
+EMobDifficulty CheckMobLevel(uint8 charlvl, int32 moblvl)
+{
     uint32 baseExp = GetBaseExp(charlvl, moblvl);
 
     if (baseExp == 0)

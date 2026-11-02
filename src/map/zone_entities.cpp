@@ -2000,7 +2000,13 @@ auto CZoneEntities::ZoneServer(timer::time_point tick) -> Task<void>
     // dormant zone stay frozen (see CZone::HasAnyRealPlayers).
     if (HasBotChars())
     {
-        luautils::OnWorldBotsZoneTick(this->m_zone);
+        botutils::TickBotSenses(this->m_zone);
+        botutils::ProcessPendingZoneLines(this->m_zone);
+
+        if (HasBotChars())
+        {
+            luautils::OnWorldBotsZoneTick(this->m_zone);
+        }
     }
 
     rebuildSpatialGrid();

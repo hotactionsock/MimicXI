@@ -23,7 +23,12 @@
 
 #include "ai/ai_container.h"
 #include "ai/helpers/pathfind.h"
+#include "common/utils.h"
 #include "entities/char_entity.h"
+#include "utils/botutils.h"
+
+#include <algorithm>
+#include <utility>
 
 CWorldBotController::CWorldBotController(CCharEntity* PChar)
 : CPlayerController(PChar)
@@ -43,6 +48,28 @@ auto CWorldBotController::Tick(const timer::time_point tick) -> Task<void>
 {
     m_Tick = tick;
 
+    auto* PChar = static_cast<CCharEntity*>(POwner);
+
+    // Dead: lie still until xi.worldbots sends it to its home point.
+    if (PChar->isDead())
+    {
+        wanderTarget_.reset();
+        if (PChar->PAI->PathFind)
+        {
+            PChar->PAI->PathFind->Clear();
+        }
+        co_return;
+    }
+
+    // Fighting takes priority over any walk order: close to melee range and face
+    // the target (a real client steers into range itself; the engine's attack
+    // state only swings once in range).
+    if (PChar->PAI->IsEngaged())
+    {
+        tickCombatMovement();
+        co_return;
+    }
+
     if (wanderTarget_ && POwner->PAI->PathFind)
     {
         if (!POwner->PAI->PathFind->IsFollowingPath())
@@ -60,6 +87,7 @@ auto CWorldBotController::Tick(const timer::time_point tick) -> Task<void>
         if (POwner->PAI->PathFind->IsFollowingPath())
         {
             POwner->PAI->PathFind->FollowPath(tick);
+            checkZoneLineArea();
 
             if (!POwner->PAI->PathFind->IsFollowingPath())
             {
@@ -72,7 +100,75 @@ auto CWorldBotController::Tick(const timer::time_point tick) -> Task<void>
     co_return;
 }
 
+void CWorldBotController::tickCombatMovement()
+{
+    auto* PChar   = static_cast<CCharEntity*>(POwner);
+    auto* PTarget = PChar->GetBattleTarget();
+    auto* path    = PChar->PAI->PathFind.get();
+    if (PTarget == nullptr || path == nullptr)
+    {
+        return;
+    }
+
+    wanderTarget_.reset();
+
+    const float range = PChar->GetMeleeRange(PTarget);
+    const float dist  = distance(PChar->loc.p, PTarget->loc.p);
+
+    if (dist <= range - 0.3f)
+    {
+        if (path->IsFollowingPath())
+        {
+            path->Clear();
+        }
+        path->LookAt(PTarget->loc.p);
+        return;
+    }
+
+    // Re-path when idle or when the target has moved away from where we aimed.
+    if (!path->IsFollowingPath() || distance(chaseAim_, PTarget->loc.p) > 2.0f)
+    {
+        chaseAim_ = PTarget->loc.p;
+        path->PathAround(PTarget->loc.p, std::max(range - 1.0f, 0.5f), PATHFLAG_RUN);
+    }
+
+    if (path->IsFollowingPath())
+    {
+        path->FollowPath(m_Tick);
+        checkZoneLineArea(false); // track the area, but never zone out mid-fight
+    }
+}
+
 void CWorldBotController::SetWanderTarget(const position_t& dest)
 {
     wanderTarget_ = dest;
+}
+
+auto CWorldBotController::SenseDue(const timer::time_point now) -> bool
+{
+    if (now < nextSense_)
+    {
+        return false;
+    }
+
+    nextSense_ = now + 1s;
+    return true;
+}
+
+auto CWorldBotController::TakePendingZoneLine() -> uint32
+{
+    return std::exchange(pendingZoneLine_, 0);
+}
+
+void CWorldBotController::checkZoneLineArea(bool allowCrossing)
+{
+    const auto area = botutils::FindBotZoneLineAt(POwner->loc.zone, POwner->loc.p);
+
+    if (allowCrossing && zoneLineAreaKnown_ && area != 0 && area != currentZoneLineArea_ && pendingZoneLine_ == 0)
+    {
+        pendingZoneLine_ = area;
+    }
+
+    currentZoneLineArea_ = area;
+    zoneLineAreaKnown_   = true;
 }
