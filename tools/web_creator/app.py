@@ -14,8 +14,10 @@ import bcrypt
 from flask import Flask, flash, jsonify, redirect, render_template, request, send_from_directory, session, url_for
 
 from db import get_connection
+from bots import bots as bots_blueprint
 
 app = Flask(__name__)
+app.register_blueprint(bots_blueprint)  # /bots, /api/bots - world bots and their activity log
 
 # Persist session secret key across restarts
 _SECRET_FILE = os.path.join(os.path.dirname(__file__), '.flask_secret')

@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block title %}World Bots — MimicXI{% endblock %}
+
+{% block head %}
+<style>
+  .bot-status { color: var(--muted, #8a8f98); font-size: 0.9rem; margin: 0.15rem 0 0; }
+  .bot-status.stale { opacity: 0.6; }
+  .bot-latest { font-size: 0.85rem; margin: 0.4rem 0 0; }
+  .bot-online { display: inline-block; width: 0.55rem; height: 0.55rem; border-radius: 50%; background: #3fb950; margin-right: 0.35rem; vertical-align: middle; }
+  .bot-offline { background: #6e7681; }
+  .char-card a { color: inherit; text-decoration: none; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <h2 class="page-title">World Bots</h2>
+  <span class="section-hint">{{ bots|length }} adventurers living in Vana'diel</span>
+</div>
+
+{% if bots %}
+<div class="char-grid">
+  {% for bot in bots %}
+  <a class="char-card" href="{{ url_for('bots.bot_page', charid=bot.charid) }}">
+    <div class="char-avatar" aria-hidden="true">
+      <span class="char-initial">{{ bot.name[0] }}</span>
+    </div>
+    <div class="char-info">
+      <h3 class="char-name">
+        <span class="bot-online {{ '' if bot.online else 'bot-offline' }}" title="{{ 'Online' if bot.online else 'Offline' }}"></span>{{ bot.name }}
+      </h3>
+      <p class="card-subtitle">
+        {{ bot.main_abbr }} {{ bot.main_level }}{% if bot.sub_abbr %}/{{ bot.sub_abbr }} {{ bot.sub_level }}{% endif %}
+        {% if bot.career and bot.career != bot.main_job %} · aiming for {{ bot.career }}{% endif %}
+      </p>
+      <p class="bot-status {{ 'stale' if bot.status.stale else '' }}">
+        {{ bot.status.text }}{% if bot.status.since %} · {{ bot.status.since|ago }}{% endif %}
+      </p>
+      {% if bot.latest %}<p class="bot-latest">{{ bot.latest }}</p>{% endif %}
+    </div>
+  </a>
+  {% endfor %}
+</div>
+{% else %}
+<div class="empty-state">
+  <p>No world bots yet.</p>
+</div>
+{% endif %}
+{% endblock %}
