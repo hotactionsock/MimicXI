@@ -1026,11 +1026,16 @@ local function combatActions(bot, charId, state, now)
     end
 
     if bot:getTP() >= 1000 then
-        xi.worldbots.gear.forWeaponSkill(charId, state)
-        local ws = UseBotWeaponSkill(charId)
-        if ws ~= 0 then
-            diag(charId, 'weapon skill %d', ws)
-            return
+        -- In a party: close an open skillchain, open one with a ready partner,
+        -- or hold TP briefly for one (worldbots_skillchain.lua).
+        local choice = xi.worldbots.skillchain.decide(bot, charId, state, now)
+        if choice ~= 'hold' then
+            xi.worldbots.gear.forWeaponSkill(charId, state)
+            local ws = UseBotWeaponSkill(charId, choice or 0)
+            if ws ~= 0 then
+                diag(charId, 'weapon skill %d', ws)
+                return
+            end
         end
     end
 

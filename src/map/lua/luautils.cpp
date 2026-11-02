@@ -359,6 +359,10 @@ void init(IPP mapIPP, bool isRunningInCI)
     lua.set_function("SellBotItems", &luautils::SellBotItems);
     lua.set_function("GetBotVendors", &luautils::GetBotVendors);
     lua.set_function("UseBotWeaponSkill", &luautils::UseBotWeaponSkill);
+    lua.set_function("GetBotWeaponSkills", &luautils::GetBotWeaponSkills);
+    lua.set_function("GetBotTargetSkillchain", &luautils::GetBotTargetSkillchain);
+    lua.set_function("PredictBotSkillchain", &luautils::PredictBotSkillchain);
+    lua.set_function("SkillchainBetween", &luautils::SkillchainBetween);
     lua.set_function("GetBotAbilities", &luautils::GetBotAbilities);
     lua.set_function("UseBotAbility", &luautils::UseBotAbility);
     lua.set_function("GetBotSpells", &luautils::GetBotSpells);
@@ -2690,11 +2694,12 @@ sol::table SellBotItems(uint32 charId)
     return table;
 }
 
-uint16 UseBotWeaponSkill(uint32 charId)
+// wsId (optional): a specific weapon skill; otherwise the best one known.
+uint16 UseBotWeaponSkill(uint32 charId, sol::optional<uint16> wsId)
 {
     TracyZoneScoped;
 
-    return botutils::UseBotWeaponSkill(charId);
+    return botutils::UseBotWeaponSkill(charId, wsId.value_or(0));
 }
 
 sol::table GetBotAbilities(uint32 charId)
@@ -2721,7 +2726,73 @@ bool UseBotAbility(uint32 charId, uint16 abilityId)
     return botutils::UseBotAbility(charId, abilityId);
 }
 
-// { { id, mpCost, skill, group, onEnemy, ready }, ... } - see botutils::GetBotSpells.
+// { { id, skillLevel, properties = { p1, p2, p3 } }, ... } - see botutils::GetBotWeaponSkills.
+sol::table GetBotWeaponSkills(uint32 charId)
+{
+    TracyZoneScoped;
+
+    auto table = lua.create_table();
+    for (const auto& ws : botutils::GetBotWeaponSkills(charId))
+    {
+        auto row          = lua.create_table();
+        row["id"]         = ws.id;
+        row["skillLevel"] = ws.skillLevel;
+        row["properties"] = lua.create_table_with(1, ws.properties[0], 2, ws.properties[1], 3, ws.properties[2]);
+        table.add(row);
+    }
+
+    return table;
+}
+
+// { closed, tier, element, properties = {...}, ageMs, remainingMs, burstElements = {...} }
+// or nil - see botutils::GetBotTargetSkillchain.
+sol::object GetBotTargetSkillchain(uint32 charId)
+{
+    TracyZoneScoped;
+
+    const auto window = botutils::GetBotTargetSkillchain(charId);
+    if (!window)
+    {
+        return sol::lua_nil;
+    }
+
+    auto table           = lua.create_table();
+    table["closed"]      = window->closed;
+    table["tier"]        = window->tier;
+    table["element"]     = window->element;
+    table["properties"]  = lua.create_table_with(1, window->properties[0], 2, window->properties[1], 3, window->properties[2]);
+    table["ageMs"]       = window->ageMs;
+    table["remainingMs"] = window->remainingMs;
+
+    auto burst = lua.create_table();
+    for (const auto element : window->burstElements)
+    {
+        burst.add(element);
+    }
+
+    table["burstElements"] = burst;
+    return table;
+}
+
+// { element, tier } wsId would close into on the bot's target now ({0, 0} = none).
+sol::table PredictBotSkillchain(uint32 charId, uint16 wsId)
+{
+    TracyZoneScoped;
+
+    const auto [element, tier] = botutils::PredictBotSkillchain(charId, wsId);
+    return lua.create_table_with("element", element, "tier", tier);
+}
+
+// { element, tier } closerWs makes after openerWs ({0, 0} = none).
+sol::table SkillchainBetween(uint16 openerWs, uint16 closerWs)
+{
+    TracyZoneScoped;
+
+    const auto [element, tier] = botutils::SkillchainBetween(openerWs, closerWs);
+    return lua.create_table_with("element", element, "tier", tier);
+}
+
+// { { id, mpCost, skill, group, onEnemy, ready, element }, ... } - see botutils::GetBotSpells.
 sol::table GetBotSpells(uint32 charId)
 {
     TracyZoneScoped;
@@ -2736,6 +2807,7 @@ sol::table GetBotSpells(uint32 charId)
         row["group"]   = spell.group;
         row["onEnemy"] = spell.onEnemy;
         row["ready"]   = spell.ready;
+        row["element"] = spell.element;
         table.add(row);
     }
 

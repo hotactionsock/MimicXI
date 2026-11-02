@@ -24,7 +24,9 @@
 #include "common/cbasetypes.h"
 #include "common/types/position.h"
 
+#include <array>
 #include <optional>
+#include <utility>
 #include <vector>
 
 // Simple melee combat for world bots (see botutils.h). Everything goes through
@@ -64,11 +66,47 @@ void SetBotHealing(uint32 charId, bool on);
 // inventory space. Returns how many items it lotted on.
 auto LotBotTreasure(uint32 charId) -> uint8;
 
-// Uses the best weapon skill the bot knows for its main weapon (highest skill
-// requirement) on its current target, if it's engaged with >= 1000 TP. Goes
-// through CPlayerController::WeaponSkill (TP, range, target checks). Returns the
+// Uses a weapon skill on the bot's current target, if it's engaged with >= 1000
+// TP: wsId if given (and known), otherwise the best it knows for its main
+// weapon (highest skill requirement). Goes through
+// CPlayerController::WeaponSkill (TP, range, target checks). Returns the
 // weapon skill id used, or 0.
-auto UseBotWeaponSkill(uint32 charId) -> uint16;
+auto UseBotWeaponSkill(uint32 charId, uint16 wsId = 0) -> uint16;
+
+// ---- Skillchains and magic bursts (Phase 4) ---------------------------------
+
+struct BotWeaponSkill
+{
+    uint16               id;
+    uint16               skillLevel;  // skill needed - a rough strength proxy (higher = stronger)
+    std::array<uint8, 3> properties;  // SKILLCHAIN_ELEMENT properties (0 = none)
+};
+
+// Weapon skills the bot knows for its current main weapon.
+auto GetBotWeaponSkills(uint32 charId) -> std::vector<BotWeaponSkill>;
+
+struct BotSkillchainWindow
+{
+    bool                 closed;        // a skillchain has gone off (tier > 0) - magic burst time
+    uint8                tier;          // 0 = opened only; 1-4 = the skillchain's level
+    uint8                element;       // closed: the skillchain (SKILLCHAIN_ELEMENT)
+    std::array<uint8, 3> properties;    // opened: the opener's properties
+    uint32               ageMs;         // since the last weapon skill landed
+    uint32               remainingMs;   // until the window closes
+    std::vector<uint8>   burstElements; // closed: spell elements that magic burst (ELEMENT)
+};
+
+// The skillchain window on the bot's current target (its Skillchain status
+// effect - the same one the engine's skillchain resolution reads), if any.
+auto GetBotTargetSkillchain(uint32 charId) -> std::optional<BotSkillchainWindow>;
+
+// What wsId would close into on the bot's target right now: { element, tier },
+// or { 0, 0 } if nothing (no window, still inside the 3s before a window
+// opens, or no matching properties). Read-only - nothing is applied.
+auto PredictBotSkillchain(uint32 charId, uint16 wsId) -> std::pair<uint8, uint8>;
+
+// The skillchain closerWs would make after openerWs: { element, tier } or { 0, 0 }.
+auto SkillchainBetween(uint16 openerWs, uint16 closerWs) -> std::pair<uint8, uint8>;
 
 struct BotAbility
 {
@@ -101,6 +139,7 @@ struct BotSpell
     uint8  group;   // SPELLGROUP (white, black, song, ninjutsu, ...)
     bool   onEnemy; // can target an enemy (otherwise self/party)
     bool   ready;   // off recast
+    uint8  element; // ELEMENT (fire, ice, ... - for magic bursts)
 };
 
 // Spells the bot knows and can cast at its current main/sub job levels - the

@@ -39,6 +39,7 @@
 #include "map_networking.h"
 #include "map_session.h"
 #include "map_session_container.h"
+#include "status_effect.h"
 #include "status_effect_container.h"
 #include "treasure_pool.h"
 #include "utils/charutils.h"
@@ -51,6 +52,8 @@
 #include "spell.h"
 #include "utils/battleutils.h"
 #include "weapon_skill.h"
+
+#include <list>
 
 namespace botutils
 {
@@ -243,7 +246,7 @@ auto LotBotTreasure(uint32 charId) -> uint8
     return lotted;
 }
 
-auto UseBotWeaponSkill(uint32 charId) -> uint16
+auto UseBotWeaponSkill(uint32 charId, uint16 wsId) -> uint16
 {
     auto* PChar = liveBot(charId);
     if (PChar == nullptr || PChar->isDead() || !PChar->PAI->IsEngaged() || PChar->health.tp < 1000)
@@ -259,12 +262,24 @@ auto UseBotWeaponSkill(uint32 charId) -> uint16
         return 0;
     }
 
-    // The strongest weapon skill it knows for this weapon type.
+    // The requested weapon skill, or the strongest it knows for this weapon type.
     CWeaponSkill* PBest = nullptr;
     for (auto* PSkill : battleutils::GetWeaponSkills(static_cast<uint8>(PWeapon->getSkillType())))
     {
-        if (PSkill != nullptr && charutils::hasWeaponSkill(PChar, PSkill->getID()) &&
-            (PBest == nullptr || PSkill->getSkillLevel() > PBest->getSkillLevel()))
+        if (PSkill == nullptr || !charutils::hasWeaponSkill(PChar, PSkill->getID()))
+        {
+            continue;
+        }
+
+        if (wsId != 0)
+        {
+            if (PSkill->getID() == wsId)
+            {
+                PBest = PSkill;
+                break;
+            }
+        }
+        else if (PBest == nullptr || PSkill->getSkillLevel() > PBest->getSkillLevel())
         {
             PBest = PSkill;
         }
@@ -397,7 +412,8 @@ auto GetBotSpells(uint32 charId) -> std::vector<BotSpell>
                            static_cast<uint8>(PSpell->getSkillType()),
                            static_cast<uint8>(PSpell->getSpellGroup()),
                            PSpell->canTargetEnemy(),
-                           !onCooldown });
+                           !onCooldown,
+                           static_cast<uint8>(PSpell->getElement()) });
     }
 
     return result;
@@ -636,6 +652,135 @@ void StopBot(uint32 charId)
     {
         path->Clear();
     }
+}
+
+// ---- Skillchains and magic bursts -------------------------------------------
+
+namespace
+{
+
+// A weapon skill's three skillchain properties.
+auto propertiesOf(CWeaponSkill* PSkill) -> std::list<SKILLCHAIN_ELEMENT>
+{
+    return { static_cast<SKILLCHAIN_ELEMENT>(PSkill->getPrimarySkillchain()),
+             static_cast<SKILLCHAIN_ELEMENT>(PSkill->getSecondarySkillchain()),
+             static_cast<SKILLCHAIN_ELEMENT>(PSkill->getTertiarySkillchain()) };
+}
+
+// The resonance a target's Skillchain effect offers, as GetSkillChainEffect reads it.
+auto resonanceOf(CStatusEffect* PSCEffect) -> std::list<SKILLCHAIN_ELEMENT>
+{
+    if (PSCEffect->GetTier() == 0)
+    {
+        const auto power = PSCEffect->GetPower();
+        return { static_cast<SKILLCHAIN_ELEMENT>(power & 0b1111),
+                 static_cast<SKILLCHAIN_ELEMENT>((power >> 4) & 0b1111),
+                 static_cast<SKILLCHAIN_ELEMENT>((power >> 8) & 0b1111) };
+    }
+
+    return { static_cast<SKILLCHAIN_ELEMENT>(PSCEffect->GetPower()) };
+}
+
+auto targetSkillchainEffect(CCharEntity* PChar) -> CStatusEffect*
+{
+    auto* PTarget = PChar->GetBattleTarget();
+    return PTarget ? PTarget->StatusEffectContainer->GetStatusEffect(xi::StatusEffect::Skillchain, 0) : nullptr;
+}
+
+} // namespace
+
+auto GetBotWeaponSkills(uint32 charId) -> std::vector<BotWeaponSkill>
+{
+    std::vector<BotWeaponSkill> result;
+
+    auto* PChar   = liveBot(charId);
+    auto* PWeapon = PChar ? dynamic_cast<CItemWeapon*>(PChar->m_Weapons[SLOT_MAIN]) : nullptr;
+    if (PWeapon == nullptr)
+    {
+        return result;
+    }
+
+    for (auto* PSkill : battleutils::GetWeaponSkills(static_cast<uint8>(PWeapon->getSkillType())))
+    {
+        if (PSkill != nullptr && charutils::hasWeaponSkill(PChar, PSkill->getID()))
+        {
+            result.push_back({ PSkill->getID(),
+                               static_cast<uint16>(PSkill->getSkillLevel()),
+                               { PSkill->getPrimarySkillchain(), PSkill->getSecondarySkillchain(), PSkill->getTertiarySkillchain() } });
+        }
+    }
+
+    return result;
+}
+
+auto GetBotTargetSkillchain(uint32 charId) -> std::optional<BotSkillchainWindow>
+{
+    auto* PChar     = liveBot(charId);
+    auto* PSCEffect = PChar ? targetSkillchainEffect(PChar) : nullptr;
+    if (PSCEffect == nullptr)
+    {
+        return std::nullopt;
+    }
+
+    const auto now     = timer::now();
+    const auto age     = now - PSCEffect->GetStartTime();
+    const auto left    = PSCEffect->GetDuration() - age;
+    const auto toMs    = [](auto d) { return static_cast<uint32>(std::max<int64>(0, std::chrono::duration_cast<std::chrono::milliseconds>(d).count())); };
+
+    BotSkillchainWindow window{};
+    window.tier        = static_cast<uint8>(PSCEffect->GetTier());
+    window.closed      = window.tier > 0;
+    window.ageMs       = toMs(age);
+    window.remainingMs = toMs(left);
+
+    if (window.closed)
+    {
+        window.element = static_cast<uint8>(PSCEffect->GetPower());
+        for (const auto element : battleutils::GetSkillchainMagicElement(static_cast<SKILLCHAIN_ELEMENT>(window.element)))
+        {
+            window.burstElements.push_back(static_cast<uint8>(element));
+        }
+    }
+    else
+    {
+        const auto power  = PSCEffect->GetPower();
+        window.properties = { static_cast<uint8>(power & 0b1111), static_cast<uint8>((power >> 4) & 0b1111), static_cast<uint8>((power >> 8) & 0b1111) };
+    }
+
+    return window;
+}
+
+auto PredictBotSkillchain(uint32 charId, uint16 wsId) -> std::pair<uint8, uint8>
+{
+    auto* PChar     = liveBot(charId);
+    auto* PSCEffect = PChar ? targetSkillchainEffect(PChar) : nullptr;
+    auto* PSkill    = battleutils::GetWeaponSkill(wsId);
+    if (PSCEffect == nullptr || PSkill == nullptr)
+    {
+        return { 0, 0 };
+    }
+
+    // Same timing rule as GetSkillChainEffect: a chain needs 3s since the last link.
+    if (PSCEffect->GetStartTime() + 3s >= timer::now())
+    {
+        return { 0, 0 };
+    }
+
+    const auto skillchain = battleutils::FormSkillchain(resonanceOf(PSCEffect), propertiesOf(PSkill));
+    return { static_cast<uint8>(skillchain), battleutils::GetSkillchainTier(skillchain) };
+}
+
+auto SkillchainBetween(uint16 openerWs, uint16 closerWs) -> std::pair<uint8, uint8>
+{
+    auto* POpener = battleutils::GetWeaponSkill(openerWs);
+    auto* PCloser = battleutils::GetWeaponSkill(closerWs);
+    if (POpener == nullptr || PCloser == nullptr)
+    {
+        return { 0, 0 };
+    }
+
+    const auto skillchain = battleutils::FormSkillchain(propertiesOf(POpener), propertiesOf(PCloser));
+    return { static_cast<uint8>(skillchain), battleutils::GetSkillchainTier(skillchain) };
 }
 
 } // namespace botutils

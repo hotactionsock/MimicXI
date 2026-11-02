@@ -51,6 +51,7 @@ local ASPIR_BELOW_MPP        = 60
 local ENFEEBLE_MAX_TRIES     = 2      -- per family per fight (resists cost MP)
 local REST_BELOW_MPP         = 30     -- casters rest between fights below this MP%...
 local PARTY_STANDOFF_YALMS   = 15     -- pure casters in a party stay at least this far from the target
+local BURST_MIN_LEFT_MS      = 1500   -- only start a magic burst with at least this long left in the window
 local REST_UNTIL_MPP         = 90     -- ...until back up to this
 
 -- Rough HP restored per Cure tier: pick the smallest tier that covers the
@@ -424,6 +425,11 @@ local function tryNuke(bot, charId, m, profile, target, now)
         return false
     end
 
+    -- A party skillchain is being set up: save the nuke for the burst.
+    if xi.worldbots.skillchain.chainPending(bot, charId, now) then
+        return false
+    end
+
     local all = families()
 
     if profile.nuke == 'divine' then
@@ -462,6 +468,52 @@ local function tryNuke(bot, charId, m, profile, target, now)
     end
 
     return cast(bot, charId, m, choices[math.random(1, #choices)], now)
+end
+
+-- A skillchain just went off on the target: nuke with an element that bursts
+-- on it, the highest tier affordable. Banish counts too (light bursts).
+local function tryBurst(bot, charId, m, profile, now)
+    if not profile or not profile.nuke then
+        return false
+    end
+
+    local window = GetBotTargetSkillchain(charId)
+    if
+        window == nil or
+        not window.closed or
+        window.remainingMs < BURST_MIN_LEFT_MS
+    then
+        return false
+    end
+
+    local wanted = {}
+    for _, element in ipairs(window.burstElements) do
+        wanted[element] = true
+    end
+
+    local all   = families()
+    local names = { 'banish' }
+    if profile.nuke ~= 'divine' then
+        for _, name in ipairs(NUKE_FAMILIES) do
+            table.insert(names, name)
+        end
+    end
+
+    local bestId, bestTier = nil, 0
+    for _, name in ipairs(names) do
+        local family = all[name]
+        local id     = bestOf(bot, m, family, now)
+        local spell  = id and m.spells[id]
+        if spell and wanted[spell.element] and canSpend(bot, m, profile, id) then
+            for tier, tierId in ipairs(family.ids) do
+                if tierId == id and tier > bestTier then
+                    bestId, bestTier = id, tier
+                end
+            end
+        end
+    end
+
+    return bestId ~= nil and cast(bot, charId, m, bestId, now)
 end
 
 local function tryDrains(bot, charId, m, profile, now)
@@ -544,6 +596,11 @@ function magic.combat(bot, charId, state, now)
     updateRange(bot, charId, m, profile, canAffordOffence(bot, m, profile))
 
     if tryCure(bot, charId, m, now, COMBAT_CURE_HPP) then
+        return true
+    end
+
+    -- Magic burst beats everything but a cure.
+    if tryBurst(bot, charId, m, profile, now) then
         return true
     end
 
@@ -655,6 +712,19 @@ function magic.buffMember(bot, charId, state, now, member, name)
 
     local id = bestOf(bot, m, family, now)
     return id ~= nil and cast(bot, charId, m, id, now, member:getID())
+end
+
+-- Elements of the nukes the bot knows (for skillchains it can burst on).
+function magic.nukeElements(state)
+    families() -- builds KIND_BY_ID
+    local elements = {}
+    for id, spell in pairs(magicState(state).spells) do
+        if KIND_BY_ID[id] == 'nuke' then
+            elements[spell.element] = true
+        end
+    end
+
+    return elements
 end
 
 -- Does the bot know any spell of this family?
