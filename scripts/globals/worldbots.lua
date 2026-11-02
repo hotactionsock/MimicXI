@@ -1256,6 +1256,22 @@ xi.worldbots.setGoal = function(charId, kind, destZoneId)
     return state.goal
 end
 
+-- Re-reads spells and re-plans gear sets now (for !worldbot gear). False if
+-- charId isn't a live bot.
+xi.worldbots.replanGear = function(charId)
+    local bot = GetPlayerByID(charId)
+    if bot == nil then
+        return false
+    end
+
+    local now   = GetSystemTime()
+    local state = getState(charId, now)
+    xi.worldbots.magic.refresh(bot, charId, state, now, true)
+    xi.worldbots.gear.plan(bot, charId, state)
+    xi.worldbots.gear.base(bot, charId, state)
+    return true
+end
+
 -- One-line job summary for !worldbot jobs (nil if charId isn't a live bot).
 xi.worldbots.describeJobs = function(charId)
     local bot = GetPlayerByID(charId)

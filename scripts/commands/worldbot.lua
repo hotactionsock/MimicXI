@@ -89,7 +89,7 @@ local function usage(player)
     player:printToPlayer('!worldbot lines - zone lines bots can use in your current zone')
     player:printToPlayer('!worldbot give <charid> <itemid> [qty] - give an item (then equips/learns it if useful)')
     player:printToPlayer('!worldbot inv <charid> - list its items (* = equipped)')
-    player:printToPlayer('!worldbot gear <charid> - equip best gear and learn scrolls now')
+    player:printToPlayer('!worldbot gear <charid> - learn scrolls, re-plan gear sets and re-read spells now')
 end
 
 -- Resolves a race token (nil, a race name, or a number) to a valid CharRace id,
@@ -420,7 +420,9 @@ commandObj.onTrigger = function(player, args)
         end
 
         local result = ManageBotInventory(charId)
-        player:printToPlayer(string.format('Bot %d: equipped %d, learned %d.', charId, result.equipped, result.learned))
+        local planned = xi.worldbots.replanGear(charId)
+        player:printToPlayer(string.format('Bot %d: equipped %d, learned %d%s.', charId, result.equipped, result.learned,
+            planned and ', gear sets re-planned' or ''))
     elseif sub == 'inv' then
         local charId = tonumber(rest)
         if charId == nil then
