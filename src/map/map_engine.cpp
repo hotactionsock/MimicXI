@@ -57,6 +57,7 @@
 
 #include "utils/battleutils.h"
 #include "utils/botlog.h"
+#include "utils/botmemory.h"
 #include "utils/botutils.h"
 #include "utils/charutils.h"
 #include "utils/fishingutils.h"
@@ -96,6 +97,7 @@ MapEngine::~MapEngine()
 {
     // Don't lose the last few seconds of bot activity on shutdown.
     botutils::FlushBotLog();
+    botutils::FlushBotMemory();
 
     g_PMapEngine = nullptr;
     itemutils::FreeItemList();
@@ -299,6 +301,7 @@ auto MapEngine::init() -> Task<void>
             []() -> Task<void>
             {
                 botutils::FlushBotLog();
+                botutils::FlushBotMemory();
                 co_return;
             });
 

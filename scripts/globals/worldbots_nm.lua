@@ -169,7 +169,12 @@ function nm.maybeCamp(bot, charId, state, now)
 
     local wantsParty = false
     for _, target in ipairs(GetBotNMTargets(charId, NM_MAX_HOPS)) do
-        if now >= (cooldown[target.mobId] or 0) then
+        -- Not on cooldown, and not one that keeps killing it.
+        local mem = xi.worldbots.memory
+        if
+            now >= (cooldown[target.mobId] or 0) and
+            not mem.avoid(bot, mem.NM, target.mobId, now)
+        then
             if target.con > limit then
                 wantsParty = wantsParty or target.con <= CON_VERY
             else

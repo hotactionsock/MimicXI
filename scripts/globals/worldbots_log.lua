@@ -93,6 +93,9 @@ function log.huntSummary(bot, zoneId)
         return
     end
 
+    -- Remember that this zone pays off (worldbots_memory.lua).
+    xi.worldbots.memory.recordHunt(bot:getID(), zoneId, progress.exp)
+
     local zoneName = GetBotZoneName(zoneId)
     log.event(bot, log.NOTABLE, 'combat', 'hunt_summary',
         string.format('%s defeated %d monster%s in %s, earning %s EXP', bot:getName(), progress.kills,
@@ -192,6 +195,17 @@ function log.changedPlan(bot, hereName, plannedName)
     log.event(bot, log.NOTABLE, 'travel', 'changed_plan',
         string.format('%s decided to train in %s instead of travelling on to %s', bot:getName(), hereName, plannedName),
         { zone = hereName, planned = plannedName })
+end
+
+function log.gaveUpRoute(bot, zoneName, deaths)
+    log.event(bot, log.NOTABLE, 'travel', 'gave_up_route',
+        string.format('%s gave up on getting to %s after dying on the way %d time%s', bot:getName(), zoneName, deaths, deaths == 1 and '' or 's'),
+        { zone = zoneName, deaths = deaths })
+end
+
+function log.gaveUpCamp(bot, zoneName)
+    log.event(bot, log.NOTABLE, 'travel', 'gave_up_camp', string.format('%s stopped using a camp in %s that kept getting them killed', bot:getName(), zoneName),
+        { zone = zoneName })
 end
 
 function log.movedCamp(bot, zoneName)

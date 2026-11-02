@@ -15,6 +15,8 @@ set(UTIL_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/botjobs.h
     ${CMAKE_CURRENT_SOURCE_DIR}/botlog.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/botlog.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/botmemory.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/botmemory.h
     ${CMAKE_CURRENT_SOURCE_DIR}/botnm.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/botnm.h
     ${CMAKE_CURRENT_SOURCE_DIR}/botparty.cpp

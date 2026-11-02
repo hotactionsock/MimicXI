@@ -543,9 +543,15 @@ local function levelingOptions(bot, zoneId, maxHops)
         crowd[z.zoneId] = z.bots
     end
 
+    local mem          = xi.worldbots.memory
     local byZone, list = {}, {}
     for _, z in ipairs(GetBotLevelingZones(level, zoneId, maxHops, size)) do
-        if z.suitable >= GOAL_MIN_SUITABLE then
+        -- Experience: skip zones (or trips) that keep killing it.
+        local avoided =
+            mem.avoid(bot, mem.ZONE, z.zoneId, now) or
+            (z.zoneId ~= zoneId and mem.avoid(bot, mem.ROUTE, z.zoneId, now))
+
+        if z.suitable >= GOAL_MIN_SUITABLE and not avoided then
             local safety  = z.suitable / (z.suitable + tier.dangerWeight * (z.dangerous or 0))
             local quality = math.min(z.suitable, ZONE_QUALITY_CAP) * safety * safety
             local bots    = crowd[z.zoneId] or 0
@@ -554,6 +560,12 @@ local function levelingOptions(bot, zoneId, maxHops)
             end
 
             local utility = quality * ZONE_HOP_DECAY ^ z.hops / (1 + math.max(0, bots - ZONE_CROWD_BOTS) / ZONE_CROWD_BOTS)
+
+            -- ...and lean towards what has worked, away from what has hurt.
+            utility = utility * mem.trust(bot, mem.ZONE, z.zoneId, now)
+            if z.zoneId ~= zoneId then
+                utility = utility * mem.trust(bot, mem.ROUTE, z.zoneId, now)
+            end
             local option  = { zoneId = z.zoneId, quality = quality, utility = utility, hops = z.hops, safe = safety >= ZONE_SAFE_ENOUGH }
             byZone[z.zoneId] = option
             table.insert(list, option)
@@ -704,10 +716,14 @@ end
 local function pickSettleSpot(bot, state)
     if state.goal.kind == 'level' then
         -- Remember it, so after a death or a sell trip it returns to the same place.
-        -- A good camp near where it is now, rather than across the zone.
-        state.goal.spot = state.goal.spot or GetBotHuntSpot(bot:getZoneID(),
-            xi.worldbots.party.huntLevel(bot, bot:getID(), GetSystemTime()), xi.worldbots.party.huntSize(bot),
-            { x = bot:getXPos(), y = bot:getYPos(), z = bot:getZPos() })
+        -- A good camp near where it is now, rather than across the zone - and
+        -- not one that has gone badly before.
+        local now    = GetSystemTime()
+        local zoneId = bot:getZoneID()
+        state.goal.spot = state.goal.spot or xi.worldbots.memory.safeCamp(bot, zoneId, now, function(avoidPos)
+            return GetBotHuntSpot(zoneId, xi.worldbots.party.huntLevel(bot, bot:getID(), now), xi.worldbots.party.huntSize(bot),
+                { x = bot:getXPos(), y = bot:getYPos(), z = bot:getZPos() }, avoidPos)
+        end)
         return state.goal.spot
     end
 
@@ -1182,9 +1198,11 @@ local function combatStep(bot, charId, state, now, moving)
                 state.noPreySince = nil
                 state.campMoves   = (state.campMoves or 0) + 1
 
-                local nextCamp = state.campMoves < CAMP_MAX_MOVES and GetBotHuntSpot(bot:getZoneID(),
-                    xi.worldbots.party.huntLevel(bot, charId, now), xi.worldbots.party.huntSize(bot),
-                    { x = bot:getXPos(), y = bot:getYPos(), z = bot:getZPos() }, camp)
+                local zoneId   = bot:getZoneID()
+                local nextCamp = state.campMoves < CAMP_MAX_MOVES and xi.worldbots.memory.safeCamp(bot, zoneId, now, function(avoidPos)
+                    return GetBotHuntSpot(zoneId, xi.worldbots.party.huntLevel(bot, charId, now), xi.worldbots.party.huntSize(bot),
+                        { x = bot:getXPos(), y = bot:getYPos(), z = bot:getZPos() }, avoidPos or camp)
+                end)
 
                 if nextCamp then
                     xi.worldbots.log.movedCamp(bot, GetBotZoneName(bot:getZoneID()))
@@ -1297,6 +1315,9 @@ local function deathStep(charId, state, now)
 
         local bot = GetPlayerByID(charId)
         if bot then
+            -- Remember what went wrong, and give up on what keeps killing it
+            -- (worldbots_memory.lua).
+            xi.worldbots.memory.recordDeath(bot, charId, state, now)
             xi.worldbots.log.died(bot, state.lastFoe)
         end
 
@@ -1641,6 +1662,11 @@ xi.worldbots.onZoneTick = function(zone, bots)
             -- Passing through somewhere that will do just as well? Train here.
             reconsiderOnArrival(bot, charId, state, zoneId)
             local goal = state.goal
+
+            -- Got where it was going: that trip works.
+            if goal and goal.zoneId == zoneId then
+                xi.worldbots.memory.recordArrival(charId, zoneId)
+            end
 
             if goal then
                 goal.settled = false -- walk back to its spot (e.g. after a home point)

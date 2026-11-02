@@ -69,6 +69,7 @@
 #include "utils/botinventory.h"
 #include "utils/botjobs.h"
 #include "utils/botlog.h"
+#include "utils/botmemory.h"
 #include "utils/botnm.h"
 #include "utils/botparty.h"
 #include "utils/botutils.h"
@@ -386,6 +387,9 @@ void init(IPP mapIPP, bool isRunningInCI)
     lua.set_function("LeaveBotParty", &luautils::LeaveBotParty);
     lua.set_function("GetBotParty", &luautils::GetBotParty);
     lua.set_function("GetBotShops", &luautils::GetBotShops);
+    lua.set_function("GetBotMemory", &luautils::GetBotMemory);
+    lua.set_function("RecordBotDeath", &luautils::RecordBotDeath);
+    lua.set_function("RecordBotSuccess", &luautils::RecordBotSuccess);
     lua.set_function("GetBotNMTargets", &luautils::GetBotNMTargets);
     lua.set_function("IsRealPlayerNearMob", &luautils::IsRealPlayerNearMob);
     lua.set_function("GetBotMobStatus", &luautils::GetBotMobStatus);
@@ -3177,6 +3181,43 @@ bool TradeBotItemToNpc(uint32 charId, uint32 npcId, uint16 itemId, uint32 quanti
     TracyZoneScoped;
 
     return botutils::TradeBotItemToNpc(charId, npcId, itemId, quantity);
+}
+
+// kind: 1 zone, 2 route, 3 camp, 4 NM - see botutils::BotMemoryKind.
+// { deaths, successes, exp, lastDeathTs, lastSuccessTs, deathLevel }
+sol::table GetBotMemory(uint32 charId, uint8 kind, uint32 ref)
+{
+    TracyZoneScoped;
+
+    const auto m = botutils::GetBotMemory(charId, static_cast<botutils::BotMemoryKind>(kind), ref);
+    auto       t = lua.create_table();
+    t["deaths"]        = m.deaths;
+    t["successes"]     = m.successes;
+    t["exp"]           = m.exp;
+    t["lastDeathTs"]   = m.lastDeathTs;
+    t["lastSuccessTs"] = m.lastSuccessTs;
+    t["deathLevel"]    = m.deathLevel;
+    return t;
+}
+
+void RecordBotDeath(uint32 charId, uint8 kind, uint32 ref, uint8 level)
+{
+    TracyZoneScoped;
+
+    if (kind >= 1 && kind <= 4)
+    {
+        botutils::RecordBotDeath(charId, static_cast<botutils::BotMemoryKind>(kind), ref, level);
+    }
+}
+
+void RecordBotSuccess(uint32 charId, uint8 kind, uint32 ref, uint32 exp)
+{
+    TracyZoneScoped;
+
+    if (kind >= 1 && kind <= 4)
+    {
+        botutils::RecordBotSuccess(charId, static_cast<botutils::BotMemoryKind>(kind), ref, exp);
+    }
 }
 
 // { { npcId, x, y, z }, ... } - general shops in a zone (botutils::GetBotShops).

@@ -22,6 +22,7 @@
 #include "botutils.h"
 #include "botinventory.h"
 #include "botlog.h"
+#include "botmemory.h"
 
 #include "common/database.h"
 #include "common/earth_time.h"
@@ -490,6 +491,7 @@ auto DeleteBotCharacter(uint32 charId) -> bool
 
     db::preparedStmt("DELETE FROM char_flags WHERE charid = ?", charId);
     db::preparedStmt("DELETE FROM world_bots WHERE charid = ?", charId);
+    DeleteBotMemory(charId);
 
     return true;
 }
