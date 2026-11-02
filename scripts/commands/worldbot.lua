@@ -68,6 +68,7 @@ local function usage(player)
     player:printToPlayer('!worldbot delete <charid> - permanently deletes the bot and its account')
     player:printToPlayer('!worldbot delete all - permanently deletes every bot (bot accounts only)')
     player:printToPlayer('!worldbot list')
+    player:printToPlayer('!worldbot zones - zones holding bots: awake/asleep, and why')
     player:printToPlayer('!worldbot travel <charid> <zoneid> - route across zone lines to that zone')
     player:printToPlayer('!worldbot goal <charid> [level|home] - show the goal, or give it a new one')
     player:printToPlayer('!worldbot goal all <level|home> - give every spawned bot in your zone that goal')
@@ -404,6 +405,32 @@ commandObj.onTrigger = function(player, args)
             for _, line in ipairs(lines) do
                 player:printToPlayer(string.format('  line %d -> zone %d at (%.1f, %.1f, %.1f)', line.id, line.zoneId, line.x, line.y, line.z))
             end
+        end
+    elseif sub == 'zones' then
+        local zones = GetBotAwakeZones()
+        if #zones == 0 then
+            player:printToPlayer('No zones hold bots yet (updates every 5s).')
+        else
+            local held = 0
+            table.sort(zones, function(a, b)
+                return a.demand > b.demand
+            end)
+
+            for _, z in ipairs(zones) do
+                local status = 'asleep'
+                if z.players then
+                    status = 'awake (players)'
+                elseif z.held then
+                    status = 'awake (bots)'
+                    held   = held + 1
+                elseif z.demand > 0 then
+                    status = 'waiting for a slot'
+                end
+
+                player:printToPlayer(string.format('  zone %d - %d bot(s), demand %.2f - %s', z.zoneId, z.bots, z.demand, status))
+            end
+
+            player:printToPlayer(string.format('%d zone(s) held awake by bots (limit: map.WORLDBOTS_MAX_AWAKE_ZONES).', held))
         end
     elseif sub == 'list' then
         local bots = GetBotList()

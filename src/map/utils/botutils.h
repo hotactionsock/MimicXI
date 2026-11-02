@@ -220,4 +220,57 @@ auto ZoneBotThroughLine(uint32 charId, uint32 zoneLineId) -> CCharEntity*;
 // a fresh spawn. Returns nullptr if charId isn't a bot or the move failed.
 auto TeleportBotCharacter(uint32 charId, xi::ZoneId zoneId, float x, float y, float z, uint8 rotation) -> CCharEntity*;
 
+// ---- Zone wakefulness (Phase 2b) -------------------------------------------
+// A zone with no real players normally goes dormant (CZone::HasAnyRealPlayers).
+// Bots that are busy levelling must keep progressing with nobody online, so
+// the zones they're in are held awake - up to a budget, chosen by activity.
+// Cities and other zones holding only idle bots still sleep.
+//
+// The Lua AI (xi.worldbots) reports each bot's activity when it changes:
+//   Active  - levelling, or on a trip/errand that serves it (travelling, selling,
+//             walking back from a home point): holds its zone awake.
+//   Resting - idle (e.g. loitering in a city): its zone may sleep until wakeAt
+//             (a Unix timestamp), when it wakes so the bot can pick a new goal.
+//   Unknown - just spawned, nothing reported yet: holds its zone awake so the
+//             AI gets a chance to decide.
+// The AI re-reports periodically, so a lost record heals itself.
+enum class BotActivity : uint8
+{
+    Unknown = 0,
+    Active  = 1,
+    Resting = 2,
+};
+
+// Records a bot's activity. wakeAt is only used for Resting (0 = never wake).
+void SetBotActivity(uint32 charId, BotActivity activity, uint32 wakeAt);
+
+// Marks a bot as making progress (EXP gained). A levelling bot that neither
+// moves nor gains EXP for a while counts for less when the budget is shared out.
+void NoteBotProgress(uint32 charId);
+
+// Drops a bot's activity record (despawn/delete).
+void ForgetBotActivity(uint32 charId);
+
+// True if bots currently hold zoneId awake (see UpdateBotAwakeZones).
+auto IsZoneHeldAwakeByBots(uint16 zoneId) -> bool;
+
+// Re-decides which zones bots hold awake and wakes newly chosen ones. Zones
+// that drop out go back to sleep through the normal dormancy check in
+// CZone::ZoneServer. Called every few seconds by the map engine, independent of
+// any zone's own tick (dormant zones don't tick).
+// Budget: map.WORLDBOTS_MAX_AWAKE_ZONES (0 = unlimited).
+void UpdateBotAwakeZones();
+
+struct BotAwakeZoneInfo
+{
+    uint16 zoneId;
+    float  demand;  // weighted bot demand (see UpdateBotAwakeZones)
+    uint32 bots;    // bots in the zone
+    bool   held;    // held awake by bots
+    bool   players; // awake anyway because real players are here
+};
+
+// Per-zone snapshot from the last UpdateBotAwakeZones, for !worldbot zones.
+auto GetBotAwakeZones() -> std::vector<BotAwakeZoneInfo>;
+
 } // namespace botutils

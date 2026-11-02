@@ -76,6 +76,7 @@ using ZoneSettingsDataset = xi::data::datasets::zones::settings::Dataset;
 
 #include "lua/luautils.h"
 
+#include "utils/botutils.h"
 #include "utils/battleutils.h"
 #include "utils/charutils.h"
 #include "utils/moduleutils.h"
@@ -1000,8 +1001,10 @@ void CZone::IncreaseZoneCounter(CCharEntity* PChar)
     // Wake the zone back up if it was slept while empty. The base sync kept the
     // empty-zone timer teardown in ZoneServer() but dropped this restart, leaving
     // any previously-empty zone dead on re-entry (no ticks -> players cannot zone out).
-    // A world bot entering doesn't wake a sleeping zone - only a real player does.
-    if (!zoneTimerToken_.has_value() && HasAnyRealPlayers())
+    // A world bot entering doesn't wake a sleeping zone by itself - only a real
+    // player does, or the bot budget holding this zone awake (a levelling bot
+    // travelling in; see botutils::UpdateBotAwakeZones).
+    if (!zoneTimerToken_.has_value() && (HasAnyRealPlayers() || botutils::IsZoneHeldAwakeByBots(static_cast<uint16>(GetID()))))
     {
         createZoneTimers();
     }
@@ -1293,7 +1296,9 @@ auto CZone::ZoneServer(timer::time_point tick) -> Task<void>
                          [rawPtr](const auto& el) { return el.get() == rawPtr; }));
     }
 
-    if (zoneTimerToken_.has_value() && !HasAnyRealPlayers() && m_timeZoneEmpty + 5s < timer::now() && CheckMobsPathedBack())
+    // Bots that are levelling can hold a zone awake too (botutils::UpdateBotAwakeZones).
+    if (zoneTimerToken_.has_value() && !HasAnyRealPlayers() && !botutils::IsZoneHeldAwakeByBots(static_cast<uint16>(GetID())) &&
+        m_timeZoneEmpty + 5s < timer::now() && CheckMobsPathedBack())
     {
         zoneTimerToken_.reset();
         zoneTimerTriggerAreasToken_.reset();
@@ -1772,6 +1777,14 @@ bool CZone::HasAnyPlayers() const
         }
     }
     return false;
+}
+
+void CZone::WakeIfSleeping()
+{
+    if (!zoneTimerToken_.has_value())
+    {
+        createZoneTimers();
+    }
 }
 
 bool CZone::HasAnyRealPlayers() const

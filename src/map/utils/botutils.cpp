@@ -22,6 +22,10 @@
 #include "botutils.h"
 
 #include "common/database.h"
+#include "common/earth_time.h"
+#include "common/settings.h"
+#include "common/timer.h"
+#include "common/tracy.h"
 #include "common/ipp.h"
 #include "common/logging.h"
 #include "common/macros.h"
@@ -49,6 +53,7 @@
 #include <algorithm>
 #include <limits>
 #include <unordered_map>
+#include <unordered_set>
 #include <cmath>
 #include <format>
 
@@ -412,6 +417,7 @@ void destroyBotSession(uint32 charId)
 
     session->shuttingDown = 1;
     sessions.destroySession(session);
+    ForgetBotActivity(charId);
 }
 
 } // namespace
@@ -1234,6 +1240,238 @@ auto ZoneBotThroughLine(uint32 charId, uint32 zoneLineId) -> CCharEntity*
     const auto arrival           = line->nextSpawnPosition();
 
     return TeleportBotCharacter(charId, destinationZoneId, arrival.x, arrival.y, arrival.z, arrival.rotation);
+}
+
+// ---- Zone wakefulness -------------------------------------------------------
+
+namespace
+{
+
+// How the budget weighs each bot (see UpdateBotAwakeZones).
+constexpr auto  kStallAfter         = 10min; // an Active bot with no movement or EXP for this long is "stalled"
+constexpr float kStalledWeight      = 0.25f; // ...and counts for this much instead of 1
+constexpr auto  kMinHold            = 2min;  // once held, a zone keeps its slot at least this long (no thrashing)
+constexpr float kWaitingPerMinute   = 0.5f;  // a zone kept waiting for a slot gains this much priority per minute
+constexpr float kProgressMoveYalms  = 1.0f;  // movement that counts as progress between two updates
+
+struct BotActivityState
+{
+    BotActivity       activity{ BotActivity::Unknown };
+    uint32            wakeAt{ 0 };
+    timer::time_point lastProgress{ timer::now() };
+    position_t        lastPos{};
+    bool              hasLastPos{ false };
+};
+
+std::unordered_map<uint32, BotActivityState>      g_botActivity;
+std::unordered_set<uint16>                        g_heldZones;
+std::unordered_map<uint16, timer::time_point>     g_heldSince;
+std::unordered_map<uint16, timer::time_point>     g_waitingSince;
+std::vector<BotAwakeZoneInfo>                     g_awakeSnapshot;
+
+auto activityState(uint32 charId) -> BotActivityState&
+{
+    return g_botActivity[charId]; // default-constructs as Unknown
+}
+
+// How much one bot wants its zone awake right now.
+auto botDemand(CCharEntity* PChar, timer::time_point now, uint32 unixNow) -> float
+{
+    auto& state = activityState(PChar->id);
+
+    // Movement since the last update counts as progress (walking to a camp,
+    // chasing prey, travelling); EXP gain is noted separately (NoteBotProgress).
+    const auto& pos = PChar->loc.p;
+    if (!state.hasLastPos || distance(state.lastPos, pos) >= kProgressMoveYalms)
+    {
+        state.lastPos      = pos;
+        state.hasLastPos   = true;
+        state.lastProgress = now;
+    }
+
+    switch (state.activity)
+    {
+        case BotActivity::Unknown:
+            // Nothing reported yet (just spawned, or the AI lost its state):
+            // the zone has to tick for the AI to decide, so it counts in full.
+            return 1.0f;
+
+        case BotActivity::Active:
+            return now - state.lastProgress < kStallAfter ? 1.0f : kStalledWeight;
+
+        case BotActivity::Resting:
+            // Asleep until its next decision is due; then it needs one tick of
+            // the zone to pick a new goal (after which it reports again).
+            return state.wakeAt != 0 && unixNow >= state.wakeAt ? 1.0f : 0.0f;
+    }
+
+    return 0.0f;
+}
+
+} // namespace
+
+void SetBotActivity(uint32 charId, BotActivity activity, uint32 wakeAt)
+{
+    auto& state = activityState(charId);
+    if (state.activity != activity)
+    {
+        state.lastProgress = timer::now(); // a fresh start, not an instant stall
+    }
+
+    state.activity = activity;
+    state.wakeAt   = activity == BotActivity::Resting ? wakeAt : 0;
+}
+
+void NoteBotProgress(uint32 charId)
+{
+    const auto it = g_botActivity.find(charId);
+    if (it != g_botActivity.end())
+    {
+        it->second.lastProgress = timer::now();
+    }
+}
+
+void ForgetBotActivity(uint32 charId)
+{
+    g_botActivity.erase(charId);
+}
+
+auto IsZoneHeldAwakeByBots(uint16 zoneId) -> bool
+{
+    return g_heldZones.contains(zoneId);
+}
+
+void UpdateBotAwakeZones()
+{
+    TracyZoneScoped;
+
+    const auto   now     = timer::now();
+    const uint32 unixNow = earth_time::timestamp();
+    const auto   budget  = settings::get<uint32>("map.WORLDBOTS_MAX_AWAKE_ZONES");
+
+    struct Candidate
+    {
+        CZone* zone;
+        float  demand;
+        float  priority;
+    };
+
+    std::vector<Candidate>        candidates;
+    std::vector<BotAwakeZoneInfo> snapshot;
+
+    zoneutils::ForEachZone(
+        [&](CZone* PZone)
+        {
+            if (PZone == nullptr || !PZone->GetZoneEntities()->HasBotChars())
+            {
+                return;
+            }
+
+            float  demand = 0.0f;
+            uint32 bots   = 0;
+            PZone->ForEachChar(
+                [&](CCharEntity* PChar)
+                {
+                    if (IsBotEntity(PChar))
+                    {
+                        ++bots;
+                        demand += botDemand(PChar, now, unixNow);
+                    }
+                });
+
+            const auto zoneId  = static_cast<uint16>(PZone->GetID());
+            const bool players = PZone->HasAnyRealPlayers();
+
+            snapshot.push_back({ zoneId, demand, bots, false, players });
+
+            // Zones with real players are awake anyway and don't use the budget.
+            if (players || demand <= 0.0f)
+            {
+                return;
+            }
+
+            float priority = demand;
+
+            // Keep a recently granted slot (avoids zones flickering on and off).
+            if (g_heldZones.contains(zoneId) && now - g_heldSince[zoneId] < kMinHold)
+            {
+                priority += 1000.0f;
+            }
+
+            // Zones left waiting creep up the list, so a crowded budget rotates
+            // rather than starving small camps forever.
+            if (const auto it = g_waitingSince.find(zoneId); it != g_waitingSince.end())
+            {
+                const auto waited = std::chrono::duration_cast<std::chrono::seconds>(now - it->second).count() / 60.0f;
+                priority += waited * kWaitingPerMinute;
+            }
+
+            candidates.push_back({ PZone, demand, priority });
+        });
+
+    std::sort(candidates.begin(), candidates.end(),
+              [](const Candidate& a, const Candidate& b)
+              {
+                  return a.priority > b.priority;
+              });
+
+    std::unordered_set<uint16> held;
+    for (const auto& candidate : candidates)
+    {
+        const auto zoneId = static_cast<uint16>(candidate.zone->GetID());
+        if (budget == 0 || held.size() < budget)
+        {
+            held.insert(zoneId);
+            g_waitingSince.erase(zoneId);
+            if (!g_heldZones.contains(zoneId))
+            {
+                g_heldSince[zoneId] = now;
+            }
+        }
+        else if (!g_waitingSince.contains(zoneId))
+        {
+            g_waitingSince[zoneId] = now;
+        }
+    }
+
+    // Forget waiting/held bookkeeping for zones that no longer want a slot.
+    std::erase_if(g_waitingSince,
+                  [&](const auto& entry)
+                  {
+                      return std::none_of(candidates.begin(), candidates.end(),
+                                          [&](const Candidate& c)
+                                          {
+                                              return static_cast<uint16>(c.zone->GetID()) == entry.first;
+                                          });
+                  });
+    std::erase_if(g_heldSince,
+                  [&](const auto& entry)
+                  {
+                      return !held.contains(entry.first);
+                  });
+
+    g_heldZones = std::move(held);
+
+    // Wake newly held zones. Zones that lost their slot fall asleep on their own
+    // (CZone::ZoneServer's dormancy check asks IsZoneHeldAwakeByBots).
+    for (const auto& candidate : candidates)
+    {
+        if (g_heldZones.contains(static_cast<uint16>(candidate.zone->GetID())))
+        {
+            candidate.zone->WakeIfSleeping();
+        }
+    }
+
+    for (auto& info : snapshot)
+    {
+        info.held = g_heldZones.contains(info.zoneId);
+    }
+    g_awakeSnapshot = std::move(snapshot);
+}
+
+auto GetBotAwakeZones() -> std::vector<BotAwakeZoneInfo>
+{
+    return g_awakeSnapshot;
 }
 
 } // namespace botutils

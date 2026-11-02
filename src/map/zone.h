@@ -324,6 +324,12 @@ public:
     void       LeaveInstanceLayer(CCharEntity* PChar);
 
     void createZoneTimers();
+    void WakeIfSleeping(); // starts the zone timers if the zone is dormant (used by botutils)
+
+    // Like HasAnyPlayers, but ignores world bots (see botutils). Drives zone
+    // dormancy: a zone holding only bots goes to sleep unless levelling bots
+    // hold it awake (botutils::UpdateBotAwakeZones).
+    bool HasAnyRealPlayers() const;
 
     virtual auto ZoneServer(timer::time_point tick) -> Task<void>;
     virtual auto CheckTriggerAreas() -> Task<void>;
@@ -421,9 +427,4 @@ private:
     std::vector<std::unique_ptr<CInstance>> m_InstanceList;
 
     bool HasAnyPlayers() const;
-
-    // Like HasAnyPlayers, but ignores world bots (see botutils). Drives zone
-    // dormancy: a zone holding only bots goes to sleep, freezing its bots until
-    // a real player arrives.
-    bool HasAnyRealPlayers() const;
 };

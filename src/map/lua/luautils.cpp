@@ -361,6 +361,8 @@ void init(IPP mapIPP, bool isRunningInCI)
     lua.set_function("UseBotAbility", &luautils::UseBotAbility);
     lua.set_function("WalkBotTo", &luautils::WalkBotTo);
     lua.set_function("SaveBotPosition", &luautils::SaveBotPosition);
+    lua.set_function("SetBotActivity", &luautils::SetBotActivity);
+    lua.set_function("GetBotAwakeZones", &luautils::GetBotAwakeZones);
     lua.set_function("TeleportBotCharacter", &luautils::TeleportBotCharacter);
     lua.set_function("PlayerHasValidSession", &luautils::PlayerHasValidSession);
     lua.set_function("GetPlayerIDByName", &charutils::getCharIdFromName);
@@ -2746,6 +2748,42 @@ void SaveBotPosition(uint32 charId)
     TracyZoneScoped;
 
     botutils::SaveBotPosition(charId);
+}
+
+// activity: 0 unknown, 1 active (holds its zone awake), 2 resting (zone may
+// sleep until wakeAt, a Unix timestamp; 0 = no wake-up). See botutils.h.
+void SetBotActivity(uint32 charId, uint8 activity, uint32 wakeAt)
+{
+    TracyZoneScoped;
+
+    if (activity > static_cast<uint8>(botutils::BotActivity::Resting))
+    {
+        ShowWarning("SetBotActivity: unknown activity %u for charid %u", activity, charId);
+        return;
+    }
+
+    botutils::SetBotActivity(charId, static_cast<botutils::BotActivity>(activity), wakeAt);
+}
+
+// Zones holding bots, from the last awake-zone update:
+// { { zoneId, demand, bots, held, players }, ... }
+sol::table GetBotAwakeZones()
+{
+    TracyZoneScoped;
+
+    auto result = lua.create_table();
+    for (const auto& info : botutils::GetBotAwakeZones())
+    {
+        auto entry       = lua.create_table();
+        entry["zoneId"]  = info.zoneId;
+        entry["demand"]  = info.demand;
+        entry["bots"]    = info.bots;
+        entry["held"]    = info.held;
+        entry["players"] = info.players;
+        result.add(entry);
+    }
+
+    return result;
 }
 
 CBaseEntity* TeleportBotCharacter(uint32 charId, uint16 zoneId, float x, float y, float z, uint8 rotation)

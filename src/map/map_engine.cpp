@@ -279,6 +279,16 @@ auto MapEngine::init() -> Task<void>
         pumpIPCToken_                   = scheduler_.intervalOnMainThread(kIPCPumpInterval, message::handle_incoming);
         flushStatisticsToken_           = scheduler_.intervalOnMainThread(kTimeServerTickInterval, std::bind(&MapNetworking::flushStatistics, networking_.get()));
 
+        // World bots: decide which zones levelling bots hold awake (dormant
+        // zones don't tick, so this can't live in a zone tick).
+        botAwakeZonesToken_ = scheduler_.intervalOnMainThread(
+            kBotAwakeZonesInterval,
+            []() -> Task<void>
+            {
+                botutils::UpdateBotAwakeZones();
+                co_return;
+            });
+
         persistSweepToken_ = scheduler_.intervalOnMainThread(
             kPersistSweepInterval,
             [this]() -> Task<void>

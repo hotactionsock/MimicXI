@@ -103,6 +103,7 @@
 
 #include "battleutils.h"
 #include "blueutils.h"
+#include "botutils.h"
 #include "charutils.h"
 #include "mimicutils.h"
 #include "enums/item_lockflg.h"
@@ -4927,6 +4928,13 @@ void AddExperiencePoints(bool expFromRaise, bool awardRegionPoints, bool fromScr
     if (PChar->isDead() && !expFromRaise)
     {
         return;
+    }
+
+    // A world bot gaining EXP is making progress - keeps its zone's claim on the
+    // bot awake-zone budget at full weight (botutils::UpdateBotAwakeZones).
+    if (botutils::IsBotEntity(PChar))
+    {
+        botutils::NoteBotProgress(PChar->id);
     }
 
     // Scripts have their own settings in main.lua settings. This is for exp from combat.

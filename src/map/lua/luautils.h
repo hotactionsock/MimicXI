@@ -347,6 +347,8 @@ auto GetBotAbilities(uint32 charId) -> sol::table;
 auto UseBotAbility(uint32 charId, uint16 abilityId) -> bool;
 void WalkBotTo(uint32 charId, float x, float y, float z);
 void SaveBotPosition(uint32 charId);
+void SetBotActivity(uint32 charId, uint8 activity, uint32 wakeAt);
+auto GetBotAwakeZones() -> sol::table;
 auto TeleportBotCharacter(uint32 charId, uint16 zoneId, float x, float y, float z, uint8 rotation) -> CBaseEntity*;
 bool PlayerHasValidSession(uint32 playerId);
 void SendToJailOffline(uint32 playerId, int8 cellId, float posX, float posY, float posZ, uint8 rot);

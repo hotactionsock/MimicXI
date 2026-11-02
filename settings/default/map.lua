@@ -308,4 +308,10 @@ xi.settings.map =
     -- The max GM level is 5, so setting this to 6 disables it
     -- for everone. Setting it to 0 enables for everyone.
     REPORT_LUA_ERRORS_TO_PLAYER_LEVEL = 6,
+
+    -- World bots: the most zones that levelling bots may hold awake with no real
+    -- players in them. Zones with real players don't count. When more zones want
+    -- a slot than this, the busiest go first and the rest take turns.
+    -- 0 = no limit.
+    WORLDBOTS_MAX_AWAKE_ZONES = 32,
 }

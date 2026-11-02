@@ -9,8 +9,12 @@
 --
 -- Driven by xi.worldbots.onZoneTick, which the engine calls for every AWAKE zone
 -- that contains bots (CZoneEntities::ZoneServer). A zone with no real players
--- goes dormant and stops ticking, so its bots simply freeze until someone
--- arrives. Session keep-alive is engine-side and works in dormant zones too.
+-- goes dormant and stops ticking - unless levelling bots hold it awake: each bot
+-- reports whether it needs its zone (reportActivity), and the engine keeps up to
+-- map.WORLDBOTS_MAX_AWAKE_ZONES such zones running, busiest first
+-- (botutils::UpdateBotAwakeZones). Idle bots (e.g. loitering in a city) let
+-- their zone sleep until their next decision is due. Session keep-alive is
+-- engine-side and works in dormant zones too.
 --
 -- Behaviour is GOAL-driven: a bot always has a reason to be where it is.
 --   level - hunt in a zone whose mobs suit its level (engine-side scoring of
@@ -175,6 +179,12 @@ local SOCIAL_SPOT_SCATTER        = 4       -- stand within this of the spot (NPC
 local SOCIAL_LOITER_RADIUS       = 5       -- tighter wander around a spot, so bots cluster
 local SOCIAL_MOVE_MIN_SEC        = 3 * 60  -- drift to a different spot this often
 local SOCIAL_MOVE_MAX_SEC        = 8 * 60
+
+-- Zone wakefulness: what each bot tells the engine (SetBotActivity, see botutils.h)
+local ACTIVITY_ACTIVE            = 1       -- holds its zone awake (levelling, travelling, errands)
+local ACTIVITY_RESTING           = 2       -- zone may sleep until the bot's next decision is due
+local ACTIVITY_REPORT_SEC        = 30      -- re-report this often even if unchanged (heals lost engine state)
+local ACTIVITY_RESTING_FALLBACK  = 60      -- wake-up delay when a resting bot has no goal end time
 
 -- Chat circles
 local CHAT_CHANCE                = 0.6     -- on heading to a spot, chance to join/start a chat circle
@@ -391,6 +401,44 @@ end
 local function setAnchor(charId, state, pos)
     state.anchor = { x = pos.x, y = pos.y, z = pos.z }
     SetBotAnchor(charId, pos.x, pos.y, pos.z)
+end
+
+-- Tells the engine whether this bot needs its zone awake. Levelling bots (and
+-- anything a trip or errand needs: travelling, walking, fighting, dying, no
+-- goal yet) are Active and hold the zone awake, even with no players online.
+-- A bot just hanging around - a settled 'home', 'stay' or GM 'zone' goal, e.g.
+-- loitering in a city - is Resting: the zone may sleep until its goal runs out,
+-- then wakes so it can pick a new one. Reported on change, and every
+-- ACTIVITY_REPORT_SEC so a lost engine-side record heals itself.
+local function reportActivity(bot, charId, state, now, zoneId)
+    local goal     = state.goal
+    local activity = ACTIVITY_ACTIVE
+    local wakeAt   = 0
+
+    local restingGoal = goal and (goal.kind == 'home' or goal.kind == 'stay' or goal.kind == 'zone')
+    if
+        restingGoal and
+        goal.settled and
+        goal.zoneId == zoneId and
+        not state.travel and
+        not state.walk and
+        not state.inCombat and
+        not bot:isDead()
+    then
+        activity = ACTIVITY_RESTING
+        wakeAt   = goal.untilTime or (now + ACTIVITY_RESTING_FALLBACK)
+    end
+
+    if
+        state.reportedActivity ~= activity or
+        state.reportedWakeAt ~= wakeAt or
+        now >= (state.nextActivityReportAt or 0)
+    then
+        SetBotActivity(charId, activity, wakeAt)
+        state.reportedActivity     = activity
+        state.reportedWakeAt       = wakeAt
+        state.nextActivityReportAt = now + ACTIVITY_REPORT_SEC
+    end
 end
 
 -----------------------------------
@@ -1142,6 +1190,9 @@ xi.worldbots.onZoneTick = function(zone, bots)
         end
 
         state.zoneId = zoneId
+
+        -- Uses last tick's decisions - one tick of lag is fine for zone sleep.
+        reportActivity(bot, charId, state, now, zoneId)
 
         local currentPos = { x = bot:getXPos(), y = bot:getYPos(), z = bot:getZPos() }
         local moving     = state.lastPos ~= nil and distance(currentPos, state.lastPos) > 0.05
