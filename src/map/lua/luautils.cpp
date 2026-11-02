@@ -384,6 +384,11 @@ void init(IPP mapIPP, bool isRunningInCI)
     lua.set_function("FormBotParty", &luautils::FormBotParty);
     lua.set_function("LeaveBotParty", &luautils::LeaveBotParty);
     lua.set_function("GetBotParty", &luautils::GetBotParty);
+    lua.set_function("GetBotShops", &luautils::GetBotShops);
+    lua.set_function("BrowseBotShop", &luautils::BrowseBotShop);
+    lua.set_function("BuyBotShopItem", &luautils::BuyBotShopItem);
+    lua.set_function("EvaluateBotGearItem", &luautils::EvaluateBotGearItem);
+    lua.set_function("IsUsefulBotScroll", &luautils::IsUsefulBotScroll);
     lua.set_function("GetBotPendingInvite", &luautils::GetBotPendingInvite);
     lua.set_function("AnswerBotInvite", &luautils::AnswerBotInvite);
     lua.set_function("SetBotLevelSync", &luautils::SetBotLevelSync);
@@ -3049,6 +3054,55 @@ sol::object GetBotParty(uint32 charId)
     }
 
     return table;
+}
+
+// { { npcId, x, y, z }, ... } - general shops in a zone (botutils::GetBotShops).
+sol::table GetBotShops(uint16 zoneId)
+{
+    TracyZoneScoped;
+
+    auto table = lua.create_table();
+    for (const auto& shop : botutils::GetBotShops(zoneId))
+    {
+        table.add(lua.create_table_with("npcId", shop.npcId, "x", shop.pos.x, "y", shop.pos.y, "z", shop.pos.z));
+    }
+
+    return table;
+}
+
+// { { index, itemId, price, name }, ... } - what the vendor sells (botutils::BrowseBotShop).
+sol::table BrowseBotShop(uint32 charId, uint32 npcId)
+{
+    TracyZoneScoped;
+
+    auto table = lua.create_table();
+    for (const auto& item : botutils::BrowseBotShop(charId, npcId))
+    {
+        table.add(lua.create_table_with("index", item.index, "itemId", item.itemId, "price", item.price, "name", item.name));
+    }
+
+    return table;
+}
+
+bool BuyBotShopItem(uint32 charId, uint8 index, uint32 quantity)
+{
+    TracyZoneScoped;
+
+    return botutils::BuyBotShopItem(charId, index, quantity);
+}
+
+float EvaluateBotGearItem(uint32 charId, uint16 itemId)
+{
+    TracyZoneScoped;
+
+    return botutils::EvaluateBotGearItem(charId, itemId);
+}
+
+bool IsUsefulBotScroll(uint32 charId, uint16 itemId)
+{
+    TracyZoneScoped;
+
+    return botutils::IsUsefulBotScroll(charId, itemId);
 }
 
 // { inviterId, inviterIsBot } for a pending party invite, or nil.

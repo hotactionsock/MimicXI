@@ -536,6 +536,19 @@ local function pickGoal(bot, charId, state, zoneId)
     end
 
     local inParty = bot:getPartySize() > 1
+
+    -- Gil to spend and a few levels since the last shopping trip: go shopping
+    -- in its home city (worldbots_shop.lua).
+    local now = GetSystemTime()
+    if not inParty and xi.worldbots.shop.wantsTrip(bot, state, now) then
+        local home = GetBotHomeZone(bot:getNation(), zoneId)
+        if home ~= 0 then
+            state.nextShopTripAt = now + 30 * 60 -- don't re-plan it while on the way
+            setGoal(charId, state, 'shop', home)
+            return true
+        end
+    end
+
     if not inParty and math.random() < GOAL_HOME_CHANCE then
         local home = GetBotHomeZone(bot:getNation(), zoneId)
         if home ~= 0 then
@@ -649,6 +662,20 @@ local function travelStep(charId, state, now, currentPos, moving)
     return false
 end
 
+-- An errand (selling, shopping) is done: back to the goal it interrupted, or
+-- a fresh one.
+local function resumeAfterErrand(charId, state)
+    local resume = state.resumeGoal
+    state.resumeGoal = nil
+    if resume then
+        setGoal(charId, state, resume.kind, resume.zoneId)
+        state.goal.spot      = resume.spot
+        state.goal.untilTime = resume.untilTime
+    else
+        state.goal = nil
+    end
+end
+
 local function relocateStep(bot, charId, state, now, currentPos, moving)
     local walk   = state.walk
     local reach  = walk.purpose == 'chat' and 1 or SPOT_REACH_YALMS
@@ -690,14 +717,20 @@ local function relocateStep(bot, charId, state, now, currentPos, moving)
             local sale = SellBotItems(charId)
             diag(charId, 'sold %d stacks for %d gil', sale.sold, sale.gil)
 
-            local resume = state.resumeGoal
-            state.resumeGoal = nil
-            if resume then
-                setGoal(charId, state, resume.kind, resume.zoneId)
-                state.goal.spot      = resume.spot
-                state.goal.untilTime = resume.untilTime
-            else
-                state.goal = nil
+            -- In town with gil: do the shopping before heading back (worldbots_shop.lua).
+            if xi.worldbots.shop.begin(bot, charId, state, now, bot:getZoneID()) then
+                return
+            end
+
+            resumeAfterErrand(charId, state)
+            return
+        end
+
+        if walk.purpose == 'shop' then
+            xi.worldbots.shop.buyHere(bot, charId, state, now)
+            if not xi.worldbots.shop.next(bot, charId, state, now) then
+                xi.worldbots.shop.finish(bot, charId, state, now)
+                resumeAfterErrand(charId, state)
             end
 
             return
@@ -1213,6 +1246,16 @@ local function plan(bot, charId, state, now, zoneId)
         local zone         = bot:getZone()
         state.walk         = newPlan(zone and zone:getRandomNavmeshPoint(mog, 2) or mog)
         state.walk.purpose = 'mog'
+        return
+    end
+
+    if goal.kind == 'shop' then
+        if not xi.worldbots.shop.begin(bot, charId, state, now, zoneId) then
+            diag(charId, 'no shops to visit in zone %d', zoneId)
+            xi.worldbots.shop.finish(bot, charId, state, now)
+            state.goal = nil
+        end
+
         return
     end
 

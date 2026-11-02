@@ -118,6 +118,7 @@ local GOAL_PHRASES =
     home  = 'headed home to %s',
     zone  = 'set off for %s',
     sell  = 'headed to %s to sell their loot',
+    shop  = 'headed to %s to go shopping',
     jobs  = 'headed to %s to change jobs',
     party = 'set off to meet their party in %s',
 }

@@ -21,6 +21,11 @@
 
 #include "botinventory.h"
 #include "botlog.h"
+#include "trade_container.h"
+#include "utils/itemutils.h"
+#include "packets/c2s/0x083_shop_buy.h"
+#include "packets/basic.h"
+#include "packet_system.h"
 
 #include "botutils.h"
 
@@ -562,6 +567,10 @@ using GearSetPlan = std::array<PlannedItem, SLOT_BACK + 1>;
 
 std::unordered_map<uint32, std::unordered_map<std::string, GearSetPlan>> g_gearPlans;
 
+// The weights each bot's plans were made with (for judging shop items).
+std::unordered_map<uint32, std::vector<std::pair<std::string, BotGearWeights>>> g_gearWeights;
+std::unordered_map<uint32, std::string>                                         g_gearWeaponSet;
+
 auto weightedScore(CItemEquipment* PItem, const BotGearWeights& weights) -> float
 {
     float score = 0.0f;
@@ -657,6 +666,9 @@ auto PlanBotGear(uint32 charId, const std::vector<std::pair<std::string, BotGear
 
     uint8 changed = 0;
     auto& plans   = g_gearPlans[charId];
+
+    g_gearWeights[charId]   = sets;
+    g_gearWeaponSet[charId] = weaponSet;
 
     // Items already in some set, to log only genuinely new gear afterwards.
     const bool                 hadPlans = !plans.empty();
@@ -782,6 +794,236 @@ auto EquipBotGearSet(uint32 charId, const std::string& name) -> uint8
 void ForgetBotGear(uint32 charId)
 {
     g_gearPlans.erase(charId);
+    g_gearWeights.erase(charId);
+    g_gearWeaponSet.erase(charId);
+}
+
+// ---- Shopping ---------------------------------------------------------------
+
+namespace
+{
+
+constexpr float kShopReachYalms = 6.0f;
+
+std::unordered_map<uint16, std::vector<BotShop>> g_shops;
+
+} // namespace
+
+auto GetBotShops(uint16 zoneId) -> std::vector<BotShop>
+{
+    if (const auto it = g_shops.find(zoneId); it != g_shops.end())
+    {
+        return it->second;
+    }
+
+    std::vector<BotShop> shops;
+
+    if (auto* PZone = zoneutils::GetZone(static_cast<xi::ZoneId>(zoneId)))
+    {
+        const auto zoneName = PZone->getName();
+
+        // clang-format off
+        PZone->GetZoneEntities()->ForEachNpc([&](CNpcEntity* PNpc)
+        {
+            if (PNpc->status != xi::Status::Normal)
+            {
+                return;
+            }
+
+            std::ifstream file(fmt::format("./scripts/zones/{}/npcs/{}.lua", zoneName, PNpc->getName()));
+            if (!file)
+            {
+                return;
+            }
+
+            const std::string script((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
+            if (script.find("xi.shop.general(") != std::string::npos || script.find("xi.shop.nation(") != std::string::npos)
+            {
+                shops.push_back({ PNpc->id, PNpc->loc.p });
+            }
+        });
+        // clang-format on
+    }
+
+    g_shops[zoneId] = shops;
+    return shops;
+}
+
+auto BrowseBotShop(uint32 charId, uint32 npcId) -> std::vector<BotShopItem>
+{
+    std::vector<BotShopItem> result;
+
+    auto* PChar = liveBot(charId);
+    if (PChar == nullptr || PChar->isDead() || PChar->isInEvent())
+    {
+        return result;
+    }
+
+    auto* PNpc = PChar->loc.zone->GetEntity(static_cast<uint16>(npcId & 0xFFF), TYPE_NPC);
+    if (PNpc == nullptr || PNpc->id != npcId || distance(PChar->loc.p, PNpc->loc.p) > kShopReachYalms)
+    {
+        return result;
+    }
+
+    // Talk to it, as a player clicking the NPC would.
+    PChar->Container->Clean();
+    luautils::OnTrigger(PChar, PNpc);
+
+    // A script that started a cutscene or menu event instead: close it.
+    if (PChar->isInEvent())
+    {
+        PChar->endCurrentEvent();
+    }
+
+    if (PChar->Container->getShopVendorId() != npcId)
+    {
+        return result; // not a shop after all
+    }
+
+    for (uint8 i = 0; i < PChar->Container->getExSize(); ++i)
+    {
+        const uint16 itemId = PChar->Container->getItemID(i);
+        const auto*  PItem  = xi::items::lookup(itemId);
+        if (itemId == 0 || PItem == nullptr)
+        {
+            continue;
+        }
+
+        result.push_back({ i, itemId, PChar->Container->getQuantity(i), HumanName(PItem->getName()) });
+    }
+
+    return result;
+}
+
+auto BuyBotShopItem(uint32 charId, uint8 index, uint32 quantity) -> bool
+{
+    auto* PChar = liveBot(charId);
+    if (PChar == nullptr || quantity == 0 || index >= PChar->Container->getExSize())
+    {
+        return false;
+    }
+
+    const uint16 itemId    = PChar->Container->getItemID(index);
+    const uint32 price     = PChar->Container->getQuantity(index);
+    auto*        PGilBefore = PChar->getStorage(LOC_INVENTORY)->GetItem(0); // slot 0 = gil
+    const uint32 gilBefore  = PGilBefore ? PGilBefore->getQuantity() : 0;
+
+    CBasicPacket packet;
+    packet.setType(static_cast<uint16>(GP_CLI_COMMAND_SHOP_BUY::packetId));
+    packet.setSize(sizeof(GP_CLI_COMMAND_SHOP_BUY));
+    packet.setSequence(0);
+    packet.as<GP_CLI_COMMAND_SHOP_BUY>()->ItemNum           = quantity;
+    packet.as<GP_CLI_COMMAND_SHOP_BUY>()->ShopNo            = 0;
+    packet.as<GP_CLI_COMMAND_SHOP_BUY>()->ShopItemIndex     = index;
+    packet.as<GP_CLI_COMMAND_SHOP_BUY>()->PropertyItemIndex = 0;
+
+    g_PMapEngine->networking().packetSystem().dispatch(packet.getType(), PChar->PSession, PChar, packet);
+
+    auto*      PGil     = PChar->getStorage(LOC_INVENTORY)->GetItem(0);
+    const uint32 gilAfter = PGil ? PGil->getQuantity() : 0;
+    if (gilAfter >= gilBefore)
+    {
+        return false; // nothing was bought (no gil, no space, stack limits...)
+    }
+
+    const auto* PItem = xi::items::lookup(itemId);
+    const auto  name  = PItem ? HumanName(PItem->getName()) : std::to_string(itemId);
+    const auto  spent = gilBefore - gilAfter;
+    LogBotEvent(PChar->id, BotLogLevel::Notable, "item", "bought",
+                quantity > 1 ? std::format("{} bought {} x{} for {} gil", PChar->getName(), name, quantity, spent)
+                             : std::format("{} bought {} for {} gil", PChar->getName(), name, spent),
+                std::format(R"({{"item_id":{},"item":"{}","quantity":{},"gil":{},"price":{}}})", itemId, JsonEscape(name), quantity, spent, price));
+    return true;
+}
+
+auto EvaluateBotGearItem(uint32 charId, uint16 itemId) -> float
+{
+    auto* PChar = liveBot(charId);
+    if (PChar == nullptr)
+    {
+        return 0.0f;
+    }
+
+    const auto weightsIt = g_gearWeights.find(charId);
+    const auto plansIt   = g_gearPlans.find(charId);
+    if (weightsIt == g_gearWeights.end() || plansIt == g_gearPlans.end())
+    {
+        return 0.0f;
+    }
+
+    auto* PItem = const_cast<CItemEquipment*>(dynamic_cast<const CItemEquipment*>(xi::items::lookup(itemId)));
+    if (PItem == nullptr || !canWear(PChar, PItem))
+    {
+        return 0.0f;
+    }
+
+    float best = 0.0f;
+
+    // Armour and accessories: against what each set plans for the slot.
+    for (const auto& [setName, weights] : weightsIt->second)
+    {
+        const auto planIt = plansIt->second.find(setName);
+        if (planIt == plansIt->second.end())
+        {
+            continue;
+        }
+
+        for (const auto slot : kSetSlots)
+        {
+            if ((PItem->getEquipSlotId() & (1 << slot)) == 0)
+            {
+                continue;
+            }
+
+            float current = 0.0f;
+            const auto& planned = planIt->second[slot];
+            if (planned.slot != 0)
+            {
+                if (auto* PCurrent = dynamic_cast<CItemEquipment*>(PChar->getStorage(planned.container)->GetItem(planned.slot)))
+                {
+                    current = weightedScore(PCurrent, weights);
+                }
+            }
+
+            best = std::max(best, weightedScore(PItem, weights) - current);
+        }
+    }
+
+    // Weapons: against what's equipped, by the weapon set's weights.
+    if (dynamic_cast<CItemWeapon*>(PItem) != nullptr && (PItem->getEquipSlotId() & (1 << SLOT_MAIN)) != 0)
+    {
+        const auto& weaponSet = g_gearWeaponSet[charId];
+        for (const auto& [setName, weights] : weightsIt->second)
+        {
+            if (setName != weaponSet)
+            {
+                continue;
+            }
+
+            auto* PCurrent = PChar->getEquip(SLOT_MAIN);
+            best           = std::max(best, weightedScore(PItem, weights) - (PCurrent ? weightedScore(PCurrent, weights) : 0.0f));
+        }
+    }
+
+    return best;
+}
+
+auto IsUsefulBotScroll(uint32 charId, uint16 itemId) -> bool
+{
+    auto* PChar = liveBot(charId);
+    if (PChar == nullptr)
+    {
+        return false;
+    }
+
+    const auto spellId = scrollSpell(itemId);
+    if (spellId == 0 || charutils::hasSpell(PChar, spellId))
+    {
+        return false;
+    }
+
+    return spell::CanUseSpellWith(static_cast<SpellID>(spellId), PChar->GetMJob(), PChar->GetMLevel()) ||
+           (PChar->GetSJob() != xi::Job::NONE && spell::CanUseSpellWith(static_cast<SpellID>(spellId), PChar->GetSJob(), PChar->GetSLevel()));
 }
 
 auto ManageBotInventory(uint32 charId) -> BotInventoryResult

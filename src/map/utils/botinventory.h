@@ -118,4 +118,47 @@ auto EquipBotGearSet(uint32 charId, const std::string& name) -> uint8;
 // Drops a bot's gear plans (despawn).
 void ForgetBotGear(uint32 charId);
 
+// ---- Shopping (Phase 6a) ---------------------------------------------------
+// Bots shop the way players do: walk up to a vendor, "talk" to it (its own
+// onTrigger runs, so stock and prices follow every player rule - nation rank,
+// fame, conquest), and buy through the real purchase handler
+// (GP_CLI_COMMAND_SHOP_BUY).
+
+struct BotShop
+{
+    uint32     npcId;
+    position_t pos;
+};
+
+// General shops in a zone (NPCs whose script opens xi.shop.general or
+// xi.shop.nation - guild shops left out). Cached per zone.
+auto GetBotShops(uint16 zoneId) -> std::vector<BotShop>;
+
+struct BotShopItem
+{
+    uint8       index;  // position in the shop, for BuyBotShopItem
+    uint16      itemId;
+    uint32      price;  // per item, after the vendor's own price rules
+    std::string name;
+};
+
+// Talks to vendor npcId (must be within reach) and returns what it sells, or
+// an empty list if it isn't a shop / the bot isn't close enough. Any event the
+// NPC's script starts is closed again (bots can't sit through cutscenes).
+auto BrowseBotShop(uint32 charId, uint32 npcId) -> std::vector<BotShopItem>;
+
+// Buys quantity of the item at index from the shop last browsed. True if the
+// purchase went through (the handler checks gil and inventory space).
+auto BuyBotShopItem(uint32 charId, uint8 index, uint32 quantity) -> bool;
+
+// How much better itemId would make the bot's gear: the biggest gain in any of
+// its planned sets (by that set's stat weights), against what the plan uses
+// in that slot now. 0 if it can't wear it, or it isn't better. Needs gear plans
+// (PlanBotGear) - 0 without them.
+auto EvaluateBotGearItem(uint32 charId, uint16 itemId) -> float;
+
+// True if itemId is a spell scroll the bot doesn't know yet and its main or
+// sub job can use at its current level.
+auto IsUsefulBotScroll(uint32 charId, uint16 itemId) -> bool;
+
 } // namespace botutils
