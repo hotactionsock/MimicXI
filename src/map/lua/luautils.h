@@ -325,7 +325,7 @@ auto ZoneBotThroughLine(uint32 charId, uint32 zoneLineId) -> bool;
 void SetBotAnchor(uint32 charId, float x, float y, float z);
 auto GetBotRouteNextLine(uint16 fromZone, uint16 toZone) -> sol::object;
 auto GetBotLevelingZones(uint8 level, uint16 fromZone, uint8 maxHops, sol::optional<uint8> partySize) -> sol::table;
-auto GetBotHuntSpot(uint16 zoneId, uint8 level, sol::optional<uint8> partySize) -> sol::object;
+auto GetBotHuntSpot(uint16 zoneId, uint8 level, sol::optional<uint8> partySize, sol::optional<sol::table> nearPos, sol::optional<sol::table> avoidPos) -> sol::object;
 auto GetBotHomeZone(uint8 nation, uint16 fromZone) -> uint16;
 auto GetBotHomePoint(uint32 charId) -> sol::object;
 auto GetBotSocialSpots(uint16 zoneId) -> sol::table;

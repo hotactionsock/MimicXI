@@ -2540,11 +2540,27 @@ sol::table GetBotLevelingZones(uint8 level, uint16 fromZone, uint8 maxHops, sol:
     return table;
 }
 
-sol::object GetBotHuntSpot(uint16 zoneId, uint8 level, sol::optional<uint8> partySize)
+// nearPos / avoidPos (optional): { x, y, z } - prefer camps close to nearPos,
+// skip the camp at avoidPos. See botutils::GetBotHuntSpot.
+sol::object GetBotHuntSpot(uint16 zoneId, uint8 level, sol::optional<uint8> partySize, sol::optional<sol::table> nearPos, sol::optional<sol::table> avoidPos)
 {
     TracyZoneScoped;
 
-    const auto spot = botutils::GetBotHuntSpot(static_cast<xi::ZoneId>(zoneId), level, partySize.value_or(1));
+    const auto toPos = [](const sol::optional<sol::table>& t) -> std::optional<position_t>
+    {
+        if (!t)
+        {
+            return std::nullopt;
+        }
+
+        position_t pos{};
+        pos.x = t->get_or("x", 0.0f);
+        pos.y = t->get_or("y", 0.0f);
+        pos.z = t->get_or("z", 0.0f);
+        return pos;
+    };
+
+    const auto spot = botutils::GetBotHuntSpot(static_cast<xi::ZoneId>(zoneId), level, partySize.value_or(1), toPos(nearPos), toPos(avoidPos));
     if (!spot)
     {
         return sol::lua_nil;

@@ -204,7 +204,11 @@ auto GetBotReachableZones(xi::ZoneId fromZone, uint8 maxHops) -> std::vector<std
 // A suitable mob spawn point in zoneId for `level` to camp at, or nullopt:
 // among the safest camps (fewest outclassing aggressive mobs nearby), picked
 // at random weighted by how much prey is around it.
-auto GetBotHuntSpot(xi::ZoneId zoneId, uint8 level, uint8 partySize = 1) -> std::optional<position_t>;
+// nearPos (optional): prefer camps close to this point - the path of least
+// resistance - and avoidPos: skip camps within 30 yalms of this point (the
+// camp being left because it ran dry).
+auto GetBotHuntSpot(xi::ZoneId zoneId, uint8 level, uint8 partySize = 1, const std::optional<position_t>& nearPos = std::nullopt,
+                    const std::optional<position_t>& avoidPos = std::nullopt) -> std::optional<position_t>;
 
 // A live bot's current home point: (zone, position), or nullopt.
 auto GetBotHomePoint(uint32 charId) -> std::optional<std::pair<uint16, position_t>>;

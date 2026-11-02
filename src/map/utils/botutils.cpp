@@ -928,6 +928,7 @@ struct HuntMob
 
 // A camp is judged by what lives within this many yalms of it.
 constexpr float kCampRadius = 30.0f;
+constexpr float kCampNearScale = 120.0f; // a camp this far away counts for half as much as one right here
 
 bool                                             g_huntBuilt = false;
 std::unordered_map<uint16, std::vector<HuntMob>> g_hunt;
@@ -1119,7 +1120,19 @@ auto GetBotLevelingZones(uint8 level, xi::ZoneId fromZone, uint8 maxHops, uint8 
 
     if (result.size() > 8)
     {
+        // Always keep the bot's own zone: "is here good enough?" needs it.
+        const auto here = std::find_if(result.begin(), result.end(),
+                                       [fromZone](const BotLevelingZone& z)
+                                       {
+                                           return z.zoneId == static_cast<uint16>(fromZone);
+                                       });
+        const auto keep = here != result.end() && std::distance(result.begin(), here) >= 8 ? std::optional<BotLevelingZone>(*here) : std::nullopt;
+
         result.resize(8);
+        if (keep)
+        {
+            result.push_back(*keep);
+        }
     }
 
     return result;
@@ -1136,7 +1149,8 @@ auto GetBotReachableZones(xi::ZoneId fromZone, uint8 maxHops) -> std::vector<std
     return result;
 }
 
-auto GetBotHuntSpot(xi::ZoneId zoneId, uint8 level, uint8 partySize) -> std::optional<position_t>
+auto GetBotHuntSpot(xi::ZoneId zoneId, uint8 level, uint8 partySize, const std::optional<position_t>& nearPos,
+                    const std::optional<position_t>& avoidPos) -> std::optional<position_t>
 {
     ensureHuntData();
 
@@ -1179,6 +1193,11 @@ auto GetBotHuntSpot(xi::ZoneId zoneId, uint8 level, uint8 partySize) -> std::opt
     uint32 fewestThreats = std::numeric_limits<uint32>::max();
     for (const auto* mob : suitable)
     {
+        if (avoidPos && distance(mob->spawnPoint, *avoidPos, true) <= kCampRadius)
+        {
+            continue;
+        }
+
         Camp camp{ mob, 0, 0 };
         for (const auto* threat : threats)
         {
@@ -1194,31 +1213,55 @@ auto GetBotHuntSpot(xi::ZoneId zoneId, uint8 level, uint8 partySize) -> std::opt
         camps.push_back(camp);
     }
 
-    // Weighted by prey among the safest camps, so bots spread over the good
-    // camps rather than all piling into the single best one.
-    uint32 totalPrey = 0;
-    for (const auto& camp : camps)
+    if (camps.empty())
     {
-        totalPrey += camp.threats == fewestThreats ? camp.prey : 0;
+        return std::nullopt;
     }
 
-    auto roll = xirand::GetRandomNumber<uint32>(totalPrey);
-    for (const auto& camp : camps)
+    // Weighted by prey among the safest camps, so bots spread over the good
+    // camps rather than all piling into the single best one - and, given a
+    // starting point, by closeness too: a decent camp nearby beats a slightly
+    // busier one across the zone.
+    const auto weightOf = [&](const Camp& camp) -> float
     {
         if (camp.threats != fewestThreats)
+        {
+            return 0.0f;
+        }
+
+        float weight = static_cast<float>(camp.prey);
+        if (nearPos)
+        {
+            weight /= 1.0f + distance(camp.mob->spawnPoint, *nearPos, true) / kCampNearScale;
+        }
+
+        return weight * weight; // sharpen: clearly better camps win most of the time
+    };
+
+    float total = 0.0f;
+    for (const auto& camp : camps)
+    {
+        total += weightOf(camp);
+    }
+
+    float roll = xirand::GetRandomNumber<float>(total);
+    for (const auto& camp : camps)
+    {
+        const float weight = weightOf(camp);
+        if (weight <= 0.0f)
         {
             continue;
         }
 
-        if (roll < camp.prey)
+        if (roll < weight)
         {
             return camp.mob->spawnPoint;
         }
 
-        roll -= camp.prey;
+        roll -= weight;
     }
 
-    return suitable.front()->spawnPoint;
+    return camps.front().mob->spawnPoint;
 }
 
 auto GetBotSocialSpots(xi::ZoneId zoneId) -> std::vector<BotSocialSpot>

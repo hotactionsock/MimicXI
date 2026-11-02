@@ -188,6 +188,17 @@ function log.dismissed(bot, playerName, reason, minutes)
         { player = playerName, reason = reason, minutes = minutes })
 end
 
+function log.changedPlan(bot, hereName, plannedName)
+    log.event(bot, log.NOTABLE, 'travel', 'changed_plan',
+        string.format('%s decided to train in %s instead of travelling on to %s', bot:getName(), hereName, plannedName),
+        { zone = hereName, planned = plannedName })
+end
+
+function log.movedCamp(bot, zoneName)
+    log.event(bot, log.DETAIL, 'travel', 'moved_camp', string.format('%s moved to a busier camp in %s', bot:getName(), zoneName),
+        { zone = zoneName })
+end
+
 local NM_METHODS =
 {
     up      = 'it is up now',

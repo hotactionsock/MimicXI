@@ -83,6 +83,15 @@ xi.worldbots = xi.worldbots or {}
 -- Lazily filled on a bot's first tick; never authoritative (see header).
 local states = {}
 
+-- Scratch state that survives crossing a zone line (everything else is tied
+-- to the zone it was in and is dropped on arrival).
+local KEEP_ACROSS_ZONES =
+{
+    'goal', 'resumeGoal', 'hire', 'careerJob', 'jobsRetryAt', 'lastShopLevel', 'nextShopTripAt',
+    'nmCooldown', 'nextNMCheckAt', 'logJob', 'logLevel', 'nextHuntSummaryAt', 'seekingShown',
+    'seekRefreshAt', 'gear', 'magic', 'campMoves',
+}
+
 -- Logs every decision to the map log as [lua] lines. Testing aid only - keep
 -- false: per-bot, per-step output would swamp the log at any real bot count.
 local DEBUG = false
@@ -210,6 +219,15 @@ local function levelTier(level)
     return LEVEL_TIERS[#LEVEL_TIERS]
 end
 local GOAL_MIN_SUITABLE          = 6       -- suitable mob spawns for a zone to count as a levelling zone
+local ZONE_QUALITY_CAP           = 24      -- past this many suitable spawns, more don't make training faster
+local ZONE_GOOD_ENOUGH           = 10      -- quality at which a (safe) zone is good enough: no reason to travel on
+local ZONE_SAFE_ENOUGH           = 0.6     -- safety a zone needs to count as good enough
+local ZONE_HOP_DECAY             = 0.45    -- each zone hop multiplies a zone's appeal by this
+local ZONE_CROWD_BOTS            = 8       -- bots training in a zone before it counts as crowded
+local ZONE_JITTER                = 0.1     -- +-10% on zone scores, to spread bots over equal options
+local ZONE_ALONG_THE_WAY         = 0.7     -- stop in a zone passed on the way if it's at least this good, relatively
+local CAMP_IDLE_SEC              = 90      -- a camp with no prey for this long: move to another
+local CAMP_MAX_MOVES             = 3       -- after this many empty camps in a row, rethink the zone
 local GOAL_RETRY_SEC             = 60      -- after a failed plan, wait before trying again
 local JOBS_RETRY_SEC             = 30 * 60 -- after a failed job change, wait this long before trying again
 
@@ -505,50 +523,112 @@ end
 -- Picks where to level: usually stays if the current zone suits, otherwise a
 -- weighted pick among suitable zones, favouring more prey, fewer hops and -
 -- far more so at low levels - fewer aggressive mobs that outclass the bot.
-local function pickLevelingZone(bot, zoneId)
-    -- A party hunts tougher prey, aimed at its lowest member's level.
+-- Levelling zones from here, scored for the path of least resistance:
+--   quality - suitable prey spawns, capped at ZONE_QUALITY_CAP (past that, more
+--             mobs don't make training faster), times safety squared (a zone
+--             crawling with aggressive mobs that outclass the bot is worth little)
+--   utility - quality, discounted for every zone hop (ZONE_HOP_DECAY) and for
+--             crowding by other bots
+-- Returns { [zoneId] = { quality, utility, hops, safe } }, plus the list
+-- sorted best utility first.
+local function levelingOptions(bot, zoneId, maxHops)
     local now   = GetSystemTime()
     local level = xi.worldbots.party.huntLevel(bot, bot:getID(), now)
     local size  = xi.worldbots.party.huntSize(bot)
     local tier  = levelTier(level)
+    maxHops     = maxHops or tier.maxHops
 
-    -- Close to home first; only look further if nothing's in reach.
-    local zones = GetBotLevelingZones(level, zoneId, tier.maxHops, size)
-    if #zones == 0 and tier.maxHops < GOAL_MAX_HOPS then
-        zones = GetBotLevelingZones(level, zoneId, GOAL_MAX_HOPS, size)
+    local crowd = {}
+    for _, z in ipairs(GetBotAwakeZones()) do
+        crowd[z.zoneId] = z.bots
     end
 
-    local total = 0
-    local candidates = {}
-
-    for _, z in ipairs(zones) do
+    local byZone, list = {}, {}
+    for _, z in ipairs(GetBotLevelingZones(level, zoneId, maxHops, size)) do
         if z.suitable >= GOAL_MIN_SUITABLE then
-            -- 1 = nothing dangerous; falls fast as dangerous spawns outnumber prey.
-            local safety = z.suitable / (z.suitable + tier.dangerWeight * (z.dangerous or 0))
-
-            if z.zoneId == zoneId and safety >= 0.5 and math.random() < tier.stayChance then
-                return zoneId
+            local safety  = z.suitable / (z.suitable + tier.dangerWeight * (z.dangerous or 0))
+            local quality = math.min(z.suitable, ZONE_QUALITY_CAP) * safety * safety
+            local bots    = crowd[z.zoneId] or 0
+            if z.zoneId == zoneId then
+                bots = math.max(0, bots - 1) -- not counting itself
             end
 
-            local weight = z.suitable / (1 + z.hops) * safety * safety
-            total = total + weight
-            table.insert(candidates, { zoneId = z.zoneId, weight = weight })
+            local utility = quality * ZONE_HOP_DECAY ^ z.hops / (1 + math.max(0, bots - ZONE_CROWD_BOTS) / ZONE_CROWD_BOTS)
+            local option  = { zoneId = z.zoneId, quality = quality, utility = utility, hops = z.hops, safe = safety >= ZONE_SAFE_ENOUGH }
+            byZone[z.zoneId] = option
+            table.insert(list, option)
         end
     end
 
-    if total <= 0 then
-        return nil
+    table.sort(list, function(a, b)
+        return a.utility > b.utility
+    end)
+
+    return byZone, list
+end
+
+-- Good enough to train in without looking further.
+local function goodEnough(option)
+    return option ~= nil and option.safe and option.quality >= ZONE_GOOD_ENOUGH
+end
+
+-- Picks where to level: stay if this zone is good enough (no needless trips);
+-- otherwise the best zone by utility, with a little jitter so bots of the same
+-- level don't all pick the same one.
+local function pickLevelingZone(bot, zoneId)
+    local byZone, list = levelingOptions(bot, zoneId)
+    if #list == 0 then
+        -- Nothing close: look further afield (still the best by utility).
+        byZone, list = levelingOptions(bot, zoneId, GOAL_MAX_HOPS)
     end
 
-    local roll = math.random() * total
-    for _, c in ipairs(candidates) do
-        roll = roll - c.weight
-        if roll <= 0 then
-            return c.zoneId
+    if goodEnough(byZone[zoneId]) then
+        return zoneId
+    end
+
+    local best, bestScore = nil, 0
+    for _, option in ipairs(list) do
+        local score = option.utility * math.randomFloat(1 - ZONE_JITTER, 1 + ZONE_JITTER)
+        if score > bestScore then
+            best, bestScore = option, score
         end
     end
 
-    return candidates[#candidates].zoneId
+    return best and best.zoneId or nil
+end
+
+-- Travelling to a levelling zone and just crossed into another: if this one
+-- is good enough - or nearly as good as where it was heading, once the
+-- remaining trip is counted - train here instead.
+local function reconsiderOnArrival(bot, charId, state, zoneId)
+    local goal = state.goal
+    if
+        goal == nil or
+        goal.kind ~= 'level' or
+        goal.zoneId == zoneId or
+        bot:getPartySize() > 1
+    then
+        return
+    end
+
+    local byZone = levelingOptions(bot, zoneId)
+    local here   = byZone[zoneId]
+    local there  = byZone[goal.zoneId]
+    if here == nil then
+        return
+    end
+
+    local worthStopping =
+        goodEnough(here) or
+        (there ~= nil and here.utility >= there.utility * ZONE_ALONG_THE_WAY) or
+        (there == nil and here.safe)
+
+    if worthStopping then
+        xi.worldbots.log.changedPlan(bot, GetBotZoneName(zoneId), GetBotZoneName(goal.zoneId))
+        goal.zoneId = zoneId
+        goal.spot   = nil
+        clearMovement(state)
+    end
 end
 
 local function pickGoal(bot, charId, state, zoneId)
@@ -624,8 +704,10 @@ end
 local function pickSettleSpot(bot, state)
     if state.goal.kind == 'level' then
         -- Remember it, so after a death or a sell trip it returns to the same place.
+        -- A good camp near where it is now, rather than across the zone.
         state.goal.spot = state.goal.spot or GetBotHuntSpot(bot:getZoneID(),
-            xi.worldbots.party.huntLevel(bot, bot:getID(), GetSystemTime()), xi.worldbots.party.huntSize(bot))
+            xi.worldbots.party.huntLevel(bot, bot:getID(), GetSystemTime()), xi.worldbots.party.huntSize(bot),
+            { x = bot:getXPos(), y = bot:getYPos(), z = bot:getZPos() })
         return state.goal.spot
     end
 
@@ -1079,6 +1161,8 @@ local function combatStep(bot, charId, state, now, moving)
         end
 
         if target then
+            state.noPreySince = nil
+            state.campMoves   = 0
             if target.distance <= ENGAGE_RANGE then
                 EngageBotTarget(charId, target.mobId)
             else
@@ -1088,6 +1172,31 @@ local function combatStep(bot, charId, state, now, moving)
 
             state.idleUntil = now + TARGET_CHECK_SEC
             return true
+        end
+
+        -- No prey at this camp: don't wander about - after a while move to
+        -- another camp nearby, and after a few empty ones rethink the zone.
+        if camp then
+            state.noPreySince = state.noPreySince or now
+            if now >= state.noPreySince + CAMP_IDLE_SEC then
+                state.noPreySince = nil
+                state.campMoves   = (state.campMoves or 0) + 1
+
+                local nextCamp = state.campMoves < CAMP_MAX_MOVES and GetBotHuntSpot(bot:getZoneID(),
+                    xi.worldbots.party.huntLevel(bot, charId, now), xi.worldbots.party.huntSize(bot),
+                    { x = bot:getXPos(), y = bot:getYPos(), z = bot:getZPos() }, camp)
+
+                if nextCamp then
+                    xi.worldbots.log.movedCamp(bot, GetBotZoneName(bot:getZoneID()))
+                    state.goal.spot    = nextCamp
+                    state.goal.settled = false
+                else
+                    state.campMoves = 0
+                    state.goal      = nil -- this zone's run dry: pick again
+                end
+
+                return true
+            end
         end
     end
 
@@ -1516,12 +1625,22 @@ xi.worldbots.onZoneTick = function(zone, bots)
         if state.zoneId ~= nil and state.zoneId ~= zoneId then
             xi.worldbots.log.arrived(bot, state.zoneId, zoneId)
 
-            local goal   = state.goal
-            local resume = state.resumeGoal
+            -- Keep the goal (that's the point of the trip) and its long-term
+            -- memory; drop everything tied to the old zone.
+            local kept = {}
+            for _, key in ipairs(KEEP_ACROSS_ZONES) do
+                kept[key] = state[key]
+            end
+
             xi.worldbots.forget(charId)
-            state            = getState(charId, now)
-            state.goal       = goal
-            state.resumeGoal = resume
+            state = getState(charId, now)
+            for key, value in pairs(kept) do
+                state[key] = value
+            end
+
+            -- Passing through somewhere that will do just as well? Train here.
+            reconsiderOnArrival(bot, charId, state, zoneId)
+            local goal = state.goal
 
             if goal then
                 goal.settled = false -- walk back to its spot (e.g. after a home point)
