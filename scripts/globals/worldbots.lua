@@ -892,6 +892,12 @@ local function combatStep(bot, charId, state, now, moving)
             SetBotHealing(charId, false)
             state.healing = false
         else
+            -- (Re)start /heal once out of combat - e.g. a caster that just
+            -- stepped out of a party fight (disengaging isn't instant).
+            if not bot:isEngaged() and not bot:hasStatusEffect(xi.effect.HEALING) then
+                SetBotHealing(charId, true)
+            end
+
             return true
         end
     end
@@ -970,6 +976,13 @@ local function combatActions(bot, charId, state, now)
     -- An urgent cure, or shadows gone, beats everything (worldbots_magic.lua).
     if xi.worldbots.magic.urgent(bot, charId, state, now) then
         diag(charId, 'urgent spell')
+        return
+    end
+
+    -- Pure casters in a party never melee: out of MP, step back and rest.
+    if xi.worldbots.magic.partyRest(bot, charId, state, now) then
+        diag(charId, 'out of MP in a party - resting')
+        state.healing = true -- /heal starts once disengaged (combatStep)
         return
     end
 

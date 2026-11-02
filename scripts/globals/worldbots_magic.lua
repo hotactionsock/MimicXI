@@ -50,6 +50,7 @@ local DRAIN_BELOW_HPP        = 70
 local ASPIR_BELOW_MPP        = 60
 local ENFEEBLE_MAX_TRIES     = 2      -- per family per fight (resists cost MP)
 local REST_BELOW_MPP         = 30     -- casters rest between fights below this MP%...
+local PARTY_STANDOFF_YALMS   = 15     -- pure casters in a party stay at least this far from the target
 local REST_UNTIL_MPP         = 90     -- ...until back up to this
 
 -- Rough HP restored per Cure tier: pick the smallest tier that covers the
@@ -116,7 +117,10 @@ local NUKE_FAMILIES = { 'fire', 'blizzard', 'aero', 'stone', 'thunder', 'water' 
 --   songs      - song families to keep up in a fight
 --   drain      - uses Drain/Aspir
 --   reserve    - fraction of max MP kept back for cures (offence stops below it)
---   standoff   - yalms to stay away from the target (0 = melee)
+--   standoff   - yalms to stay away from the target when solo (0 = melee)
+--   pureCaster - never melees in a party: stands off, and rests when out of MP
+--                (auto-attacks only feed the mob TP). Solo it still melees
+--                once its MP runs dry, as there's no one else to fight.
 local PROFILES = nil
 
 local function profiles()
@@ -126,10 +130,10 @@ local function profiles()
 
     PROFILES =
     {
-        [xi.job.WHM] = { nuke = 'divine', enfeebles = { 'dia', 'paralyze', 'slow' }, reserve = 0.35, standoff = 0 },
-        [xi.job.BLM] = { nuke = true, enfeebles = {}, drain = true, reserve = 0.15, standoff = 15 },
+        [xi.job.WHM] = { nuke = 'divine', enfeebles = { 'dia', 'paralyze', 'slow' }, reserve = 0.35, standoff = 0, pureCaster = true },
+        [xi.job.BLM] = { nuke = true, enfeebles = {}, drain = true, reserve = 0.15, standoff = 15, pureCaster = true },
         [xi.job.RDM] = { nuke = true, enfeebles = { 'dia', 'paralyze', 'slow' }, reserve = 0.3, standoff = 0 },
-        [xi.job.SCH] = { nuke = true, enfeebles = { 'dia' }, reserve = 0.3, standoff = 15 },
+        [xi.job.SCH] = { nuke = true, enfeebles = { 'dia' }, reserve = 0.3, standoff = 15, pureCaster = true },
         [xi.job.PLD] = { nuke = 'divine', enfeebles = {}, reserve = 0.35, standoff = 0 },
         [xi.job.DRK] = { nuke = false, enfeebles = { 'bio' }, drain = true, reserve = 0.2, standoff = 0 },
         [xi.job.BRD] = { nuke = false, enfeebles = {}, songs = { 'minuet', 'madrigal' }, reserve = 0, standoff = 0 },
@@ -211,10 +215,19 @@ function magic.refresh(bot, charId, state, now, force)
     m.job = job
 end
 
--- Stand off at the profile's range while there's MP to cast with; out of MP,
--- close in and melee instead of standing there.
+local function inParty(bot)
+    return bot:getPartySize() > 1
+end
+
+-- Solo: stand off at the profile's range while there's MP to cast with; out
+-- of MP, close in and melee instead of standing there. In a party a pure
+-- caster always stands off (it rests rather than melee - see partyRest).
 local function updateRange(bot, charId, m, profile, canCast)
     local range = (profile and canCast) and profile.standoff or 0
+    if profile and profile.pureCaster and inParty(bot) then
+        range = math.max(profile.standoff, PARTY_STANDOFF_YALMS)
+    end
+
     if range ~= m.range then
         SetBotCombatRange(charId, range)
         m.range = range
@@ -586,6 +599,25 @@ function magic.castFamily(bot, charId, state, now, name)
 
     local id = bestOf(bot, m, family, now)
     return id ~= nil and cast(bot, charId, m, id, now)
+end
+
+-- A pure caster in a party, low on MP, steps out of the fight and rests
+-- instead of meleeing. True if it disengaged (the caller starts /heal).
+function magic.partyRest(bot, charId, state, now)
+    local profile = profileOf(bot)
+    if
+        not profile or
+        not profile.pureCaster or
+        not inParty(bot) or
+        not bot:isEngaged() or
+        bot:getMPP() >= REST_BELOW_MPP or
+        bot:getHPP() < COMBAT_CURE_HPP
+    then
+        return false
+    end
+
+    bot:disengage()
+    return true
 end
 
 -- Should the bot rest (/heal) for MP? Only bots that actually use MP for
