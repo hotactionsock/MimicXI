@@ -131,4 +131,35 @@ auto IsBotCasting(uint32 charId) -> bool;
 // moving in if the target is further than that. See CWorldBotController.
 void SetBotCombatRange(uint32 charId, float yalms);
 
+// ---- Travel safety (Phase 3) -----------------------------------------------
+
+struct BotThreat
+{
+    uint32     mobId;
+    position_t pos;
+    float      distance;
+    bool       sight;         // detects by sight (Invisible counters it)
+    bool       sound;         // detects by sound (Sneak counters it)
+    bool       trueDetection; // sees through Sneak/Invisible
+    float      sightRange;
+    float      soundRange;
+};
+
+// Mobs within radius that would aggro the bot and are too strong for it to
+// want to fight (tougher than prey - see IsBotPrey), nearest first. Uses the
+// same aggression checks a mob's own aggro routine does (aggressive, not
+// neutral, not busy, not underground) and its detection mods.
+auto ScanBotThreats(uint32 charId, float radius) -> std::vector<BotThreat>;
+
+// Uses the first itemId in the bot's inventory on itself (Silent Oil, Prism
+// Powder, potions...) through CPlayerController::UseItem. Returns true if the
+// item use started.
+auto UseBotItem(uint32 charId, uint16 itemId) -> bool;
+
+// True if the bot carries at least one itemId in its inventory.
+auto BotHasItem(uint32 charId, uint16 itemId) -> bool;
+
+// Stops any walk in progress (e.g. to wait for a roaming mob to pass).
+void StopBot(uint32 charId);
+
 } // namespace botutils

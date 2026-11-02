@@ -471,4 +471,146 @@ void SetBotCombatRange(uint32 charId, float yalms)
     }
 }
 
+// ---- Travel safety ----------------------------------------------------------
+
+auto ScanBotThreats(uint32 charId, float radius) -> std::vector<BotThreat>
+{
+    std::vector<BotThreat> result;
+
+    auto* PChar = liveBot(charId);
+    if (PChar == nullptr)
+    {
+        return result;
+    }
+
+    const uint8 level = PChar->GetMLevel();
+
+    // clang-format off
+    PChar->loc.zone->GetZoneEntities()->ForEachMob([&](CMobEntity* PMob)
+    {
+        if (PMob == nullptr || PMob->isDead() || !PMob->PAI->IsSpawned() || PMob->PMaster != nullptr || PMob->PAI->IsEngaged())
+        {
+            return;
+        }
+
+        const float d = distance(PChar->loc.p, PMob->loc.p);
+        if (d > radius)
+        {
+            return;
+        }
+
+        // Same "am I aggressive at all" checks as CMobController::CanAggroTarget.
+        const bool aggressive = (PMob->getMobMod(xi::MobMod::AlwaysAggro) != 0 || PMob->m_Aggro) && !PMob->m_neutral &&
+                                PMob->getMobMod(xi::MobMod::NoAggro) == 0 &&
+                                !(((PMob->m_roamFlags & xi::RoamFlag::Worm) != xi::RoamFlag::None) && PMob->IsNameHidden());
+        if (!aggressive)
+        {
+            return;
+        }
+
+        // Prey it would happily fight anyway, and Too Weak mobs don't aggro.
+        if (suitsLevel(PMob, level) || charutils::CheckMob(level, PMob) <= EMobDifficulty::TooWeak)
+        {
+            return;
+        }
+
+        const auto detects = static_cast<xi::Detects>(PMob->getMobMod(xi::MobMod::Detection));
+
+        BotThreat threat{};
+        threat.mobId         = PMob->id;
+        threat.pos           = PMob->loc.p;
+        threat.distance      = d;
+        threat.sight         = (detects & xi::Detects::Sight) != xi::Detects::None;
+        threat.sound         = (detects & xi::Detects::Hearing) != xi::Detects::None;
+        threat.trueDetection = PMob->m_TrueDetection;
+        threat.sightRange    = static_cast<float>(PMob->getMobMod(xi::MobMod::SightRange));
+        threat.soundRange    = static_cast<float>(PMob->getMobMod(xi::MobMod::SoundRange));
+        result.push_back(threat);
+    });
+    // clang-format on
+
+    std::sort(result.begin(), result.end(),
+              [](const BotThreat& a, const BotThreat& b)
+              {
+                  return a.distance < b.distance;
+              });
+
+    return result;
+}
+
+namespace
+{
+
+auto findInventoryItem(CCharEntity* PChar, uint16 itemId) -> uint8
+{
+    auto* PInventory = PChar->getStorage(LOC_INVENTORY);
+    if (PInventory == nullptr)
+    {
+        return 0;
+    }
+
+    for (uint8 slot = 1; slot <= PInventory->GetSize(); ++slot)
+    {
+        auto* PItem = PInventory->GetItem(slot);
+        if (PItem != nullptr && PItem->getID() == itemId && PItem->getQuantity() > 0 && !PItem->isSent())
+        {
+            return slot;
+        }
+    }
+
+    return 0;
+}
+
+} // namespace
+
+auto UseBotItem(uint32 charId, uint16 itemId) -> bool
+{
+    auto* PChar = liveBot(charId);
+    if (PChar == nullptr || PChar->isDead())
+    {
+        return false;
+    }
+
+    const uint8 slot       = findInventoryItem(PChar, itemId);
+    auto*       controller = dynamic_cast<CWorldBotController*>(PChar->PAI->GetController());
+    if (slot == 0 || controller == nullptr)
+    {
+        return false;
+    }
+
+    // Using an item is interrupted by moving, like casting.
+    controller->ClearWanderTarget();
+    if (auto* path = PChar->PAI->PathFind.get())
+    {
+        path->Clear();
+    }
+
+    return controller->UseItem(EntityId(PChar), LOC_INVENTORY, slot);
+}
+
+auto BotHasItem(uint32 charId, uint16 itemId) -> bool
+{
+    auto* PChar = liveBot(charId);
+    return PChar != nullptr && findInventoryItem(PChar, itemId) != 0;
+}
+
+void StopBot(uint32 charId)
+{
+    auto* PChar = liveBot(charId);
+    if (PChar == nullptr)
+    {
+        return;
+    }
+
+    if (auto* controller = dynamic_cast<CWorldBotController*>(PChar->PAI->GetController()))
+    {
+        controller->ClearWanderTarget();
+    }
+
+    if (auto* path = PChar->PAI->PathFind.get())
+    {
+        path->Clear();
+    }
+}
+
 } // namespace botutils

@@ -57,6 +57,9 @@
 -- wear and uses any spell scroll it can learn (ManageBotInventory - engine-side,
 -- through the same equip/learn rules a player has).
 --
+-- Travel safety: while walking anywhere it Sneaks/Invisibles past mobs too
+-- strong to fight, or waits for them to roam off (worldbots_travel.lua).
+--
 -- Zone-line crossing itself is engine-side: any bot that walks into a usable
 -- zone line's area crosses it, like a real player. Loitering steers clear of
 -- zone lines, so crossings only happen as part of travel (or a clipped path).
@@ -1363,9 +1366,14 @@ xi.worldbots.onZoneTick = function(zone, bots)
         if state.inCombat or combatStep(bot, charId, state, now, moving) then
             -- fighting, resting or closing in on prey this tick
         elseif state.travel then
-            zoned = travelStep(charId, state, now, currentPos, moving)
+            -- Sneak/Invisible past danger, or wait for it to roam off (worldbots_travel.lua).
+            if not xi.worldbots.travel.step(bot, charId, state, now) then
+                zoned = travelStep(charId, state, now, currentPos, moving)
+            end
         elseif state.walk then
-            relocateStep(bot, charId, state, now, currentPos, moving)
+            if not xi.worldbots.travel.step(bot, charId, state, now) then
+                relocateStep(bot, charId, state, now, currentPos, moving)
+            end
         elseif state.chat then
             -- Standing in a chat circle: stay put until the chat is over, then
             -- drift off to another spot.

@@ -364,6 +364,10 @@ void init(IPP mapIPP, bool isRunningInCI)
     lua.set_function("CastBotSpell", &luautils::CastBotSpell);
     lua.set_function("SetBotCombatRange", &luautils::SetBotCombatRange);
     lua.set_function("IsBotCasting", &luautils::IsBotCasting);
+    lua.set_function("ScanBotThreats", &luautils::ScanBotThreats);
+    lua.set_function("UseBotItem", &luautils::UseBotItem);
+    lua.set_function("BotHasItem", &luautils::BotHasItem);
+    lua.set_function("StopBot", &luautils::StopBot);
     lua.set_function("PlanBotGear", &luautils::PlanBotGear);
     lua.set_function("EquipBotGearSet", &luautils::EquipBotGearSet);
     lua.set_function("GetBotJobInfo", &luautils::GetBotJobInfo);
@@ -2754,6 +2758,53 @@ bool IsBotCasting(uint32 charId)
     TracyZoneScoped;
 
     return botutils::IsBotCasting(charId);
+}
+
+// { { mobId, x, y, z, distance, sight, sound, trueDetection, sightRange, soundRange }, ... }
+// nearest first - see botutils::ScanBotThreats.
+sol::table ScanBotThreats(uint32 charId, float radius)
+{
+    TracyZoneScoped;
+
+    auto table = lua.create_table();
+    for (const auto& threat : botutils::ScanBotThreats(charId, radius))
+    {
+        auto row             = lua.create_table();
+        row["mobId"]         = threat.mobId;
+        row["x"]             = threat.pos.x;
+        row["y"]             = threat.pos.y;
+        row["z"]             = threat.pos.z;
+        row["distance"]      = threat.distance;
+        row["sight"]         = threat.sight;
+        row["sound"]         = threat.sound;
+        row["trueDetection"] = threat.trueDetection;
+        row["sightRange"]    = threat.sightRange;
+        row["soundRange"]    = threat.soundRange;
+        table.add(row);
+    }
+
+    return table;
+}
+
+bool UseBotItem(uint32 charId, uint16 itemId)
+{
+    TracyZoneScoped;
+
+    return botutils::UseBotItem(charId, itemId);
+}
+
+bool BotHasItem(uint32 charId, uint16 itemId)
+{
+    TracyZoneScoped;
+
+    return botutils::BotHasItem(charId, itemId);
+}
+
+void StopBot(uint32 charId)
+{
+    TracyZoneScoped;
+
+    botutils::StopBot(charId);
 }
 
 // sets = { [name] = { mods = { [xi.mod id] = weight, ... }, weaponDps = weight }, ... };

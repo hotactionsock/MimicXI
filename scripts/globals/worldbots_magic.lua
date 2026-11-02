@@ -61,7 +61,8 @@ local CURE_TIER_MISSING_HP   = { 0, 60, 140, 300, 500, 650 }
 -----------------------------------
 
 -- kind: 'cure', 'buff' (self, keyed by effect), 'shadows', 'enfeeble' (enemy,
---       keyed by effect), 'nuke', 'drain', 'aspir', 'song' (self, in combat)
+--       keyed by effect), 'nuke', 'drain', 'aspir', 'song' (self, in combat),
+--       'travel' (Sneak/Invisible - only cast by worldbots_travel.lua)
 -- prebuff: cast between fights when missing (otherwise in-combat upkeep only)
 local FAMILY_DEFS =
 {
@@ -96,6 +97,9 @@ local FAMILY_DEFS =
     thunder   = { kind = 'nuke', spells = { 'THUNDER', 'THUNDER_II', 'THUNDER_III', 'THUNDER_IV', 'THUNDER_V', 'THUNDER_VI' } },
     water     = { kind = 'nuke', spells = { 'WATER', 'WATER_II', 'WATER_III', 'WATER_IV', 'WATER_V', 'WATER_VI' } },
     banish    = { kind = 'nuke', undeadOnly = true, spells = { 'BANISH', 'BANISH_II', 'BANISH_III', 'BANISH_IV', 'BANISH_V' } },
+
+    sneak     = { kind = 'travel', effect = 'SNEAK',     spells = { 'SNEAK' } },
+    invisible = { kind = 'travel', effect = 'INVISIBLE', spells = { 'INVISIBLE' } },
 
     drain     = { kind = 'drain', spells = { 'DRAIN', 'DRAIN_II', 'DRAIN_III' } },
     aspir     = { kind = 'aspir', spells = { 'ASPIR', 'ASPIR_II', 'ASPIR_III' } },
@@ -569,6 +573,19 @@ function magic.idle(bot, charId, state, now)
     end
 
     return tryBuffs(bot, charId, m, now, BUFF_ORDER, true)
+end
+
+-- Casts a family's best tier on the bot if it knows one (Sneak/Invisible for
+-- travel - see worldbots_travel.lua). True if it started casting.
+function magic.castFamily(bot, charId, state, now, name)
+    local m      = magicState(state)
+    local family = families()[name]
+    if family == nil then
+        return false
+    end
+
+    local id = bestOf(bot, m, family, now)
+    return id ~= nil and cast(bot, charId, m, id, now)
 end
 
 -- Should the bot rest (/heal) for MP? Only bots that actually use MP for
