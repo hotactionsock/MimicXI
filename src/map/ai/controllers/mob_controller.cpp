@@ -1954,10 +1954,20 @@ auto CMobController::IsSpellReady(const float& currentDistance, const float& mel
         return true;
     }
 
-    // Worms don't cast in melee range (typically.) The edge cases can be scripted.
-    if ((PMob->m_roamFlags & xi::RoamFlag::Worm) != xi::RoamFlag::None && currentDistance <= meleeRange)
+    // Worms: stationary casters. After a cast the next one is normally due in
+    // 0.5-1.0x MagicCool (OnCastStopped). In melee range worms still cast, just
+    // less often (1.0-1.5x); if their enmity target is out of reach magic is all
+    // they have, so they cast far more often (0-0.5x - roughly 3-4x the rate).
+    // MimicXI change - upstream blocked worm casting in melee range entirely.
+    if ((PMob->m_roamFlags & xi::RoamFlag::Worm) != xi::RoamFlag::None)
     {
-        return false;
+        const auto magicCool = std::chrono::seconds(PMob->getMobMod(xi::MobMod::MagicCool));
+        if (currentDistance <= meleeRange)
+        {
+            return m_Tick >= m_nextMagicTime + magicCool / 2;
+        }
+
+        return m_Tick >= m_nextMagicTime - magicCool / 2;
     }
 
     if (currentDistance > 5 && ((PMob->m_roamFlags & xi::RoamFlag::Worm) != xi::RoamFlag::None) == 0)
