@@ -255,17 +255,17 @@ auto IsRealPlayerNearMob(uint32 mobId, uint16 zoneId, float radius) -> bool
         return false;
     }
 
-    bool near = false;
+    bool playerNear = false;
     PZone->ForEachChar(
         [&](CCharEntity* PChar)
         {
-            if (!near && !IsBotEntity(PChar) && !PChar->isDead() && distance(PChar->loc.p, PMob->loc.p) <= radius)
+            if (!playerNear && !IsBotEntity(PChar) && !PChar->isDead() && distance(PChar->loc.p, PMob->loc.p) <= radius)
             {
-                near = true;
+                playerNear = true;
             }
         });
 
-    return near;
+    return playerNear;
 }
 
 auto GetBotForcedPops(uint16 zoneId) -> std::vector<BotForcedPop>
