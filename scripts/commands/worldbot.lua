@@ -40,6 +40,17 @@ local STARTING_JOBS = { 1, 2, 3, 4, 5, 6 }
 
 local POPULATE_MAX = 50
 
+-- Where a new character of each nation starts: one of its three cities, picked
+-- at random - the same choice character creation makes (loginHelpers).
+-- Position 0,0,0 is what a new character is saved with too: on first login
+-- the city's zone script puts it outside a Mog House (xi.moghouse).
+local STARTING_CITIES =
+{
+    { 'SOUTHERN_SAN_DORIA', 'NORTHERN_SAN_DORIA', 'PORT_SAN_DORIA' }, -- San d'Oria
+    { 'BASTOK_MINES', 'BASTOK_MARKETS', 'PORT_BASTOK' },              -- Bastok
+    { 'WINDURST_WATERS', 'PORT_WINDURST', 'WINDURST_WOODS' },         -- Windurst
+}
+
 -- Random two-to-three syllable names, FFXI style (letters only, 3-15 chars).
 local NAME_ONSETS = { 'b', 'c', 'd', 'f', 'g', 'h', 'j', 'k', 'l', 'm', 'n', 'p', 'r', 's', 't', 'v', 'z', 'br', 'ch', 'dr', 'gr', 'kr', 'sh', 'th', 'tr', 'st', '' }
 local NAME_VOWELS = { 'a', 'e', 'i', 'o', 'u', 'a', 'e', 'ai', 'ia', 'ou', 'y' }
@@ -62,7 +73,8 @@ local function usage(player)
     player:printToPlayer('!worldbot edit <charid> [race] [face] [name] - use "-" to leave a field unchanged')
     player:printToPlayer('  race: 1-8 or a name (humemale, humefemale, elvaanmale, elvaanfemale, tarutarumale, tarutarufemale, mithra, galka)')
     player:printToPlayer('  face: 0-15')
-    player:printToPlayer('!worldbot populate <count> - create+spawn that many random bots here, levelling in this zone')
+    player:printToPlayer('!worldbot populate <count> - create+spawn that many new bots, each in a random starting city like a new character')
+    player:printToPlayer('!worldbot populate <count> here - create+spawn them at your position instead, levelling in this zone')
     player:printToPlayer('!worldbot spawn <charid>')
     player:printToPlayer('!worldbot despawn <charid> - parks it (not respawned on restart)')
     player:printToPlayer('!worldbot delete <charid> - permanently deletes the bot and its account')
@@ -235,38 +247,66 @@ commandObj.onTrigger = function(player, args)
         DespawnBotCharacter(charId)
         player:printToPlayer(string.format('Despawned bot charid %d.', charId))
     elseif sub == 'populate' then
-        local count = tonumber(rest)
-        if count == nil or count < 1 then
+        local countToken, mode = (rest or ''):match('^(%S+)%s*(%S*)$')
+        local count = tonumber(countToken)
+        if count == nil or count < 1 or (mode ~= '' and mode ~= 'here') then
             usage(player)
             return
         end
 
         count = math.min(math.floor(count), POPULATE_MAX)
 
-        local zoneId  = player:getZoneID()
-        local created = 0
+        local here     = mode == 'here'
+        local created  = 0
         local leveling = 0
+        local byNation = { 0, 0, 0 }
 
         for _ = 1, count do
+            -- Where it starts: a random nation's random starting city (like a
+            -- new character), or the GM's spot for 'here'.
+            local nation = math.random(1, #STARTING_CITIES)
+            local zoneId, x, y, z
+
+            if here then
+                zoneId, x, y, z = player:getZoneID(), player:getXPos(), player:getYPos(), player:getZPos()
+            else
+                local cities = STARTING_CITIES[nation]
+                zoneId, x, y, z = xi.zone[cities[math.random(1, #cities)]], 0, 0, 0
+            end
+
             -- A random name can clash with an existing character - retry a few times.
             local charId = 0
             for _ = 1, 10 do
-                charId = CreateBotCharacter(zoneId, player:getXPos(), player:getYPos(), player:getZPos(), math.random(0, 255),
+                charId = CreateBotCharacter(zoneId, x, y, z, math.random(0, 255),
                     resolveRace(nil), resolveFace(nil), randomName(), STARTING_JOBS[math.random(#STARTING_JOBS)], math.random(0, 2))
                 if charId ~= 0 then
                     break
                 end
             end
 
-            if charId ~= 0 and SpawnBotCharacter(charId) ~= nil then
+            local bot = charId ~= 0 and SpawnBotCharacter(charId) or nil
+            if bot ~= nil then
                 created = created + 1
-                if xi.worldbots.setGoal(charId, 'level', zoneId) then
-                    leveling = leveling + 1
+
+                if here then
+                    if xi.worldbots.setGoal(charId, 'level', zoneId) then
+                        leveling = leveling + 1
+                    end
+                else
+                    -- Placed outside a Mog House on first login: anchor it there.
+                    -- It picks its own levelling zone (and career) on its first plan.
+                    SetBotAnchor(charId, bot:getXPos(), bot:getYPos(), bot:getZPos())
+                    byNation[nation] = byNation[nation] + 1
                 end
             end
         end
 
-        player:printToPlayer(string.format('Created and spawned %d/%d bot(s); %d levelling in this zone.', created, count, leveling))
+        if here then
+            player:printToPlayer(string.format('Created and spawned %d/%d bot(s); %d levelling in this zone.', created, count, leveling))
+        else
+            player:printToPlayer(string.format('Created and spawned %d/%d bot(s) in their starting cities: %d San d\'Oria, %d Bastok, %d Windurst.',
+                created, count, byNation[1], byNation[2], byNation[3]))
+        end
     elseif sub == 'delete' and rest == 'all' then
         local count = 0
         for _, bot in ipairs(GetBotList()) do
