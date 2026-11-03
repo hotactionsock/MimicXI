@@ -20,6 +20,7 @@
 */
 
 #include "synthutils.h"
+#include "botprogress.h"
 
 #include "charutils.h"
 #include "common/logging.h"
@@ -1179,7 +1180,9 @@ void sendSynthDone(CCharEntity* PChar)
         handleSynthSuccess(PChar);
     }
 
+    const auto craftSkillsBefore = botutils::BotCraftSkills(PChar);
     doSynthSkillUp(PChar);
+    botutils::LogBotSynth(PChar, craftSkillsBefore); // world bots' activity log (no-op for players)
 
     std::ignore = synthTransaction->commit();
     PChar->removeTransaction(synthTransaction);

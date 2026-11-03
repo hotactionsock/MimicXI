@@ -484,6 +484,7 @@ void AfterZoneIn(CBaseEntity* PChar);
 void OnZoneInitialize(xi::ZoneId ZoneID);
 void OnZoneTick(CZone* PZone);
 void OnWorldBotsZoneTick(CZone* PZone); // xi.worldbots.onZoneTick(zone, bots) for an awake zone holding bots
+void OnWorldBotProgress(CCharEntity* PChar, const std::string& event, uint8 logId, uint16 id); // xi.worldbots.log.progress
 
 void OnTriggerAreaEnter(CCharEntity* PChar, const std::unique_ptr<ITriggerArea>& PTriggerArea); // when player enters a trigger area in a zone
 void OnTriggerAreaLeave(CCharEntity* PChar, const std::unique_ptr<ITriggerArea>& PTriggerArea); // when player leaves a trigger area in a zone

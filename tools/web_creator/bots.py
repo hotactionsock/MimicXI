@@ -11,7 +11,8 @@ JSON below; the old /bots URLs redirect there:
 
 JSON (public, read-only):
     /api/bots                       every bot with its status line
-    /api/bots/<charid>              profile, status, stats, title, achievements, storyline and recent events
+    /api/bots/<charid>              profile, status, stats, title, achievements, storyline, quests/missions/crafts
+                                    (progress) and recent events
     /api/bots/<charid>/events       events, newest first (?limit, ?before, ?since, ?category)
     /api/bots/feed                  latest events across all bots, with names (?since=<id>, ?limit)
     /api/bots/<charid>/live         live snapshot (and asks the game server to keep snapshotting it)
@@ -31,6 +32,7 @@ import time
 from flask import Blueprint, abort, jsonify, redirect, request
 
 from db import get_connection
+from progress import character_progress
 
 bots = Blueprint('bots', __name__)
 
@@ -82,6 +84,12 @@ STATUS_TEMPLATES = {
     'logged_on':    'Just logged on',
     'warp':         'Warping to {to}',
     'raised':       'Back on their feet after a raise',
+    'quest_started':     'On the quest "{name}"',
+    'mission_started':   'On the mission "{name}"',
+    'quest_completed':   'Just completed the quest "{name}"',
+    'mission_completed': 'Just completed the mission "{name}"',
+    'synth':             'Crafting',
+    'synth_failed':      'Crafting',
 }
 
 # Achievements, worked out from the log and the character's job levels.
@@ -157,7 +165,7 @@ def describe_now(events, now=None):
 
         zone = e['data'].get('zone') or 'somewhere'
         text = template.format(zone=zone, player=e['data'].get('player') or 'a player', nm=e['data'].get('nm') or 'monster',
-                               to=e['data'].get('to') or 'somewhere')
+                               to=e['data'].get('to') or 'somewhere', name=e['data'].get('name') or 'a task')
 
         # "In Valkurm Dunes" after "set off for Valkurm Dunes to train" = training there.
         if e['event'] == 'arrived':
@@ -548,7 +556,7 @@ def _plural(n, word, plural=None):
     return '{:,} {}'.format(n, word if n == 1 else (plural or word + 's'))
 
 
-def build_story(bot, facts, achievements, now=None):
+def build_story(bot, facts, achievements, now=None, progress=None):
     """{'now': [sentences], 'so_far': [sentences], 'long_term': [sentences]}."""
     name   = bot['name']
     stats  = bot.get('stats') or {}
@@ -620,6 +628,22 @@ def build_story(bot, facts, achievements, now=None):
     elif kills:
         so_far.append('They have never been defeated.')
 
+    # Quests, missions and crafts (once bots take them on).
+    progress = progress or {}
+    deeds = []
+    if progress.get('quests_completed'):
+        deeds.append('completed {}'.format(_plural(progress['quests_completed'], 'quest')))
+    if (progress.get('nation_rank') or 1) > 1:
+        deeds.append('reached rank {} in {}'.format(progress['nation_rank'], bot.get('nation') or 'their nation'))
+    for line in progress.get('missions', []):
+        if line['completed'] and line['storyline'] not in ("San d'Oria Missions", 'Bastok Missions', 'Windurst Missions'):
+            deeds.append('worked through {} of {}'.format(_plural(line['completed'], 'mission'), line['storyline']))
+    best_craft = max((c for c in progress.get('crafts', []) if c['level'] > 0), key=lambda c: c['level'], default=None)
+    if best_craft:
+        deeds.append('taken up {} ({}, level {})'.format(best_craft['craft'], best_craft['rank'], best_craft['level']))
+    if deeds:
+        so_far.append('They have {}.'.format(_list_words(deeds)))
+
     if facts.get('ah_sold') or facts.get('ah_bought'):
         trade = []
         if facts['ah_sold']:
@@ -683,7 +707,8 @@ def _one_bot(cur, charid):
     bot['stats']  = _stats(cur, charid)
     bot['events'] = events
     bot['title'], bot['achievements'] = achievements_for(_achievement_counts(cur, charid).get(charid))
-    bot['story']  = build_story(bot, _story_facts(cur, charid), bot['achievements'])
+    bot['progress'] = character_progress(cur, charid)
+    bot['story']    = build_story(bot, _story_facts(cur, charid), bot['achievements'], progress=bot['progress'])
     return bot
 
 

@@ -3974,6 +3974,26 @@ void OnZoneTick(CZone* PZone)
     }
 }
 
+// A bot's quest or mission changed (see botutils::OnBotQuestOrMission):
+// xi.worldbots.log.progress names it and logs it.
+void OnWorldBotProgress(CCharEntity* PChar, const std::string& event, uint8 logId, uint16 id)
+{
+    TracyZoneScoped;
+
+    auto progress = lua["xi"]["worldbots"]["log"]["progress"];
+    if (!progress.valid())
+    {
+        return;
+    }
+
+    auto result = progress(CLuaBaseEntity(PChar), event, logId, id);
+    if (!result.valid())
+    {
+        sol::error err = result;
+        ShowError("luautils::OnWorldBotProgress: %s", err.what());
+    }
+}
+
 void OnWorldBotsZoneTick(CZone* PZone)
 {
     TracyZoneScoped;

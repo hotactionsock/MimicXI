@@ -5,7 +5,8 @@
 -- obtained, sold, tossed, used an item, unlocked or changed jobs, logged on or off -
 -- see src/map/utils/botlog.h). This module logs what only the AI knows about:
 -- level-ups, careers, deaths, home points, trips and arrivals, hunt summaries,
--- parties, skillchains and magic bursts.
+-- parties, skillchains and magic bursts - and names the quests and missions
+-- the engine reports (log.progress).
 --
 -- Levels: 1 milestone, 2 notable, 3 detail (map.WORLDBOTS_LOG_LEVEL decides
 -- what's kept). Every line is a ready-to-show sentence plus a flat table of
@@ -235,6 +236,95 @@ function log.nmResult(bot, nmName, outcome)
     local text  = outcome == 'defeated' and string.format('%s defeated the notorious monster %s', bot:getName(), nmName) or
         string.format('%s stopped hunting %s (%s)', bot:getName(), nmName, outcome)
     log.event(bot, level, 'combat', outcome == 'defeated' and 'nm_defeated' or 'nm_ended', text, { nm = nmName, outcome = outcome })
+end
+
+-----------------------------------
+-- Quests and missions (called by the engine for bots - botprogress.h). The
+-- engine says what changed; this names it from the game's own id tables.
+-----------------------------------
+
+local QUEST_AREA_NAMES =
+{
+    sandoria = 'San d\'Oria', bastok = 'Bastok', windurst = 'Windurst', jeuno = 'Jeuno', otherAreas = 'Other Areas',
+    outlands = 'Outlands', ahtUrhgan = 'Aht Urhgan', crystalWar = 'Crystal War', abyssea = 'Abyssea',
+    adoulin = 'Adoulin', coalition = 'Coalition',
+}
+
+local MISSION_AREA_NAMES =
+{
+    sandoria = 'San d\'Oria Missions', bastok = 'Bastok Missions', windurst = 'Windurst Missions',
+    zilart = 'Rise of the Zilart', toau = 'Treasures of Aht Urhgan', wotg = 'Wings of the Goddess',
+    cop = 'Chains of Promathia', assault = 'Assault', campaign = 'Campaign', acp = 'A Crystalline Prophecy',
+    amk = 'A Moogle Kupo d\'Etat', asa = 'A Shantotto Ascension', soa = 'Seekers of Adoulin',
+    rov = 'Rhapsodies of Vana\'diel', tvr = 'The Voracious Resurgence',
+}
+
+-- Little words stay lower case in a title, unless they start it.
+local SMALL_WORDS = { a = true, an = true, ['and'] = true, at = true, ['for'] = true, from = true, ['in'] = true,
+    of = true, on = true, ['or'] = true, the = true, to = true, with = true }
+
+-- "THE_RITES_OF_LIFE" -> "The Rites of Life" (the id tables have no apostrophes).
+local function titleCase(key)
+    local words = {}
+    for word in string.gmatch(key, '[^_]+') do
+        local lower = word:lower()
+        if word:match('^[IVX]+$') then
+            table.insert(words, word) -- roman numerals stay as they are
+        elseif #words > 0 and SMALL_WORDS[lower] then
+            table.insert(words, lower)
+        else
+            table.insert(words, lower:sub(1, 1):upper() .. lower:sub(2))
+        end
+    end
+
+    return table.concat(words, ' ')
+end
+
+local function nameIn(tables, id)
+    for _, ids in ipairs(tables) do
+        for key, value in pairs(ids or {}) do
+            if value == id then
+                return titleCase(key)
+            end
+        end
+    end
+
+    return nil
+end
+
+local PROGRESS =
+{
+    quest_started     = { what = 'quest',   verb = 'took on',      level = log.NOTABLE },
+    quest_completed   = { what = 'quest',   verb = 'completed',    level = log.NOTABLE },
+    mission_started   = { what = 'mission', verb = 'began',        level = log.NOTABLE },
+    mission_completed = { what = 'mission', verb = 'completed',    level = log.MILESTONE },
+}
+
+function log.progress(bot, event, logId, id)
+    local kind = PROGRESS[event]
+    if kind == nil then
+        return
+    end
+
+    local area, name, areaName
+    if kind.what == 'quest' then
+        area     = xi.quest.area and xi.quest.area[logId]
+        name     = area and nameIn({ xi.quest.id[area] }, id)
+        areaName = QUEST_AREA_NAMES[area] or area
+    else
+        if id == 65535 then
+            return -- "no mission" (a nation's log cleared)
+        end
+
+        area     = xi.mission.area and xi.mission.area[logId]
+        name     = area and nameIn({ xi.mission.id[area], logId <= 2 and xi.mission.id.nation or nil }, id)
+        areaName = MISSION_AREA_NAMES[area] or area
+    end
+
+    name = name or string.format('#%d', id)
+    log.event(bot, kind.level, kind.what, event,
+        string.format('%s %s the %s "%s"%s', bot:getName(), kind.verb, kind.what, name, areaName and string.format(' (%s)', areaName) or ''),
+        { log_id = logId, id = id, name = name, area = areaName or '' })
 end
 
 function log.skillchain(bot, wsName, element)

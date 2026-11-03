@@ -13,6 +13,9 @@
     travel:    "Travel",
     nm:        "Notorious",
     shop:      "Shopping",
+    quest:     "Quests",
+    mission:   "Missions",
+    craft:     "Crafting",
   };
 
   function esc(s) {

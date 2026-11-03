@@ -49,6 +49,54 @@
         return;
       }
 
+      // ── Quests, missions & crafts (progress.py) ───────────────────────────
+      function progressHtml() {
+        const p = bot.progress;
+        if (!p) return "";
+        const crafts   = (p.crafts || []).filter(c => c.level > 0).sort((a, b) => b.level - a.level);
+        const missions = p.missions || [];
+        const quests   = p.quests || [];
+        const nothing  = !crafts.length && !missions.length && !quests.length && (p.nation_rank || 1) <= 1;
+
+        const missionRows = missions.map(m => `
+          <li class="prog-row">
+            <span class="prog-name">${B.esc(m.storyline)}</span>
+            <span class="prog-meta">${m.current ? `on "${B.esc(m.current)}"` : "between missions"} · ${m.completed} done</span>
+          </li>`).join("");
+        const questRows = quests.map(q => `
+          <li class="prog-row">
+            <span class="prog-name">${B.esc(q.area)}</span>
+            <span class="prog-meta">${q.completed} completed${q.in_progress.length ? ` · on ${q.in_progress.slice(0, 3).map(n => `"${B.esc(n)}"`).join(", ")}${q.in_progress.length > 3 ? ` +${q.in_progress.length - 3}` : ""}` : ""}</span>
+          </li>`).join("");
+        const craftRows = crafts.map(c => `
+          <div class="job-bar" title="${B.esc(c.craft)} ${c.level} (${B.esc(c.rank)})">
+            <span class="craft-name">${B.esc(c.craft)}</span>
+            <span class="job-track"><span class="job-fill" style="width:${Math.min(100, c.level)}%"></span></span>
+            <span class="job-level">${c.level}</span>
+            <span class="craft-rank">${B.esc(c.rank)}</span>
+          </div>`).join("");
+
+        return `
+          <div class="profile-progress">
+            <h2 class="section-label">Quests, missions & crafts</h2>
+            ${nothing ? `<p class="prog-empty">Nothing yet - quests, missions and crafts show here as they take them on.</p>` : `
+            <div class="prog-grid">
+              <div class="prog-card">
+                <h3 class="story-label">Missions${p.nation_rank ? ` · ${B.esc(bot.nation || "Nation")} rank ${p.nation_rank}` : ""}</h3>
+                ${missionRows ? `<ul class="prog-list">${missionRows}</ul>` : `<p class="prog-empty">None started.</p>`}
+              </div>
+              <div class="prog-card">
+                <h3 class="story-label">Quests${p.quests_completed ? ` · ${p.quests_completed} completed` : ""}</h3>
+                ${questRows ? `<ul class="prog-list">${questRows}</ul>` : `<p class="prog-empty">None yet.</p>`}
+              </div>
+              <div class="prog-card">
+                <h3 class="story-label">Crafts</h3>
+                ${craftRows ? `<div class="craft-bars">${craftRows}</div>` : `<p class="prog-empty">None yet.</p>`}
+              </div>
+            </div>`}
+          </div>`;
+      }
+
       // ── Story (bots.py build_story) ──────────────────────────────────────
       function storyHtml() {
         const st    = bot.story || {};
@@ -132,6 +180,8 @@
                 </div>`).join("")}
             </div>
           </div>` : ""}
+
+          ${progressHtml()}
 
           ${achievements.length ? `
           <div class="profile-achievements">

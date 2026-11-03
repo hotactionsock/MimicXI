@@ -22,6 +22,8 @@ set(UTIL_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/botnm.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/botnm.h
     ${CMAKE_CURRENT_SOURCE_DIR}/botparty.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/botprogress.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/botprogress.h
     ${CMAKE_CURRENT_SOURCE_DIR}/botparty.h
     ${CMAKE_CURRENT_SOURCE_DIR}/botinventory.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/botinventory.h

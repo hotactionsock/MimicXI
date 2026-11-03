@@ -27,6 +27,7 @@
 #include "lua_spell.h"
 #include "lua_statuseffect.h"
 #include "luautils.h"
+#include "utils/botprogress.h"
 
 #include "common/logging.h"
 #include "common/timer.h"
@@ -8325,6 +8326,7 @@ void CLuaBaseEntity::addQuest(QuestLog logId, const uint16 questId) const
             PChar->m_questLog[static_cast<uint8_t>(logId)].current[questId / 8] |= (1 << (questId % 8));
             charutils::SendPartialQuestLog(PChar, logId, false);
             charutils::SaveQuestsList(PChar);
+            botutils::OnBotQuestOrMission(PChar, "quest_started", static_cast<uint8_t>(logId), questId);
         }
     }
     else
@@ -8487,6 +8489,7 @@ void CLuaBaseEntity::completeQuest(QuestLog logId, uint16 questID) const
             charutils::SendPartialQuestLog(PChar, logId, true);
             charutils::SaveQuestsList(PChar);
             roeutils::event(ROE_QUEST_COMPLETE, PChar, RoeDatagramList{});
+            botutils::OnBotQuestOrMission(PChar, "quest_completed", static_cast<uint8_t>(logId), questID);
         }
     }
     else
@@ -8521,6 +8524,7 @@ void CLuaBaseEntity::addMission(MissionLog logId, uint16 missionID) const
         PChar->m_missionLog[static_cast<uint8_t>(logId)].current = missionID;
         charutils::SendPartialMissionLog(PChar, logId, false);
         charutils::SaveMissionsList(PChar);
+        botutils::OnBotQuestOrMission(PChar, "mission_started", static_cast<uint8_t>(logId), missionID);
     }
     else
     {
@@ -8680,6 +8684,7 @@ void CLuaBaseEntity::completeMission(MissionLog logId, const uint16 missionID) c
             charutils::SendPartialMissionLog(PChar, logId, false);
             charutils::SaveMissionsList(PChar);
             roeutils::event(ROE_MISSION_COMPLETE, PChar, RoeDatagramList{});
+            botutils::OnBotQuestOrMission(PChar, "mission_completed", static_cast<uint8_t>(logId), missionID);
         }
     }
     else
@@ -11217,12 +11222,18 @@ void CLuaBaseEntity::setSkillRank(uint8 skillID, uint8 newrank)
     {
         PChar->WorkingSkills.rank[skillID]  = newrank;
         PChar->WorkingSkills.skill[skillID] = (PChar->RealSkills.skill[skillID] / 10) * 0x20 + newrank;
+        const bool rankChanged              = PChar->RealSkills.rank[skillID] != newrank;
         PChar->RealSkills.rank[skillID]     = newrank;
 
         jobpointutils::RefreshGiftMods(PChar);
         charutils::BuildingCharSkillsTable(PChar);
         charutils::SaveCharSkills(PChar, skillID);
         PChar->pushPacket<GP_SERV_COMMAND_CLISTATUS2>(PChar);
+
+        if (rankChanged)
+        {
+            botutils::LogBotCraftRank(PChar, skillID, newrank);
+        }
     }
 }
 
