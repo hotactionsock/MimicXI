@@ -115,6 +115,8 @@ local REST_BELOW_HPP             = 50     -- /heal when HP% drops below this bet
 local REST_UNTIL_HPP             = 95     -- ...until back up to this
 local LOOT_WINDOW_SEC            = 10     -- keep lotting this long after a fight ends
 local DEATH_WAIT_SEC             = 20     -- lie dead this long before returning to the home point
+local RAISE_WAIT_SEC             = 60     -- ...or this long when someone in the party can raise
+local RAISE_ACCEPT_SEC           = 3      -- a beat before accepting a raise
 local ACTION_CHECK_SEC           = 1      -- in a fight, consider a weapon skill / job ability this often
 local ENGAGE_SETTLE_SEC          = 2      -- start-of-fight abilities wait this long after engaging
 
@@ -1369,8 +1371,33 @@ local function deathStep(charId, state, now)
         return
     end
 
-    if now >= state.deadSince + DEATH_WAIT_SEC then
-        state.deadSince = nil
+    -- Raised: accept after a moment, like clicking Accept on the menu.
+    local bot = GetPlayerByID(charId)
+    if bot and bot:hasRaiseTractorMenu() then
+        state.raiseSeenAt = state.raiseSeenAt or now
+        if now >= state.raiseSeenAt + RAISE_ACCEPT_SEC and AcceptBotRaise(charId) then
+            diag(charId, 'accepted a raise')
+            state.deadSince, state.raiseSeenAt = nil, nil
+            xi.worldbots.log.event(bot, xi.worldbots.log.DETAIL, 'death', 'raised',
+                string.format('%s was raised', bot:getName()), { zone_id = bot:getZoneID() })
+        end
+
+        return
+    end
+
+    -- Someone in the party can raise: wait for it (party etiquette) a while
+    -- before giving up and returning to the home point.
+    local wait = DEATH_WAIT_SEC
+    if
+        bot and
+        bot:getPartySize() > 1 and
+        xi.worldbots.roles.partyCanRaise(charId)
+    then
+        wait = RAISE_WAIT_SEC
+    end
+
+    if now >= state.deadSince + wait then
+        state.deadSince, state.raiseSeenAt = nil, nil
         HomepointBot(charId)
     end
 end
@@ -1784,6 +1811,8 @@ xi.worldbots.onZoneTick = function(zone, bots)
         if bot:isDead() then
             deathStep(charId, state, now)
             goto continue
+        elseif state.deadSince then
+            state.deadSince, state.raiseSeenAt = nil, nil -- back on its feet (raised)
         end
 
         if bot:isEngaged() then

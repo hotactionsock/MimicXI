@@ -54,6 +54,40 @@ local function nearbyMembers(bot, charId, record)
     return result
 end
 
+-- A dead party member within reach who hasn't been raised yet, or nil.
+local function fallenMember(bot, charId)
+    for _, m in ipairs(GetBotParty(charId) or {}) do
+        if m.dead and m.charId ~= charId and m.zoneId == bot:getZoneID() then
+            local dx, dz = m.x - bot:getXPos(), m.z - bot:getZPos()
+            local entity = math.sqrt(dx * dx + dz * dz) <= ROLE_RANGE_YALMS and GetPlayerByID(m.charId) or nil
+            if entity and not entity:hasRaiseTractorMenu() then
+                return entity
+            end
+        end
+    end
+
+    return nil
+end
+
+-- Can anyone alive in this party raise? (WHM 25+, RDM/SCH 35+, or a /WHM
+-- subjob of 25+.) A dead bot waits for them instead of going home.
+function roles.partyCanRaise(charId)
+    for _, m in ipairs(GetBotParty(charId) or {}) do
+        if not m.dead and m.charId ~= charId then
+            local sub = math.floor(m.level / 2)
+            if
+                (m.mainJob == xi.job.WHM and m.level >= 25) or
+                ((m.mainJob == xi.job.RDM or m.mainJob == xi.job.SCH) and m.level >= 35) or
+                (m.subJob == xi.job.WHM and sub >= 25)
+            then
+                return true
+            end
+        end
+    end
+
+    return false
+end
+
 -- The member most in need of a cure below thresholdHpp (tank first on ties).
 local function neediest(members, thresholdHpp)
     local best
@@ -220,6 +254,18 @@ function roles.act(bot, charId, state, now, fighting)
 
     local role    = record.roles[charId] or 'damage'
     local members = nearbyMembers(bot, charId, record)
+
+    -- Between fights, anyone who can Raise brings back a fallen member (a
+    -- real player too) - who waits for it rather than heading home.
+    if not fighting and xi.worldbots.magic.knows(state, 'raise') then
+        local fallen = fallenMember(bot, charId)
+        if
+            fallen and
+            xi.worldbots.magic.raiseMember(bot, charId, state, now, fallen)
+        then
+            return true
+        end
+    end
 
     -- Anyone who can cure steps in for a member about to die, whatever their role.
     if

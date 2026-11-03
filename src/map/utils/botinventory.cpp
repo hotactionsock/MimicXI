@@ -1128,6 +1128,18 @@ auto IsUsefulBotScroll(uint32 charId, uint16 itemId) -> bool
            (PChar->GetSJob() != xi::Job::NONE && spell::CanUseSpellWith(static_cast<SpellID>(spellId), PChar->GetSJob(), PChar->GetSLevel()));
 }
 
+auto IsBotKeeperLoot(CCharEntity* PChar, uint16 itemId) -> bool
+{
+    auto* PItem = const_cast<CItem*>(xi::items::lookup(itemId));
+    return PChar != nullptr && PItem != nullptr && isKeeper(PChar, PItem, {});
+}
+
+auto IsGearOrScroll(uint16 itemId) -> bool
+{
+    const auto* PItem = xi::items::lookup(itemId);
+    return PItem != nullptr && (dynamic_cast<const CItemEquipment*>(PItem) != nullptr || scrollSpell(itemId) != 0);
+}
+
 auto ManageBotInventory(uint32 charId) -> BotInventoryResult
 {
     auto* PChar = liveBot(charId);

@@ -71,6 +71,7 @@ local CURE_TIER_MISSING_HP   = { 0, 60, 140, 300, 500, 650 }
 local FAMILY_DEFS =
 {
     cure      = { kind = 'cure',     spells = { 'CURE', 'CURE_II', 'CURE_III', 'CURE_IV', 'CURE_V', 'CURE_VI' } },
+    raise     = { kind = 'cure',     spells = { 'RAISE', 'RAISE_II', 'RAISE_III', 'ARISE' } }, -- party members only (worldbots_roles.lua)
 
     protect   = { kind = 'buff', prebuff = true, effect = 'PROTECT',    spells = { 'PROTECT', 'PROTECT_II', 'PROTECT_III', 'PROTECT_IV', 'PROTECT_V' } },
     shell     = { kind = 'buff', prebuff = true, effect = 'SHELL',      spells = { 'SHELL', 'SHELL_II', 'SHELL_III', 'SHELL_IV', 'SHELL_V' } },
@@ -705,6 +706,14 @@ function magic.cureMember(bot, charId, state, now, member)
     end
 
     local id = bestOf(bot, m, families().cure, now, tier)
+    return id ~= nil and cast(bot, charId, m, id, now, member:getID())
+end
+
+-- Raises a fallen party member with the best Raise it knows and can afford.
+-- True if it started casting.
+function magic.raiseMember(bot, charId, state, now, member)
+    local m  = magicState(state)
+    local id = bestOf(bot, m, families().raise, now)
     return id ~= nil and cast(bot, charId, m, id, now, member:getID())
 end
 

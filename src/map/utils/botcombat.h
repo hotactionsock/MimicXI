@@ -64,8 +64,14 @@ auto EngageBotTarget(uint32 charId, uint32 mobId) -> bool;
 void SetBotHealing(uint32 charId, bool on);
 
 // Lots every item in the bot's treasure pool it hasn't lotted yet, while it has
-// inventory space. Returns how many items it lotted on.
+// inventory space. In a party it passes on gear and scrolls it can't use (and,
+// with a real player in the party, on everything else it wouldn't keep).
+// Returns how many items it lotted on.
 auto LotBotTreasure(uint32 charId) -> uint8;
+
+// Accepts a pending Raise (as a player clicking Accept on the raise menu).
+// False if the bot isn't dead or nobody has raised it.
+auto AcceptBotRaise(uint32 charId) -> bool;
 
 // Uses a weapon skill on the bot's current target, if it's engaged with >= 1000
 // TP: wsId if given (and known), otherwise the best it knows for its main

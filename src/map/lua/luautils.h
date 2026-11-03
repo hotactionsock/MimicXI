@@ -336,6 +336,7 @@ auto FindBotAttacker(uint32 charId) -> sol::object;
 auto EngageBotTarget(uint32 charId, uint32 mobId) -> bool;
 void SetBotHealing(uint32 charId, bool on);
 auto LotBotTreasure(uint32 charId) -> uint8;
+bool AcceptBotRaise(uint32 charId);
 auto HomepointBot(uint32 charId) -> bool;
 auto GetBotFreeSlots(uint32 charId) -> uint8;
 auto TossBotJunk(uint32 charId, uint32 maxValue, uint8 wantFree) -> uint8;

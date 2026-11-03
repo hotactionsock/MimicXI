@@ -21,6 +21,7 @@
 
 #include "botcombat.h"
 
+#include "botinventory.h"
 #include "botlog.h"
 #include "botutils.h"
 
@@ -232,12 +233,30 @@ auto LotBotTreasure(uint32 charId) -> uint8
         return 0;
     }
 
+    const auto& members          = PChar->PTreasurePool->getMembers();
+    const bool  sharedPool       = members.size() > 1;
+    const bool  realPlayerInPool = std::any_of(members.begin(), members.end(),
+                                               [](CCharEntity* PMember)
+                                               {
+                                                   return PMember != nullptr && !IsBotEntity(PMember);
+                                               });
+
     uint8 lotted = 0;
     for (const auto& item : PChar->PTreasurePool->getItems())
     {
         if (item.ID == 0 || PChar->PTreasurePool->hasLottedItem(PChar, item.SlotID) ||
             PChar->PTreasurePool->hasPassedItem(PChar, item.SlotID))
         {
+            continue;
+        }
+
+        // Party etiquette: pass on gear it can't wear and scrolls it can't
+        // learn, so whoever can use them gets them. With a real player in the
+        // pool, it also leaves them the rest (crafting materials, sellables) -
+        // a bot has no use for the gil.
+        if (sharedPool && !IsBotKeeperLoot(PChar, item.ID) && (realPlayerInPool || IsGearOrScroll(item.ID)))
+        {
+            PChar->PTreasurePool->passItem(PChar, item.SlotID);
             continue;
         }
 
@@ -251,6 +270,19 @@ auto LotBotTreasure(uint32 charId) -> uint8
     }
 
     return lotted;
+}
+
+auto AcceptBotRaise(uint32 charId) -> bool
+{
+    auto* PChar = liveBot(charId);
+    if (PChar == nullptr || !PChar->isDead() || PChar->m_hasRaise == 0)
+    {
+        return false;
+    }
+
+    // As the raise menu's Accept does (GP_CLI_COMMAND_ACTION RaiseMenu).
+    PChar->Raise();
+    return true;
 }
 
 auto UseBotWeaponSkill(uint32 charId, uint16 wsId) -> uint16

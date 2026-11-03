@@ -355,6 +355,7 @@ void init(IPP mapIPP, bool isRunningInCI)
     lua.set_function("EngageBotTarget", &luautils::EngageBotTarget);
     lua.set_function("SetBotHealing", &luautils::SetBotHealing);
     lua.set_function("LotBotTreasure", &luautils::LotBotTreasure);
+    lua.set_function("AcceptBotRaise", &luautils::AcceptBotRaise);
     lua.set_function("HomepointBot", &luautils::HomepointBot);
     lua.set_function("GetBotFreeSlots", &luautils::GetBotFreeSlots);
     lua.set_function("TossBotJunk", &luautils::TossBotJunk);
@@ -2698,6 +2699,13 @@ uint8 LotBotTreasure(uint32 charId)
     TracyZoneScoped;
 
     return botutils::LotBotTreasure(charId);
+}
+
+bool AcceptBotRaise(uint32 charId)
+{
+    TracyZoneScoped;
+
+    return botutils::AcceptBotRaise(charId);
 }
 
 bool HomepointBot(uint32 charId)

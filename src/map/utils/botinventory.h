@@ -34,6 +34,8 @@
 // engine paths a real client's actions do (charutils::EquipItem's job/level/race
 // checks, ItemClaimTransaction for consuming items, charutils::addSpell) - bots
 // can't do anything a player couldn't.
+class CCharEntity;
+
 namespace botutils
 {
 
@@ -160,5 +162,13 @@ auto EvaluateBotGearItem(uint32 charId, uint16 itemId) -> float;
 // True if itemId is a spell scroll the bot doesn't know yet and its main or
 // sub job can use at its current level.
 auto IsUsefulBotScroll(uint32 charId, uint16 itemId) -> bool;
+
+// True if itemId is gear the bot's main job and race can wear (now or once it
+// levels) or a spell scroll one of its jobs can learn - loot it would keep
+// rather than sell. Used for party loot etiquette (LotBotTreasure).
+auto IsBotKeeperLoot(CCharEntity* PChar, uint16 itemId) -> bool;
+
+// True if itemId is equipment or a spell scroll at all.
+auto IsGearOrScroll(uint16 itemId) -> bool;
 
 } // namespace botutils
