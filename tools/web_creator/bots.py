@@ -97,6 +97,10 @@ STATUS_TEMPLATES = {
 # common (grey) to mythic (orange) - and a bot's title is its rarest
 # achievement (the later one on a tie). Relic and mythic titles get flair on
 # the pages. aim=False: not something a bot aims for (left out of "next up").
+#
+# Rule: every achievement must stay reachable for every bot - genuine goals
+# only. Nothing a bot can lose for good (no "never defeated", no "fewer than
+# N deaths by level X") and nothing that rewards failing (no death counters).
 RARITIES = ['common', 'uncommon', 'rare', 'exceptional', 'relic', 'mythic']
 
 # Famous notorious monsters, by the name the log records them under.
@@ -133,7 +137,6 @@ ACHIEVEMENTS = [
     _ach('well_travelled', 'Frequent Traveller',  'the Well-Travelled',    'Took 25 outpost teleports or home point warps',  'uncommon', lambda c: c['warps'] >= 25),
     _ach('problem_solver', 'Problem Solver',      'the Problem Solver',    'Completed 25 quests',                            'uncommon', lambda c: c['quests'] >= 25),
     _ach('lizzy',         'Lizzy\'s Bane',        'Lizzy\'s Bane',         'Defeated Leaping Lizzy',                         'uncommon', lambda c: c['nm_lizzy'] >= 1),
-    _ach('undeterred',    'Undeterred',           'the Undeterred',        'Was defeated 100 times and kept going',          'uncommon', lambda c: c['deaths'] >= 100, aim=False),
     # ── Rare ──
     _ach('veteran',       'Veteran',              'the Veteran',           'Reached level 50',                               'rare', lambda c: c['max_level'] >= 50),
     _ach('jack',          'Jack of All Trades',   'the Jack of All Trades', 'Levelled three jobs to 30',                     'rare', lambda c: c['jobs_30'] >= 3),
@@ -150,7 +153,6 @@ ACHIEVEMENTS = [
     _ach('old_guard',     'Old Guard',            'the Old Guard',         'Adventured for half a year',                     'rare', lambda c: c['days_active'] >= 180),
     # ── Exceptional ──
     _ach('elite',         'Elite',                'the Elite',             'Reached level 60',                               'exceptional', lambda c: c['max_level'] >= 60),
-    _ach('unbroken',      'Unbroken',             'the Unbroken',          'Reached level 50 with fewer than 10 defeats',    'exceptional', lambda c: c['max_level'] >= 50 and c['deaths'] < 10),
     _ach('polymath',      'Polymath',             'the Polymath',          'Levelled six jobs to 50',                        'exceptional', lambda c: c['jobs_50'] >= 6),
     _ach('scourge',       'Scourge',              'the Scourge',           'Defeated 50,000 monsters',                       'exceptional', lambda c: c['kills'] >= 50000),
     _ach('monster_hunter', 'Monster Hunter',      'the Monster Hunter',    'Defeated 50 notorious monsters',                 'exceptional', lambda c: c['nm_defeated'] >= 50),
@@ -159,6 +161,7 @@ ACHIEVEMENTS = [
     _ach('magnate',       'Magnate',              'the Magnate',           'Earned 1,000,000 gil on the auction house',      'exceptional', lambda c: c['ah_gil'] >= 1000000),
     _ach('hero_people',   'Hero of the People',   'Hero of the People',    'Completed 100 quests',                           'exceptional', lambda c: c['quests'] >= 100),
     _ach('zilart',        'Vanquisher of Zilart', 'Vanquisher of Zilart',  'Completed the Rise of the Zilart missions',      'exceptional', lambda c: c['zilart_done'] >= 18),
+    _ach('adept',         'Adept Crafter',        'the Adept',             'Reached level 80 in a craft',                    'exceptional', lambda c: c['craft_max'] >= 80),
     _ach('arthro',        'Crab King\'s Bane',    'the Crab King\'s Bane',  'Defeated King Arthro',                           'exceptional', lambda c: c['nm_arthro'] >= 1),
     # ── Relic (gold, with flair) ──
     _ach('master',        'Master',               'the Master',            'Reached level {}'.format(LEVEL_CAP_ACH),         'relic', lambda c: c['max_level'] >= LEVEL_CAP_ACH),
@@ -171,7 +174,8 @@ ACHIEVEMENTS = [
     _ach('turtle',        'Shell Breaker',        'the Shell Breaker',     'Defeated Adamantoise or Aspidochelone',          'relic', lambda c: c['nm_turtle'] >= 1),
     # ── Mythic (orange, with the most flair) ──
     _ach('wyrmslayer',    'Wyrmslayer',           'the Wyrmslayer',        'Defeated Fafnir or Nidhogg',                     'mythic', lambda c: c['nm_wyrm'] >= 1),
-    _ach('untouchable',   'Untouchable',          'the Untouchable',       'Reached level {} without ever being defeated'.format(LEVEL_CAP_ACH), 'mythic', lambda c: c['max_level'] >= LEVEL_CAP_ACH and c['deaths'] == 0),
+    _ach('champion',      'Champion of Vana\'diel', 'Champion of Vana\'diel', 'Reached rank 10 and completed the Zilart and Promathia missions', 'mythic',
+         lambda c: c['nation_rank'] >= 10 and c['zilart_done'] >= 18 and c['cop_done'] >= 40),
     _ach('living_legend', 'Living Legend',        'the Living Legend',     'Took every job to level {}'.format(LEVEL_CAP_ACH), 'mythic', lambda c: c['jobs_cap'] >= ALL_JOBS),
 ]
 
