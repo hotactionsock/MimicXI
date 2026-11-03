@@ -796,9 +796,12 @@ end
 -----------------------------------
 -- World bots and caskets: a chest dropped by a mob a bot (or an all-bot party)
 -- killed is opened by that bot. It walks over, and a few seconds later opens
--- it: a locked chest takes the same lock game a player plays - examine it for
--- a range hint (one attempt), then guess higher/lower with what's left - and
--- can fail (a failed Gold casket can still turn into a mimic). Whatever is
+-- it. A locked chest is opened by a SIMULATION of the lock game, not the real
+-- casket event (no onTrigger/onEventFinish, no lock messages, no RoE credit):
+-- against the chest's own combination and attempt count, the bot spends one
+-- attempt on the "between X and Y" hint, then halves the range with each
+-- guess. It never uses the other hints or Thief's Tools. It can fail (a
+-- failed Gold casket can still turn into a mimic). Whatever is
 -- inside goes to the bot: temporary items, items, and Gold casket gear with
 -- its augments. Chests owed to a party with a real player in it are left to
 -- the players.
@@ -814,7 +817,8 @@ local chestNames =
     [casketInfo.dropTypes.RARE_ITEM] = 'a gold treasure casket',
 }
 
--- Plays the lock game the way a sensible player would. True if it opened.
+-- Simulates the lock game the way a sensible player would play it, against
+-- the chest's real combination and attempt count. True if it opened.
 local function botPickLock(npc)
     local correct  = npc:getLocalVar('[caskets]CORRECT_NUM')
     local attempts = npc:getLocalVar('[caskets]ATTEMPTS')
