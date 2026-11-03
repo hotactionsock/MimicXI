@@ -324,4 +324,9 @@ xi.settings.map =
 
     -- Delete activity log rows older than this many days (0 = keep forever).
     WORLDBOTS_LOG_RETENTION_DAYS = 90,
+
+    -- World bots: play sessions. Bots play for a few hours, log off (into a
+    -- Mog House, or in the field) and come back hours later, mostly in the
+    -- afternoon and evening. Offline bots gain nothing. false = always online.
+    WORLDBOTS_SESSIONS = true,
 }

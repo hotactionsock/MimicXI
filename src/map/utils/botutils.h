@@ -75,6 +75,16 @@ auto SpawnBotCharacter(uint32 charId) -> CCharEntity*;
 // clearing its accounts_sessions row) and marks it inactive in `world_bots`.
 void DespawnBotCharacter(uint32 charId);
 
+// Ends a bot's play session: saves where it stands, removes it from the world
+// like a logout, and keeps it offline for offlineSec (world_bots.logged_out_until),
+// after which UpdateBotLogins brings it back where it left off. It stays part
+// of the population (active = 1) - just not online, so it gains nothing while
+// away. where is how it left ("in their Mog House", "in the field") for the log.
+void LogOffBot(uint32 charId, uint32 offlineSec, const std::string& where);
+
+// Logs back in every bot whose time away is up (map engine timer).
+void UpdateBotLogins();
+
 // Despawns (if needed) and permanently deletes a bot character, its throwaway
 // account and its `world_bots` row. Returns false if charId isn't a bot.
 auto DeleteBotCharacter(uint32 charId) -> bool;

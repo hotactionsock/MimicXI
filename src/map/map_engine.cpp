@@ -305,6 +305,15 @@ auto MapEngine::init() -> Task<void>
                 co_return;
             });
 
+        // World bots: log back in bots whose time away (between play sessions) is up.
+        botLoginToken_ = scheduler_.intervalOnMainThread(
+            kBotLoginInterval,
+            []() -> Task<void>
+            {
+                botutils::UpdateBotLogins();
+                co_return;
+            });
+
         botLogPruneToken_ = scheduler_.intervalOnMainThread(
             kBotLogPruneInterval,
             []() -> Task<void>

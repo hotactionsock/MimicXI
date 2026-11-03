@@ -89,7 +89,7 @@ local KEEP_ACROSS_ZONES =
 {
     'goal', 'resumeGoal', 'hire', 'careerJob', 'jobsRetryAt', 'lastShopLevel', 'nextShopTripAt',
     'nmCooldown', 'nextNMCheckAt', 'logJob', 'logLevel', 'nextHuntSummaryAt', 'seekingShown',
-    'seekRefreshAt', 'gear', 'magic', 'campMoves',
+    'seekRefreshAt', 'gear', 'magic', 'campMoves', 'sessionEndsAt',
 }
 
 -- Logs every decision to the map log as [lua] lines. Testing aid only - keep
@@ -870,6 +870,13 @@ local function relocateStep(bot, charId, state, now, currentPos, moving)
             return
         end
 
+        -- At the Mog House door at the end of a play session: in it goes, and
+        -- the bot logs off (worldbots_session.lua). The entity is gone now.
+        if walk.purpose == 'logoff' then
+            xi.worldbots.session.logOff(bot, charId, 'in their Mog House in ' .. GetBotZoneName(bot:getZoneID()))
+            return true
+        end
+
         if walk.purpose == 'vendor' then
             local sale = SellBotItems(charId)
             diag(charId, 'sold %d stacks for %d gil', sale.sold, sale.gil)
@@ -915,6 +922,17 @@ end
 
 -- Heads for a social spot (different from the current one): either to stand
 -- in a chat circle there, or just to hang around it.
+-- Does this zone have a Mog House entrance (a 'mog' social spot)?
+local function hasMogHouse(zoneId)
+    for _, spot in ipairs(getSocialSpots(zoneId)) do
+        if spot.kind == 'mog' then
+            return true
+        end
+    end
+
+    return false
+end
+
 local function goToSocialSpot(bot, charId, state)
     local zone  = bot:getZone()
     local spots = zone and getSocialSpots(zone:getID()) or {}
@@ -1448,6 +1466,29 @@ local function plan(bot, charId, state, now, zoneId)
         return
     end
 
+    -- End of a play session: walk to the Mog House and log off there - or,
+    -- with no Mog House here after all, log off where it stands.
+    if goal.kind == 'logoff' then
+        local here = { x = bot:getXPos(), y = bot:getYPos(), z = bot:getZPos() }
+        local mogs = {}
+        for _, spot in ipairs(getSocialSpots(zoneId)) do
+            if spot.kind == 'mog' then
+                table.insert(mogs, spot)
+            end
+        end
+
+        local mog = nearestOf(mogs, here)
+        if mog == nil then
+            xi.worldbots.session.logOff(bot, charId, 'in ' .. GetBotZoneName(zoneId))
+            return true
+        end
+
+        local zone         = bot:getZone()
+        state.walk         = newPlan(zone and zone:getRandomNavmeshPoint(mog, 1) or mog)
+        state.walk.purpose = 'logoff'
+        return
+    end
+
     -- Sell trip: walk to the nearest vendor (selling happens on arrival).
     if goal.kind == 'jobs' then
         local here = { x = bot:getXPos(), y = bot:getYPos(), z = bot:getZPos() }
@@ -1714,6 +1755,11 @@ xi.worldbots.onZoneTick = function(zone, bots)
         -- Player invites, hired-bot level sync and leaving, the /sea entry (worldbots_hire.lua).
         xi.worldbots.hire.tick(bot, charId, state, now)
 
+        -- Play sessions: time to stop for the day? (worldbots_session.lua)
+        if xi.worldbots.session.tick(bot, charId, state, now, zoneId, hasMogHouse(zoneId)) then
+            goto continue -- logged off, or standing out the /logout countdown
+        end
+
         -- Emotes and /away (worldbots_social.lua).
         xi.worldbots.social.tick(bot, charId, state, now, #getSocialSpots(zoneId) > 0)
 
@@ -1780,7 +1826,7 @@ xi.worldbots.onZoneTick = function(zone, bots)
             end
         elseif state.walk then
             if not xi.worldbots.travel.step(bot, charId, state, now) then
-                relocateStep(bot, charId, state, now, currentPos, moving)
+                zoned = relocateStep(bot, charId, state, now, currentPos, moving) or false -- true = logged off
             end
         elseif state.chat then
             -- Standing in a chat circle: stay put until the chat is over, then
@@ -1791,8 +1837,8 @@ xi.worldbots.onZoneTick = function(zone, bots)
                 state.nextSpotMoveAt = now
             end
         else
-            if not moving then
-                plan(bot, charId, state, now, zoneId)
+            if not moving and plan(bot, charId, state, now, zoneId) then
+                goto continue -- logged off: the entity is gone
             end
 
             if not state.travel and not state.walk then

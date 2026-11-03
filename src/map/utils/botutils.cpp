@@ -405,7 +405,7 @@ auto SpawnBotCharacter(uint32 charId) -> CCharEntity*
     // point wherever the character stands - for a bot, out in the field).
     ensureCityHomePoint(PBotChar);
 
-    db::preparedStmt("UPDATE world_bots SET active = 1 WHERE charid = ?", charId);
+    db::preparedStmt("UPDATE world_bots SET active = 1, logged_out_until = 0 WHERE charid = ?", charId);
     LogBotEvent(charId, BotLogLevel::Detail, "lifecycle", "spawned", std::format("{} logged in", PBotChar->getName()));
 
     return PBotChar;
@@ -444,6 +444,30 @@ void DespawnBotCharacter(uint32 charId)
 {
     destroyBotSession(charId);
     db::preparedStmt("UPDATE world_bots SET active = 0 WHERE charid = ?", charId);
+}
+
+void LogOffBot(uint32 charId, uint32 offlineSec, const std::string& where)
+{
+    if (g_PMapEngine == nullptr)
+    {
+        return;
+    }
+
+    auto* session = g_PMapEngine->networking().sessions().getSessionByCharId(charId);
+    if (session == nullptr || !session->isBotSession || !session->PChar)
+    {
+        return;
+    }
+
+    auto* PChar = session->PChar.get();
+    charutils::SaveCharPosition(PChar); // logs back in right here
+
+    const uint32 until = earth_time::timestamp() + std::max<uint32>(offlineSec, 60);
+    LogBotEvent(charId, BotLogLevel::Notable, "lifecycle", "logged_off", std::format("{} logged off {}", PChar->getName(), where),
+                std::format(R"({{"where":"{}","zone_id":{},"offline_sec":{}}})", JsonEscape(where), static_cast<uint16>(PChar->getZone()), offlineSec));
+
+    destroyBotSession(charId);
+    db::preparedStmt("UPDATE world_bots SET logged_out_until = ? WHERE charid = ?", until, charId);
 }
 
 auto DeleteBotCharacter(uint32 charId) -> bool
@@ -559,7 +583,11 @@ void SpawnPersistentBots()
 
     std::vector<uint32> toSpawn;
 
-    const auto rset = db::preparedStmt("SELECT w.charid, c.pos_zone FROM world_bots w JOIN chars c ON c.charid = w.charid WHERE w.active = 1");
+    // Bots that are logged off (a play session ended) stay offline until their
+    // time is up - UpdateBotLogins brings them back.
+    const auto rset = db::preparedStmt("SELECT w.charid, c.pos_zone FROM world_bots w JOIN chars c ON c.charid = w.charid "
+                                       "WHERE w.active = 1 AND w.logged_out_until <= ?",
+                                       earth_time::timestamp());
     FOR_DB_MULTIPLE_RESULTS(rset)
     {
         const auto zoneId = rset->get<uint16>("pos_zone");
@@ -581,6 +609,54 @@ void SpawnPersistentBots()
     if (!toSpawn.empty())
     {
         ShowInfo("botutils: respawned %u of %u active world bot(s)", spawned, static_cast<uint32>(toSpawn.size()));
+    }
+}
+
+void UpdateBotLogins()
+{
+    if (g_PMapEngine == nullptr)
+    {
+        return;
+    }
+
+    std::vector<uint16> managedZones;
+    for (const auto& [zoneId, name] : zoneutils::GetManagedZones())
+    {
+        managedZones.push_back(static_cast<uint16>(zoneId));
+    }
+
+    std::vector<uint32> due;
+
+    const auto rset = db::preparedStmt("SELECT w.charid, c.pos_zone FROM world_bots w JOIN chars c ON c.charid = w.charid "
+                                       "WHERE w.active = 1 AND w.logged_out_until > 0 AND w.logged_out_until <= ? LIMIT 20",
+                                       earth_time::timestamp());
+    FOR_DB_MULTIPLE_RESULTS(rset)
+    {
+        const auto zoneId = rset->get<uint16>("pos_zone");
+        if (managedZones.empty() || std::find(managedZones.begin(), managedZones.end(), zoneId) != managedZones.end())
+        {
+            due.push_back(rset->get<uint32>("charid"));
+        }
+    }
+
+    for (const auto charId : due)
+    {
+        if (g_PMapEngine->networking().sessions().getSessionByCharId(charId) != nullptr)
+        {
+            db::preparedStmt("UPDATE world_bots SET logged_out_until = 0 WHERE charid = ?", charId);
+            continue;
+        }
+
+        if (auto* PChar = SpawnBotCharacter(charId))
+        {
+            LogBotEvent(charId, BotLogLevel::Notable, "lifecycle", "logged_on", std::format("{} logged on", PChar->getName()),
+                        std::format(R"({{"zone_id":{}}})", static_cast<uint16>(PChar->getZone())));
+        }
+        else
+        {
+            // Couldn't come back (zone missing?) - try again in a while rather than every tick.
+            db::preparedStmt("UPDATE world_bots SET logged_out_until = ? WHERE charid = ?", earth_time::timestamp() + 600, charId);
+        }
     }
 }
 

@@ -380,6 +380,7 @@ void init(IPP mapIPP, bool isRunningInCI)
     lua.set_function("GetRealPlayersNearBot", &luautils::GetRealPlayersNearBot);
     lua.set_function("CountRealPlayersNear", &luautils::CountRealPlayersNear);
     lua.set_function("SetBotAway", &luautils::SetBotAway);
+    lua.set_function("LogOffBot", &luautils::LogOffBot);
     lua.set_function("PlanBotGear", &luautils::PlanBotGear);
     lua.set_function("EquipBotGearSet", &luautils::EquipBotGearSet);
     lua.set_function("GetBotJobInfo", &luautils::GetBotJobInfo);
@@ -2962,6 +2963,15 @@ void SetBotAway(uint32 charId, bool away)
     TracyZoneScoped;
 
     botutils::SetBotAway(charId, away);
+}
+
+// Ends a bot's play session (see botutils::LogOffBot). The entity is gone
+// afterwards - don't touch it.
+void LogOffBot(uint32 charId, uint32 offlineSec, const std::string& where)
+{
+    TracyZoneScoped;
+
+    botutils::LogOffBot(charId, offlineSec, where);
 }
 
 // emote: xi.emote id; targetId (optional): who at; textToo (optional, default true).
