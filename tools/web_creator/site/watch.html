@@ -31,6 +31,7 @@
             <canvas id="radar" aria-label="Live map around the adventurer"></canvas>
             <div class="watch-tip" id="watch-tip" hidden></div>
             <div class="watch-notice" id="watch-notice" hidden></div>
+            <div class="watch-credit" id="watch-credit" hidden></div>
           </div>
           <div class="watch-controls">
             <button type="button" class="filter-chip" id="zoom-in" aria-label="Zoom in">＋</button>
@@ -39,6 +40,7 @@
             <button type="button" class="filter-chip" id="mode-zone">Whole area</button>
             <button type="button" class="filter-chip is-active" id="toggle-spawns">Spawn points</button>
             <button type="button" class="filter-chip is-active" id="toggle-labels">Names</button>
+            <button type="button" class="filter-chip is-active" id="toggle-map" hidden>Map</button>
           </div>
           <ul class="watch-legend">
             <li><span class="lg lg-bot"></span>Adventurer</li>
@@ -110,6 +112,10 @@
       let showSpawns = true;
       let showLabels = true;
       let feedLast   = 0;
+      let zoneMaps   = null;   // /api/maps/<zone>: calibrated map images (e.g. Remapster)
+      let mapsZone   = null;
+      let showMap    = true;
+      const mapImages = new Map(); // file -> Image
 
       // Smooth movement: each entity moves from where it was drawn to its new
       // position over one poll interval.
@@ -186,10 +192,14 @@
       }
 
       // The view: centre and scale (pixels per yalm).
-      function view(w, h, botPos) {
-        if (mode === "zone" && layout && layout.spawns.length) {
+      function view(w, h, botPos, map) {
+        if (mode === "zone" && (map || (layout && layout.spawns.length))) {
           let minX = Infinity, maxX = -Infinity, minZ = Infinity, maxZ = -Infinity;
-          const pts = layout.spawns.concat(snap ? snap.lines || [] : []);
+          let pts = (layout ? layout.spawns : []).concat(snap ? snap.lines || [] : []);
+          if (map) {
+            const b = mapBounds(map);
+            pts = [{ x: b.x0, z: b.z0 }, { x: b.x1, z: b.z1 }];
+          }
           if (botPos) pts.push(botPos);
           for (const p of pts) {
             minX = Math.min(minX, p.x); maxX = Math.max(maxX, p.x);
@@ -202,11 +212,32 @@
         return { cx: c.x, cz: c.z, scale: Math.min(w, h) / 2 / radius };
       }
 
+      // The calibrated map for where the bot stands (the floor whose height
+      // range holds it), or null.
+      function currentMap() {
+        if (!showMap || !zoneMaps || !snap || zoneMaps.zone_id !== snap.zone_id || !zoneMaps.maps.length) return null;
+        const fits = zoneMaps.maps.filter(m =>
+          (m.ymin === undefined || snap.y >= m.ymin) && (m.ymax === undefined || snap.y <= m.ymax));
+        const entry = fits[0] || zoneMaps.maps[0];
+        const img   = mapImages.get(entry.file);
+        return img && img.complete && img.naturalWidth ? { entry, img } : null;
+      }
+
+      // With a map, its calibration says which way is up (north as the map
+      // draws it); without one, Z_UP.
+      let flipX = false, zUp = Z_UP;
+
       function toScreen(v, w, h, x, z) {
         return {
-          sx: w / 2 + (x - v.cx) * v.scale,
-          sy: h / 2 + (Z_UP ? -1 : 1) * (z - v.cz) * v.scale,
+          sx: w / 2 + (flipX ? -1 : 1) * (x - v.cx) * v.scale,
+          sy: h / 2 + (zUp ? -1 : 1) * (z - v.cz) * v.scale,
         };
+      }
+
+      // World corners of a calibrated image.
+      function mapBounds(m) {
+        const e = m.entry, W = m.img.naturalWidth, H = m.img.naturalHeight;
+        return { x0: (0 - e.bx) / e.ax, z0: (0 - e.bz) / e.az, x1: (W - e.bx) / e.ax, z1: (H - e.bz) / e.az };
       }
 
       // ── Drawing ──────────────────────────────────────────────────────────
@@ -226,9 +257,26 @@
           return;
         }
 
+        const map = currentMap();
+        flipX = map ? map.entry.ax < 0 : false;
+        zUp   = map ? map.entry.az < 0 : Z_UP;
+        document.getElementById("watch-credit").hidden = !map || !zoneMaps.credit;
+
         const me = lerpPos("me", snap.x, snap.z, now);
-        const v  = view(w, h, me);
+        const v  = view(w, h, me, map);
         const S  = (x, z) => toScreen(v, w, h, x, z);
+
+        // The zone map (e.g. Remapster), placed by its calibration.
+        if (map) {
+          const b  = mapBounds(map);
+          const s0 = S(b.x0, b.z0), s1 = S(b.x1, b.z1);
+          ctx.save();
+          ctx.globalAlpha = 0.9;
+          ctx.translate(s0.sx, s0.sy);
+          ctx.scale((s1.sx - s0.sx) / map.img.naturalWidth, (s1.sy - s0.sy) / map.img.naturalHeight);
+          ctx.drawImage(map.img, 0, 0);
+          ctx.restore();
+        }
 
         // Grid every 10 yalms (50 stronger), and range rings around the bot.
         const step = 10;
@@ -253,7 +301,7 @@
         ctx.setLineDash([]);
 
         // Where things live (spawn points) - also the shape of the area.
-        if (showSpawns && layout && layout.zone_id === snap.zone_id) {
+        if (showSpawns && !map && layout && layout.zone_id === snap.zone_id) {
           ctx.fillStyle = C.spawn;
           const dot = Math.max(1.5, Math.min(4, v.scale * 1.2));
           for (const p of layout.spawns) {
@@ -338,6 +386,7 @@
         const angle = (snap.rot || 0) / 256 * Math.PI * 2;
         ctx.save();
         ctx.translate(centre.sx, centre.sy);
+        ctx.scale(flipX ? -1 : 1, zUp ? 1 : -1);
         ctx.rotate(-angle);
         ctx.fillStyle = C.bot;
         ctx.strokeStyle = C.bg; ctx.lineWidth = 2;
@@ -472,6 +521,10 @@
               layoutZone = s.zone_id;
               B.getJson(`/api/zones/${s.zone_id}/layout`).then(l => { layout = l; }).catch(() => {});
             }
+            if (mapsZone !== s.zone_id) {
+              mapsZone = s.zone_id;
+              loadMaps(s.zone_id);
+            }
           }
 
           renderSide(data);
@@ -489,6 +542,23 @@
           setLive("off", "Offline");
           notice("The live view is unavailable right now.");
         }
+      }
+
+      // Map images for the zone (only those that have been calibrated).
+      function loadMaps(zoneId) {
+        zoneMaps = null;
+        B.getJson(`/api/maps/${zoneId}`).then(d => {
+          zoneMaps = d;
+          document.getElementById("toggle-map").hidden = !d.maps.length;
+          document.getElementById("watch-credit").textContent = d.credit || "";
+          for (const m of d.maps) {
+            if (!mapImages.has(m.file)) {
+              const img = new Image();
+              img.src = `maps/${encodeURIComponent(m.file)}`;
+              mapImages.set(m.file, img);
+            }
+          }
+        }).catch(() => {});
       }
 
       async function pollFeed() {
@@ -542,6 +612,7 @@
       document.getElementById("mode-zone").onclick   = () => setMode("zone");
       document.getElementById("toggle-spawns").onclick = (ev) => { showSpawns = !showSpawns; ev.target.classList.toggle("is-active", showSpawns); };
       document.getElementById("toggle-labels").onclick = (ev) => { showLabels = !showLabels; ev.target.classList.toggle("is-active", showLabels); };
+      document.getElementById("toggle-map").onclick = (ev) => { showMap = !showMap; ev.target.classList.toggle("is-active", showMap); };
 
       window.addEventListener("resize", resize);
       loadColours();

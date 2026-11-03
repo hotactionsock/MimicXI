@@ -509,6 +509,11 @@
   background: var(--bg-2); border: 1px solid var(--line);
   color: var(--ink-soft); font-size: 0.88rem;
 }
+.watch-credit {
+  position: absolute; right: 8px; bottom: 6px;
+  font-size: 0.7rem; color: var(--ink-faint);
+  background: rgba(0, 0, 0, 0.35); padding: 2px 6px; border-radius: 4px;
+}
 .watch-controls { display: flex; flex-wrap: wrap; gap: 6px; margin: 12px 0 10px; }
 .watch-legend { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 0.78rem; color: var(--ink-faint); }
 .watch-legend li { display: inline-flex; align-items: center; gap: 6px; }
@@ -562,3 +567,23 @@
   .watch-layout { grid-template-columns: minmax(0, 1fr); }
   .watch-map { aspect-ratio: 1 / 1; }
 }
+
+/* ── Map calibration (mapcal.html) ──────────────────────────── */
+.cal-toolbar { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin: 18px 0; }
+.cal-status { color: var(--ink-faint); font-size: 0.88rem; }
+.cal-map { border: 1px solid var(--line); border-radius: var(--radius-lg); overflow: hidden; background: var(--paper); }
+.cal-map canvas { display: block; cursor: crosshair; }
+.cal-hint { font-size: 0.82rem; color: var(--ink-faint); margin: 8px 0 0; }
+.cal-points { list-style: none; margin: 0; padding: 0; }
+.cal-point { display: grid; grid-template-columns: 20px 1fr 64px 64px auto; gap: 6px; align-items: center; padding: 5px 4px; border-radius: var(--radius); }
+.cal-point.is-selected { background: var(--bg-2); }
+.cal-n { font-family: var(--mono); color: var(--crystal-amber); }
+.cal-xz { padding: 5px 6px; font-size: 0.8rem; width: 100%; }
+.cal-fit { font-size: 0.85rem; color: var(--ink-soft); margin: 10px 0 0; word-break: break-word; white-space: pre-wrap; }
+.cal-field { display: grid; grid-template-columns: 110px minmax(0, 1fr); align-items: center; gap: 8px; margin: 6px 0; font-size: 0.85rem; color: var(--ink-soft); }
+.cal-actions { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
+.cal-search { width: 100%; margin-bottom: 8px; }
+.cal-spawns { max-height: 320px; overflow-y: auto; }
+.cal-spawn { cursor: pointer; grid-template-columns: 12px minmax(0, 1fr) auto !important; }
+.cal-spawn:hover .watch-row-name { color: var(--crystal-amber); }
+.cal-field input { width: 100%; min-width: 0; box-sizing: border-box; }

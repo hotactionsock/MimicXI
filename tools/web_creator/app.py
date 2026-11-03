@@ -15,9 +15,11 @@ from flask import Flask, flash, jsonify, redirect, render_template, request, sen
 
 from db import get_connection
 from bots import bots as bots_blueprint
+from maps import maps as maps_blueprint
 
 app = Flask(__name__)
 app.register_blueprint(bots_blueprint)  # /bots, /api/bots - world bots and their activity log
+app.register_blueprint(maps_blueprint)  # /api/maps - zone map images (e.g. Remapster) and their calibration
 
 # Persist session secret key across restarts
 _SECRET_FILE = os.path.join(os.path.dirname(__file__), '.flask_secret')

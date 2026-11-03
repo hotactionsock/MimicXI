@@ -1,0 +1,6 @@
+
+# Zone map images (not ours to commit - see site/maps/README.md)
+site/maps/*.png
+site/maps/*.jpg
+site/maps/*.jpeg
+site/maps/*.webp

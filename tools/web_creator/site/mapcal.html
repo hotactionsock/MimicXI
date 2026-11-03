@@ -1,0 +1,321 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Map calibration — MimicXI</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="bots.css">
+  <script>window.MIMIC_API_BASE = "";</script>
+</head>
+<body data-screen-label="Map calibration">
+
+  <div class="bots-shell watch-shell">
+    <div class="container">
+      <h1 class="watch-name">Map calibration</h1>
+      <p class="watch-where">Line zone map images (in the site's <code>maps/</code> folder) up with game coordinates, for the live view.
+        Click three or more spots on the map spread far apart, and give each its in-game position: type it (<code>!where</code> in game) or pick a spawn point.
+        Every spawn point is then drawn on the map, so you can see when it lines up.</p>
+
+      <div class="cal-toolbar">
+        <select id="cal-zone" class="bots-input" aria-label="Zone"></select>
+        <select id="cal-file" class="bots-input" aria-label="Map image"></select>
+        <span class="cal-status" id="cal-status"></span>
+      </div>
+
+      <div class="watch-layout">
+        <div>
+          <div class="cal-map"><canvas id="cal-canvas"></canvas></div>
+          <p class="cal-hint">Click the map to add a point. The selected point is ringed; pick a spawn point on the right or type coordinates to place it in the world.</p>
+        </div>
+
+        <aside class="watch-side">
+          <section class="watch-card">
+            <h2 class="section-label">Points</h2>
+            <ol class="cal-points" id="cal-points"><li class="feed-empty">No points yet.</li></ol>
+            <p class="cal-fit" id="cal-fit"></p>
+          </section>
+
+          <section class="watch-card">
+            <h2 class="section-label">This map</h2>
+            <label class="cal-field">Label <input class="bots-input" id="cal-label" placeholder="e.g. Upper level"></label>
+            <label class="cal-field">Height from (y) <input class="bots-input" id="cal-ymin" placeholder="optional"></label>
+            <label class="cal-field">Height to (y) <input class="bots-input" id="cal-ymax" placeholder="optional"></label>
+            <div class="cal-actions">
+              <button type="button" class="btn btn-primary" id="cal-save">Save</button>
+              <button type="button" class="btn btn-ghost" id="cal-copy">Copy JSON</button>
+            </div>
+            <p class="cal-fit" id="cal-save-status"></p>
+          </section>
+
+          <section class="watch-card">
+            <h2 class="section-label">Spawn points</h2>
+            <input type="search" class="bots-input cal-search" id="cal-spawn-search" placeholder="Filter by name…">
+            <ul class="watch-list cal-spawns" id="cal-spawns"></ul>
+          </section>
+        </aside>
+      </div>
+    </div>
+  </div>
+
+  <script src="shell.js"></script>
+  <script src="tweaks.js"></script>
+  <script src="bots-common.js"></script>
+  <script>
+    (function () {
+      const B      = window.MimicBots;
+      const canvas = document.getElementById("cal-canvas");
+      const ctx    = canvas.getContext("2d");
+
+      let zones    = [];
+      let admin    = false;
+      let zoneId   = null;
+      let zoneData = null;   // /api/maps/<zone>
+      let spawns   = [];
+      let img      = null;
+      let points   = [];     // {px, py, x, z}
+      let selected = -1;
+      let fit      = null;   // {ax, bx, az, bz, err}
+
+      const status = (t) => { document.getElementById("cal-status").textContent = t; };
+
+      // ── Fitting: least squares per axis (pixel = a * world + b) ──────────
+      function fitAxis(pairs) {
+        const n = pairs.length;
+        const mx = pairs.reduce((s, p) => s + p[0], 0) / n;
+        const my = pairs.reduce((s, p) => s + p[1], 0) / n;
+        let sxy = 0, sxx = 0;
+        for (const [x, y] of pairs) { sxy += (x - mx) * (y - my); sxx += (x - mx) * (x - mx); }
+        if (sxx < 1e-6) return null;
+        const a = sxy / sxx;
+        return { a, b: my - a * mx };
+      }
+
+      function refit() {
+        const ready = points.filter(p => Number.isFinite(p.x) && Number.isFinite(p.z));
+        fit = null;
+        if (ready.length >= 2) {
+          const fx = fitAxis(ready.map(p => [p.x, p.px]));
+          const fz = fitAxis(ready.map(p => [p.z, p.py]));
+          if (fx && fz && fx.a !== 0 && fz.a !== 0) {
+            const err = Math.sqrt(ready.reduce((s, p) =>
+              s + (fx.a * p.x + fx.b - p.px) ** 2 + (fz.a * p.z + fz.b - p.py) ** 2, 0) / ready.length);
+            fit = { ax: fx.a, bx: fx.b, az: fz.a, bz: fz.b, err };
+          }
+        }
+
+        const el = document.getElementById("cal-fit");
+        if (fit) {
+          el.textContent = `Fit from ${ready.length} points: off by ${fit.err.toFixed(1)} px on average. ` +
+            `North is ${fit.az < 0 ? "up" : "down"} on this map. ${ready.length < 3 ? "Add a third point to check it." : ""}`;
+        } else {
+          el.textContent = ready.length ? "Need two points with different x and z." : "";
+        }
+        draw();
+      }
+
+      // ── Drawing ──────────────────────────────────────────────────────────
+      function draw() {
+        if (!img) {
+          canvas.width = canvas.height = 0;
+          return;
+        }
+        const width = canvas.parentElement.clientWidth;
+        const scale = width / img.naturalWidth;
+        const dpr   = window.devicePixelRatio || 1;
+        canvas.style.width  = width + "px";
+        canvas.style.height = img.naturalHeight * scale + "px";
+        canvas.width  = Math.round(width * dpr);
+        canvas.height = Math.round(img.naturalHeight * scale * dpr);
+        ctx.setTransform(dpr * scale, 0, 0, dpr * scale, 0, 0);
+        ctx.drawImage(img, 0, 0);
+
+        const r = 1 / scale; // one screen pixel in image pixels
+        if (fit) {
+          ctx.fillStyle = "rgba(224, 104, 107, 0.85)";
+          for (const s of spawns) {
+            const px = fit.ax * s.x + fit.bx, py = fit.az * s.z + fit.bz;
+            ctx.beginPath(); ctx.arc(px, py, 2.5 * r, 0, Math.PI * 2); ctx.fill();
+          }
+        }
+
+        points.forEach((p, i) => {
+          ctx.strokeStyle = "#e8c27a"; ctx.lineWidth = 2 * r;
+          ctx.beginPath(); ctx.moveTo(p.px - 8 * r, p.py); ctx.lineTo(p.px + 8 * r, p.py);
+          ctx.moveTo(p.px, p.py - 8 * r); ctx.lineTo(p.px, p.py + 8 * r); ctx.stroke();
+          if (i === selected) {
+            ctx.beginPath(); ctx.arc(p.px, p.py, 12 * r, 0, Math.PI * 2); ctx.stroke();
+          }
+          ctx.font = `${12 * r}px Inter, sans-serif`;
+          ctx.fillStyle = "#e8c27a";
+          ctx.fillText(String(i + 1), p.px + 10 * r, p.py - 10 * r);
+        });
+      }
+
+      // ── Points list ──────────────────────────────────────────────────────
+      function renderPoints() {
+        const list = document.getElementById("cal-points");
+        if (!points.length) {
+          list.innerHTML = `<li class="feed-empty">No points yet.</li>`;
+          refit();
+          return;
+        }
+        list.innerHTML = points.map((p, i) => `
+          <li class="cal-point ${i === selected ? "is-selected" : ""}" data-i="${i}">
+            <span class="cal-n">${i + 1}</span>
+            <span class="watch-row-meta">px ${Math.round(p.px)}, ${Math.round(p.py)}</span>
+            <input class="bots-input cal-xz" data-i="${i}" data-k="x" placeholder="x" value="${Number.isFinite(p.x) ? p.x : ""}">
+            <input class="bots-input cal-xz" data-i="${i}" data-k="z" placeholder="z" value="${Number.isFinite(p.z) ? p.z : ""}">
+            <button type="button" class="filter-chip" data-remove="${i}" aria-label="Remove point ${i + 1}">✕</button>
+          </li>`).join("");
+        refit();
+      }
+
+      document.getElementById("cal-points").addEventListener("input", (ev) => {
+        const t = ev.target;
+        if (!t.classList.contains("cal-xz")) return;
+        points[+t.dataset.i][t.dataset.k] = t.value.trim() === "" ? NaN : Number(t.value);
+        refit();
+      });
+      document.getElementById("cal-points").addEventListener("click", (ev) => {
+        const rm = ev.target.closest("[data-remove]");
+        if (rm) {
+          points.splice(+rm.dataset.remove, 1);
+          selected = Math.min(selected, points.length - 1);
+          renderPoints();
+          return;
+        }
+        const row = ev.target.closest(".cal-point");
+        if (row && ev.target.tagName !== "INPUT") {
+          selected = +row.dataset.i;
+          renderPoints();
+        }
+      });
+
+      canvas.addEventListener("click", (ev) => {
+        if (!img) return;
+        const rect  = canvas.getBoundingClientRect();
+        const scale = rect.width / img.naturalWidth;
+        points.push({ px: (ev.clientX - rect.left) / scale, py: (ev.clientY - rect.top) / scale, x: NaN, z: NaN });
+        selected = points.length - 1;
+        renderPoints();
+      });
+
+      // ── Spawn points ─────────────────────────────────────────────────────
+      function renderSpawns() {
+        const q = document.getElementById("cal-spawn-search").value.trim().toLowerCase();
+        const shown = spawns.filter(s => !q || s.name.toLowerCase().includes(q)).slice(0, 80);
+        document.getElementById("cal-spawns").innerHTML = shown.length ? shown.map((s, i) => `
+          <li class="watch-row cal-spawn" data-x="${s.x}" data-z="${s.z}">
+            <span class="watch-dot"></span>
+            <span class="watch-row-name">${B.esc(s.name)}</span>
+            <span class="watch-row-meta">${s.x}, ${s.z}</span>
+          </li>`).join("") : `<li class="feed-empty">No spawn points.</li>`;
+      }
+      document.getElementById("cal-spawn-search").addEventListener("input", renderSpawns);
+      document.getElementById("cal-spawns").addEventListener("click", (ev) => {
+        const row = ev.target.closest(".cal-spawn");
+        if (!row || selected < 0) {
+          status("Click the map first to place a point, then pick the spawn point it marks.");
+          return;
+        }
+        points[selected].x = Number(row.dataset.x);
+        points[selected].z = Number(row.dataset.z);
+        renderPoints();
+      });
+
+      // ── Loading ──────────────────────────────────────────────────────────
+      async function loadZone(id) {
+        zoneId = id;
+        points = []; selected = -1; fit = null; img = null;
+        const [maps, layout] = await Promise.all([
+          B.getJson(`/api/maps/${id}`),
+          B.getJson(`/api/zones/${id}/layout`).catch(() => ({ spawns: [] })),
+        ]);
+        zoneData = maps;
+        spawns   = layout.spawns || [];
+        document.getElementById("cal-file").innerHTML = maps.files.map(f => `<option value="${B.esc(f)}">${B.esc(f)}</option>`).join("");
+        renderSpawns();
+        if (maps.files.length) loadFile(maps.files[0]);
+        status(layout.zone ? layout.zone : "");
+      }
+
+      function loadFile(file) {
+        points = []; selected = -1;
+        const saved = zoneData.maps.find(m => m.file === file);
+        fit = saved ? { ax: saved.ax, bx: saved.bx, az: saved.az, bz: saved.bz, err: 0 } : null;
+        document.getElementById("cal-label").value = saved && saved.label || "";
+        document.getElementById("cal-ymin").value  = saved && saved.ymin !== undefined ? saved.ymin : "";
+        document.getElementById("cal-ymax").value  = saved && saved.ymax !== undefined ? saved.ymax : "";
+        img = new Image();
+        img.onload = () => {
+          renderPoints();
+          if (saved) {
+            fit = { ax: saved.ax, bx: saved.bx, az: saved.az, bz: saved.bz, err: 0 };
+            document.getElementById("cal-fit").textContent = "Saved calibration shown - add points to redo it.";
+            draw();
+          }
+        };
+        img.src = `maps/${encodeURIComponent(file)}`;
+      }
+
+      function entryForSave() {
+        const file = document.getElementById("cal-file").value;
+        const num  = (id) => { const v = document.getElementById(id).value.trim(); return v === "" ? undefined : Number(v); };
+        return { file, ax: fit.ax, bx: fit.bx, az: fit.az, bz: fit.bz,
+                 ymin: num("cal-ymin"), ymax: num("cal-ymax"), label: document.getElementById("cal-label").value.trim() };
+      }
+
+      function zoneEntries() {
+        const entry = entryForSave();
+        return zoneData.maps.filter(m => m.file !== entry.file).concat([entry]);
+      }
+
+      document.getElementById("cal-save").onclick = async () => {
+        const out = document.getElementById("cal-save-status");
+        if (!fit) { out.textContent = "Place and fit points first."; return; }
+        if (!admin) { out.textContent = "Sign in with an admin account to save - or copy the JSON into maps/calibration.json."; return; }
+        try {
+          const base = (window.MIMIC_API_BASE || "").replace(/\/$/, "");
+          const r = await fetch(`${base}/api/maps/${zoneId}`, {
+            method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ maps: zoneEntries() }),
+          });
+          if (!r.ok) throw new Error("HTTP " + r.status);
+          zoneData = await r.json();
+          out.textContent = "Saved. The live view uses it from now on.";
+        } catch (e) {
+          out.textContent = "Couldn't save: " + e.message;
+        }
+      };
+
+      document.getElementById("cal-copy").onclick = async () => {
+        const out = document.getElementById("cal-save-status");
+        if (!fit) { out.textContent = "Place and fit points first."; return; }
+        const json = JSON.stringify({ [zoneId]: zoneEntries() }, null, 2);
+        try { await navigator.clipboard.writeText(json); out.textContent = "Copied - paste it under \"zones\" in maps/calibration.json."; }
+        catch (e) { out.textContent = json; }
+      };
+
+      document.getElementById("cal-zone").onchange = (ev) => loadZone(Number(ev.target.value));
+      document.getElementById("cal-file").onchange = (ev) => loadFile(ev.target.value);
+      window.addEventListener("resize", draw);
+
+      B.getJson("/api/maps").then(d => {
+        zones = d.zones || [];
+        admin = !!d.admin;
+        const select = document.getElementById("cal-zone");
+        if (!zones.length) {
+          select.innerHTML = `<option>No map images yet</option>`;
+          status("Put map images in the site's maps/ folder (see maps/README.md).");
+          return;
+        }
+        select.innerHTML = zones.map(z => `<option value="${z.zone_id}">Zone ${z.zone_id} (${z.calibrated.length}/${z.files.length} calibrated)</option>`).join("");
+        loadZone(zones[0].zone_id);
+      }).catch(() => status("Couldn't load the map list."));
+    })();
+  </script>
+</body>
+</html>
