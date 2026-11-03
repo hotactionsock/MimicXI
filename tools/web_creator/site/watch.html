@@ -65,6 +65,23 @@
               <div class="inv-grid" id="inv-grid"><p class="feed-empty">Loading…</p></div>
             </section>
           </div>
+
+          <section class="watch-card ah-card">
+            <div class="ah-head">
+              <h2 class="section-label">Auction House</h2>
+              <span class="ah-summary" id="ah-summary"></span>
+            </div>
+            <div class="ah-cols">
+              <div>
+                <h3 class="story-label" id="ah-listing-label">Listings</h3>
+                <ul class="ah-list" id="ah-listings"><li class="feed-empty">Loading…</li></ul>
+              </div>
+              <div>
+                <h3 class="story-label">Recent sales</h3>
+                <ul class="ah-list" id="ah-sales"><li class="feed-empty">–</li></ul>
+              </div>
+            </div>
+          </section>
         </div>
 
         <aside class="watch-side">
@@ -683,6 +700,44 @@
         grid.innerHTML = cells.join("") || `<p class="feed-empty">Empty.</p>`;
       }
 
+      // ── Auction House listings ───────────────────────────────────────────
+      let ahJson = "";
+      async function loadAuctions() {
+        try {
+          const ah   = await B.getJson(`/api/bots/${charid}/auctions`);
+          const text = JSON.stringify(ah);
+          if (text === ahJson) return;
+          ahJson = text;
+
+          document.getElementById("ah-summary").textContent =
+            `Purse ${ah.purse.toLocaleString()} gil · sold ${ah.sold_count.toLocaleString()} for ${ah.sold_gil.toLocaleString()} gil`;
+          document.getElementById("ah-listing-label").textContent = `Listings · ${ah.listings.length} of ${ah.limit}`;
+
+          document.getElementById("ah-listings").innerHTML = ah.listings.length ? ah.listings.map(l => {
+            const status = l.cheapest_other == null
+              ? `<span class="ah-chip is-alone">Only one listed</span>`
+              : l.cheapest_other < l.price
+                ? `<span class="ah-chip is-under" title="Someone else lists it for ${l.cheapest_other.toLocaleString()} gil - theirs sells first">Undercut: ${l.cheapest_other.toLocaleString()}</span>`
+                : `<span class="ah-chip is-best">Cheapest</span>`;
+            return `
+              <li class="ah-row">
+                <span class="ah-icon">${icon(l.item_id, l.name)}${l.stack ? `<span class="inv-qty">${l.quantity}</span>` : ""}</span>
+                <span class="ah-name">${B.esc(l.name)}
+                  <span class="ah-sub">${l.stack ? `stack of ${l.quantity} · ` : ""}listed ${B.ago(l.listed_at)}${l.on_sale > 1 ? ` · ${l.on_sale} on sale` : ""}</span></span>
+                <span class="ah-price">${l.price.toLocaleString()}<span class="ah-sub"> gil</span></span>
+                ${status}
+              </li>`;
+          }).join("") : `<li class="feed-empty">Nothing up for sale.</li>`;
+
+          document.getElementById("ah-sales").innerHTML = ah.recent_sales.length ? ah.recent_sales.map(sale => `
+            <li class="ah-row is-sale">
+              <span class="ah-icon">${sale.item_id ? icon(sale.item_id, sale.name) : ""}</span>
+              <span class="ah-name">${B.esc(sale.name)}<span class="ah-sub">${B.ago(sale.ts)}</span></span>
+              <span class="ah-price">${sale.price.toLocaleString()}<span class="ah-sub"> gil</span></span>
+            </li>`).join("") : `<li class="feed-empty">No sales yet.</li>`;
+        } catch (e) { /* keep what's shown */ }
+      }
+
       document.getElementById("gear-tabs").addEventListener("click", (ev) => {
         const b = ev.target.closest("[data-bag]");
         if (!b || !invData) return;
@@ -747,6 +802,8 @@
       setInterval(pollFeed, FEED_MS);
       loadGear();
       setInterval(loadGear, GEAR_MS);
+      loadAuctions();
+      setInterval(loadAuctions, GEAR_MS);
       setInterval(() => B.refreshTimes(document), 30000);
     })();
   </script>

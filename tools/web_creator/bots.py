@@ -16,6 +16,7 @@ JSON (public, read-only):
     /api/bots/feed                  latest events across all bots, with names (?since=<id>, ?limit)
     /api/bots/<charid>/live         live snapshot (and asks the game server to keep snapshotting it)
     /api/bots/<charid>/inventory    every bag it owns and what's in it (equipment: /api/character/<charid>/equipment)
+    /api/bots/<charid>/auctions     its AH listings (and who's cheaper), recent sales and AH purse
     /api/zones/<zoneid>/layout      a zone's mob spawn points, for the live radar
     /api/bots/leaderboards          top bots by level, kills, EXP, NMs, achievements, defeats... (?period=all|week, ?limit)
 
@@ -860,6 +861,52 @@ def _inventory(cur, charid):
 @bots.route('/api/bots/<int:charid>/inventory')
 def api_bot_inventory(charid):
     result = _with_connection(lambda cur: _inventory(cur, charid))
+    if result is None:
+        abort(404)
+    return jsonify(result)
+
+
+def _auctions(cur, charid):
+    """The bot's Auction House picture for the live view: active listings
+    (with whether someone else lists the same thing cheaper - the cheapest
+    sells first), its last few sales, and its AH purse."""
+    cur.execute('SELECT ah_purse FROM world_bots WHERE charid = ?', (charid,))
+    row = cur.fetchone()
+    if not row:
+        return None
+
+    cur.execute(
+        'SELECT a.id, a.itemid, a.stack, a.price, a.date, ib.name, ib.stackSize, '
+        '  (SELECT MIN(o.price) FROM auction_house o WHERE o.itemid = a.itemid AND o.stack = a.stack '
+        '     AND o.sale = 0 AND o.seller != a.seller) AS cheapest_other, '
+        '  (SELECT COUNT(*) FROM auction_house o WHERE o.itemid = a.itemid AND o.stack = a.stack AND o.sale = 0) AS on_sale '
+        'FROM auction_house a LEFT JOIN item_basic ib ON ib.itemid = a.itemid '
+        'WHERE a.seller = ? AND a.sale = 0 ORDER BY a.id', (charid,))
+    listings = []
+    for lid, item_id, stack, price, date, name, stack_size, cheapest, on_sale in cur.fetchall():
+        listings.append({
+            'item_id': item_id, 'name': _item_label(name) or 'Item #{}'.format(item_id), 'stack': bool(stack),
+            'quantity': int(stack_size or 1) if stack else 1, 'price': int(price), 'listed_at': int(date),
+            'cheapest_other': int(cheapest) if cheapest is not None else None, 'on_sale': int(on_sale or 0),
+        })
+
+    cur.execute(
+        "SELECT ts, JSON_VALUE(data, '$.item_id'), JSON_VALUE(data, '$.item'), JSON_VALUE(data, '$.price') "
+        "FROM world_bot_log WHERE charid = ? AND event = 'ah_sold' ORDER BY ts DESC, id DESC LIMIT 6", (charid,))
+    sales = [{'ts': r[0], 'item_id': int(r[1] or 0), 'name': r[2] or '', 'price': int(r[3] or 0)} for r in cur.fetchall()]
+
+    cur.execute(
+        "SELECT COUNT(*), COALESCE(SUM(JSON_VALUE(data, '$.price')), 0) FROM world_bot_log "
+        "WHERE charid = ? AND event = 'ah_sold'", (charid,))
+    total = cur.fetchone() or (0, 0)
+
+    return {'charid': charid, 'purse': int(row[0] or 0), 'listings': listings, 'limit': 7,
+            'recent_sales': sales, 'sold_count': int(total[0] or 0), 'sold_gil': int(total[1] or 0)}
+
+
+@bots.route('/api/bots/<int:charid>/auctions')
+def api_bot_auctions(charid):
+    result = _with_connection(lambda cur: _auctions(cur, charid))
     if result is None:
         abort(404)
     return jsonify(result)
