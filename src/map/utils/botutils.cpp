@@ -22,6 +22,7 @@
 #include "botutils.h"
 #include "botinventory.h"
 #include "botlog.h"
+#include "botauction.h"
 #include "botmemory.h"
 
 #include "common/database.h"
@@ -79,6 +80,7 @@ void forgetBotCharacter(uint32 charId)
 {
     DeleteBotLog(charId);
     DeleteBotMemory(charId);
+    DeleteBotAuctionData(charId);
     ForgetBotActivity(charId);
     ForgetBotGear(charId);
 }

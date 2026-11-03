@@ -19,6 +19,9 @@ SET SQL_MODE="NO_AUTO_VALUE_ON_ZERO";
 --              (see scripts/globals/worldbots_jobs.lua).
 --   logged_out_until - between play sessions: the bot is logged off until this
 --              unix time, then logs back in where it left (0 = online / due).
+--   ah_purse - gil the bot may spend on the Auction House: credited only by
+--              its AH sales and vendor sales of loot (bots carry the gil cap
+--              for vendors, so AH money is kept apart - see botauction.h).
 --
 
 DROP TABLE IF EXISTS `world_bots`;
@@ -30,6 +33,7 @@ CREATE TABLE IF NOT EXISTS `world_bots` (
   `anchor_z` float(7,3)          NOT NULL DEFAULT 0,
   `career_job` tinyint(2) unsigned NOT NULL DEFAULT 0,
   `logged_out_until` int(10) unsigned NOT NULL DEFAULT 0,
+  `ah_purse` int(10) unsigned NOT NULL DEFAULT 0,
   PRIMARY KEY (`charid`),
   KEY `active` (`active`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;

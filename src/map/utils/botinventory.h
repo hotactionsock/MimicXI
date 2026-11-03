@@ -177,6 +177,34 @@ auto IsBotKeeperLoot(CCharEntity* PChar, uint16 itemId) -> bool;
 // opens the Safe and Storage. Returns how many stacks it moved.
 auto StowBotKeepers(uint32 charId, uint8 wantFree, bool insideMogHouse) -> uint8;
 
+// One thing a bot could put up on the Auction House (see GetBotAuctionCandidates).
+struct BotAuctionCandidate
+{
+    uint16      itemId;
+    uint8       location;    // container it's in (inventory, Mog Case, ...)
+    uint8       slot;
+    uint32      quantity;
+    bool        stack;       // a full stack (listed as a stack), else a single
+    bool        gear;
+    bool        duplicate;   // a spare copy of gear for its own job
+    uint32      vendorPrice; // what a vendor would pay for it all (0 = can't vendor)
+    std::string name;
+};
+
+// What the bot could list on the AH, from its inventory and the storage it
+// carries everywhere (Mog Case, Satchel, Sack, spare wardrobes). Never
+// Rare/Ex, NoAuction, augmented or partly used items; stackables only as full
+// stacks. Gear its main job can wear (now or once it levels) is kept for
+// levelling - only a duplicate copy is offered. Scrolls are kept while one of
+// its jobs could still learn them.
+auto GetBotAuctionCandidates(uint32 charId) -> std::vector<BotAuctionCandidate>;
+
+// The bot gives up selling itemId on the AH (a common drop that never sold):
+// it stops being kept loot, so it can be vendored or tossed. Rare/Ex items
+// are never given up. In memory only.
+void ReleaseBotKeptItem(uint32 charId, uint16 itemId);
+void ForgetBotAuctionItems(uint32 charId);
+
 // True if itemId is equipment or a spell scroll at all.
 auto IsGearOrScroll(uint16 itemId) -> bool;
 

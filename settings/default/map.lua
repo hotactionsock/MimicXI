@@ -327,4 +327,10 @@ xi.settings.map =
     -- Mog House, or in the field) and come back hours later, mostly in the
     -- afternoon and evening. Offline bots gain nothing. false = always online.
     WORLDBOTS_SESSIONS = true,
+
+    -- World bots: the Auction House. Bots list loot (7 listings max, as for
+    -- players), relist what doesn't sell, and buy gear upgrades for their job,
+    -- with AH money kept in a separate, capped purse fed only by their sales.
+    -- See scripts/globals/worldbots_ah.lua. false = bots stay off the AH.
+    WORLDBOTS_AH = true,
 }

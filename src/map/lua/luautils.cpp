@@ -66,6 +66,7 @@
 #include "persist_batch.h"
 #include "utils/battleutils.h"
 #include "utils/botcombat.h"
+#include "utils/botauction.h"
 #include "utils/botinventory.h"
 #include "utils/botjobs.h"
 #include "utils/botlog.h"
@@ -360,6 +361,20 @@ void init(IPP mapIPP, bool isRunningInCI)
     lua.set_function("GetBotFreeSlots", &luautils::GetBotFreeSlots);
     lua.set_function("TossBotJunk", &luautils::TossBotJunk);
     lua.set_function("StowBotKeepers", &luautils::StowBotKeepers);
+    lua.set_function("GetBotAuctionCandidates", &luautils::GetBotAuctionCandidates);
+    lua.set_function("GetBotAuctionMarket", &luautils::GetBotAuctionMarket);
+    lua.set_function("GetBotAuctionListings", &luautils::GetBotAuctionListings);
+    lua.set_function("ListBotAuctionItem", &luautils::ListBotAuctionItem);
+    lua.set_function("CancelBotAuction", &luautils::CancelBotAuction);
+    lua.set_function("FindBotAuctionUpgrades", &luautils::FindBotAuctionUpgrades);
+    lua.set_function("BuyBotAuctionItem", &luautils::BuyBotAuctionItem);
+    lua.set_function("CollectBotDeliveries", &luautils::CollectBotDeliveries);
+    lua.set_function("GetBotAuctionPurse", &luautils::GetBotAuctionPurse);
+    lua.set_function("AddBotAuctionPurse", &luautils::AddBotAuctionPurse);
+    lua.set_function("GetBotAuctionFails", &luautils::GetBotAuctionFails);
+    lua.set_function("NoteBotAuctionFail", &luautils::NoteBotAuctionFail);
+    lua.set_function("ClearBotAuctionFail", &luautils::ClearBotAuctionFail);
+    lua.set_function("ReleaseBotKeptItem", &luautils::ReleaseBotKeptItem);
     lua.set_function("GetBotSellableValue", &luautils::GetBotSellableValue);
     lua.set_function("SellBotItems", &luautils::SellBotItems);
     lua.set_function("GetBotVendors", &luautils::GetBotVendors);
@@ -2737,6 +2752,191 @@ uint8 StowBotKeepers(uint32 charId, uint8 wantFree, sol::object insideMogHouse)
     TracyZoneScoped;
 
     return botutils::StowBotKeepers(charId, wantFree, insideMogHouse.is<bool>() && insideMogHouse.as<bool>());
+}
+
+// ---- World bots: the Auction House (see utils/botauction.h) ----------------
+
+// { { itemId, location, slot, quantity, stack, gear, duplicate, vendorPrice, name }, ... }
+sol::table GetBotAuctionCandidates(uint32 charId)
+{
+    TracyZoneScoped;
+
+    auto table = lua.create_table();
+    for (const auto& c : botutils::GetBotAuctionCandidates(charId))
+    {
+        auto row           = lua.create_table();
+        row["itemId"]      = c.itemId;
+        row["location"]    = c.location;
+        row["slot"]        = c.slot;
+        row["quantity"]    = c.quantity;
+        row["stack"]       = c.stack;
+        row["gear"]        = c.gear;
+        row["duplicate"]   = c.duplicate;
+        row["vendorPrice"] = c.vendorPrice;
+        row["name"]        = c.name;
+        table.add(row);
+    }
+
+    return table;
+}
+
+// { lowest, lowestIsMine, listings, botListings, mine, sales7d, median, historyCount, vendorPrice }
+sol::table GetBotAuctionMarket(uint32 charId, uint16 itemId, bool stack)
+{
+    TracyZoneScoped;
+
+    const auto m          = botutils::GetBotAuctionMarket(charId, itemId, stack);
+    auto       table      = lua.create_table();
+    table["lowest"]       = m.lowest;
+    table["lowestIsMine"] = m.lowestIsMine;
+    table["listings"]     = m.listings;
+    table["botListings"]  = m.botListings;
+    table["mine"]         = m.mine;
+    table["sales7d"]      = m.sales7d;
+    table["median"]       = m.median;
+    table["historyCount"] = m.historyCount;
+    table["vendorPrice"]  = m.vendorPrice;
+    return table;
+}
+
+// { { itemId, stack, price, listedAt, name }, ... }
+sol::table GetBotAuctionListings(uint32 charId)
+{
+    TracyZoneScoped;
+
+    auto table = lua.create_table();
+    for (const auto& l : botutils::GetBotAuctionListings(charId))
+    {
+        auto row        = lua.create_table();
+        row["itemId"]   = l.itemId;
+        row["stack"]    = l.stack;
+        row["price"]    = l.price;
+        row["listedAt"] = l.listedAt;
+        row["name"]     = l.name;
+        table.add(row);
+    }
+
+    return table;
+}
+
+bool ListBotAuctionItem(uint32 charId, uint8 location, uint8 slot, uint32 price, bool stack)
+{
+    TracyZoneScoped;
+
+    return botutils::ListBotAuctionItem(charId, location, slot, price, stack);
+}
+
+bool CancelBotAuction(uint32 charId, uint16 itemId, bool stack, uint32 price)
+{
+    TracyZoneScoped;
+
+    return botutils::CancelBotAuction(charId, itemId, stack, price);
+}
+
+// { { itemId, price, gain, name }, ... } best gain first
+sol::table FindBotAuctionUpgrades(uint32 charId, uint32 maxPrice)
+{
+    TracyZoneScoped;
+
+    auto table = lua.create_table();
+    for (const auto& u : botutils::FindBotAuctionUpgrades(charId, maxPrice))
+    {
+        auto row      = lua.create_table();
+        row["itemId"] = u.itemId;
+        row["price"]  = u.price;
+        row["gain"]   = u.gain;
+        row["name"]   = u.name;
+        table.add(row);
+    }
+
+    return table;
+}
+
+uint32 BuyBotAuctionItem(uint32 charId, uint16 itemId, bool stack, uint32 maxPrice)
+{
+    TracyZoneScoped;
+
+    return botutils::BuyBotAuctionItem(charId, itemId, stack, maxPrice);
+}
+
+// { gil, sold = { { itemId, price }, ... }, returned = { itemId, ... } }
+sol::table CollectBotDeliveries(uint32 charId)
+{
+    TracyZoneScoped;
+
+    const auto result = botutils::CollectBotDeliveries(charId);
+    auto       table  = lua.create_table();
+    auto       sold   = lua.create_table();
+    auto       back   = lua.create_table();
+    for (const auto& [itemId, price] : result.sold)
+    {
+        auto row      = lua.create_table();
+        row["itemId"] = itemId;
+        row["price"]  = price;
+        sold.add(row);
+    }
+
+    for (const auto itemId : result.returned)
+    {
+        back.add(itemId);
+    }
+
+    table["gil"]      = result.gil;
+    table["sold"]     = sold;
+    table["returned"] = back;
+    return table;
+}
+
+uint32 GetBotAuctionPurse(uint32 charId)
+{
+    TracyZoneScoped;
+
+    return botutils::GetBotAuctionPurse(charId);
+}
+
+uint32 AddBotAuctionPurse(uint32 charId, int32 delta, uint32 cap)
+{
+    TracyZoneScoped;
+
+    return botutils::AddBotAuctionPurse(charId, delta, cap);
+}
+
+// { [itemId] = { fails, lastFail }, ... }
+sol::table GetBotAuctionFails(uint32 charId)
+{
+    TracyZoneScoped;
+
+    auto table = lua.create_table();
+    for (const auto& f : botutils::GetBotAuctionFails(charId))
+    {
+        auto row        = lua.create_table();
+        row["fails"]    = f.fails;
+        row["lastFail"] = f.lastFail;
+        table[f.itemId] = row;
+    }
+
+    return table;
+}
+
+void NoteBotAuctionFail(uint32 charId, uint16 itemId)
+{
+    TracyZoneScoped;
+
+    botutils::NoteBotAuctionFail(charId, itemId);
+}
+
+void ClearBotAuctionFail(uint32 charId, uint16 itemId)
+{
+    TracyZoneScoped;
+
+    botutils::ClearBotAuctionFail(charId, itemId);
+}
+
+void ReleaseBotKeptItem(uint32 charId, uint16 itemId)
+{
+    TracyZoneScoped;
+
+    botutils::ReleaseBotKeptItem(charId, itemId);
 }
 
 uint32 GetBotSellableValue(uint32 charId)

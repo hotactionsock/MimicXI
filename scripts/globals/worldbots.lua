@@ -89,7 +89,7 @@ local KEEP_ACROSS_ZONES =
 {
     'goal', 'resumeGoal', 'hire', 'careerJob', 'jobsRetryAt', 'lastShopLevel', 'nextShopTripAt',
     'nmCooldown', 'nextNMCheckAt', 'logJob', 'logLevel', 'nextHuntSummaryAt', 'seekingShown',
-    'seekRefreshAt', 'gear', 'magic', 'campMoves', 'sessionEndsAt',
+    'seekRefreshAt', 'gear', 'magic', 'campMoves', 'sessionEndsAt', 'nextAHAt',
 }
 
 -- Logs every decision to the map log as [lua] lines. Testing aid only - keep
@@ -319,6 +319,17 @@ local function getSocialSpots(zoneId)
     end
 
     return spots
+end
+
+-- Does this zone have an Auction Counter (an 'ah' social spot)?
+local function hasAuctionCounter(zoneId)
+    for _, spot in ipairs(getSocialSpots(zoneId)) do
+        if spot.kind == 'ah' then
+            return true
+        end
+    end
+
+    return false
 end
 
 -- Weighted random spot index, avoiding `exclude` when there's a choice.
@@ -685,6 +696,16 @@ local function pickGoal(bot, charId, state, zoneId)
         end
     end
 
+    -- Time to visit the Auction House: collect sales, relist, maybe buy an
+    -- upgrade (worldbots_ah.lua).
+    if not inParty and xi.worldbots.ah.wantsTrip(bot, charId, state, now) then
+        local target = xi.worldbots.ah.tripZone(bot, zoneId, hasAuctionCounter)
+        if target and (target == zoneId or GetBotRouteNextLine(zoneId, target) ~= nil) then
+            setGoal(charId, state, 'ah', target)
+            return true
+        end
+    end
+
     -- An NM nearby drops an upgrade it can get: camp it (worldbots_nm.lua).
     if xi.worldbots.nm.maybeCamp(bot, charId, state, now) then
         return true
@@ -878,6 +899,17 @@ local function relocateStep(bot, charId, state, now, currentPos, moving)
             return
         end
 
+        -- At the Auction Counter (worldbots_ah.lua).
+        if walk.purpose == 'ah' then
+            local result = xi.worldbots.ah.visit(bot, charId, state, now)
+            if result then
+                diag(charId, 'AH: %d sold, %d back, %d listed, bought %s', result.sold, result.returned, result.listed, tostring(result.bought))
+            end
+
+            state.goal = nil
+            return
+        end
+
         -- At the gate guard or crystal: pay for the warp and go
         -- (worldbots_warp.lua). True = the bot left the zone.
         if walk.purpose == 'warp' then
@@ -895,6 +927,7 @@ local function relocateStep(bot, charId, state, now, currentPos, moving)
         if walk.purpose == 'vendor' then
             local sale = SellBotItems(charId)
             diag(charId, 'sold %d stacks for %d gil', sale.sold, sale.gil)
+            xi.worldbots.ah.creditVendorSale(bot, charId, sale.gil) -- loot money for the AH purse
 
             -- In town with gil: do the shopping before heading back (worldbots_shop.lua).
             if xi.worldbots.shop.begin(bot, charId, state, now, bot:getZoneID()) then
@@ -1541,6 +1574,28 @@ local function plan(bot, charId, state, now, zoneId)
         state.travel        = newPlan(line)
         state.travel.lineId = line.id
         state.travel.zoneId = line.zoneId
+        return
+    end
+
+    -- Auction House trip: walk to the nearest Auction Counter.
+    if goal.kind == 'ah' then
+        local here     = { x = bot:getXPos(), y = bot:getYPos(), z = bot:getZPos() }
+        local counters = {}
+        for _, spot in ipairs(getSocialSpots(zoneId)) do
+            if spot.kind == 'ah' then
+                table.insert(counters, spot)
+            end
+        end
+
+        local counter = nearestOf(counters, here)
+        if counter == nil then
+            state.goal = nil
+            return
+        end
+
+        local zone         = bot:getZone()
+        state.walk         = newPlan(zone and zone:getRandomNavmeshPoint(counter, 1.5) or counter)
+        state.walk.purpose = 'ah'
         return
     end
 

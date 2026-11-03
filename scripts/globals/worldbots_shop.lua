@@ -38,6 +38,20 @@ local CONSUMABLES =
     { item = 'SHIHEI',       keep = 20, needsSpell = 'UTSUSEMI_ICHI' },
 }
 
+-- Item ids of the consumables it keeps in stock (never resold on the AH:
+-- that would turn vendor gil into AH gil - worldbots_ah.lua).
+function shop.consumableIds()
+    local ids = {}
+    for _, entry in ipairs(CONSUMABLES) do
+        local id = xi.item[entry.item]
+        if id then
+            table.insert(ids, id)
+        end
+    end
+
+    return ids
+end
+
 local function budget(bot)
     local gil = bot:getGil()
     return gil - math.max(RESERVE_MIN, math.floor(gil * RESERVE_FRACTION))

@@ -127,6 +127,7 @@ local GOAL_PHRASES =
     jobs  = 'headed to %s to change jobs',
     party = 'set off to meet their party in %s',
     logoff = 'headed home to %s to call it a day',
+    ah     = 'headed to the auction house in %s',
 }
 
 function log.goal(bot, kind, zoneId)

@@ -358,6 +358,12 @@ auto isKeeper(CCharEntity* PChar, CItem* PItem, const std::unordered_set<CItem*>
 // and armour that can be listed, plus augmented gear (it can't be listed, but
 // a Gold casket augment isn't vendor trash either). Kept in storage when the
 // bags fill up (StowBotKeepers).
+// Items a bot has given up on selling on the Auction House (a common drop
+// that never sold): no longer kept, so they can be vendored or tossed like
+// any other loot. In memory only - after a restart they get another go on
+// the AH first. See ReleaseBotKeptItem.
+std::unordered_map<uint32, std::unordered_set<uint16>> g_releasedLoot;
+
 auto isKeptLoot(CItem* PItem) -> bool
 {
     if (PItem->hasFlag(ItemFlag::Rare) || PItem->hasFlag(ItemFlag::Exclusive))
@@ -372,6 +378,24 @@ auto isKeptLoot(CItem* PItem) -> bool
     }
 
     return !PItem->hasFlag(ItemFlag::NoAuction) || PEquip->getAugment(0) != 0;
+}
+
+// isKeptLoot, unless the bot has given up selling this item on the AH.
+// Rare/Ex items are never given up.
+auto isKeptLoot(CCharEntity* PChar, CItem* PItem) -> bool
+{
+    if (!isKeptLoot(PItem))
+    {
+        return false;
+    }
+
+    if (PItem->hasFlag(ItemFlag::Rare) || PItem->hasFlag(ItemFlag::Exclusive))
+    {
+        return true;
+    }
+
+    const auto it = g_releasedLoot.find(PChar->id);
+    return it == g_releasedLoot.end() || !it->second.contains(PItem->getID());
 }
 
 auto isSellable(CItem* PItem) -> bool
@@ -525,7 +549,7 @@ auto TossBotJunk(uint32 charId, uint32 maxValue, uint8 wantFree) -> uint8
     for (uint8 i = 1; i <= PInventory->GetSize(); ++i)
     {
         auto* PItem = PInventory->GetItem(i);
-        if (PItem != nullptr && !isKeeper(PChar, PItem, equipped) && !isKeptLoot(PItem) && lootValue(PItem) < maxValue)
+        if (PItem != nullptr && !isKeeper(PChar, PItem, equipped) && !isKeptLoot(PChar, PItem) && lootValue(PItem) < maxValue)
         {
             junk.emplace_back(lootValue(PItem), i);
         }
@@ -577,7 +601,7 @@ auto GetBotSellableValue(uint32 charId) -> uint32
     for (uint8 i = 1; i <= PInventory->GetSize(); ++i)
     {
         auto* PItem = PInventory->GetItem(i);
-        if (PItem != nullptr && !isKeeper(PChar, PItem, equipped) && !isKeptLoot(PItem))
+        if (PItem != nullptr && !isKeeper(PChar, PItem, equipped) && !isKeptLoot(PChar, PItem))
         {
             total += lootValue(PItem);
         }
@@ -602,7 +626,7 @@ auto SellBotItems(uint32 charId) -> BotSaleResult
     for (uint8 i = 1; i <= PInventory->GetSize(); ++i)
     {
         auto* PItem = PInventory->GetItem(i);
-        if (PItem == nullptr || isKeeper(PChar, PItem, equipped) || isKeptLoot(PItem) || !isSellable(PItem))
+        if (PItem == nullptr || isKeeper(PChar, PItem, equipped) || isKeptLoot(PChar, PItem) || !isSellable(PItem))
         {
             continue;
         }
@@ -1186,7 +1210,7 @@ auto StowBotKeepers(uint32 charId, uint8 wantFree, bool insideMogHouse) -> uint8
         }
 
         auto* PItem = PInventory->GetItem(slot);
-        if (PItem == nullptr || PItem->isBusy() || equipped.contains(PItem) || isKeeper(PChar, PItem, equipped) || !isKeptLoot(PItem))
+        if (PItem == nullptr || PItem->isBusy() || equipped.contains(PItem) || isKeeper(PChar, PItem, equipped) || !isKeptLoot(PChar, PItem))
         {
             continue;
         }
@@ -1235,6 +1259,150 @@ auto StowBotKeepers(uint32 charId, uint8 wantFree, bool insideMogHouse) -> uint8
 
     PChar->m_moghouseID = previousMogHouse;
     return stowed;
+}
+
+auto GetBotAuctionCandidates(uint32 charId) -> std::vector<BotAuctionCandidate>
+{
+    std::vector<BotAuctionCandidate> result;
+
+    auto* PChar = liveBot(charId);
+    if (PChar == nullptr)
+    {
+        return result;
+    }
+
+    // Where it keeps things it can reach at an Auction Counter (not the Safe).
+    static const std::array<CONTAINER_ID, 10> kContainers = {
+        LOC_INVENTORY, LOC_MOGCASE, LOC_MOGSATCHEL, LOC_MOGSACK,
+        LOC_WARDROBE3, LOC_WARDROBE4, LOC_WARDROBE5, LOC_WARDROBE6, LOC_WARDROBE7, LOC_WARDROBE8,
+    };
+
+    const auto equipped = equippedItems(PChar);
+    const auto job      = static_cast<uint8>(PChar->GetMJob());
+
+    // How many of each item it owns (equipped included): gear for its job is
+    // kept for levelling, one of each - only a duplicate is for sale.
+    std::unordered_map<uint16, uint32> owned;
+    for (auto* PItem : equipped)
+    {
+        ++owned[PItem->getID()];
+    }
+
+    for (const auto location : kContainers)
+    {
+        auto* PStore = PChar->getStorage(location);
+        for (uint8 slot = 1; slot <= PStore->GetSize(); ++slot)
+        {
+            if (auto* PItem = PStore->GetItem(slot); PItem != nullptr && !equipped.contains(PItem))
+            {
+                ++owned[PItem->getID()];
+            }
+        }
+    }
+
+    std::unordered_map<uint16, uint32> keptOne; // job gear: copies set aside to keep
+
+    for (const auto location : kContainers)
+    {
+        auto* PStore = PChar->getStorage(location);
+        for (uint8 slot = 1; slot <= PStore->GetSize(); ++slot)
+        {
+            auto* PItem = PStore->GetItem(slot);
+            if (PItem == nullptr || PItem->isBusy() || equipped.contains(PItem))
+            {
+                continue;
+            }
+
+            // What the AH takes at all, and what it never lets go of.
+            if (PItem->hasFlag(ItemFlag::NoAuction) || PItem->hasFlag(ItemFlag::Rare) || PItem->hasFlag(ItemFlag::Exclusive))
+            {
+                continue;
+            }
+
+            if (PItem->isSubType(ITEM_CHARGED))
+            {
+                const auto* PUsable = static_cast<CItemUsable*>(PItem);
+                if (PUsable->getCurrentCharges() < PUsable->getMaxCharges())
+                {
+                    continue; // the AH refuses partly used items
+                }
+            }
+
+            // Whole stacks of stackables; single items one at a time.
+            const auto stackSize = PItem->getStackSize();
+            const bool stack     = stackSize > 1;
+            if (stack && PItem->getQuantity() != stackSize)
+            {
+                continue;
+            }
+
+            bool duplicate = false;
+            auto* PEquip   = dynamic_cast<CItemEquipment*>(PItem);
+            if (PEquip != nullptr)
+            {
+                if (PEquip->getAugment(0) != 0)
+                {
+                    continue; // augmented gear can't be listed
+                }
+
+                // Gear for the job it's levelling - now or later: kept, bar duplicates.
+                if ((PEquip->getJobs() & (1 << (job - 1))) != 0 && PEquip->isEquippableByRace(PChar->look.race))
+                {
+                    const auto id      = PItem->getID();
+                    const bool wearing = std::any_of(equipped.begin(), equipped.end(),
+                                                     [id](CItem* PWorn)
+                                                     {
+                                                         return PWorn->getID() == id;
+                                                     });
+                    if (!wearing && keptOne[id] == 0)
+                    {
+                        keptOne[id] = 1; // keep this copy
+                        continue;
+                    }
+
+                    duplicate = true;
+                }
+            }
+            else if (const auto spellId = scrollSpell(PItem->getID()); spellId != 0)
+            {
+                // A scroll: kept while any of its jobs could still learn it.
+                bool learnable = false;
+                for (uint8 j = 1; j < MAX_JOBTYPE && !charutils::hasSpell(PChar, spellId); ++j)
+                {
+                    learnable = learnable || spell::CanUseSpellWith(static_cast<SpellID>(spellId), static_cast<xi::Job>(j), 99);
+                }
+
+                if (learnable)
+                {
+                    continue;
+                }
+            }
+
+            result.push_back(BotAuctionCandidate{
+                .itemId      = PItem->getID(),
+                .location    = static_cast<uint8>(location),
+                .slot        = slot,
+                .quantity    = PItem->getQuantity(),
+                .stack       = stack,
+                .gear        = PEquip != nullptr,
+                .duplicate   = duplicate,
+                .vendorPrice = isSellable(PItem) ? PItem->getBasePrice() * PItem->getQuantity() : 0,
+                .name        = HumanName(PItem->getName()),
+            });
+        }
+    }
+
+    return result;
+}
+
+void ReleaseBotKeptItem(uint32 charId, uint16 itemId)
+{
+    g_releasedLoot[charId].insert(itemId);
+}
+
+void ForgetBotAuctionItems(uint32 charId)
+{
+    g_releasedLoot.erase(charId);
 }
 
 auto IsBotKeeperLoot(CCharEntity* PChar, uint16 itemId) -> bool
