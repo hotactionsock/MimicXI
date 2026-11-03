@@ -385,6 +385,7 @@ local function formParty(chosen, now, keepFirstAsLeader)
                 xi.worldbots.log.formedParty(member, #members)
             else
                 xi.worldbots.log.joinedParty(member, leaderBot:getName(), record.roles[id] or 'damage', #members)
+                xi.worldbots.social.onJoinedParty(member, id, xi.worldbots.internal.getState(id, now), now, leader.charId)
             end
         end
     end
@@ -500,6 +501,7 @@ function party.disband(record, now)
         local member = GetPlayerByID(id)
         if member and member:getPartySize() > 1 then
             xi.worldbots.log.leftParty(member, 'the party broke up', minutes)
+            xi.worldbots.social.onLeftParty(member, id, api.getState(id, now), now)
         end
 
         LeaveBotParty(id)

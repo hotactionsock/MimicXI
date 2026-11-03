@@ -49,6 +49,7 @@ local function endHire(bot, charId, state, now, reason)
 
     local minutes = math.floor((now - hired.since) / 60)
     xi.worldbots.log.dismissed(bot, hired.hirerName, reason, minutes)
+    xi.worldbots.social.onLeftParty(bot, charId, state, now)
 
     state.goal = nil -- pick a fresh goal of its own
 end
@@ -106,6 +107,7 @@ function hire.tick(bot, charId, state, now)
 
             xi.worldbots.party.stopSeeking(charId)
             xi.worldbots.log.hired(bot, state.hire.hirerName)
+            xi.worldbots.social.onJoinedParty(bot, charId, state, now, invite.inviterId)
         end
     end
 

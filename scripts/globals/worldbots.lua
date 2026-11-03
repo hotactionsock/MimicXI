@@ -228,6 +228,8 @@ local ZONE_JITTER                = 0.1     -- +-10% on zone scores, to spread bo
 local ZONE_ALONG_THE_WAY         = 0.7     -- stop in a zone passed on the way if it's at least this good, relatively
 local CAMP_IDLE_SEC              = 90      -- a camp with no prey for this long: move to another
 local CAMP_MAX_MOVES             = 3       -- after this many empty camps in a row, rethink the zone
+local CAMP_PLAYER_YALMS          = 15      -- a real player this close to the camp: move over, don't crowd them
+local HESITATE_CHANCE            = 0.3     -- chance per action check to pause a beat before a weapon skill / spell
 local GOAL_RETRY_SEC             = 60      -- after a failed plan, wait before trying again
 local JOBS_RETRY_SEC             = 30 * 60 -- after a failed job change, wait this long before trying again
 
@@ -898,6 +900,7 @@ local function relocateStep(bot, charId, state, now, currentPos, moving)
         if walk.purpose == 'chat' then
             bot:lookAt(walk.circle.center)
             state.chat = { circle = walk.circle, untilTime = now + math.random(CHAT_MIN_SEC, CHAT_MAX_SEC) }
+            xi.worldbots.social.onChatStart(bot, charId, state, now)
         elseif walk.purpose == 'spot' then
             state.loiterRadius   = SOCIAL_LOITER_RADIUS
             state.nextSpotMoveAt = now + math.random(SOCIAL_MOVE_MIN_SEC, SOCIAL_MOVE_MAX_SEC)
@@ -1180,7 +1183,18 @@ local function combatStep(bot, charId, state, now, moving)
             state.noPreySince = nil
             state.campMoves   = 0
             if target.distance <= ENGAGE_RANGE then
-                EngageBotTarget(charId, target.mobId)
+                -- A beat to "notice" it first, like a player (attackers are
+                -- fought back at once, above). 1-3 ticks = 0.4-1.2s.
+                local pending = state.pendingEngage
+                if pending == nil or pending.mobId ~= target.mobId then
+                    state.pendingEngage = { mobId = target.mobId, atTick = (state.ticks or 0) + math.random(1, 3) }
+                    state.nextTargetCheckAt = now -- look again next tick
+                elseif (state.ticks or 0) >= pending.atTick then
+                    state.pendingEngage = nil
+                    EngageBotTarget(charId, target.mobId)
+                else
+                    state.nextTargetCheckAt = now
+                end
             else
                 WalkBotTo(charId, target.x, target.y, target.z)
                 state.walkOrderAt = now
@@ -1188,6 +1202,14 @@ local function combatStep(bot, charId, state, now, moving)
 
             state.idleUntil = now + TARGET_CHECK_SEC
             return true
+        end
+
+        -- A real player has set up right here: give them room.
+        if camp and now >= (state.crowdCheckAt or 0) then
+            state.crowdCheckAt = now + 30
+            if CountRealPlayersNear(bot:getZoneID(), camp.x, camp.y, camp.z, CAMP_PLAYER_YALMS) > 0 then
+                state.noPreySince = now - CAMP_IDLE_SEC -- move on now, via the code below
+            end
         end
 
         -- No prey at this camp: don't wander about - after a while move to
@@ -1265,7 +1287,11 @@ local function combatActions(bot, charId, state, now)
         return
     end
 
-    if bot:getTP() >= 1000 then
+    -- Not every action the instant it's possible: now and then a beat's
+    -- hesitation before a weapon skill (never once TP is near full).
+    local hesitate = math.randomFloat(0, 1) < HESITATE_CHANCE
+
+    if bot:getTP() >= 1000 and not (hesitate and bot:getTP() < 2000) then
         -- In a party: close an open skillchain, open one with a ready partner,
         -- or hold TP briefly for one (worldbots_skillchain.lua).
         local choice = xi.worldbots.skillchain.decide(bot, charId, state, now)
@@ -1280,7 +1306,7 @@ local function combatActions(bot, charId, state, now)
     end
 
     -- The job's spell rotation: cures, songs, enfeebles, nukes, drains, buffs.
-    if xi.worldbots.magic.combat(bot, charId, state, now) then
+    if not hesitate and xi.worldbots.magic.combat(bot, charId, state, now) then
         diag(charId, 'spell')
         return
     end
@@ -1319,6 +1345,7 @@ local function deathStep(charId, state, now)
             -- (worldbots_memory.lua).
             xi.worldbots.memory.recordDeath(bot, charId, state, now)
             xi.worldbots.log.died(bot, state.lastFoe)
+            xi.worldbots.social.onDied(state)
         end
 
         return
@@ -1686,6 +1713,12 @@ xi.worldbots.onZoneTick = function(zone, bots)
 
         -- Player invites, hired-bot level sync and leaving, the /sea entry (worldbots_hire.lua).
         xi.worldbots.hire.tick(bot, charId, state, now)
+
+        -- Emotes and /away (worldbots_social.lua).
+        xi.worldbots.social.tick(bot, charId, state, now, #getSocialSpots(zoneId) > 0)
+
+        -- Ticks seen, for sub-second human-like hesitation.
+        state.ticks = (state.ticks or 0) + 1
 
         -- Bots carry the gil cap, so money never stops them buying gear
         -- upgrades and supplies (worldbots_shop.lua).

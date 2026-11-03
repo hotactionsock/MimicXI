@@ -74,6 +74,7 @@ function log.tick(bot, state, now)
             string.format('%s reached level %d %s', bot:getName(), level, log.jobName(job)),
             { job = job, level = level })
         state.logLevel = level
+        xi.worldbots.social.onLevelUp(bot, bot:getID(), state, now)
     elseif level < state.logLevel then
         state.logLevel = level -- de-levelled; not a milestone
     end

@@ -34,6 +34,7 @@ local AVOID_DANGER        = 2           -- stop trying something at this much da
 local SUCCESS_BOOST       = 0.15        -- appeal bonus for a zone it earned EXP in lately...
 local SUCCESS_RECENT_SEC  = 24 * 60 * 60 -- ...within this long
 local CAMP_GRID_YALMS     = 40
+local CAMP_PLAYER_YALMS   = 20          -- don't pick a camp with a real player this close
 
 -- A camp's memory key: the zone and the 40-yalm grid cell its spot is in.
 function memory.campKey(zoneId, pos)
@@ -144,7 +145,11 @@ function memory.safeCamp(bot, zoneId, now, getSpot)
             return nil
         end
 
-        if not memory.avoid(bot, memory.CAMP, memory.campKey(zoneId, spot), now) then
+        -- Not one that has gone badly, and not right on top of a real player.
+        if
+            not memory.avoid(bot, memory.CAMP, memory.campKey(zoneId, spot), now) and
+            CountRealPlayersNear(zoneId, spot.x, spot.y, spot.z, CAMP_PLAYER_YALMS) == 0
+        then
             return spot
         end
 

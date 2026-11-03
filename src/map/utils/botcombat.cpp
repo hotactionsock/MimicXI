@@ -44,12 +44,17 @@
 #include "status_effect_container.h"
 #include "treasure_pool.h"
 #include "utils/charutils.h"
+#include "utils/zoneutils.h"
 #include "zone.h"
 #include "zone_entities.h"
 #include "ability.h"
 #include "items/item_weapon.h"
 #include "party.h"
 #include "recast_container.h"
+#include "enums/emote.h"
+#include "packets/c2s/0x05d_motion.h"
+#include "packets/basic.h"
+#include "packet_system.h"
 #include "spell.h"
 #include "utils/battleutils.h"
 #include "weapon_skill.h"
@@ -794,6 +799,127 @@ auto SkillchainBetween(uint16 openerWs, uint16 closerWs) -> std::pair<uint8, uin
 
     const auto skillchain = battleutils::FormSkillchain(propertiesOf(POpener), propertiesOf(PCloser));
     return { static_cast<uint8>(skillchain), battleutils::GetSkillchainTier(skillchain) };
+}
+
+auto BotEmote(uint32 charId, uint8 emote, uint32 targetId, bool textToo) -> bool
+{
+    auto* PChar = liveBot(charId);
+    if (PChar == nullptr || PChar->isDead())
+    {
+        return false;
+    }
+
+    // At someone in the zone, or at itself (no target).
+    CBaseEntity* PTarget = PChar;
+    if (targetId != 0 && targetId != PChar->id)
+    {
+        PTarget = nullptr;
+        PChar->loc.zone->ForEachChar(
+            [&](CCharEntity* POther)
+            {
+                if (PTarget == nullptr && POther->id == targetId)
+                {
+                    PTarget = POther;
+                }
+            });
+
+        if (PTarget == nullptr)
+        {
+            PTarget = PChar->loc.zone->GetEntity(static_cast<uint16>(targetId & 0xFFF), TYPE_MOB | TYPE_NPC);
+        }
+
+        if (PTarget == nullptr || PTarget->id != targetId || distance(PChar->loc.p, PTarget->loc.p) > 30.0f)
+        {
+            return false;
+        }
+
+        if (auto* path = PChar->PAI->PathFind.get())
+        {
+            path->LookAt(PTarget->loc.p);
+        }
+    }
+
+    CBasicPacket packet;
+    packet.setType(static_cast<uint16>(GP_CLI_COMMAND_MOTION::packetId));
+    packet.setSize(sizeof(GP_CLI_COMMAND_MOTION));
+    packet.setSequence(0);
+    auto* data     = packet.as<GP_CLI_COMMAND_MOTION>();
+    data->UniqueNo = PTarget->id;
+    data->ActIndex = PTarget->targid;
+    data->Number   = emote;
+    data->Mode     = static_cast<uint8>(textToo ? EmoteMode::All : EmoteMode::Motion);
+    data->Param    = 0;
+
+    g_PMapEngine->networking().packetSystem().dispatch(packet.getType(), PChar->PSession, PChar, packet);
+    return true;
+}
+
+auto GetRealPlayersNearBot(uint32 charId, float radius) -> std::vector<uint32>
+{
+    std::vector<std::pair<float, uint32>> found;
+
+    auto* PChar = liveBot(charId);
+    if (PChar == nullptr)
+    {
+        return {};
+    }
+
+    PChar->loc.zone->ForEachChar(
+        [&](CCharEntity* POther)
+        {
+            if (POther != PChar && !IsBotEntity(POther) && !POther->isDead())
+            {
+                const float d = distance(PChar->loc.p, POther->loc.p);
+                if (d <= radius)
+                {
+                    found.emplace_back(d, POther->id);
+                }
+            }
+        });
+
+    std::sort(found.begin(), found.end());
+
+    std::vector<uint32> result;
+    for (const auto& [d, id] : found)
+    {
+        result.push_back(id);
+    }
+
+    return result;
+}
+
+auto CountRealPlayersNear(uint16 zoneId, const position_t& pos, float radius) -> uint32
+{
+    auto* PZone = zoneutils::GetZone(static_cast<xi::ZoneId>(zoneId));
+    if (PZone == nullptr)
+    {
+        return 0;
+    }
+
+    uint32 count = 0;
+    PZone->ForEachChar(
+        [&](CCharEntity* POther)
+        {
+            if (!IsBotEntity(POther) && distance(pos, POther->loc.p) <= radius)
+            {
+                ++count;
+            }
+        });
+
+    return count;
+}
+
+void SetBotAway(uint32 charId, bool away)
+{
+    auto* PChar = liveBot(charId);
+    if (PChar == nullptr || PChar->playerConfig.AwayFlg == away)
+    {
+        return;
+    }
+
+    PChar->playerConfig.AwayFlg = away;
+    PChar->updatemask |= UPDATE_HP;
+    charutils::SavePlayerSettings(PChar);
 }
 
 } // namespace botutils

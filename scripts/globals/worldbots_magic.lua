@@ -46,6 +46,7 @@ local URGENT_CURE_HPP        = 45     -- in a fight, cure before anything else b
 local COMBAT_CURE_HPP        = 60     -- in a fight, cure when nothing better to do below this
 local IDLE_CURE_HPP          = 75     -- between fights, cure instead of resting below this...
 local IDLE_CURE_MIN_MPP      = 50     -- ...if MP is at least this
+local CURE_UNDERSHOOT_CHANCE = 0.1    -- now and then cast one Cure tier lower than needed
 local DRAIN_BELOW_HPP        = 70
 local ASPIR_BELOW_MPP        = 60
 local ENFEEBLE_MAX_TRIES     = 2      -- per family per fight (resists cost MP)
@@ -341,6 +342,11 @@ local function tryCure(bot, charId, m, now, belowHpp)
         if missing >= need then
             tier = i
         end
+    end
+
+    -- Like a player, not always the textbook tier: now and then one lower.
+    if tier > 1 and math.randomFloat(0, 1) < CURE_UNDERSHOOT_CHANCE then
+        tier = tier - 1
     end
 
     local id = bestOf(bot, m, families().cure, now, tier)

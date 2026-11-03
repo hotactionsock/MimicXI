@@ -215,6 +215,9 @@ local function endCamp(bot, charId, state, now, outcome)
         state.nmCooldown = state.nmCooldown or {}
         state.nmCooldown[plan.mobId] = now + NM_COOLDOWN_SEC
         xi.worldbots.log.nmResult(bot, plan.name, outcome)
+        if outcome == 'defeated' then
+            xi.worldbots.social.onNMDefeated(bot, charId, state, now)
+        end
     end
 
     state.goal = nil

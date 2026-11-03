@@ -206,4 +206,20 @@ auto BotHasItem(uint32 charId, uint16 itemId) -> bool;
 // Stops any walk in progress (e.g. to wait for a roaming mob to pass).
 void StopBot(uint32 charId);
 
+// Plays an emote (Emote id: wave, cheer, bow...) through the real emote
+// handler (GP_CLI_COMMAND_MOTION), at targetId (a char or mob in the zone) or
+// at nobody. textToo: also show the emote's chat text, as a player's
+// /emote does by default.
+auto BotEmote(uint32 charId, uint8 emote, uint32 targetId, bool textToo) -> bool;
+
+// Real players (not bots) within radius of the bot, nearest first (char ids).
+auto GetRealPlayersNearBot(uint32 charId, float radius) -> std::vector<uint32>;
+
+// How many real players are within radius of a point in a zone.
+auto CountRealPlayersNear(uint16 zoneId, const position_t& pos, float radius) -> uint32;
+
+// The /away flag (shown in /sea and over the character), as the client's
+// /away toggle sets it (GP_CLI_COMMAND_CONFIG).
+void SetBotAway(uint32 charId, bool away);
+
 } // namespace botutils

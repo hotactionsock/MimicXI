@@ -86,6 +86,10 @@ public:
     // Stop pathfinding after this much distance has been walked.
     auto LimitDistance(float maxDistance) -> void;
 
+    // Scales how far each step moves (1 = the usual AI pace). World bots use
+    // this to move at a real player's pace for their speed.
+    auto SetStepScale(float scale) -> void;
+
     // Take one step toward position.
     auto StepTo(const position_t& pos, bool run = false) -> void;
 
@@ -161,6 +165,7 @@ private:
     std::vector<pathpoint_t> patrol_;
     std::vector<position_t>  turnPoints_;
     float                    distanceFromPoint_;
+    float                    stepScale_{ 1.0f };
 
     uint8        pathFlags_;
     uint8        patrolFlags_;

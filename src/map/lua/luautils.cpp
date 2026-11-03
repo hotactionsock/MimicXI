@@ -376,6 +376,10 @@ void init(IPP mapIPP, bool isRunningInCI)
     lua.set_function("UseBotItem", &luautils::UseBotItem);
     lua.set_function("BotHasItem", &luautils::BotHasItem);
     lua.set_function("StopBot", &luautils::StopBot);
+    lua.set_function("BotEmote", &luautils::BotEmote);
+    lua.set_function("GetRealPlayersNearBot", &luautils::GetRealPlayersNearBot);
+    lua.set_function("CountRealPlayersNear", &luautils::CountRealPlayersNear);
+    lua.set_function("SetBotAway", &luautils::SetBotAway);
     lua.set_function("PlanBotGear", &luautils::PlanBotGear);
     lua.set_function("EquipBotGearSet", &luautils::EquipBotGearSet);
     lua.set_function("GetBotJobInfo", &luautils::GetBotJobInfo);
@@ -2926,6 +2930,46 @@ void StopBot(uint32 charId)
     TracyZoneScoped;
 
     botutils::StopBot(charId);
+}
+
+// { charId, ... } nearest first.
+sol::table GetRealPlayersNearBot(uint32 charId, float radius)
+{
+    TracyZoneScoped;
+
+    auto table = lua.create_table();
+    for (const auto id : botutils::GetRealPlayersNearBot(charId, radius))
+    {
+        table.add(id);
+    }
+
+    return table;
+}
+
+uint32 CountRealPlayersNear(uint16 zoneId, float x, float y, float z, float radius)
+{
+    TracyZoneScoped;
+
+    position_t pos{};
+    pos.x = x;
+    pos.y = y;
+    pos.z = z;
+    return botutils::CountRealPlayersNear(zoneId, pos, radius);
+}
+
+void SetBotAway(uint32 charId, bool away)
+{
+    TracyZoneScoped;
+
+    botutils::SetBotAway(charId, away);
+}
+
+// emote: xi.emote id; targetId (optional): who at; textToo (optional, default true).
+bool BotEmote(uint32 charId, uint8 emote, sol::optional<uint32> targetId, sol::optional<bool> textToo)
+{
+    TracyZoneScoped;
+
+    return botutils::BotEmote(charId, emote, targetId.value_or(0), textToo.value_or(true));
 }
 
 // sets = { [name] = { mods = { [xi.mod id] = weight, ... }, weaponDps = weight }, ... };

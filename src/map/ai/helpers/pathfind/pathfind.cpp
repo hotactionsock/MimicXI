@@ -336,6 +336,11 @@ auto CPathFind::FollowPath(timer::time_point tick) -> void
     }
 }
 
+auto CPathFind::SetStepScale(float scale) -> void
+{
+    stepScale_ = scale > 0.0f ? scale : 1.0f;
+}
+
 auto CPathFind::StepTo(const position_t& pos, bool run) -> void
 {
     // External callers honor the configured stop-short distance, which is 0 unless a range was set.
@@ -361,7 +366,7 @@ auto CPathFind::StepToInternal(const position_t& pos, bool run, float stopShort)
         return static_cast<float>(baseSpeed);
     }();
 
-    const float stepDistance = speed / (run ? 50.0f : 40.0f);
+    const float stepDistance = speed / (run ? 50.0f : 40.0f) * stepScale_;
 
     // Kinematics live in pathfind_step so tests can exercise the exact math; stepTowards() also faces the owner.
     position_t& ownerPos = owner_->position();

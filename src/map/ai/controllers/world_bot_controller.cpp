@@ -27,14 +27,27 @@
 #include "common/utils.h"
 #include "entities/char_entity.h"
 #include "utils/botutils.h"
+#include "map_constants.h"
 
 #include <algorithm>
 #include <utility>
+
+namespace
+{
+
+// A player's client moves speed / 10 yalms a second; AI pathing steps
+// speed / 50 yalms per (running) step, one step per zone tick. Scale the steps
+// so a bot covers ground like a player at the same speed (BASE_SPEED in
+// settings/map.lua, plus gear, buffs and the rest - CBattleEntity::UpdateSpeed).
+constexpr float kPlayerStepScale = std::chrono::duration<float>(kLogicUpdateInterval).count() * 50.0f / 10.0f;
+
+} // namespace
 
 CWorldBotController::CWorldBotController(CCharEntity* PChar)
 : CPlayerController(PChar)
 {
     POwner->PAI->PathFind = std::make_unique<CPathFind>(PChar);
+    POwner->PAI->PathFind->SetStepScale(kPlayerStepScale);
 }
 
 CWorldBotController::~CWorldBotController()
