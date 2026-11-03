@@ -10,7 +10,14 @@ Drop map images here to show them under the live radar (`watch.html`):
 [Remapster](https://www.remapster.com/) (check its terms, and keep the credit:
 `credit` in `calibration.json` is shown on the live view).
 
-Then line each image up with the game's coordinates on `mapcal.html` (signed
+**Quickest:** run `python3 tools/fetch_zone_maps.py` on the web server. It
+downloads the Remapster maps from the AscensionXI wiki (used with the
+AscensionXI team's permission) and calibrates each one automatically from the
+NPC markers on their zone pages. Any map without enough markers is downloaded
+but listed for calibrating by hand. Calibrations you make by hand are never
+overwritten (unless you pass `--overwrite`).
+
+Otherwise, line each image up with the game's coordinates on `mapcal.html` (signed
 in as an admin account): click three or more spots on the map and enter their
 in-game positions (`!where` shows yours in game), or use the spawn points it
 offers. That writes `calibration.json`:

@@ -134,6 +134,10 @@ def api_save_zone_maps(zone_id):
             if raw.get(key) not in (None, ''):
                 entry[key] = _number(raw.get(key), key)
         entry['label'] = str(raw.get('label') or '')[:40]
+        # Calibrations from tools/fetch_zone_maps.py keep their source, so a
+        # later run can refresh them; one saved here by hand has none.
+        if raw.get('source') == 'ascension':
+            entry['source'] = 'ascension'
         entries.append(entry)
 
     with _save_lock:
