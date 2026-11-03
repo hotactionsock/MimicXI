@@ -1401,7 +1401,7 @@ local function deathStep(charId, state, now)
         if now >= state.raiseSeenAt + RAISE_ACCEPT_SEC and AcceptBotRaise(charId) then
             diag(charId, 'accepted a raise')
             state.deadSince, state.raiseSeenAt = nil, nil
-            xi.worldbots.log.event(bot, xi.worldbots.log.DETAIL, 'death', 'raised',
+            xi.worldbots.log.event(bot, xi.worldbots.log.NOTABLE, 'death', 'raised',
                 string.format('%s was raised', bot:getName()), { zone_id = bot:getZoneID() })
         end
 

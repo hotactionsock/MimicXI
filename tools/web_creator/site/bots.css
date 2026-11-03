@@ -260,6 +260,50 @@
 }
 
 .profile-jobs { margin-bottom: 36px; }
+
+/* Titles and achievements (worked out from the log - see bots.py ACHIEVEMENTS) */
+.bot-title {
+  font-size: 0.78rem;
+  font-style: italic;
+  color: var(--crystal-lilac);
+  margin-top: 2px;
+}
+.profile-title {
+  margin: 4px 0 0;
+  font-family: var(--serif);
+  font-style: italic;
+  font-size: 1.05rem;
+  color: var(--crystal-lilac);
+}
+.profile-achievements { margin-bottom: 36px; }
+.achievement-count { margin-left: 8px; color: var(--crystal-amber-deep); letter-spacing: 0.08em; }
+.achievement-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 10px;
+}
+.achievement {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  padding: 10px 12px;
+  border: 1px solid var(--line-soft);
+  border-radius: var(--radius);
+  background: var(--bg-2);
+  opacity: 0.5;
+}
+.achievement.is-earned {
+  opacity: 1;
+  border-color: var(--crystal-amber-deep);
+  background: var(--paper);
+}
+.achievement-mark { color: var(--crystal-amber); font-size: 1.1rem; line-height: 1.2; }
+.achievement-text { display: flex; flex-direction: column; min-width: 0; }
+.achievement-name { font-weight: 600; color: var(--ink); }
+.achievement-desc { font-size: 0.82rem; color: var(--ink-soft); }
 .job-bars {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));

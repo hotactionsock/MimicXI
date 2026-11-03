@@ -62,6 +62,9 @@
         const jobs   = (bot.jobs || [])
           .filter(j => j.level > 1 || j.abbr === bot.main_abbr)
           .sort((a, b) => b.level - a.level);
+        // Earned first (in the order they're listed), then the ones still to get.
+        const achievements = (bot.achievements || []).slice().sort((a, b) => (b.earned ? 1 : 0) - (a.earned ? 1 : 0));
+        const earned       = achievements.filter(a => a.earned);
 
         document.title = `${bot.name} — MimicXI`;
 
@@ -74,6 +77,7 @@
                 <span class="bot-presence ${bot.online ? "is-online" : ""}"></span>
                 <span class="profile-presence">${bot.online ? "In the world" : "Resting"}</span>
               </div>
+              ${bot.title ? `<p class="profile-title">${B.esc(bot.name)} ${B.esc(bot.title)}</p>` : ""}
               <div class="profile-facts">
                 <span class="profile-fact"><span class="job-chip">${B.esc(bot.main_abbr || "?")}</span> ${B.esc(bot.main_job)} ${bot.main_level}${sub}</span>
                 ${bot.nation ? `<span class="profile-fact">${B.esc(bot.nation)}</span>` : ""}
@@ -107,6 +111,21 @@
                   <span class="job-level">${j.level}</span>
                 </div>`).join("")}
             </div>
+          </div>` : ""}
+
+          ${achievements.length ? `
+          <div class="profile-achievements">
+            <h2 class="section-label">Achievements <span class="achievement-count">${earned.length} of ${achievements.length}</span></h2>
+            <ul class="achievement-list">
+              ${achievements.map(a => `
+                <li class="achievement ${a.earned ? "is-earned" : ""}" title="${B.esc(a.earned ? `Title: ${bot.name} ${a.title}` : "Not earned yet")}">
+                  <span class="achievement-mark" aria-hidden="true">${a.earned ? "★" : "☆"}</span>
+                  <span class="achievement-text">
+                    <span class="achievement-name">${B.esc(a.name)}</span>
+                    <span class="achievement-desc">${B.esc(a.description)}</span>
+                  </span>
+                </li>`).join("")}
+            </ul>
           </div>` : ""}`;
       }
 

@@ -9,12 +9,13 @@ JSON below; the old /bots URLs redirect there:
 
 JSON (public, read-only):
     /api/bots                       every bot with its status line
-    /api/bots/<charid>              profile, status, stats and recent events
+    /api/bots/<charid>              profile, status, stats, title, achievements and recent events
     /api/bots/<charid>/events       events, newest first (?limit, ?before, ?since, ?category)
     /api/bots/feed                  latest events across all bots, with names (?since=<id>, ?limit)
 
 Every log row already carries a ready-to-show sentence; this module adds the
-"what is it doing now" status, worked out from the latest events.
+"what is it doing now" status, worked out from the latest events, and titles
+and achievements (ACHIEVEMENTS) worked out from the whole log.
 """
 
 import json
@@ -69,7 +70,34 @@ STATUS_TEMPLATES = {
     'left_for_player': 'Joining a player\'s party',
     'sold':         'Selling loot in town',
     'created':      'Just starting out in {zone}',
+    'goal_logoff':  'Heading home to {zone} to log off',
+    'logged_off':   'Logged off',
+    'logged_on':    'Just logged on',
+    'warp':         'Warping to {to}',
+    'raised':       'Back on their feet after a raise',
 }
+
+# Achievements, worked out from the log and the character's job levels.
+# Listed least to most prestigious: a bot's title is the last one it has.
+# Each test takes the counts from _achievement_counts.
+ACHIEVEMENTS = [
+    ('first_steps',  'First Steps',           'the Fledgling',         'Reached level 10',                         lambda c: c['max_level'] >= 10),
+    ('resilient',    'Back on Their Feet',    'the Resilient',         'Was raised by a party member',             lambda c: c['raised'] >= 1),
+    ('seasoned',     'Seasoned',              'the Seasoned',          'Reached level 30',                         lambda c: c['max_level'] >= 30),
+    ('companion',    'Hired Hand',            'the Companion',         'Adventured in a player\'s party',          lambda c: c['hired'] >= 1),
+    ('team_player',  'Team Player',           'the Team Player',       'Took part in 25 parties',                  lambda c: c['parties'] >= 25),
+    ('globetrotter', 'Globetrotter',          'the Globetrotter',      'Set foot in 30 different areas',           lambda c: c['zones'] >= 30),
+    ('slayer',       'Slayer',                'the Slayer',            'Defeated 1,000 monsters',                  lambda c: c['kills'] >= 1000),
+    ('nm_hunter',    'Notorious Hunter',      'the Notorious Hunter',  'Defeated a notorious monster',             lambda c: c['nm_defeated'] >= 1),
+    ('veteran',      'Veteran',               'the Veteran',           'Reached level 50',                         lambda c: c['max_level'] >= 50),
+    ('jack',         'Jack of All Trades',    'the Jack of All Trades', 'Levelled three jobs to 30',               lambda c: c['jobs_30'] >= 3),
+    ('gilded',       'Gilded',                'the Gilded',            'Opened a gold treasure casket',            lambda c: c['gold_caskets'] >= 1),
+    ('unbroken',     'Unbroken',              'the Unbroken',          'Reached level 50 with fewer than 10 defeats', lambda c: c['max_level'] >= 50 and c['deaths'] < 10),
+    ('exterminator', 'Exterminator',          'the Exterminator',      'Defeated 10,000 monsters',                 lambda c: c['kills'] >= 10000),
+    ('bane',         'Bane of the Notorious', 'Bane of the Notorious', 'Defeated 10 notorious monsters',           lambda c: c['nm_defeated'] >= 10),
+    ('elite',        'Elite',                 'the Elite',             'Reached level 75',                         lambda c: c['max_level'] >= 75),
+    ('master',       'Master',                'the Master',            'Reached level 99',                         lambda c: c['max_level'] >= 99),
+]
 
 
 def _job(job_id):
@@ -121,7 +149,8 @@ def describe_now(events, now=None):
             continue
 
         zone = e['data'].get('zone') or 'somewhere'
-        text = template.format(zone=zone, player=e['data'].get('player') or 'a player', nm=e['data'].get('nm') or 'monster')
+        text = template.format(zone=zone, player=e['data'].get('player') or 'a player', nm=e['data'].get('nm') or 'monster',
+                               to=e['data'].get('to') or 'somewhere')
 
         # "In Valkurm Dunes" after "set off for Valkurm Dunes to train" = training there.
         if e['event'] == 'arrived':
@@ -256,6 +285,70 @@ def _stats(cur, charid):
     }
 
 
+def _achievement_counts(cur, charid=None):
+    """{charid: counts} for the achievement tests: totals from the log plus
+    the highest job level and how many jobs are at 30+."""
+    where  = ' WHERE charid = ?' if charid is not None else ''
+    params = (charid,) if charid is not None else ()
+
+    cur.execute(
+        'SELECT charid,'
+        "  SUM(event = 'died'),"
+        "  COALESCE(SUM(CASE WHEN event = 'hunt_summary' THEN JSON_VALUE(data, '$.kills') END), 0),"
+        "  SUM(event = 'nm_defeated'),"
+        "  SUM(event = 'casket' AND JSON_VALUE(data, '$.chest') = 4),"
+        "  COUNT(DISTINCT CASE WHEN event = 'arrived' THEN JSON_VALUE(data, '$.zone_id') END),"
+        "  SUM(event = 'hired'),"
+        "  SUM(event = 'joined' OR event = 'formed'),"
+        "  SUM(event = 'raised')"
+        ' FROM world_bot_log' + where + ' GROUP BY charid',
+        params,
+    )
+    counts = {}
+    for r in cur.fetchall():
+        counts[r[0]] = {
+            'deaths':       int(r[1] or 0),
+            'kills':        int(r[2] or 0),
+            'nm_defeated':  int(r[3] or 0),
+            'gold_caskets': int(r[4] or 0),
+            'zones':        int(r[5] or 0),
+            'hired':        int(r[6] or 0),
+            'parties':      int(r[7] or 0),
+            'raised':       int(r[8] or 0),
+        }
+
+    cur.execute(
+        'SELECT j.charid, {} FROM char_jobs j INNER JOIN world_bots w ON w.charid = j.charid'.format(
+            ', '.join('j.`{}`'.format(c) for c in JOB_COLUMNS)) + (' WHERE j.charid = ?' if charid is not None else ''),
+        params,
+    )
+    for r in cur.fetchall():
+        levels = [lvl or 0 for lvl in r[1:]]
+        c = counts.setdefault(r[0], {
+            'deaths': 0, 'kills': 0, 'nm_defeated': 0, 'gold_caskets': 0, 'zones': 0, 'hired': 0, 'parties': 0, 'raised': 0,
+        })
+        c['max_level'] = max(levels) if levels else 0
+        c['jobs_30']   = sum(1 for lvl in levels if lvl >= 30)
+
+    for c in counts.values():
+        c.setdefault('max_level', 0)
+        c.setdefault('jobs_30', 0)
+
+    return counts
+
+
+def achievements_for(counts):
+    """(title, [achievement]) for one bot's counts. title is None until it
+    has earned something."""
+    result, title = [], None
+    for key, name, achievement_title, description, test in ACHIEVEMENTS:
+        earned = bool(counts) and test(counts)
+        if earned:
+            title = achievement_title
+        result.append({'key': key, 'name': name, 'title': achievement_title, 'description': description, 'earned': earned})
+    return title, result
+
+
 def _with_connection(fn):
     conn = get_connection()
     cur  = conn.cursor()
@@ -269,10 +362,12 @@ def _with_connection(fn):
 def _all_bots(cur):
     profiles = _bot_profiles(cur)
     latest   = _latest_events_by_bot(cur)
+    counts   = _achievement_counts(cur)
     for p in profiles:
         events      = latest.get(p['charid'], [])
         p['status'] = describe_now(events)
         p['latest'] = events[0]['message'] if events else None
+        p['title'], _ = achievements_for(counts.get(p['charid']))
     return profiles
 
 
@@ -287,6 +382,7 @@ def _one_bot(cur, charid):
     bot['jobs']   = _job_levels(cur, charid)
     bot['stats']  = _stats(cur, charid)
     bot['events'] = events
+    bot['title'], bot['achievements'] = achievements_for(_achievement_counts(cur, charid).get(charid))
     return bot
 
 
