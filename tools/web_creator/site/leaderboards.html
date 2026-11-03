@@ -52,7 +52,7 @@
             ${B.avatar(e, "board-avatar")}
             <span class="board-who">
               <a class="board-name" href="bot.html?id=${e.charid}">${B.esc(e.name)}</a>
-              <span class="board-sub">${B.esc(e.main_abbr || "?")} ${e.main_level}${e.title ? ` · ${B.esc(e.title)}` : ""}</span>
+              <span class="board-sub">${B.esc(e.main_abbr || "?")} ${e.main_level}${e.title ? ` · ${B.titleHtml(e.title, e.title_rarity)}` : ""}</span>
             </span>
             <span class="board-value" title="${B.esc(`${e.value.toLocaleString()} ${unit}`)}">${e.value.toLocaleString()}</span>
           </li>`;

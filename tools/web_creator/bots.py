@@ -92,26 +92,87 @@ STATUS_TEMPLATES = {
     'synth_failed':      'Crafting',
 }
 
-# Achievements, worked out from the log and the character's job levels.
-# Listed least to most prestigious: a bot's title is the last one it has.
-# Each test takes the counts from _achievement_counts.
+# Achievements, worked out from the log, job levels and character progress
+# (_achievement_counts). Each has a rarity - the site's item rarity colours,
+# common (grey) to mythic (orange) - and a bot's title is its rarest
+# achievement (the later one on a tie). Relic and mythic titles get flair on
+# the pages. aim=False: not something a bot aims for (left out of "next up").
+RARITIES = ['common', 'uncommon', 'rare', 'exceptional', 'relic', 'mythic']
+
+# Famous notorious monsters, by the name the log records them under.
+NAMED_NMS = {
+    'lizzy':    ['Leaping Lizzy'],
+    'emperor':  ['Valkurm Emperor'],
+    'arthro':   ['King Arthro'],
+    'behemoth': ['Behemoth', 'King Behemoth'],
+    'turtle':   ['Adamantoise', 'Aspidochelone'],
+    'wyrm':     ['Fafnir', 'Nidhogg'],
+}
+ALL_JOBS  = 22
+LEVEL_CAP_ACH = 75
+
+def _ach(key, name, title, description, rarity, test, aim=True):
+    return {'key': key, 'name': name, 'title': title, 'description': description, 'rarity': rarity, 'test': test, 'aim': aim}
+
 ACHIEVEMENTS = [
-    ('first_steps',  'First Steps',           'the Fledgling',         'Reached level 10',                         lambda c: c['max_level'] >= 10),
-    ('resilient',    'Back on Their Feet',    'the Resilient',         'Was raised by a party member',             lambda c: c['raised'] >= 1),
-    ('seasoned',     'Seasoned',              'the Seasoned',          'Reached level 30',                         lambda c: c['max_level'] >= 30),
-    ('companion',    'Hired Hand',            'the Companion',         'Adventured in a player\'s party',          lambda c: c['hired'] >= 1),
-    ('team_player',  'Team Player',           'the Team Player',       'Took part in 25 parties',                  lambda c: c['parties'] >= 25),
-    ('globetrotter', 'Globetrotter',          'the Globetrotter',      'Set foot in 30 different areas',           lambda c: c['zones'] >= 30),
-    ('slayer',       'Slayer',                'the Slayer',            'Defeated 1,000 monsters',                  lambda c: c['kills'] >= 1000),
-    ('nm_hunter',    'Notorious Hunter',      'the Notorious Hunter',  'Defeated a notorious monster',             lambda c: c['nm_defeated'] >= 1),
-    ('veteran',      'Veteran',               'the Veteran',           'Reached level 50',                         lambda c: c['max_level'] >= 50),
-    ('jack',         'Jack of All Trades',    'the Jack of All Trades', 'Levelled three jobs to 30',               lambda c: c['jobs_30'] >= 3),
-    ('gilded',       'Gilded',                'the Gilded',            'Opened a gold treasure casket',            lambda c: c['gold_caskets'] >= 1),
-    ('unbroken',     'Unbroken',              'the Unbroken',          'Reached level 50 with fewer than 10 defeats', lambda c: c['max_level'] >= 50 and c['deaths'] < 10),
-    ('exterminator', 'Exterminator',          'the Exterminator',      'Defeated 10,000 monsters',                 lambda c: c['kills'] >= 10000),
-    ('bane',         'Bane of the Notorious', 'Bane of the Notorious', 'Defeated 10 notorious monsters',           lambda c: c['nm_defeated'] >= 10),
-    ('elite',        'Elite',                 'the Elite',             'Reached level 75',                         lambda c: c['max_level'] >= 75),
-    ('master',       'Master',                'the Master',            'Reached level 99',                         lambda c: c['max_level'] >= 99),
+    # ── Common ──
+    _ach('first_steps',   'First Steps',          'the Fledgling',         'Reached level 10',                               'common', lambda c: c['max_level'] >= 10),
+    _ach('resilient',     'Back on Their Feet',   'the Resilient',         'Was raised by a party member',                   'common', lambda c: c['raised'] >= 1, aim=False),
+    _ach('regular',       'Regular',              'the Regular',           'Adventured for a week',                          'common', lambda c: c['days_active'] >= 7),
+    _ach('peddler',       'Open for Business',    'the Peddler',           'Sold something on the auction house',            'common', lambda c: c['ah_sold'] >= 1),
+    _ach('tinkerer',      'Tinkerer',             'the Tinkerer',          'Reached level 10 in a craft',                    'common', lambda c: c['craft_max'] >= 10),
+    _ach('errand_runner', 'Errand Runner',        'the Errand Runner',     'Completed 5 quests',                             'common', lambda c: c['quests'] >= 5),
+    # ── Uncommon ──
+    _ach('seasoned',      'Seasoned',             'the Seasoned',          'Reached level 30',                               'uncommon', lambda c: c['max_level'] >= 30),
+    _ach('companion',     'Hired Hand',           'the Companion',         'Adventured in a player\'s party',                'uncommon', lambda c: c['hired'] >= 1),
+    _ach('team_player',   'Team Player',          'the Team Player',       'Took part in 25 parties',                        'uncommon', lambda c: c['parties'] >= 25),
+    _ach('globetrotter',  'Globetrotter',         'the Globetrotter',      'Set foot in 30 different areas',                 'uncommon', lambda c: c['zones'] >= 30),
+    _ach('slayer',        'Slayer',               'the Slayer',            'Defeated 1,000 monsters',                        'uncommon', lambda c: c['kills'] >= 1000),
+    _ach('nm_hunter',     'Notorious Hunter',     'the Notorious Hunter',  'Defeated a notorious monster',                   'uncommon', lambda c: c['nm_defeated'] >= 1),
+    _ach('meticulous',    'Fine Work',            'the Meticulous',        'Made a high-quality item',                       'uncommon', lambda c: c['hq_synths'] >= 1),
+    _ach('well_travelled', 'Frequent Traveller',  'the Well-Travelled',    'Took 25 outpost teleports or home point warps',  'uncommon', lambda c: c['warps'] >= 25),
+    _ach('problem_solver', 'Problem Solver',      'the Problem Solver',    'Completed 25 quests',                            'uncommon', lambda c: c['quests'] >= 25),
+    _ach('lizzy',         'Lizzy\'s Bane',        'Lizzy\'s Bane',         'Defeated Leaping Lizzy',                         'uncommon', lambda c: c['nm_lizzy'] >= 1),
+    _ach('undeterred',    'Undeterred',           'the Undeterred',        'Was defeated 100 times and kept going',          'uncommon', lambda c: c['deaths'] >= 100, aim=False),
+    # ── Rare ──
+    _ach('veteran',       'Veteran',              'the Veteran',           'Reached level 50',                               'rare', lambda c: c['max_level'] >= 50),
+    _ach('jack',          'Jack of All Trades',   'the Jack of All Trades', 'Levelled three jobs to 30',                     'rare', lambda c: c['jobs_30'] >= 3),
+    _ach('gilded',        'Gilded',               'the Gilded',            'Opened a gold treasure casket',                  'rare', lambda c: c['gold_caskets'] >= 1),
+    _ach('exterminator',  'Exterminator',         'the Exterminator',      'Defeated 10,000 monsters',                       'rare', lambda c: c['kills'] >= 10000),
+    _ach('bane',          'Bane of the Notorious', 'Bane of the Notorious', 'Defeated 10 notorious monsters',                'rare', lambda c: c['nm_defeated'] >= 10),
+    _ach('wayfarer',      'Wayfarer',             'the Wayfarer',          'Set foot in 75 different areas',                 'rare', lambda c: c['zones'] >= 75),
+    _ach('friend',        'Friend to Many',       'Friend to Many',        'Adventured with 10 different players',           'rare', lambda c: c['players'] >= 10),
+    _ach('socialite',     'Socialite',            'the Socialite',         'Took part in 100 parties',                       'rare', lambda c: c['parties'] >= 100),
+    _ach('tycoon',        'Tycoon',               'the Tycoon',            'Sold 100 items on the auction house',            'rare', lambda c: c['ah_sold'] >= 100),
+    _ach('artisan',       'Artisan',              'the Artisan',           'Reached level 60 in a craft',                    'rare', lambda c: c['craft_max'] >= 60),
+    _ach('honoured',      'Honoured',             'the Honoured',          'Reached rank 6 in their nation',                 'rare', lambda c: c['nation_rank'] >= 6),
+    _ach('emperor',       'Emperor\'s Bane',      'Emperor\'s Bane',       'Defeated the Valkurm Emperor',                   'rare', lambda c: c['nm_emperor'] >= 1),
+    _ach('old_guard',     'Old Guard',            'the Old Guard',         'Adventured for half a year',                     'rare', lambda c: c['days_active'] >= 180),
+    # ── Exceptional ──
+    _ach('elite',         'Elite',                'the Elite',             'Reached level 60',                               'exceptional', lambda c: c['max_level'] >= 60),
+    _ach('unbroken',      'Unbroken',             'the Unbroken',          'Reached level 50 with fewer than 10 defeats',    'exceptional', lambda c: c['max_level'] >= 50 and c['deaths'] < 10),
+    _ach('polymath',      'Polymath',             'the Polymath',          'Levelled six jobs to 50',                        'exceptional', lambda c: c['jobs_50'] >= 6),
+    _ach('scourge',       'Scourge',              'the Scourge',           'Defeated 50,000 monsters',                       'exceptional', lambda c: c['kills'] >= 50000),
+    _ach('monster_hunter', 'Monster Hunter',      'the Monster Hunter',    'Defeated 50 notorious monsters',                 'exceptional', lambda c: c['nm_defeated'] >= 50),
+    _ach('cartographer',  'Cartographer',         'the Cartographer',      'Set foot in 120 different areas',                'exceptional', lambda c: c['zones'] >= 120),
+    _ach('treasure_hunter', 'Treasure Hunter',    'the Treasure Hunter',   'Opened 10 gold treasure caskets',                'exceptional', lambda c: c['gold_caskets'] >= 10),
+    _ach('magnate',       'Magnate',              'the Magnate',           'Earned 1,000,000 gil on the auction house',      'exceptional', lambda c: c['ah_gil'] >= 1000000),
+    _ach('hero_people',   'Hero of the People',   'Hero of the People',    'Completed 100 quests',                           'exceptional', lambda c: c['quests'] >= 100),
+    _ach('zilart',        'Vanquisher of Zilart', 'Vanquisher of Zilart',  'Completed the Rise of the Zilart missions',      'exceptional', lambda c: c['zilart_done'] >= 18),
+    _ach('arthro',        'Crab King\'s Bane',    'the Crab King\'s Bane',  'Defeated King Arthro',                           'exceptional', lambda c: c['nm_arthro'] >= 1),
+    # ── Relic (gold, with flair) ──
+    _ach('master',        'Master',               'the Master',            'Reached level {}'.format(LEVEL_CAP_ACH),         'relic', lambda c: c['max_level'] >= LEVEL_CAP_ACH),
+    _ach('paragon',       'Paragon',              'the Paragon',           'Took three jobs to level {}'.format(LEVEL_CAP_ACH), 'relic', lambda c: c['jobs_cap'] >= 3),
+    _ach('calamity',      'Calamity',             'the Calamity',          'Defeated 100,000 monsters',                      'relic', lambda c: c['kills'] >= 100000),
+    _ach('master_craftsman', 'Master Craftsman',  'the Master Craftsman',  'Reached level 100 in a craft',                   'relic', lambda c: c['craft_max'] >= 100),
+    _ach('hero_nation',   'Hero of the Nation',   'Hero of the Nation',    'Reached rank 10 in their nation',                'relic', lambda c: c['nation_rank'] >= 10),
+    _ach('dawn',          'Bringer of Dawn',      'Bringer of Dawn',       'Completed the Chains of Promathia missions',     'relic', lambda c: c['cop_done'] >= 40),
+    _ach('behemoth',      'Behemoth\'s Bane',     'Behemoth\'s Bane',      'Defeated Behemoth or King Behemoth',             'relic', lambda c: c['nm_behemoth'] >= 1),
+    _ach('turtle',        'Shell Breaker',        'the Shell Breaker',     'Defeated Adamantoise or Aspidochelone',          'relic', lambda c: c['nm_turtle'] >= 1),
+    # ── Mythic (orange, with the most flair) ──
+    _ach('wyrmslayer',    'Wyrmslayer',           'the Wyrmslayer',        'Defeated Fafnir or Nidhogg',                     'mythic', lambda c: c['nm_wyrm'] >= 1),
+    _ach('untouchable',   'Untouchable',          'the Untouchable',       'Reached level {} without ever being defeated'.format(LEVEL_CAP_ACH), 'mythic', lambda c: c['max_level'] >= LEVEL_CAP_ACH and c['deaths'] == 0),
+    _ach('living_legend', 'Living Legend',        'the Living Legend',     'Took every job to level {}'.format(LEVEL_CAP_ACH), 'mythic', lambda c: c['jobs_cap'] >= ALL_JOBS),
 ]
 
 
@@ -300,11 +361,28 @@ def _stats(cur, charid):
     }
 
 
+_COUNT_KEYS = ['deaths', 'kills', 'nm_defeated', 'gold_caskets', 'zones', 'hired', 'players', 'parties', 'raised',
+               'ah_sold', 'ah_gil', 'warps', 'hq_synths', 'first_ts'] + ['nm_' + k for k in NAMED_NMS]
+
+
+def _blank_counts():
+    c = {k: 0 for k in _COUNT_KEYS}
+    c.update(max_level=0, jobs_30=0, jobs_50=0, jobs_cap=0, quests=0, nation_rank=1, zilart_done=0, cop_done=0,
+             craft_max=0, days_active=0)
+    return c
+
+
 def _achievement_counts(cur, charid=None):
-    """{charid: counts} for the achievement tests: totals from the log plus
-    the highest job level and how many jobs are at 30+."""
+    """{charid: counts} for the achievement tests: totals from the log, job
+    levels, and quests/missions/rank/crafts from the character tables."""
     where  = ' WHERE charid = ?' if charid is not None else ''
     params = (charid,) if charid is not None else ()
+    now    = int(time.time())
+
+    named = []
+    for key, nm_names in NAMED_NMS.items():
+        quoted = ', '.join("'{}'".format(n.replace("'", "''")) for n in nm_names)
+        named.append("  SUM(event = 'nm_defeated' AND JSON_VALUE(data, '$.nm') IN ({}))".format(quoted))
 
     cur.execute(
         'SELECT charid,'
@@ -314,54 +392,92 @@ def _achievement_counts(cur, charid=None):
         "  SUM(event = 'casket' AND JSON_VALUE(data, '$.chest') = 4),"
         "  COUNT(DISTINCT CASE WHEN event = 'arrived' THEN JSON_VALUE(data, '$.zone_id') END),"
         "  SUM(event = 'hired'),"
+        "  COUNT(DISTINCT CASE WHEN event = 'hired' THEN JSON_VALUE(data, '$.player') END),"
         "  SUM(event = 'joined' OR event = 'formed'),"
-        "  SUM(event = 'raised')"
+        "  SUM(event = 'raised'),"
+        "  SUM(event = 'ah_sold'),"
+        "  COALESCE(SUM(CASE WHEN event = 'ah_sold' THEN JSON_VALUE(data, '$.price') END), 0),"
+        "  SUM(event = 'warp'),"
+        "  SUM(event = 'synth' AND JSON_VALUE(data, '$.hq') > 0),"
+        "  MIN(ts),"
+        + ','.join(named) +
         ' FROM world_bot_log' + where + ' GROUP BY charid',
         params,
     )
     counts = {}
     for r in cur.fetchall():
-        counts[r[0]] = {
-            'deaths':       int(r[1] or 0),
-            'kills':        int(r[2] or 0),
-            'nm_defeated':  int(r[3] or 0),
-            'gold_caskets': int(r[4] or 0),
-            'zones':        int(r[5] or 0),
-            'hired':        int(r[6] or 0),
-            'parties':      int(r[7] or 0),
-            'raised':       int(r[8] or 0),
-        }
+        c = _blank_counts()
+        for key, value in zip(_COUNT_KEYS, r[1:]):
+            c[key] = int(value or 0)
+        c['days_active'] = (now - c['first_ts']) // 86400 if c['first_ts'] else 0
+        counts[r[0]] = c
 
+    # Job levels.
     cur.execute(
         'SELECT j.charid, {} FROM char_jobs j INNER JOIN world_bots w ON w.charid = j.charid'.format(
-            ', '.join('j.`{}`'.format(c) for c in JOB_COLUMNS)) + (' WHERE j.charid = ?' if charid is not None else ''),
+            ', '.join('j.`{}`'.format(col) for col in JOB_COLUMNS)) + (' WHERE j.charid = ?' if charid is not None else ''),
         params,
     )
     for r in cur.fetchall():
         levels = [lvl or 0 for lvl in r[1:]]
-        c = counts.setdefault(r[0], {
-            'deaths': 0, 'kills': 0, 'nm_defeated': 0, 'gold_caskets': 0, 'zones': 0, 'hired': 0, 'parties': 0, 'raised': 0,
-        })
+        c = counts.setdefault(r[0], _blank_counts())
         c['max_level'] = max(levels) if levels else 0
         c['jobs_30']   = sum(1 for lvl in levels if lvl >= 30)
+        c['jobs_50']   = sum(1 for lvl in levels if lvl >= 50)
+        c['jobs_cap']  = sum(1 for lvl in levels if lvl >= LEVEL_CAP_ACH)
 
-    for c in counts.values():
-        c.setdefault('max_level', 0)
-        c.setdefault('jobs_30', 0)
+    # Quests completed, nation rank and storylines (chars blobs - progress.py layout).
+    cur.execute(
+        'SELECT c.charid, c.nation, c.quests, c.missions, p.rank_sandoria, p.rank_bastok, p.rank_windurst '
+        'FROM chars c INNER JOIN world_bots w ON w.charid = c.charid LEFT JOIN char_profile p ON p.charid = c.charid'
+        + (' WHERE c.charid = ?' if charid is not None else ''),
+        params,
+    )
+    for r in cur.fetchall():
+        c = counts.setdefault(r[0], _blank_counts())
+        quests = bytes(r[2] or b'')
+        c['quests'] = sum(bin(b).count('1') for area in range(11) for b in quests[area * 64 + 32:area * 64 + 64])
+        missions = bytes(r[3] or b'')
+        done = lambda log: sum(1 for b in missions[log * 70 + 6:log * 70 + 70] if b)
+        c['zilart_done'], c['cop_done'] = done(3), done(6)
+        nation = int(r[1] or 0)
+        c['nation_rank'] = int((r[4:7][nation] if nation < 3 else 1) or 1)
+
+    # Best craft.
+    cur.execute(
+        'SELECT s.charid, MAX(s.value) FROM char_skills s INNER JOIN world_bots w ON w.charid = s.charid '
+        'WHERE s.skillid BETWEEN 49 AND 56' + (' AND s.charid = ?' if charid is not None else '') + ' GROUP BY s.charid',
+        params,
+    )
+    for r in cur.fetchall():
+        counts.setdefault(r[0], _blank_counts())['craft_max'] = int(r[1] or 0) // 10
 
     return counts
 
 
 def achievements_for(counts):
-    """(title, [achievement]) for one bot's counts. title is None until it
-    has earned something."""
-    result, title = [], None
-    for key, name, achievement_title, description, test in ACHIEVEMENTS:
-        earned = bool(counts) and test(counts)
-        if earned:
-            title = achievement_title
-        result.append({'key': key, 'name': name, 'title': achievement_title, 'description': description, 'earned': earned})
-    return title, result
+    """(title, [achievement]) for one bot's counts. The title is its rarest
+    achievement's (the later one on a tie), or None until it has earned
+    something; each achievement carries its rarity, and the title's is
+    title_rarity(achievements)."""
+    result, best = [], None
+    for a in ACHIEVEMENTS:
+        earned = bool(counts) and a['test'](counts)
+        entry  = {k: a[k] for k in ('key', 'name', 'title', 'description', 'rarity', 'aim')}
+        entry['earned'] = earned
+        result.append(entry)
+        if earned and (best is None or RARITIES.index(a['rarity']) >= RARITIES.index(best['rarity'])):
+            best = entry
+    return (best['title'] if best else None), result
+
+
+def title_rarity(achievements):
+    """The rarity of the title achievements_for chose (None without one)."""
+    best = None
+    for a in achievements:
+        if a['earned'] and (best is None or RARITIES.index(a['rarity']) >= RARITIES.index(best)):
+            best = a['rarity']
+    return best
 
 
 # Leaderboards: (key, label, unit). 'level' (all time) and 'levels_gained'
@@ -449,11 +565,14 @@ def leaderboards(cur, period='all', limit=10, now=None):
             if value != previous:
                 rank, previous = index + 1, value
             bot = bots[charid]
+            title, earned_list = achievements_for(counts.get(charid))
+            rarity = title_rarity(earned_list)
             entries.append({
                 'rank':       rank,
                 'charid':     charid,
                 'name':       name,
-                'title':      achievements_for(counts.get(charid))[0],
+                'title':      title,
+                'title_rarity': rarity,
                 'main_abbr':  bot['main_abbr'],
                 'main_level': bot['main_level'],
                 'race':       bot['race'],
@@ -663,7 +782,9 @@ def build_story(bot, facts, achievements, now=None, progress=None):
         long_term.append('They have mastered {} at level {} and are looking for new challenges.'.format(career, LEVEL_CAP))
 
     # The next couple of achievements worth aiming for (not "be raised").
-    upcoming = [a for a in achievements or [] if not a['earned'] and a['key'] != 'resilient'][:2]
+    # Easiest first: the lowest rarity it hasn't earned (and that's worth aiming for).
+    upcoming = sorted((a for a in achievements or [] if not a['earned'] and a.get('aim', True)),
+                      key=lambda a: RARITIES.index(a['rarity']) if a.get('rarity') in RARITIES else 0)[:2]
     if upcoming:
         long_term.append('Next achievements to aim for: {}.'.format(_list_words([a['name'] for a in upcoming])))
 
@@ -691,7 +812,8 @@ def _all_bots(cur):
         events      = latest.get(p['charid'], [])
         p['status'] = describe_now(events)
         p['latest'] = events[0]['message'] if events else None
-        p['title'], _ = achievements_for(counts.get(p['charid']))
+        p['title'], achievements = achievements_for(counts.get(p['charid']))
+        p['title_rarity'] = title_rarity(achievements)
     return profiles
 
 
@@ -707,6 +829,7 @@ def _one_bot(cur, charid):
     bot['stats']  = _stats(cur, charid)
     bot['events'] = events
     bot['title'], bot['achievements'] = achievements_for(_achievement_counts(cur, charid).get(charid))
+    bot['title_rarity'] = title_rarity(bot['achievements'])
     bot['progress'] = character_progress(cur, charid)
     bot['story']    = build_story(bot, _story_facts(cur, charid), bot['achievements'], progress=bot['progress'])
     return bot

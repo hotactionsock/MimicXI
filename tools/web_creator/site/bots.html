@@ -110,7 +110,7 @@
                 <span class="bot-name">${B.esc(b.name)}</span>
                 <span class="bot-presence ${b.online ? "is-online" : ""}" title="${b.online ? "In the world" : "Resting"}"></span>
               </div>
-              ${b.title ? `<div class="bot-title">${B.esc(b.title)}</div>` : ""}
+              ${b.title ? `<div class="bot-title">${B.titleHtml(b.title, b.title_rarity)}</div>` : ""}
               <div class="bot-job">
                 <span class="job-chip">${B.esc(b.main_abbr || "?")}</span>
                 <span>Lv ${b.main_level}${sub}</span>

@@ -49,6 +49,50 @@
         return;
       }
 
+      // ── Achievements: earned rarest first; the rest folded away ──────────
+      let showLocked = false;
+      function achievementCard(a) {
+        const r = B.RARITIES.includes(a.rarity) ? a.rarity : "common";
+        const flair = a.earned && (r === "relic" || r === "mythic") ? " has-glow" : "";
+        return `
+          <li class="achievement r-${r} ${a.earned ? "is-earned" : ""}${flair}"
+              title="${B.esc(a.earned ? `Title: ${bot.name} ${a.title}` : "Not earned yet")}">
+            <span class="achievement-mark" aria-hidden="true">${a.earned ? "★" : "☆"}</span>
+            <span class="achievement-text">
+              <span class="achievement-name">${B.esc(a.name)}</span>
+              <span class="achievement-desc">${B.esc(a.description)}</span>
+            </span>
+            <span class="ach-rarity">${B.RARITY_LABELS[r]}</span>
+          </li>`;
+      }
+
+      function achievementsHtml(achievements, earned) {
+        if (!achievements.length) return "";
+        const byRarity = (list) => list.slice().sort((a, b) => B.RARITIES.indexOf(b.rarity) - B.RARITIES.indexOf(a.rarity));
+        const locked   = achievements.filter(a => !a.earned);
+        const tiers    = B.RARITIES.slice().reverse().map(r => {
+          const all = achievements.filter(a => a.rarity === r);
+          const got = all.filter(a => a.earned).length;
+          return all.length ? `<span class="ach-tier r-${r} ${got ? "has-some" : ""}">${B.RARITY_LABELS[r]} ${got}/${all.length}</span>` : "";
+        }).join("");
+        return `
+          <div class="profile-achievements">
+            <h2 class="section-label">Achievements <span class="achievement-count">${earned.length} of ${achievements.length}</span></h2>
+            <div class="ach-tiers">${tiers}</div>
+            ${earned.length ? `<ul class="achievement-list">${byRarity(earned).map(achievementCard).join("")}</ul>`
+                            : `<p class="prog-empty">None earned yet.</p>`}
+            ${locked.length ? `
+            <button type="button" class="filter-chip ach-toggle" id="ach-toggle">${showLocked ? "Hide" : "Show"} the ${locked.length} still to earn</button>
+            ${showLocked ? `<ul class="achievement-list is-locked">${locked.slice().sort((a, b) => B.RARITIES.indexOf(a.rarity) - B.RARITIES.indexOf(b.rarity)).map(achievementCard).join("")}</ul>` : ""}` : ""}
+          </div>`;
+      }
+
+      document.addEventListener("click", (ev) => {
+        if (ev.target.id !== "ach-toggle") return;
+        showLocked = !showLocked;
+        renderProfile();
+      });
+
       // ── Quests, missions & crafts (progress.py) ───────────────────────────
       function progressHtml() {
         const p = bot.progress;
@@ -128,7 +172,7 @@
           .filter(j => j.level > 1 || j.abbr === bot.main_abbr)
           .sort((a, b) => b.level - a.level);
         // Earned first (in the order they're listed), then the ones still to get.
-        const achievements = (bot.achievements || []).slice().sort((a, b) => (b.earned ? 1 : 0) - (a.earned ? 1 : 0));
+        const achievements = bot.achievements || [];
         const earned       = achievements.filter(a => a.earned);
 
         document.title = `${bot.name} — MimicXI`;
@@ -143,7 +187,7 @@
                 <span class="profile-presence">${bot.online ? "In the world" : "Resting"}</span>
                 ${bot.online ? `<a class="btn btn-ghost profile-watch" href="watch.html?id=${bot.charid}">Watch live</a>` : ""}
               </div>
-              ${bot.title ? `<p class="profile-title">${B.esc(bot.name)} ${B.esc(bot.title)}</p>` : ""}
+              ${bot.title ? `<p class="profile-title">${B.esc(bot.name)} ${B.titleHtml(bot.title, bot.title_rarity)}</p>` : ""}
               <div class="profile-facts">
                 <span class="profile-fact"><span class="job-chip">${B.esc(bot.main_abbr || "?")}</span> ${B.esc(bot.main_job)} ${bot.main_level}${sub}</span>
                 ${bot.nation ? `<span class="profile-fact">${B.esc(bot.nation)}</span>` : ""}
@@ -183,20 +227,7 @@
 
           ${progressHtml()}
 
-          ${achievements.length ? `
-          <div class="profile-achievements">
-            <h2 class="section-label">Achievements <span class="achievement-count">${earned.length} of ${achievements.length}</span></h2>
-            <ul class="achievement-list">
-              ${achievements.map(a => `
-                <li class="achievement ${a.earned ? "is-earned" : ""}" title="${B.esc(a.earned ? `Title: ${bot.name} ${a.title}` : "Not earned yet")}">
-                  <span class="achievement-mark" aria-hidden="true">${a.earned ? "★" : "☆"}</span>
-                  <span class="achievement-text">
-                    <span class="achievement-name">${B.esc(a.name)}</span>
-                    <span class="achievement-desc">${B.esc(a.description)}</span>
-                  </span>
-                </li>`).join("")}
-            </ul>
-          </div>` : ""}`;
+          ${achievementsHtml(achievements, earned)}`;
       }
 
       // ── Timeline ─────────────────────────────────────────────────────────

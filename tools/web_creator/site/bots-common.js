@@ -79,5 +79,18 @@
     return esc(message);
   }
 
-  window.MimicBots = { esc, setText, getJson, ago, refreshTimes, avatar, categoryLabel, linkName, CATEGORY_LABELS };
+  // Achievement rarities (bots.py RARITIES), lowest first, with display names.
+  const RARITIES = ["common", "uncommon", "rare", "exceptional", "relic", "mythic"];
+  const RARITY_LABELS = { common: "Common", uncommon: "Uncommon", rare: "Rare", exceptional: "Exceptional", relic: "Relic", mythic: "Mythic" };
+
+  // A title, coloured by its rarity; relic and mythic titles get flair.
+  function titleHtml(title, rarity, cls) {
+    if (!title) return "";
+    const r = RARITIES.includes(rarity) ? rarity : "common";
+    const flair = r === "mythic" ? " has-flair has-sparkle" : r === "relic" ? " has-flair" : "";
+    return `<span class="r-title r-${r}${flair}${cls ? " " + cls : ""}" title="${RARITY_LABELS[r]} title">${esc(title)}</span>`;
+  }
+
+  window.MimicBots = { esc, setText, getJson, ago, refreshTimes, avatar, categoryLabel, linkName, CATEGORY_LABELS,
+                       RARITIES, RARITY_LABELS, titleHtml };
 })();

@@ -671,3 +671,67 @@
 .craft-bars .job-bar { grid-template-columns: 96px 1fr auto auto; display: grid; }
 .craft-name { font-size: 0.82rem; color: var(--ink-soft); }
 .craft-rank { font-family: var(--mono); font-size: 0.68rem; color: var(--crystal-lilac); min-width: 70px; text-align: right; }
+
+/* ── Rarity: titles and achievements (bots.py RARITIES) ─────────
+   The site's item rarity colours. Relic and mythic titles shimmer; mythic
+   ones sparkle too. */
+.r-common      { --rc: #9b94a8; }
+.r-uncommon    { --rc: #7fbf94; }
+.r-rare        { --rc: #6dadd8; }
+.r-exceptional { --rc: #b787c9; }
+.r-relic       { --rc: #e8c785; }
+.r-mythic      { --rc: #f0a85b; }
+
+.r-title { color: var(--rc); }
+.bot-title .r-title { font-style: italic; }
+.r-title.has-flair {
+  font-weight: 600;
+  background: linear-gradient(100deg, var(--rc) 0%, var(--rc) 38%, #fff6dc 50%, var(--rc) 62%, var(--rc) 100%);
+  background-size: 250% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: title-shimmer 3.6s linear infinite;
+  filter: drop-shadow(0 0 6px color-mix(in srgb, var(--rc) 45%, transparent));
+}
+.r-title.has-sparkle { position: relative; padding: 0 0.15em; }
+.r-title.has-sparkle::before,
+.r-title.has-sparkle::after {
+  content: "\2726";
+  position: absolute;
+  font-size: 0.6em;
+  color: #fff3d6;
+  -webkit-text-fill-color: #fff3d6;
+  text-shadow: 0 0 6px var(--rc);
+  animation: title-twinkle 2.4s ease-in-out infinite;
+  pointer-events: none;
+}
+.r-title.has-sparkle::before { left: -0.7em; top: -0.35em; }
+.r-title.has-sparkle::after  { right: -0.75em; bottom: -0.1em; animation-delay: 1.2s; }
+@keyframes title-shimmer { from { background-position: 125% 0; } to { background-position: -125% 0; } }
+@keyframes title-twinkle { 0%, 100% { opacity: 0; transform: scale(0.5) rotate(0deg); } 50% { opacity: 1; transform: scale(1) rotate(25deg); } }
+
+/* Achievements by rarity */
+.ach-tiers { display: flex; flex-wrap: wrap; gap: 6px; margin: -4px 0 14px; }
+.ach-tier {
+  font-family: var(--mono); font-size: 0.68rem; letter-spacing: 0.06em;
+  padding: 3px 9px; border-radius: 999px; border: 1px solid var(--line); color: var(--ink-faint);
+}
+.ach-tier.has-some { color: var(--rc); border-color: color-mix(in srgb, var(--rc) 55%, transparent); }
+.achievement { position: relative; }
+.achievement.is-earned { border-color: var(--rc); }
+.achievement.is-earned .achievement-mark { color: var(--rc); }
+.ach-rarity {
+  margin-left: auto; align-self: flex-start;
+  font-family: var(--mono); font-size: 0.6rem; letter-spacing: 0.08em; text-transform: uppercase;
+  color: var(--rc); opacity: 0.85;
+}
+.achievement.has-glow { box-shadow: 0 0 0 1px var(--rc), 0 0 14px -4px var(--rc); animation: ach-glow 3s ease-in-out infinite; }
+@keyframes ach-glow { 50% { box-shadow: 0 0 0 1px var(--rc), 0 0 22px -2px var(--rc); } }
+.ach-toggle { margin-top: 14px; }
+.achievement-list.is-locked { margin-top: 12px; }
+
+@media (prefers-reduced-motion: reduce) {
+  .r-title.has-flair, .r-title.has-sparkle::before, .r-title.has-sparkle::after, .achievement.has-glow { animation: none; }
+  .r-title.has-sparkle::before, .r-title.has-sparkle::after { opacity: 0.8; }
+}
