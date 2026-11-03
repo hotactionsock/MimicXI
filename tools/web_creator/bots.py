@@ -895,13 +895,7 @@ def _auctions(cur, charid):
         "FROM world_bot_log WHERE charid = ? AND event = 'ah_sold' ORDER BY ts DESC, id DESC LIMIT 6", (charid,))
     sales = [{'ts': r[0], 'item_id': int(r[1] or 0), 'name': r[2] or '', 'price': int(r[3] or 0)} for r in cur.fetchall()]
 
-    cur.execute(
-        "SELECT COUNT(*), COALESCE(SUM(JSON_VALUE(data, '$.price')), 0) FROM world_bot_log "
-        "WHERE charid = ? AND event = 'ah_sold'", (charid,))
-    total = cur.fetchone() or (0, 0)
-
-    return {'charid': charid, 'purse': int(row[0] or 0), 'listings': listings, 'limit': 7,
-            'recent_sales': sales, 'sold_count': int(total[0] or 0), 'sold_gil': int(total[1] or 0)}
+    return {'charid': charid, 'purse': int(row[0] or 0), 'listings': listings, 'limit': 7, 'recent_sales': sales}
 
 
 @bots.route('/api/bots/<int:charid>/auctions')

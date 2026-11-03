@@ -709,8 +709,7 @@
           if (text === ahJson) return;
           ahJson = text;
 
-          document.getElementById("ah-summary").textContent =
-            `Purse ${ah.purse.toLocaleString()} gil · sold ${ah.sold_count.toLocaleString()} for ${ah.sold_gil.toLocaleString()} gil`;
+          document.getElementById("ah-summary").textContent = `Purse ${ah.purse.toLocaleString()} gil`;
           document.getElementById("ah-listing-label").textContent = `Listings · ${ah.listings.length} of ${ah.limit}`;
 
           document.getElementById("ah-listings").innerHTML = ah.listings.length ? ah.listings.map(l => {
