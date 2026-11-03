@@ -794,6 +794,192 @@ xi.caskets.extractNpcLoot = function(npc)
 end
 
 -----------------------------------
+-- World bots and caskets: a chest dropped by a mob a bot (or an all-bot party)
+-- killed is opened by that bot. It walks over, and a few seconds later opens
+-- it: a locked chest takes the same lock game a player plays - examine it for
+-- a range hint (one attempt), then guess higher/lower with what's left - and
+-- can fail (a failed Gold casket can still turn into a mimic). Whatever is
+-- inside goes to the bot: temporary items, items, and Gold casket gear with
+-- its augments. Chests owed to a party with a real player in it are left to
+-- the players.
+-----------------------------------
+local botOpenDelayMinMs = 4000
+local botOpenDelayMaxMs = 9000
+local botReachYalms       = 30
+
+local chestNames =
+{
+    [casketInfo.dropTypes.TEMP]      = 'a treasure casket',
+    [casketInfo.dropTypes.ITEM]      = 'a locked treasure casket',
+    [casketInfo.dropTypes.RARE_ITEM] = 'a gold treasure casket',
+}
+
+-- Plays the lock game the way a sensible player would. True if it opened.
+local function botPickLock(npc)
+    local correct  = npc:getLocalVar('[caskets]CORRECT_NUM')
+    local attempts = npc:getLocalVar('[caskets]ATTEMPTS')
+    local firstDigit = math.floor(correct / 10)
+
+    -- Examine first: "greater than X and less than Y" (as the hint in onEventFinish).
+    local low, high = 10, 99
+    if firstDigit == 1 then
+        high = 20 + math.randomInt(1, 9)
+    elseif firstDigit == 9 then
+        low = 80 + math.randomInt(1, 9)
+    else
+        low  = firstDigit * 10 - 10 + math.randomInt(1, 9)
+        high = firstDigit * 10 + 10 + math.randomInt(1, 9)
+    end
+
+    -- Then halve the range with each guess.
+    for _ = 2, attempts do
+        local guess = math.floor((low + high) / 2)
+        if guess == correct then
+            return true
+        elseif guess < correct then
+            low = guess + 1
+        else
+            high = guess - 1
+        end
+    end
+
+    return false
+end
+
+-- Empties an open chest into the bot's bags. Returns the item names taken.
+local function botTakeContents(bot, npc, dropType)
+    local taken = {}
+    local function note(itemId)
+        local item = GetItemByID(itemId)
+        table.insert(taken, item and xi.worldbots.log.humanName(item:getName()) or tostring(itemId))
+    end
+
+    if dropType == casketInfo.dropTypes.TEMP then
+        for slot = 1, 3 do
+            local itemId = getTempDrop(npc, slot)
+            if
+                itemId ~= 0 and
+                not bot:hasItem(itemId, xi.inventoryLocation.TEMPITEMS) and
+                bot:addTempItem(itemId)
+            then
+                note(itemId)
+            end
+
+            npc:setLocalVar('[caskets]TEMP' .. slot, 0)
+        end
+
+        return taken
+    end
+
+    for slot = 1, 4 do
+        local itemId = getChestItem(npc, slot)
+        if itemId ~= 0 and bot:getFreeSlotsCount() > 0 then
+            local numAugs = npc:getLocalVar(string.format('[caskets]ITEM%dNUMAUGS', slot))
+            local added   = false
+
+            if dropType == casketInfo.dropTypes.RARE_ITEM and numAugs > 0 then
+                local augments = {}
+                for j = 1, numAugs do
+                    augments[j] =
+                    {
+                        id    = npc:getLocalVar(string.format('[caskets]ITEM%dAUG%dID', slot, j)),
+                        value = npc:getLocalVar(string.format('[caskets]ITEM%dAUG%dVAL', slot, j)) - 1,
+                    }
+                end
+
+                added = bot:addItem({ id = itemId, exdata = { augmentKind = xi.augment.kind.HAS_AUGMENTS, augmentSubKind = xi.augment.subKind.STANDARD, augments = augments } })
+            else
+                added = bot:addItem(itemId, casketInfo.multipleItems[itemId] and 33 or 1)
+            end
+
+            if added then
+                note(itemId)
+            end
+        end
+
+        npc:setLocalVar('[caskets]ITEM' .. slot, 0)
+    end
+
+    return taken
+end
+
+local function botOpenCasket(charId, npc)
+    local bot = GetPlayerByID(charId)
+    if
+        bot == nil or
+        bot:isDead() or
+        bot:getZoneID() ~= npc:getZoneID() or
+        npc:getLocalVar('[caskets]SPAWNSTATUS') ~= casketInfo.spawnStatus.SPAWNED_CLOSED or
+        bot:checkDistance(npc) > botReachYalms
+    then
+        return
+    end
+
+    local dropType  = npc:getLocalVar('[caskets]LOOT_TYPE')
+    local chestName = chestNames[dropType] or 'a treasure casket'
+    local zoneName  = GetBotZoneName(bot:getZoneID())
+
+    getDrops(npc, dropType, bot:getZoneID())
+
+    if npc:getLocalVar('[caskets]LOCKED') ~= 0 then
+        if not botPickLock(npc) then
+            xi.worldbots.log.event(bot, xi.worldbots.log.DETAIL, 'item', 'casket_failed',
+                string.format('%s failed to open %s in %s', bot:getName(), chestName, zoneName),
+                { chest = dropType, zone = zoneName })
+
+            if
+                dropType == casketInfo.dropTypes.RARE_ITEM and
+                xi.caskets.mimic and
+                xi.caskets.mimic.onChestFail
+            then
+                xi.caskets.mimic.onChestFail(bot, npc)
+            end
+
+            removeChest(npc)
+            return
+        end
+
+        npc:setLocalVar('[caskets]LOCKED', 0)
+    end
+
+    npc:setAnimationSub(1)
+    npc:setLocalVar('[caskets]SPAWNSTATUS', casketInfo.spawnStatus.SPAWNED_OPEN)
+
+    local taken = botTakeContents(bot, npc, dropType)
+    local found = #taken > 0 and table.concat(taken, ', ') or 'nothing it could carry'
+    local level = dropType == casketInfo.dropTypes.RARE_ITEM and xi.worldbots.log.NOTABLE or xi.worldbots.log.DETAIL
+
+    xi.worldbots.log.event(bot, level, 'item', 'casket',
+        string.format('%s opened %s in %s and found %s', bot:getName(), chestName, zoneName, found),
+        { chest = dropType, zone = zoneName, items = table.concat(taken, ', ') })
+
+    npc:timer(3000, function(chest)
+        removeChest(chest)
+    end)
+end
+
+-- A casket just dropped for player's kill: if a bot (or all-bot party) owns
+-- it, the bot goes and opens it.
+local function botClaimCasket(player, npc)
+    local charId = player:getID()
+    if not IsBotCharacter(charId) then
+        return
+    end
+
+    for _, member in ipairs(GetBotParty(charId) or {}) do
+        if not member.isBot then
+            return -- a real player's party: theirs to open
+        end
+    end
+
+    local pos = npc:getPos()
+    WalkBotTo(charId, pos.x, pos.y, pos.z)
+    npc:timer(math.randomInt(botOpenDelayMinMs, botOpenDelayMaxMs), function(chest)
+        botOpenCasket(charId, chest)
+    end)
+end
+
+-----------------------------------
 -- Desc: Casket spawn checks, runs through all checks before spawning
 -----------------------------------
 xi.caskets.spawnCasket = function(player, mob, x, y, z, r)
@@ -807,6 +993,7 @@ xi.caskets.spawnCasket = function(player, mob, x, y, z, r)
 
     if dropChance(player) then
         setCasketData(player, x, y, z, r, npc, chestOwner, mob, mob:getMainLvl())
+        botClaimCasket(player, npc)
     end
 end
 
