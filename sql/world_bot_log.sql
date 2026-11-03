@@ -17,7 +17,7 @@ SET SQL_MODE="NO_AUTO_VALUE_ON_ZERO";
 --   event    - stable key for the website (level_up, obtained, sold, ...)
 --   message  - ready-to-show sentence ("Testbot learned Cure")
 --   data     - the same facts as a JSON object (item ids, levels, zone ids...)
--- Pruned after map.WORLDBOTS_LOG_RETENTION_DAYS.
+-- Kept for as long as the bot exists; deleted with it (botutils::DeleteBotLog).
 --
 
 DROP TABLE IF EXISTS `world_bot_log`;

@@ -33,8 +33,8 @@
 //
 // Rows are queued in memory and written in one transaction every few seconds
 // (FlushBotLog), so thousands of bots don't hammer the database. How much is
-// recorded is set by map.WORLDBOTS_LOG_LEVEL; old rows are pruned after
-// map.WORLDBOTS_LOG_RETENTION_DAYS.
+// recorded is set by map.WORLDBOTS_LOG_LEVEL. A bot's rows are kept for as
+// long as the bot exists, and deleted with it (DeleteBotLog).
 namespace botutils
 {
 
@@ -58,8 +58,14 @@ void LogBotEvent(uint32 charId, BotLogLevel level, const std::string& category, 
 // Writes queued events (every few seconds from the map engine).
 void FlushBotLog();
 
-// Deletes rows older than the retention setting (at startup, then every few hours).
+// Deletes rows left behind by bots that no longer exist (at startup, then
+// every few hours). A live bot's history is never pruned.
 void PruneBotLog();
+
+// Forgets everything logged for charId: its rows, anything still queued, and
+// its running hunt tally. For deleting a bot - and for a new bot, so it never
+// inherits the history of a deleted character that had the same charid.
+void DeleteBotLog(uint32 charId);
 
 // "Goblin_Thug" -> "Goblin Thug", "bat_wing" -> "Bat Wing": engine internal
 // names as a person would write them.

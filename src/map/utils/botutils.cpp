@@ -73,6 +73,16 @@ constexpr uint8 kNationCount = 3; // San d'Oria, Bastok, Windurst - see kHomeCit
 auto nearestHomeCity(uint8 nation, uint16 from) -> std::pair<uint16, uint8>;
 void ensureCityHomePoint(CCharEntity* PChar);
 
+// Drops everything kept about a bot character outside the char_* tables: its
+// activity log, its memories, and the engine's per-bot caches.
+void forgetBotCharacter(uint32 charId)
+{
+    DeleteBotLog(charId);
+    DeleteBotMemory(charId);
+    ForgetBotActivity(charId);
+    ForgetBotGear(charId);
+}
+
 } // namespace
 
 auto CreateBotCharacter(xi::ZoneId zoneId, float x, float y, float z, uint8 rotation, CharRace race, CharFace face, const std::string& name,
@@ -175,6 +185,10 @@ auto CreateBotCharacter(xi::ZoneId zoneId, float x, float y, float z, uint8 rota
     // same as loginHelpers::saveCharacter does.
     db::preparedStmt("DELETE FROM char_inventory WHERE charid = ?", charId);
     db::preparedStmt("INSERT INTO char_inventory(charid) VALUES(?)", charId);
+
+    // A deleted character that had this charid may have left history behind
+    // (e.g. deleted by hand, or before deletes cleaned up): start clean.
+    forgetBotCharacter(charId);
 
     if (!db::preparedStmt("INSERT INTO world_bots(charid,active,anchor_x,anchor_y,anchor_z) VALUES(?, 0, ?, ?, ?)", charId, x, y, z))
     {
@@ -477,15 +491,6 @@ auto DeleteBotCharacter(uint32 charId) -> bool
         return false;
     }
 
-    // The log outlives the bot: it's its history.
-    {
-        const auto rset = db::preparedStmt("SELECT charname FROM chars WHERE charid = ?", charId);
-        FOR_DB_SINGLE_RESULT(rset)
-        {
-            LogBotEvent(charId, BotLogLevel::Milestone, "lifecycle", "retired", std::format("{} retired", rset->get<std::string>("charname")));
-        }
-    }
-
     destroyBotSession(charId);
 
     uint32 accId = 0;
@@ -515,7 +520,10 @@ auto DeleteBotCharacter(uint32 charId) -> bool
 
     db::preparedStmt("DELETE FROM char_flags WHERE charid = ?", charId);
     db::preparedStmt("DELETE FROM world_bots WHERE charid = ?", charId);
-    DeleteBotMemory(charId);
+
+    // Everything the bot was, gone with it - a later bot can be given the same
+    // charid and must start with a clean slate (no old log, memories or plans).
+    forgetBotCharacter(charId);
 
     return true;
 }

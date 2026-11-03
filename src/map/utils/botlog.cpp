@@ -248,14 +248,18 @@ void FlushBotLog()
 
 void PruneBotLog()
 {
-    const auto days = settings::get<uint32>("map.WORLDBOTS_LOG_RETENTION_DAYS");
-    if (days == 0)
-    {
-        return;
-    }
+    db::preparedStmt("DELETE FROM world_bot_log WHERE charid NOT IN (SELECT charid FROM world_bots) LIMIT 50000");
+}
 
-    const uint32 cutoff = earth_time::timestamp() - days * 24 * 60 * 60;
-    db::preparedStmt("DELETE FROM world_bot_log WHERE ts < ? LIMIT 50000", cutoff);
+void DeleteBotLog(uint32 charId)
+{
+    std::erase_if(g_pending,
+                  [charId](const LogRow& row)
+                  {
+                      return row.charId == charId;
+                  });
+    g_hunt.erase(charId);
+    db::preparedStmt("DELETE FROM world_bot_log WHERE charid = ?", charId);
 }
 
 auto HumanName(const std::string& internalName) -> std::string

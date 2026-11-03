@@ -2,7 +2,7 @@
 -- xi.worldbots.log - the Lua half of the bot activity log.
 --
 -- The engine logs what it does itself (created, learned a spell, equipped,
--- obtained, sold, tossed, used an item, unlocked or changed jobs, retired -
+-- obtained, sold, tossed, used an item, unlocked or changed jobs, logged on or off -
 -- see src/map/utils/botlog.h). This module logs what only the AI knows about:
 -- level-ups, careers, deaths, home points, trips and arrivals, hunt summaries,
 -- parties, skillchains and magic bursts.
