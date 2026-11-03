@@ -1,7 +1,7 @@
 -----------------------------------
 -- xi.worldbots.party - bot parties (Phase 4).
 --
--- Forming: from level 10 a bot that picks a new levelling goal often also
+-- Forming: from level 5 (PARTY_MIN_LEVEL) a bot that picks a new levelling goal often also
 -- puts itself on a "seeking party" list (it keeps levelling solo while it
 -- waits). Every few seconds the matchmaker groups seekers of similar level
 -- (within PARTY_LEVEL_SPREAD) who are a few zone hops apart into a balanced
@@ -31,7 +31,7 @@ xi.worldbots.party = xi.worldbots.party or {}
 
 local party = xi.worldbots.party
 
-local PARTY_MIN_LEVEL      = 10      -- below this, bots solo (as most players do)
+local PARTY_MIN_LEVEL      = 5       -- below this, bots solo; from here they can team up for harder early camps
 local SEEK_CHANCE          = 0.6     -- on picking a levelling goal, chance to also seek a party
 local SEEK_TIMEOUT_SEC     = 15 * 60 -- give up seeking after this
 local PARTY_LEVEL_SPREAD   = 4       -- max level gap within a party
