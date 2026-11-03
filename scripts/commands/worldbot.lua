@@ -3,7 +3,7 @@
 --                 spawn charid|despawn charid|delete charid|list|
 --                 travel charid zoneid|goal charid [level|home]|lines|
 --                 give charid itemid [qty]|inv charid|gear charid|
---                 populate count|delete all|ah charid [visit]|
+--                 populate count|delete all|ah charid [visit]|population|
 --                 ahprice item [single stack|off|on|clear]>
 -- desc: GM management of AI-driven world-population bot characters (see
 --       src/map/utils/botutils.h and scripts/globals/worldbots.lua).
@@ -68,6 +68,7 @@ local function usage(player)
     player:printToPlayer('!worldbot delete all - permanently deletes every bot (bot accounts only)')
     player:printToPlayer('!worldbot list')
     player:printToPlayer('!worldbot zones - zones holding bots: awake/asleep, and why')
+    player:printToPlayer('!worldbot population - bots online vs map.WORLDBOTS_POPULATION, standby and resting')
     player:printToPlayer('!worldbot jobs <charid> - career job, current jobs and levels')
     player:printToPlayer('!worldbot career <charid> <job> - set its career job (e.g. PLD or 7)')
     player:printToPlayer('!worldbot party <charid> - its party, roles and camp')
@@ -631,6 +632,17 @@ commandObj.onTrigger = function(player, args)
 
             player:printToPlayer(string.format('%d zone(s) held awake by bots (limit: map.WORLDBOTS_MAX_AWAKE_ZONES).', held))
         end
+    elseif sub == 'population' then
+        local pop = GetBotPopulation()
+        if pop.target == 0 then
+            player:printToPlayer(string.format('%d bot(s) online, no target (map.WORLDBOTS_POPULATION = 0).', pop.online))
+        else
+            player:printToPlayer(string.format('%d of %d bot(s) online (never below %d from log-offs), %d on the way out.',
+                pop.online, pop.target, pop.floor, pop.leaving))
+        end
+
+        player:printToPlayer(string.format('Offline: %d rested on standby, %d still resting (%d could come back early).',
+            pop.standby, pop.resting, pop.early))
     elseif sub == 'list' then
         local bots = GetBotList()
         if #bots == 0 then

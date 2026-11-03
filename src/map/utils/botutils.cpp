@@ -456,6 +456,113 @@ void destroyBotSession(uint32 charId)
 
 } // namespace
 
+namespace
+{
+
+// Bots on their way out (ReserveBotLogOff): charid -> held until (timestamp).
+// A hold lapses if the bot stops asking (its log-off was called off).
+constexpr uint32 kLeavingHoldSec = 20 * 60;
+
+auto botsLeaving() -> std::unordered_map<uint32, uint32>&
+{
+    static std::unordered_map<uint32, uint32> leaving;
+    return leaving;
+}
+
+void pruneBotsLeaving(uint32 now)
+{
+    auto& leaving = botsLeaving();
+    std::erase_if(leaving, [now](const auto& entry)
+                  { return entry.second < now || g_PMapEngine == nullptr || g_PMapEngine->networking().sessions().getSessionByCharId(entry.first) == nullptr; });
+}
+
+// With a gap to fill and nobody rested, a bot away at least this long cuts its
+// break short and comes back early - as players do when friends need them.
+constexpr uint32 kMinRestSec = 60 * 60;
+
+auto populationTarget() -> uint32
+{
+    return settings::get<uint32>("map.WORLDBOTS_POPULATION");
+}
+
+// How far below the target log-offs may take the online count while it waits
+// for rested bots to come back: 5%, at least one.
+auto populationFloor(uint32 target) -> uint32
+{
+    const uint32 dip = std::max<uint32>(1, target / 20);
+    return target > dip ? target - dip : 0;
+}
+
+// Online / standby / resting counts for active bots, across every map process
+// (accounts_sessions holds a row for each live bot session).
+auto countBotPopulation(uint32 now) -> BotPopulation
+{
+    BotPopulation population{};
+    const auto    rset = db::preparedStmt("SELECT CAST(COALESCE(SUM(s.charid IS NOT NULL), 0) AS UNSIGNED) AS online, "
+                                          "CAST(COALESCE(SUM(s.charid IS NULL AND w.logged_out_until <= ?), 0) AS UNSIGNED) AS standby, "
+                                          "CAST(COALESCE(SUM(s.charid IS NULL AND w.logged_out_until > ?), 0) AS UNSIGNED) AS resting, "
+                                          "CAST(COALESCE(SUM(s.charid IS NULL AND w.logged_out_until > ? AND w.logged_out_at + ? <= ?), 0) AS UNSIGNED) AS early "
+                                          "FROM world_bots w LEFT JOIN accounts_sessions s ON s.charid = w.charid WHERE w.active = 1",
+                                          now, now, now, kMinRestSec, now);
+    FOR_DB_SINGLE_RESULT(rset)
+    {
+        population.online  = rset->get<uint32>("online");
+        population.standby = rset->get<uint32>("standby");
+        population.resting = rset->get<uint32>("resting");
+        population.early   = rset->get<uint32>("early");
+    }
+
+    return population;
+}
+
+} // namespace
+
+auto ReserveBotLogOff(uint32 charId) -> bool
+{
+    const uint32 target = populationTarget();
+    if (target == 0)
+    {
+        return true;
+    }
+
+    const uint32 now     = earth_time::timestamp();
+    auto&        leaving = botsLeaving();
+    pruneBotsLeaving(now);
+
+    if (auto it = leaving.find(charId); it != leaving.end())
+    {
+        it->second = now + kLeavingHoldSec;
+        return true;
+    }
+
+    // Once this bot and everyone already leaving have gone: can bots waiting
+    // offline (rested, or away long enough to come back early) refill the
+    // target? If not, it may still go while the dip stays small - so a pool
+    // barely bigger than the target still gets its breaks.
+    const auto    population = countBotPopulation(now);
+    const int64_t remaining  = static_cast<int64_t>(population.online) - static_cast<int64_t>(leaving.size()) - 1;
+    if (remaining + population.standby + population.early < static_cast<int64_t>(target) &&
+        remaining < static_cast<int64_t>(populationFloor(target)))
+    {
+        return false;
+    }
+
+    leaving[charId] = now + kLeavingHoldSec;
+    return true;
+}
+
+auto GetBotPopulation() -> BotPopulation
+{
+    const uint32 now = earth_time::timestamp();
+    pruneBotsLeaving(now);
+
+    auto population    = countBotPopulation(now);
+    population.target  = populationTarget();
+    population.leaving = static_cast<uint32>(botsLeaving().size());
+    population.floor   = population.target > 0 ? populationFloor(population.target) : 0;
+    return population;
+}
+
 void DespawnBotCharacter(uint32 charId)
 {
     destroyBotSession(charId);
@@ -483,7 +590,8 @@ void LogOffBot(uint32 charId, uint32 offlineSec, const std::string& where)
                 std::format(R"({{"where":"{}","zone_id":{},"offline_sec":{}}})", JsonEscape(where), static_cast<uint16>(PChar->getZone()), offlineSec));
 
     destroyBotSession(charId);
-    db::preparedStmt("UPDATE world_bots SET logged_out_until = ? WHERE charid = ?", until, charId);
+    botsLeaving().erase(charId);
+    db::preparedStmt("UPDATE world_bots SET logged_out_until = ?, logged_out_at = ? WHERE charid = ?", until, earth_time::timestamp(), charId);
 }
 
 auto DeleteBotCharacter(uint32 charId) -> bool
@@ -594,12 +702,30 @@ void SpawnPersistentBots()
     std::vector<uint32> toSpawn;
 
     // Bots that are logged off (a play session ended) stay offline until their
-    // time is up - UpdateBotLogins brings them back.
+    // time is up - UpdateBotLogins brings them back. With an online population
+    // set, only that many come back now (those that were online before the
+    // restart first); the rest wait on standby.
+    const uint32 now    = earth_time::timestamp();
+    const uint32 target = populationTarget();
+    uint32       room   = std::numeric_limits<uint32>::max();
+    if (target > 0)
+    {
+        const auto online = countBotPopulation(now).online;
+        room              = online < target ? target - online : 0;
+    }
+
     const auto rset = db::preparedStmt("SELECT w.charid, c.pos_zone FROM world_bots w JOIN chars c ON c.charid = w.charid "
-                                       "WHERE w.active = 1 AND w.logged_out_until <= ?",
-                                       earth_time::timestamp());
+                                       "LEFT JOIN accounts_sessions s ON s.charid = w.charid "
+                                       "WHERE w.active = 1 AND s.charid IS NULL AND w.logged_out_until <= ? "
+                                       "ORDER BY w.logged_out_until ASC, RAND()",
+                                       now);
     FOR_DB_MULTIPLE_RESULTS(rset)
     {
+        if (toSpawn.size() >= room)
+        {
+            break;
+        }
+
         const auto zoneId = rset->get<uint16>("pos_zone");
         if (managedZones.empty() || std::find(managedZones.begin(), managedZones.end(), zoneId) != managedZones.end())
         {
@@ -636,12 +762,41 @@ void UpdateBotLogins()
     }
 
     std::vector<uint32> due;
+    const uint32        now    = earth_time::timestamp();
+    const uint32        target = populationTarget();
 
-    const auto rset = db::preparedStmt("SELECT w.charid, c.pos_zone FROM world_bots w JOIN chars c ON c.charid = w.charid "
-                                       "WHERE w.active = 1 AND w.logged_out_until > 0 AND w.logged_out_until <= ? LIMIT 20",
-                                       earth_time::timestamp());
+    // No target: everyone whose time away is up. With one: just enough to
+    // bring the online count back up - rested bots first, longest away first,
+    // then bots away at least kMinRestSec coming back early.
+    uint32 wanted = 20;
+    if (target > 0)
+    {
+        pruneBotsLeaving(now);
+        const auto online = countBotPopulation(now).online;
+        wanted            = online < target ? std::min<uint32>(20, target - online) : 0;
+        if (wanted == 0)
+        {
+            return;
+        }
+    }
+
+    const auto rset = target > 0
+                          ? db::preparedStmt("SELECT w.charid, c.pos_zone FROM world_bots w JOIN chars c ON c.charid = w.charid "
+                                             "LEFT JOIN accounts_sessions s ON s.charid = w.charid "
+                                             "WHERE w.active = 1 AND s.charid IS NULL AND (w.logged_out_until <= ? OR w.logged_out_at + ? <= ?) "
+                                             "ORDER BY w.logged_out_until > ? ASC, IF(w.logged_out_until > ?, w.logged_out_at, w.logged_out_until) ASC, RAND() "
+                                             "LIMIT 200",
+                                             now, kMinRestSec, now, now, now)
+                          : db::preparedStmt("SELECT w.charid, c.pos_zone FROM world_bots w JOIN chars c ON c.charid = w.charid "
+                                             "WHERE w.active = 1 AND w.logged_out_until > 0 AND w.logged_out_until <= ? LIMIT 20",
+                                             now);
     FOR_DB_MULTIPLE_RESULTS(rset)
     {
+        if (due.size() >= wanted)
+        {
+            break;
+        }
+
         const auto zoneId = rset->get<uint16>("pos_zone");
         if (managedZones.empty() || std::find(managedZones.begin(), managedZones.end(), zoneId) != managedZones.end())
         {

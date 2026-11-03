@@ -33,6 +33,7 @@ CREATE TABLE IF NOT EXISTS `world_bots` (
   `anchor_z` float(7,3)          NOT NULL DEFAULT 0,
   `career_job` tinyint(2) unsigned NOT NULL DEFAULT 0,
   `logged_out_until` int(10) unsigned NOT NULL DEFAULT 0,
+  `logged_out_at` int(10) unsigned NOT NULL DEFAULT 0,
   `ah_purse` int(10) unsigned NOT NULL DEFAULT 0,
   PRIMARY KEY (`charid`),
   KEY `active` (`active`)

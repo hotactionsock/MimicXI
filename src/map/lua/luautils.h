@@ -381,6 +381,8 @@ auto GetRealPlayersNearBot(uint32 charId, float radius) -> sol::table;
 auto CountRealPlayersNear(uint16 zoneId, float x, float y, float z, float radius) -> uint32;
 void SetBotAway(uint32 charId, bool away);
 void LogOffBot(uint32 charId, uint32 offlineSec, const std::string& where);
+bool ReserveBotLogOff(uint32 charId);
+auto GetBotPopulation() -> sol::table;
 auto PlanBotGear(uint32 charId, sol::table sets, std::string const& weaponSet) -> uint8;
 auto EquipBotGearSet(uint32 charId, std::string const& name) -> uint8;
 auto GetBotJobInfo(uint32 charId) -> sol::object;

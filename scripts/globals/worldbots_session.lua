@@ -17,6 +17,12 @@
 -- Mog House door, or where it stood in the field. While offline a bot is out
 -- of the world entirely: no EXP, no gil, nothing.
 --
+-- The online population (map.WORLDBOTS_POPULATION) has the last word: a bot
+-- whose session is up only logs off if a rested bot is waiting to take its
+-- place (ReserveBotLogOff), so log-offs never drain the world - otherwise it
+-- plays on for another HOLD_MIN_MIN..HOLD_MAX_MIN minutes and asks again. Its
+-- time away is then the least it rests; it logs back in when there's a gap.
+--
 -- map.WORLDBOTS_SESSIONS = false turns this off (bots play around the clock).
 -----------------------------------
 xi = xi or {}
@@ -42,6 +48,8 @@ local LOGOUT_WAIT_MIN    = 20       -- /logout countdown standing in the field
 local LOGOUT_WAIT_MAX    = 30
 local RETRY_SEC          = 2 * 60   -- not a good moment: look again this much later
 local STARTUP_SPREAD_SEC = 10 * 60  -- ...for bots first seen this soon after the server starts
+local HOLD_MIN_MIN       = 10       -- nobody rested to take its place: play on this long...
+local HOLD_MAX_MIN       = 30
 
 -- Goals a bot can drop to go and log off. Errands (selling, shopping, a job
 -- change), NM camps and party trips get finished first.
@@ -153,6 +161,10 @@ function session.tick(bot, charId, state, now, zoneId, hasMogHouse)
 
     -- Standing out the /logout countdown in the field.
     local logout = state.logout
+    if logout or (state.goal and state.goal.kind == 'logoff') then
+        ReserveBotLogOff(charId) -- still on its way out: keep its place
+    end
+
     if logout then
         if
             bot:isEngaged() or
@@ -179,6 +191,12 @@ function session.tick(bot, charId, state, now, zoneId, hasMogHouse)
 
     if not canStop(bot, state) then
         state.sessionEndsAt = now + RETRY_SEC
+        return false
+    end
+
+    -- Only if someone's ready to take its place (the online population).
+    if not ReserveBotLogOff(charId) then
+        state.sessionEndsAt = now + math.random(HOLD_MIN_MIN * 60, HOLD_MAX_MIN * 60)
         return false
     end
 

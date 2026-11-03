@@ -82,8 +82,35 @@ void DespawnBotCharacter(uint32 charId);
 // away. where is how it left ("in their Mog House", "in the field") for the log.
 void LogOffBot(uint32 charId, uint32 offlineSec, const std::string& where);
 
-// Logs back in every bot whose time away is up (map engine timer).
+// Logs bots back in (map engine timer). With map.WORLDBOTS_POPULATION set,
+// it keeps that many bots online: rested bots (time away over) log in,
+// longest-away first, only to fill gaps below the target. With it at 0,
+// every bot logs back in as soon as its time away is up. With a gap and no
+// rested bot, one away an hour or more comes back early.
 void UpdateBotLogins();
+
+// The online population (map.WORLDBOTS_POPULATION): may this bot end its play
+// session now? Yes if there's no target; if, once it and every bot already on
+// its way out have gone, bots waiting offline can refill the target (rested,
+// or away an hour or more and willing to come back early); or if the online
+// count stays within a 5% dip of the target anyway. A yes holds its place in the queue
+// out (renewed by asking again) until it logs off, so a crowd of session ends
+// can't all leave at once. Asking again while already leaving is always yes.
+auto ReserveBotLogOff(uint32 charId) -> bool;
+
+struct BotPopulation
+{
+    uint32 target;  // map.WORLDBOTS_POPULATION (0 = none)
+    uint32 online;  // active bots logged on
+    uint32 leaving; // ...of those, on their way out (ReserveBotLogOff)
+    uint32 standby; // offline and rested - ready to log in when needed
+    uint32 resting; // offline, time away not yet up
+    uint32 early;   // ...of those, away long enough to come back early if needed
+    uint32 floor;   // log-offs never take the online count below this
+};
+
+// For !worldbot population.
+auto GetBotPopulation() -> BotPopulation;
 
 // Despawns (if needed) and permanently deletes a bot character, its throwaway
 // account and its `world_bots` row. Returns false if charId isn't a bot.

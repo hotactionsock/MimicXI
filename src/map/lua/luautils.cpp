@@ -401,6 +401,8 @@ void init(IPP mapIPP, bool isRunningInCI)
     lua.set_function("CountRealPlayersNear", &luautils::CountRealPlayersNear);
     lua.set_function("SetBotAway", &luautils::SetBotAway);
     lua.set_function("LogOffBot", &luautils::LogOffBot);
+    lua.set_function("ReserveBotLogOff", &luautils::ReserveBotLogOff);
+    lua.set_function("GetBotPopulation", &luautils::GetBotPopulation);
     lua.set_function("PlanBotGear", &luautils::PlanBotGear);
     lua.set_function("EquipBotGearSet", &luautils::EquipBotGearSet);
     lua.set_function("GetBotJobInfo", &luautils::GetBotJobInfo);
@@ -3224,6 +3226,32 @@ void LogOffBot(uint32 charId, uint32 offlineSec, const std::string& where)
     TracyZoneScoped;
 
     botutils::LogOffBot(charId, offlineSec, where);
+}
+
+// May this bot end its play session now, given the online population
+// (see botutils::ReserveBotLogOff)? A yes holds its place until it logs off.
+bool ReserveBotLogOff(uint32 charId)
+{
+    TracyZoneScoped;
+
+    return botutils::ReserveBotLogOff(charId);
+}
+
+// { target, online, leaving, standby, resting, early, floor } - for !worldbot population.
+sol::table GetBotPopulation()
+{
+    TracyZoneScoped;
+
+    const auto population = botutils::GetBotPopulation();
+    auto       result     = lua.create_table();
+    result["target"]      = population.target;
+    result["online"]      = population.online;
+    result["leaving"]     = population.leaving;
+    result["standby"]     = population.standby;
+    result["resting"]     = population.resting;
+    result["early"]       = population.early;
+    result["floor"]       = population.floor;
+    return result;
 }
 
 // emote: xi.emote id; targetId (optional): who at; textToo (optional, default true).

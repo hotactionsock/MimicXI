@@ -328,6 +328,16 @@ xi.settings.map =
     -- afternoon and evening. Offline bots gain nothing. false = always online.
     WORLDBOTS_SESSIONS = true,
 
+    -- World bots: how many bots are online at once, out of every active bot.
+    -- Log-offs and log-ons keep the count here: a bot whose session is up
+    -- only logs off if a rested bot is waiting to take its place (else it
+    -- plays on a while), and rested bots log in only to fill gaps - longest
+    -- away first. With a gap and nobody rested, a bot away an hour or more
+    -- comes back early. Log-offs never take it more than 5% below the target.
+    -- E.g. 200 bots with a target of 100: 100 online, taking turns.
+    -- 0 = no target: each bot logs off and on by its own session timer.
+    WORLDBOTS_POPULATION = 0,
+
     -- World bots: the Auction House. Bots list loot (7 listings max, as for
     -- players), relist what doesn't sell, and buy gear upgrades for their job,
     -- with AH money kept in a separate, capped purse fed only by their sales.
