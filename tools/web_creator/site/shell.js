@@ -40,8 +40,8 @@
 
   function renderHeader() {
     const navLinks = PAGES.map(p => {
-      // A bot's own page (bot.html) counts as the Adventurers section.
-      const page = here === "bot.html" ? "bots.html" : here;
+      // A bot's own page and the leaderboards count as the Adventurers section.
+      const page = here === "bot.html" || here === "leaderboards.html" ? "bots.html" : here;
       const cls = p.href.toLowerCase() === page ? "active" : "";
       return `<a href="${p.href}" class="nav-link ${cls}">${p.label}</a>`;
     }).join("");

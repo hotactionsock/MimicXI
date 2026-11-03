@@ -6,12 +6,14 @@ Pages (public) - the public site's bots.html / bot.html (site/), built on the
 JSON below; the old /bots URLs redirect there:
     /bots.html              every bot, with what it's doing now, and a live feed
     /bot.html?id=<charid>   one bot: profile, status, stats and its timeline
+    /leaderboards.html      the top bots by level, kills, EXP, notorious monsters and more
 
 JSON (public, read-only):
     /api/bots                       every bot with its status line
     /api/bots/<charid>              profile, status, stats, title, achievements and recent events
     /api/bots/<charid>/events       events, newest first (?limit, ?before, ?since, ?category)
     /api/bots/feed                  latest events across all bots, with names (?since=<id>, ?limit)
+    /api/bots/leaderboards          top bots by level, kills, EXP, NMs, achievements... (?period=all|week, ?limit)
 
 Every log row already carries a ready-to-show sentence; this module adds the
 "what is it doing now" status, worked out from the latest events, and titles
@@ -349,6 +351,104 @@ def achievements_for(counts):
     return title, result
 
 
+# Leaderboards: (key, label, unit). 'level' (all time) and 'levels_gained'
+# (a week) are the headline board; the rest count log events in the period.
+LEADERBOARDS_ALL = [
+    ('level',        'Highest level',                'level'),
+    ('achievements', 'Most achievements',            'achievements'),
+    ('kills',        'Monsters defeated',            'monsters'),
+    ('exp',          'EXP earned',                   'EXP'),
+    ('nm_defeated',  'Notorious monsters defeated',  'NMs'),
+    ('zones',        'Areas explored',               'areas'),
+    ('gold_caskets', 'Gold caskets opened',          'caskets'),
+    ('parties',      'Parties joined',               'parties'),
+]
+LEADERBOARDS_WEEK = [
+    ('levels_gained', 'Levels gained',               'levels'),
+    ('kills',         'Monsters defeated',           'monsters'),
+    ('exp',           'EXP earned',                  'EXP'),
+    ('nm_defeated',   'Notorious monsters defeated', 'NMs'),
+    ('zones',         'Areas explored',              'areas'),
+    ('gold_caskets',  'Gold caskets opened',         'caskets'),
+    ('parties',       'Parties joined',              'parties'),
+]
+WEEK_SEC = 7 * 24 * 60 * 60
+
+
+def _period_totals(cur, since):
+    """{charid: totals} from the log, for rows at or after `since` (0 = all)."""
+    cur.execute(
+        'SELECT charid,'
+        "  SUM(event = 'level_up'),"
+        "  COALESCE(SUM(CASE WHEN event = 'hunt_summary' THEN JSON_VALUE(data, '$.kills') END), 0),"
+        "  COALESCE(SUM(CASE WHEN event = 'hunt_summary' THEN JSON_VALUE(data, '$.exp') END), 0),"
+        "  SUM(event = 'nm_defeated'),"
+        "  COUNT(DISTINCT CASE WHEN event = 'arrived' THEN JSON_VALUE(data, '$.zone_id') END),"
+        "  SUM(event = 'casket' AND JSON_VALUE(data, '$.chest') = 4),"
+        "  SUM(event = 'joined' OR event = 'formed')"
+        ' FROM world_bot_log WHERE ts >= ? GROUP BY charid',
+        (since,),
+    )
+    totals = {}
+    for r in cur.fetchall():
+        totals[r[0]] = {
+            'levels_gained': int(r[1] or 0),
+            'kills':         int(r[2] or 0),
+            'exp':           int(r[3] or 0),
+            'nm_defeated':   int(r[4] or 0),
+            'zones':         int(r[5] or 0),
+            'gold_caskets':  int(r[6] or 0),
+            'parties':       int(r[7] or 0),
+        }
+    return totals
+
+
+def leaderboards(cur, period='all', limit=10, now=None):
+    """{'period', 'boards': [{key, label, unit, entries: [{rank, charid, name, title, main_abbr,
+    main_level, value}]}]}. Bots with nothing to show (value 0) are left off a board; ties share
+    a rank, broken by name for order."""
+    week    = period == 'week'
+    since   = (now or int(time.time())) - WEEK_SEC if week else 0
+    limit   = max(1, min(int(limit), 50))
+    bots    = {p['charid']: p for p in _bot_profiles(cur)}
+    totals  = _period_totals(cur, since)
+    counts  = _achievement_counts(cur)
+
+    def value_of(key, charid):
+        if key == 'level':
+            return bots[charid]['main_level']
+        if key == 'achievements':
+            _, achievements = achievements_for(counts.get(charid))
+            return sum(1 for a in achievements if a['earned'])
+        return totals.get(charid, {}).get(key, 0)
+
+    boards = []
+    for key, label, unit in (LEADERBOARDS_WEEK if week else LEADERBOARDS_ALL):
+        scored = [(value_of(key, charid), bot['name'], charid) for charid, bot in bots.items()]
+        scored = sorted((row for row in scored if row[0] > 0), key=lambda row: (-row[0], row[1]))[:limit]
+
+        entries, rank, previous = [], 0, None
+        for index, (value, name, charid) in enumerate(scored):
+            if value != previous:
+                rank, previous = index + 1, value
+            bot = bots[charid]
+            entries.append({
+                'rank':       rank,
+                'charid':     charid,
+                'name':       name,
+                'title':      achievements_for(counts.get(charid))[0],
+                'main_abbr':  bot['main_abbr'],
+                'main_level': bot['main_level'],
+                'race':       bot['race'],
+                'face':       bot['face'],
+                'value':      value,
+            })
+
+        boards.append({'key': key, 'label': label, 'unit': unit, 'entries': entries})
+
+    return {'period': 'week' if week else 'all', 'boards': boards}
+
+
 def _with_connection(fn):
     conn = get_connection()
     cur  = conn.cursor()
@@ -398,6 +498,13 @@ def api_bots_feed():
     since = request.args.get('since', type=int)
     limit = request.args.get('limit', default=50, type=int)
     return jsonify({'events': _with_connection(lambda cur: _fetch_events(cur, limit=limit, since=since))})
+
+
+@bots.route('/api/bots/leaderboards')
+def api_bots_leaderboards():
+    period = request.args.get('period', default='all')
+    limit  = request.args.get('limit', default=10, type=int)
+    return jsonify(_with_connection(lambda cur: leaderboards(cur, period=period, limit=limit)))
 
 
 @bots.route('/api/bots/<int:charid>')

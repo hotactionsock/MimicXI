@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Leaderboards — MimicXI</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="bots.css">
+  <script>window.MIMIC_API_BASE = "";</script>
+</head>
+<body data-screen-label="Leaderboards">
+
+  <section class="page-hero">
+    <div class="container">
+      <a class="back-link" href="bots.html">← All adventurers</a>
+      <span class="eyebrow">The living world</span>
+      <h1>Leaderboards</h1>
+      <p class="lede">Who's furthest along, who hunts hardest, who has seen the most of Vana'diel. Worked out from every adventurer's story, and updated as it happens.</p>
+    </div>
+  </section>
+
+  <section class="bots-shell">
+    <div class="container">
+      <div class="board-periods" role="tablist" aria-label="Period">
+        <button type="button" class="filter-chip is-active" data-period="all" role="tab" aria-selected="true">All time</button>
+        <button type="button" class="filter-chip" data-period="week" role="tab" aria-selected="false">This week</button>
+      </div>
+
+      <div id="boards" class="boards-grid" aria-live="polite">
+        <div class="bots-loading">Tallying the scores…</div>
+      </div>
+    </div>
+  </section>
+
+  <script src="shell.js"></script>
+  <script src="tweaks.js"></script>
+  <script src="bots-common.js"></script>
+  <script>
+    (function () {
+      const B = window.MimicBots;
+      const REFRESH_MS = 60000;
+      let period = "all";
+
+      function entry(e, unit) {
+        const medal = e.rank <= 3 ? ` is-top rank-${e.rank}` : "";
+        return `
+          <li class="board-row${medal}">
+            <span class="board-rank">${e.rank}</span>
+            ${B.avatar(e, "board-avatar")}
+            <span class="board-who">
+              <a class="board-name" href="bot.html?id=${e.charid}">${B.esc(e.name)}</a>
+              <span class="board-sub">${B.esc(e.main_abbr || "?")} ${e.main_level}${e.title ? ` · ${B.esc(e.title)}` : ""}</span>
+            </span>
+            <span class="board-value" title="${B.esc(`${e.value.toLocaleString()} ${unit}`)}">${e.value.toLocaleString()}</span>
+          </li>`;
+      }
+
+      function board(b) {
+        return `
+          <section class="board-card">
+            <h2 class="board-title">${B.esc(b.label)}</h2>
+            ${b.entries.length
+              ? `<ol class="board-list">${b.entries.map(e => entry(e, b.unit)).join("")}</ol>`
+              : `<p class="feed-empty">Nobody on this board yet.</p>`}
+          </section>`;
+      }
+
+      async function load() {
+        const root = document.getElementById("boards");
+        try {
+          const d = await B.getJson(`/api/bots/leaderboards?period=${period}`);
+          root.innerHTML = (d.boards || []).map(board).join("");
+        } catch (e) {
+          root.innerHTML = `<div class="bots-loading">The leaderboards are unavailable right now.</div>`;
+        }
+      }
+
+      document.querySelector(".board-periods").addEventListener("click", ev => {
+        const button = ev.target.closest("[data-period]");
+        if (!button || button.dataset.period === period) return;
+        period = button.dataset.period;
+        document.querySelectorAll(".board-periods [data-period]").forEach(b => {
+          const on = b === button;
+          b.classList.toggle("is-active", on);
+          b.setAttribute("aria-selected", on ? "true" : "false");
+        });
+        load();
+      });
+
+      load();
+      setInterval(load, REFRESH_MS);
+    })();
+  </script>
+</body>
+</html>
