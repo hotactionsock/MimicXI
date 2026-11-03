@@ -302,6 +302,11 @@ local outpostDestinations =
     [xi.region.TAVNAZIANARCH]    = { -535.861,  -7.149,  -53.628, 122,  24 }, -- Tavnazia (R)
 }
 
+-- Where an outpost teleport to region lands: { x, y, z, rot, zoneId }, or nil.
+xi.teleport.outpostDestination = function(region)
+    return outpostDestinations[region]
+end
+
 xi.teleport.toOutpost = function(player, region)
     local dest = outpostDestinations[region]
     player:setPos(unpack(dest))

@@ -847,6 +847,11 @@ local function relocateStep(bot, charId, state, now, currentPos, moving)
         if walk.purpose == 'homepoint' then
             if distance(currentPos, walk.target) <= HOMEPOINT_REACH_YALMS then
                 bot:setHomePoint()
+                local index = xi.homepoint.indexNear(bot:getZoneID(), walk.target)
+                if index then
+                    xi.homepoint.unlock(bot, index)
+                end
+
                 xi.worldbots.log.homePoint(bot)
                 diag(charId, 'home point set')
             end
@@ -870,6 +875,12 @@ local function relocateStep(bot, charId, state, now, currentPos, moving)
 
             state.goal = nil -- pick a new (levelling) goal next
             return
+        end
+
+        -- At the gate guard or crystal: pay for the warp and go
+        -- (worldbots_warp.lua). True = the bot left the zone.
+        if walk.purpose == 'warp' then
+            return xi.worldbots.warp.take(bot, charId, state, now, walk.warp)
         end
 
         -- At the Mog House door at the end of a play session: in it goes, and
@@ -924,6 +935,18 @@ end
 
 -- Heads for a social spot (different from the current one): either to stand
 -- in a chat circle there, or just to hang around it.
+-- The zone's home point crystals ('hp' social spots - cities only).
+local function crystalsOf(zoneId)
+    local crystals = {}
+    for _, spot in ipairs(getSocialSpots(zoneId)) do
+        if spot.kind == 'hp' then
+            table.insert(crystals, spot)
+        end
+    end
+
+    return crystals
+end
+
 -- Does this zone have a Mog House entrance (a 'mog' social spot)?
 local function hasMogHouse(zoneId)
     for _, spot in ipairs(getSocialSpots(zoneId)) do
@@ -1471,6 +1494,21 @@ local function plan(bot, charId, state, now, zoneId)
             return
         end
 
+        -- A long way to go: an outpost teleport or home point warp from here,
+        -- if it saves enough walking (worldbots_warp.lua). Once per zone visit.
+        if not state.warpChecked then
+            state.warpChecked = true
+            local w = xi.worldbots.warp.find(bot, state, now, zoneId, goal.zoneId, crystalsOf(zoneId), hopsBetween)
+            if w then
+                local zone = bot:getZone()
+                diag(charId, 'taking a %s warp towards zone %d', w.kind, goal.zoneId)
+                state.walk         = newPlan(zone and zone:getRandomNavmeshPoint(w.at, 2) or w.at)
+                state.walk.purpose = 'warp'
+                state.walk.warp    = w
+                return
+            end
+        end
+
         -- Leaving a city to level: re-home at the crystal by the exit, if that's
         -- more convenient for the levelling zone than the current home point.
         if not state.departHomepointDone and goal.kind == 'level' then
@@ -1785,6 +1823,12 @@ xi.worldbots.onZoneTick = function(zone, bots)
         -- Play sessions: time to stop for the day? (worldbots_session.lua)
         if xi.worldbots.session.tick(bot, charId, state, now, zoneId, hasMogHouse(zoneId)) then
             goto continue -- logged off, or standing out the /logout countdown
+        end
+
+        -- Passing a home point crystal unlocks it, as for players (worldbots_warp.lua).
+        local crystals = crystalsOf(zoneId)
+        if #crystals > 0 then
+            xi.worldbots.warp.touch(bot, state, now, zoneId, crystals)
         end
 
         -- Emotes and /away (worldbots_social.lua).

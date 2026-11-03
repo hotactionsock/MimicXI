@@ -182,6 +182,63 @@ local function goToHP(player, choice, index)
     end
 end
 
+-----------------------------------
+-- For world bots (scripts/globals/worldbots_warp.lua): bots touch crystals and
+-- warp between them under the same rules and fees as players.
+-----------------------------------
+
+-- The home point whose crystal is at pos in zoneId (its landing spot within
+-- 15 yalms), or nil.
+xi.homepoint.indexNear = function(zoneId, pos)
+    local best, bestDist = nil, 15
+    for index, data in pairs(homepointData) do
+        local dest = data.dest
+        if dest[5] == zoneId then
+            local dx, dz = dest[1] - pos.x, dest[3] - pos.z
+            local dist   = math.sqrt(dx * dx + dz * dz)
+            if dist <= bestDist then
+                best, bestDist = index, dist
+            end
+        end
+    end
+
+    return best
+end
+
+-- Unlocks a home point for player as touching its crystal does. True if new.
+xi.homepoint.unlock = function(player, index)
+    local hpBit = index % 32
+    local hpSet = math.floor(index / 32)
+    if player:hasTeleport(xi.teleport.type.HOMEPOINT, hpBit, hpSet) then
+        return false
+    end
+
+    player:addTeleport(xi.teleport.type.HOMEPOINT, hpBit, hpSet)
+    return true
+end
+
+-- Home points player can warp to from the crystal at origin:
+-- { { index, zoneId, dest = { x, y, z, rot, zone }, cost }, ... }
+xi.homepoint.destinations = function(player, origin)
+    local result = {}
+    if xi.settings.main.HOMEPOINT_TELEPORT ~= 1 or homepointData[origin] == nil then
+        return result
+    end
+
+    local hasKI = player:hasKeyItem(xi.ki.RHAPSODY_IN_WHITE)
+    for index, data in pairs(homepointData) do
+        if
+            index ~= origin and
+            data.dest[5] ~= homepointData[origin].dest[5] and
+            player:hasTeleport(xi.teleport.type.HOMEPOINT, index % 32, math.floor(index / 32))
+        then
+            table.insert(result, { index = index, zoneId = data.dest[5], dest = data.dest, cost = getCost(origin, index, hasKI) })
+        end
+    end
+
+    return result
+end
+
 -- Functions called by homepoint scripts.
 xi.homepoint.onTrigger = function(player, csid, index)
     if xi.settings.main.HOMEPOINT_TELEPORT ~= 1 then -- Settings.lua Homepoints disabled
