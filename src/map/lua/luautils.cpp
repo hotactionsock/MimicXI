@@ -375,6 +375,9 @@ void init(IPP mapIPP, bool isRunningInCI)
     lua.set_function("NoteBotAuctionFail", &luautils::NoteBotAuctionFail);
     lua.set_function("ClearBotAuctionFail", &luautils::ClearBotAuctionFail);
     lua.set_function("ReleaseBotKeptItem", &luautils::ReleaseBotKeptItem);
+    lua.set_function("GetBotAuctionStartPrice", &luautils::GetBotAuctionStartPrice);
+    lua.set_function("SetBotAuctionPrice", &luautils::SetBotAuctionPrice);
+    lua.set_function("ClearBotAuctionPrice", &luautils::ClearBotAuctionPrice);
     lua.set_function("GetBotSellableValue", &luautils::GetBotSellableValue);
     lua.set_function("SellBotItems", &luautils::SellBotItems);
     lua.set_function("GetBotVendors", &luautils::GetBotVendors);
@@ -2937,6 +2940,37 @@ void ReleaseBotKeptItem(uint32 charId, uint16 itemId)
     TracyZoneScoped;
 
     botutils::ReleaseBotKeptItem(charId, itemId);
+}
+
+// { single, stacks, manualSingle, manualStacks, allow, commonDrop, source }
+sol::table GetBotAuctionStartPrice(uint16 itemId)
+{
+    TracyZoneScoped;
+
+    const auto p          = botutils::GetBotAuctionStartPrice(itemId);
+    auto       table      = lua.create_table();
+    table["single"]       = p.single;
+    table["stacks"]       = p.stacks;
+    table["manualSingle"] = p.manualSingle;
+    table["manualStacks"] = p.manualStacks;
+    table["allow"]        = p.allow;
+    table["commonDrop"]   = p.commonDrop;
+    table["source"]       = p.source;
+    return table;
+}
+
+void SetBotAuctionPrice(uint16 itemId, uint32 single, uint32 stacks, bool allow)
+{
+    TracyZoneScoped;
+
+    botutils::SetBotAuctionPrice(itemId, single, stacks, allow);
+}
+
+void ClearBotAuctionPrice(uint16 itemId)
+{
+    TracyZoneScoped;
+
+    botutils::ClearBotAuctionPrice(itemId);
 }
 
 uint32 GetBotSellableValue(uint32 charId)

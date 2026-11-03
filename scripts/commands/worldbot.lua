@@ -3,7 +3,8 @@
 --                 spawn charid|despawn charid|delete charid|list|
 --                 travel charid zoneid|goal charid [level|home]|lines|
 --                 give charid itemid [qty]|inv charid|gear charid|
---                 populate count|delete all>
+--                 populate count|delete all|ah charid [visit]|
+--                 ahprice item [single stack|off|on|clear]>
 -- desc: GM management of AI-driven world-population bot characters (see
 --       src/map/utils/botutils.h and scripts/globals/worldbots.lua).
 -----------------------------------
@@ -80,6 +81,42 @@ local function usage(player)
     player:printToPlayer('!worldbot give <charid> <itemid> [qty] - give an item (then equips/learns it if useful)')
     player:printToPlayer('!worldbot inv <charid> - list its items (* = equipped)')
     player:printToPlayer('!worldbot gear <charid> - learn scrolls, re-plan gear sets and re-read spells now')
+    player:printToPlayer('!worldbot ah <charid> [visit] - its AH purse and listings; "visit" sends it to the AH at its next goal')
+    player:printToPlayer('!worldbot ahprice <item> - what bots would price it at, and why (item: id or name, e.g. bronze_sword)')
+    player:printToPlayer('!worldbot ahprice <item> <single|-> [stack|-] - set your price for it (0 = back to the estimate)')
+    player:printToPlayer('!worldbot ahprice <item> off|on|clear - stop bots listing it / allow again / remove your price')
+end
+
+-- An item id from a number or a name ("bronze_sword", "Bronze Sword").
+local function resolveItem(token)
+    local id = tonumber(token)
+    if id then
+        return id
+    end
+
+    return token and xi.item[token:upper():gsub('[%s%-]', '_')] or nil
+end
+
+local function itemLabel(itemId)
+    local item = GetItemByID(itemId)
+    return item and string.format('%s (%d)', item:getName(), itemId) or tostring(itemId)
+end
+
+local function showAHPrice(player, itemId)
+    local start  = GetBotAuctionStartPrice(itemId)
+    local single = GetBotAuctionMarket(0, itemId, false)
+    local stacks = GetBotAuctionMarket(0, itemId, true)
+
+    player:printToPlayer(string.format('%s: bots %s list it', itemLabel(itemId), start.allow and 'may' or 'never'))
+    player:printToPlayer(string.format('  start price: single %d%s, stack %s%s - source: %s%s', start.single, start.manualSingle and ' (yours)' or '',
+        start.stacks > 0 and tostring(start.stacks) or '-', start.manualStacks and ' (yours)' or '', start.source, start.commonDrop and ', common drop' or ''))
+    for _, entry in ipairs({ { 'single', single }, { 'stack', stacks } }) do
+        local m = entry[2]
+        if m.listings > 0 or m.historyCount > 0 then
+            player:printToPlayer(string.format('  %s market: %d listed (lowest %d, %d by bots), median %d from %d sales, %d sold this week',
+                entry[1], m.listings, m.lowest, m.botListings, m.median, m.historyCount, m.sales7d))
+        end
+    end
 end
 
 -- Resolves a race token (nil, a race name, or a number) to a valid CharRace id,
@@ -431,6 +468,62 @@ commandObj.onTrigger = function(player, args)
         for _, item in ipairs(items) do
             local equipped = item.equipSlot >= 0 and string.format(' * %s', SLOT_NAMES[item.equipSlot] or '?') or ''
             player:printToPlayer(string.format('  [%d:%d] %s (%d) x%d%s', item.container, item.slot, item.name, item.itemId, item.quantity, equipped))
+        end
+    elseif sub == 'ahprice' then
+        local itemToken, a, b = rest:match('^(%S*)%s*(%S*)%s*(%S*)$')
+        local itemId          = resolveItem(itemToken ~= '' and itemToken or nil)
+        if itemId == nil or GetItemByID(itemId) == nil then
+            usage(player)
+            return
+        end
+
+        local start = GetBotAuctionStartPrice(itemId)
+        local mine  = { single = start.manualSingle and start.single or 0, stacks = start.manualStacks and start.stacks or 0 }
+
+        if a == 'off' or a == 'on' then
+            SetBotAuctionPrice(itemId, mine.single, mine.stacks, a == 'on')
+        elseif a == 'clear' then
+            ClearBotAuctionPrice(itemId)
+        elseif a ~= '' then
+            local single = a == '-' and mine.single or tonumber(a)
+            local stacks = (b == '' or b == '-') and mine.stacks or tonumber(b)
+            if single == nil or stacks == nil or single < 0 or stacks < 0 then
+                usage(player)
+                return
+            end
+
+            SetBotAuctionPrice(itemId, single, stacks, start.allow)
+        end
+
+        showAHPrice(player, itemId)
+    elseif sub == 'ah' then
+        local charIdArg, action = rest:match('^(%S*)%s*(%S*)$')
+        local charId            = tonumber(charIdArg)
+        if charId == nil or not IsBotCharacter(charId) then
+            usage(player)
+            return
+        end
+
+        if action == 'visit' then
+            local state = xi.worldbots.internal.getState(charId, GetSystemTime())
+            state.nextAHAt = 0
+            local goal = state.goal
+            if goal and goal.settled then
+                goal.untilTime = GetSystemTime() -- pick its next goal now
+            end
+
+            player:printToPlayer('It will head for the auction house at its next goal (if it has something to sell or listings).')
+        end
+
+        player:printToPlayer(string.format('AH purse: %d gil', GetBotAuctionPurse(charId)))
+        local listings = GetBotAuctionListings(charId)
+        if #listings == 0 then
+            player:printToPlayer('  no listings')
+        end
+
+        for _, listing in ipairs(listings) do
+            player:printToPlayer(string.format('  %s%s at %d gil, listed %d min ago', listing.name, listing.stack and ' (stack)' or '', listing.price,
+                math.floor((GetSystemTime() - listing.listedAt) / 60)))
         end
     elseif sub == 'lines' then
         local lines = xi.worldbots.zoneLines(player:getZoneID())

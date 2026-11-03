@@ -30,6 +30,7 @@
 #include "entities/char_entity.h"
 #include "item_container.h"
 #include "items.h"
+#include "enums/item_flag.h"
 #include "items/item_equipment.h"
 #include "items/transactions/item_claim.h"
 #include "map_engine.h"
@@ -43,7 +44,10 @@
 #include "utils/itemutils.h"
 
 #include <algorithm>
+#include <bit>
+#include <cmath>
 #include <format>
+#include <unordered_map>
 
 namespace botutils
 {
@@ -171,7 +175,205 @@ auto toInventory(CCharEntity* PChar, uint8 location, uint8 slot) -> uint8
     return 0;
 }
 
+// ---- Starting price estimate ----------------------------------------------
+
+// Gil-equivalent effort of one kill at a mob level: grows with level, as
+// higher mobs take longer and are harder to farm.
+auto killEffort(float level) -> float
+{
+    const float scale = 1.0f + level / 6.0f;
+    return 4.0f * scale * scale;
+}
+
+constexpr float  kEstimateScale     = 0.4f;    // effort -> gil
+constexpr float  kNMKillsPerHour    = 30.0f;   // what an hour camping an NM is worth, in kills
+constexpr float  kMinNMHours        = 1.0f;
+constexpr float  kStackDiscount     = 0.85f;   // a stack sells a little under 12-15 singles
+constexpr float  kGearCurveBase     = 40.0f;   // gear: 40 x level^1.7 (level 10 ~2k, 30 ~13k, 50 ~31k, 75 ~61k)...
+constexpr float  kGearCurveExp      = 1.7f;
+constexpr float  kJobFactorBase     = 0.6f;    // ...x (0.6 + 0.04 per job that can wear it), at most 1.5
+constexpr float  kJobFactorPerJob   = 0.04f;
+constexpr float  kJobFactorMax      = 1.5f;
+constexpr uint32 kMaxEstimate       = 2000000;
+constexpr uint32 kMinSingle         = 50;
+constexpr uint32 kMinStack          = 300;
+constexpr float  kVendorMult        = 3.0f;    // not gear, no ordinary mob drops it: vendor x this
+constexpr float  kCommonDropChance  = 0.10f;
+constexpr uint16 kMobTypeNotorious  = 0x02;
+constexpr uint16 kMobTypeBattlefield = 0x10;
+constexpr uint16 kMobTypeEvent      = 0x20;
+
+struct Estimate
+{
+    uint32      single{ 0 };
+    uint32      stacks{ 0 };
+    bool        commonDrop{ false };
+    std::string source;
+};
+
+std::unordered_map<uint16, Estimate> g_estimates; // static data: computed once per item
+
+auto estimatePrice(uint16 itemId) -> Estimate
+{
+    if (const auto it = g_estimates.find(itemId); it != g_estimates.end())
+    {
+        return it->second;
+    }
+
+    Estimate estimate;
+
+    const auto* PItem = xi::items::lookup(itemId);
+    if (PItem == nullptr)
+    {
+        return estimate;
+    }
+
+    const uint32 vendor    = PItem->hasFlag(ItemFlag::NoSale) ? 0 : PItem->getBasePrice();
+    const uint32 stackSize = PItem->getStackSize();
+    const auto*  PEquip    = dynamic_cast<const CItemEquipment*>(PItem);
+
+    // The cheapest way to farm it, over every mob group that drops it - from
+    // ordinary mobs and from notorious monsters separately.
+    float bestMob = 0.0f;
+    float bestNM  = 0.0f;
+    const auto rset = db::preparedStmt(
+        "SELECT d.dropType, d.itemRate, d.groupRate, g.respawntime, p.mobType, "
+        "CAST(AVG((s.minLevel + s.maxLevel) / 2) AS DOUBLE) AS level "
+        "FROM mob_droplist d "
+        "INNER JOIN mob_groups g ON g.dropid = d.dropId "
+        "INNER JOIN mob_pools p ON p.poolid = g.poolid "
+        "INNER JOIN mob_spawn_points s ON s.groupid = g.groupid AND ((s.mobid >> 12) & 0xFFF) = g.zoneid "
+        "WHERE d.itemId = ? AND d.dropType IN (0, 1) AND d.itemRate > 0 AND s.maxLevel > 0 "
+        "GROUP BY g.groupid, g.zoneid, d.dropType, d.itemRate, d.groupRate, g.respawntime, p.mobType",
+        itemId);
+    FOR_DB_MULTIPLE_RESULTS(rset)
+    {
+        float chance = rset->get<uint16>("itemRate") / 1000.0f;
+        if (rset->get<uint8>("dropType") == 1) // grouped: the group's chance, then its share of it
+        {
+            chance *= rset->get<uint16>("groupRate") / 1000.0f;
+        }
+
+        if (chance <= 0.0f)
+        {
+            continue;
+        }
+
+        const float  level   = static_cast<float>(rset->get<double>("level"));
+        const uint16 mobType = rset->get<uint16>("mobType");
+        float        effort  = killEffort(level) / chance;
+
+        // Notorious monsters (and battlefield / event mobs) can't be farmed
+        // freely: one kill per respawn, so an hour of camping per kill at least.
+        if ((mobType & (kMobTypeNotorious | kMobTypeBattlefield | kMobTypeEvent)) != 0)
+        {
+            const float hours = std::max(kMinNMHours, rset->get<uint32>("respawntime") / 3600.0f);
+            effort *= hours * kNMKillsPerHour;
+            bestNM = bestNM == 0.0f ? effort : std::min(bestNM, effort);
+        }
+        else
+        {
+            estimate.commonDrop = estimate.commonDrop || chance >= kCommonDropChance;
+            bestMob             = bestMob == 0.0f ? effort : std::min(bestMob, effort);
+        }
+    }
+
+    float single = 0.0f;
+    if (PEquip != nullptr)
+    {
+        // Gear: by its level and how many jobs can wear it - or what it takes
+        // to farm it, if that's more (an NM's gear is worth its camp).
+        const float level = std::max<float>(1.0f, PEquip->getReqLvl());
+        const float jobs  = static_cast<float>(std::popcount(PEquip->getJobs()));
+        single            = kGearCurveBase * std::pow(level, kGearCurveExp) * std::min(kJobFactorMax, kJobFactorBase + kJobFactorPerJob * jobs);
+        estimate.source   = "level";
+
+        const float farmed = (bestMob > 0.0f ? bestMob : bestNM) * kEstimateScale;
+        if (farmed > single)
+        {
+            single          = farmed;
+            estimate.source = "drops";
+        }
+    }
+    else if (bestMob > 0.0f)
+    {
+        // Anything else an ordinary mob drops: what farming it takes. (A drop
+        // known only from NMs says little - most such things also come from
+        // ordinary mobs, crafting or gathering.)
+        single          = bestMob * kEstimateScale;
+        estimate.source = "drops";
+    }
+    else
+    {
+        single          = vendor * kVendorMult;
+        estimate.source = "vendor";
+    }
+
+    const float floorSingle = std::max<float>(kMinSingle, vendor * 1.1f);
+    single                  = std::clamp<float>(single, floorSingle, static_cast<float>(kMaxEstimate));
+    estimate.single         = static_cast<uint32>(single);
+
+    if (stackSize > 1)
+    {
+        const float floorStack = std::max<float>(kMinStack, vendor * stackSize * 1.1f);
+        estimate.stacks        = static_cast<uint32>(std::clamp<float>(single * stackSize * kStackDiscount, floorStack, static_cast<float>(kMaxEstimate)));
+    }
+
+    g_estimates[itemId] = estimate;
+    return estimate;
+}
+
 } // namespace
+
+auto GetBotAuctionStartPrice(uint16 itemId) -> BotAuctionPrice
+{
+    const auto estimate = estimatePrice(itemId);
+
+    BotAuctionPrice price;
+    price.single     = estimate.single;
+    price.stacks     = estimate.stacks;
+    price.commonDrop = estimate.commonDrop;
+    price.source     = estimate.source;
+
+    const auto rset = db::preparedStmt("SELECT price_single, price_stacks, allow FROM world_bot_ah_prices WHERE itemid = ?", itemId);
+    FOR_DB_SINGLE_RESULT(rset)
+    {
+        const auto single = rset->get<uint32>("price_single");
+        const auto stacks = rset->get<uint32>("price_stacks");
+        if (single > 0)
+        {
+            price.single       = single;
+            price.manualSingle = true;
+        }
+
+        if (stacks > 0)
+        {
+            price.stacks       = stacks;
+            price.manualStacks = true;
+        }
+
+        price.allow = rset->get<uint8>("allow") != 0;
+        if (price.manualSingle || price.manualStacks)
+        {
+            price.source = "manual";
+        }
+    }
+
+    return price;
+}
+
+void SetBotAuctionPrice(uint16 itemId, uint32 single, uint32 stacks, bool allow)
+{
+    db::preparedStmt("INSERT INTO world_bot_ah_prices (itemid, price_single, price_stacks, allow, updated) VALUES (?, ?, ?, ?, ?) "
+                     "ON DUPLICATE KEY UPDATE price_single = VALUES(price_single), price_stacks = VALUES(price_stacks), "
+                     "allow = VALUES(allow), updated = VALUES(updated)",
+                     itemId, single, stacks, allow ? 1 : 0, earth_time::timestamp());
+}
+
+void ClearBotAuctionPrice(uint16 itemId)
+{
+    db::preparedStmt("DELETE FROM world_bot_ah_prices WHERE itemid = ?", itemId);
+}
 
 auto GetBotAuctionMarket(uint32 charId, uint16 itemId, bool stack) -> BotAuctionMarket
 {

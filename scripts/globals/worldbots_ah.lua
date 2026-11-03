@@ -30,8 +30,11 @@
 --     of loot - the same faucets a player has - and capped by level. AH buys
 --     must fit in it. Bots can only put back into the market what the market
 --     and their own loot gave them.
---   * Anchored prices. A reference price comes from the median of recent
---     sales (or, with no history, a multiple of the vendor price). Listings
+--   * Anchored prices. A reference price is the server owner's manual price
+--     (world_bot_ah_prices, !worldbot ahprice) if set, else the median of
+--     recent sales, else a starting estimate (botauction.h: gear by level and
+--     how many jobs wear it, other drops by farming effort, the rest by vendor
+--     price). Items set to "off" are never listed. Listings
 --     stay within [floor, ceiling] around it: a bot undercuts the cheapest
 --     listing by 1-5%, but never below the floor (no race to the bottom, never
 --     below what a vendor pays) and never above the ceiling (no runaway
@@ -60,8 +63,6 @@ local STALE_SEC          = 24 * 60 * 60 -- an undercut listing older than this c
 local DAY_SEC            = 24 * 60 * 60
 
 -- Pricing
-local NO_HISTORY_GEAR    = 4            -- no sales history: price at vendor x this (gear)...
-local NO_HISTORY_OTHER   = 3            -- ...or x this (anything else)
 local MIN_SINGLE_PRICE   = 100          -- never list a single below this...
 local MIN_STACK_PRICE    = 300          -- ...or a stack below this
 local HISTORY_TRUSTED    = 3            -- sales needed to trust the median alone
@@ -86,7 +87,6 @@ local PURSE_BASE         = 20000
 local PURSE_PER_LEVEL    = 3000
 local BUY_PURSE_SHARE    = 0.5          -- never spend more than this share of the purse at once
 local BUY_OVER_REFERENCE = 1.15         -- never pay more than this x the going rate
-local BUY_NO_HISTORY     = 6            -- no history: at most vendor x this
 
 -- AH fee, as auctionutils charges it (map settings).
 local function auctionFee(price, stack)
@@ -121,18 +121,24 @@ local function effectiveFails(fail, now)
     return math.max(0, fail.fails - math.floor((now - fail.lastFail) / DAY_SEC))
 end
 
--- The going rate for one (or a stack), or nil if it can't be priced.
-local function referencePrice(market, gear, stack)
-    local fallback = market.vendorPrice * (gear and NO_HISTORY_GEAR or NO_HISTORY_OTHER)
-    fallback = math.max(fallback, stack and MIN_STACK_PRICE or MIN_SINGLE_PRICE)
-
-    if market.historyCount >= HISTORY_TRUSTED then
-        return market.median
-    elseif market.historyCount > 0 then
-        return math.floor((market.median + fallback) / 2)
+-- The going rate for one (or a stack): the server owner's manual price if
+-- there is one, else the market's recent sales, else the starting estimate
+-- (GetBotAuctionStartPrice - by gear level, farming effort or vendor price).
+-- Returns the price and whether it's a manual one.
+local function referencePrice(market, start, stack)
+    local estimate = stack and start.stacks or start.single
+    if stack and start.manualStacks or not stack and start.manualSingle then
+        return estimate, true
     end
 
-    return fallback
+    estimate = math.max(estimate, stack and MIN_STACK_PRICE or MIN_SINGLE_PRICE)
+    if market.historyCount >= HISTORY_TRUSTED then
+        return market.median, false
+    elseif market.historyCount > 0 then
+        return math.floor((market.median + estimate) / 2), false
+    end
+
+    return estimate, false
 end
 
 local function priceBand(market, reference, stack)
@@ -160,11 +166,12 @@ local function askingPrice(market, reference, stack)
     return math.min(target, ceiling)
 end
 
--- A cheap, plentiful thing nobody's buying.
-local function isCommon(market, reference)
+-- A cheap, plentiful thing nobody's buying: an easy drop from ordinary mobs,
+-- or worth little more than a vendor pays, or cheap and not selling at all.
+local function isCommon(market, start, reference)
     if
-        market.vendorPrice > 0 and
-        reference <= market.vendorPrice * COMMON_REF_OVER_VENDOR
+        start.commonDrop or
+        (market.vendorPrice > 0 and reference <= market.vendorPrice * COMMON_REF_OVER_VENDOR)
     then
         return true
     end
@@ -275,14 +282,20 @@ local function list(bot, charId, now, freeSlots)
 
     for _, c in ipairs(GetBotAuctionCandidates(charId)) do
         local key = c.itemId * 2 + (c.stack and 1 or 0)
-        if not exclude[c.itemId] and not seen[key] then
+        -- (An item the server owner set to "off" is never listed.)
+        local start = not exclude[c.itemId] and not seen[key] and GetBotAuctionStartPrice(c.itemId) or nil
+        if start and start.allow then
             seen[key] = true
 
-            local market    = GetBotAuctionMarket(charId, c.itemId, c.stack)
-            local reference = referencePrice(market, c.gear, c.stack)
-            local failCount = effectiveFails(fails[c.itemId], now)
+            local market            = GetBotAuctionMarket(charId, c.itemId, c.stack)
+            local reference, manual = referencePrice(market, start, c.stack)
+            local failCount         = effectiveFails(fails[c.itemId], now)
 
-            if failCount >= GIVE_UP_FAILS and isCommon(market, reference) then
+            if
+                failCount >= GIVE_UP_FAILS and
+                not manual and
+                isCommon(market, start, reference)
+            then
                 -- A common drop that won't sell: give up - vendor or toss it.
                 ReleaseBotKeptItem(charId, c.itemId)
                 xi.worldbots.log.event(bot, xi.worldbots.log.DETAIL, 'item', 'ah_gave_up',
@@ -331,13 +344,9 @@ local function buy(bot, charId)
     end
 
     for _, upgrade in ipairs(FindBotAuctionUpgrades(charId, budget)) do
-        local market = GetBotAuctionMarket(charId, upgrade.itemId, false)
-        local limit  = budget
-        if market.historyCount >= HISTORY_TRUSTED then
-            limit = math.min(limit, math.floor(market.median * BUY_OVER_REFERENCE))
-        elseif market.vendorPrice > 0 then
-            limit = math.min(limit, market.vendorPrice * BUY_NO_HISTORY)
-        end
+        local market    = GetBotAuctionMarket(charId, upgrade.itemId, false)
+        local reference = referencePrice(market, GetBotAuctionStartPrice(upgrade.itemId), false)
+        local limit     = math.min(budget, math.floor(reference * BUY_OVER_REFERENCE))
 
         local paid = BuyBotAuctionItem(charId, upgrade.itemId, false, limit)
         if paid > 0 then

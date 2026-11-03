@@ -122,6 +122,39 @@ auto GetBotAuctionFails(uint32 charId) -> std::vector<BotAuctionFail>;
 void NoteBotAuctionFail(uint32 charId, uint16 itemId);
 void ClearBotAuctionFail(uint32 charId, uint16 itemId);
 
+// ---- Starting prices ----------------------------------------------------------
+//
+// What an item is worth before the market has spoken (no sales history yet),
+// or what the server owner says it's worth:
+//   manual  - world_bot_ah_prices (set with !worldbot ahprice, or imported
+//             from an ffxiahbot-format CSV): always wins, and can also forbid
+//             bots from listing an item at all
+//   level   - gear: by its level and how many jobs can wear it (a curve:
+//             level 10 ~2k, 30 ~13k, 50 ~31k, 75 ~61k for all-job gear) - or
+//             what farming it takes, if more (an NM's gear)
+//   drops   - anything else an ordinary mob drops: from the cheapest way to
+//             farm it (drop chance and mob level, mob_droplist). Drops known
+//             only from NMs are ignored for non-gear
+//   vendor  - anything else: a multiple of the vendor price
+// Market sale history takes over from the estimate once there is some
+// (worldbots_ah.lua); a manual price beats both.
+struct BotAuctionPrice
+{
+    uint32      single{ 0 };
+    uint32      stacks{ 0 };
+    bool        manualSingle{ false };
+    bool        manualStacks{ false };
+    bool        allow{ true };   // false = bots never list it (manual)
+    bool        commonDrop{ false }; // farmed easily: an ordinary mob, 10%+ chance
+    std::string source;          // "manual", "level", "drops" or "vendor"
+};
+
+auto GetBotAuctionStartPrice(uint16 itemId) -> BotAuctionPrice;
+
+// Manual prices (0 = no override for that kind - use the estimate).
+void SetBotAuctionPrice(uint16 itemId, uint32 single, uint32 stacks, bool allow);
+void ClearBotAuctionPrice(uint16 itemId);
+
 // Everything AH for a bot that's being deleted (or a new bot reusing its
 // charid): its unsold listings, fail counts and given-up items.
 void DeleteBotAuctionData(uint32 charId);
