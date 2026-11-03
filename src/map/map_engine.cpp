@@ -59,6 +59,7 @@
 #include "utils/botlog.h"
 #include "utils/botmemory.h"
 #include "utils/botutils.h"
+#include "utils/botwatch.h"
 #include "utils/charutils.h"
 #include "utils/fishingutils.h"
 #include "utils/gardenutils.h"
@@ -302,6 +303,15 @@ auto MapEngine::init() -> Task<void>
             {
                 botutils::FlushBotLog();
                 botutils::FlushBotMemory();
+                co_return;
+            });
+
+        // World bots: live snapshots of bots someone is watching on the website.
+        botWatchToken_ = scheduler_.intervalOnMainThread(
+            kBotWatchInterval,
+            []() -> Task<void>
+            {
+                botutils::UpdateBotWatch();
                 co_return;
             });
 

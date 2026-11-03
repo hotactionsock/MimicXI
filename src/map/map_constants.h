@@ -65,6 +65,7 @@ static constexpr auto kBotAwakeZonesInterval  = 5s; // botutils::UpdateBotAwakeZ
 static constexpr auto kBotLogFlushInterval    = 5s; // botutils::FlushBotLog
 static constexpr auto kBotLogPruneInterval    = 6h; // botutils::PruneBotLog
 static constexpr auto kBotLoginInterval       = 30s; // botutils::UpdateBotLogins
+static constexpr auto kBotWatchInterval       = 2s;  // botutils::UpdateBotWatch (website live view)
 
 // The rate at which we force Lua garbage collections
 static constexpr auto kGarbageCollectionInterval = 15min;

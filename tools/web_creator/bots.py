@@ -7,12 +7,15 @@ JSON below; the old /bots URLs redirect there:
     /bots.html              every bot, with what it's doing now, and a live feed
     /bot.html?id=<charid>   one bot: profile, status, stats and its timeline
     /leaderboards.html      the top bots by level, kills, EXP, notorious monsters and more
+    /watch.html?id=<charid> watch one bot live: radar, HP/MP/TP, what's around it
 
 JSON (public, read-only):
     /api/bots                       every bot with its status line
     /api/bots/<charid>              profile, status, stats, title, achievements, storyline and recent events
     /api/bots/<charid>/events       events, newest first (?limit, ?before, ?since, ?category)
     /api/bots/feed                  latest events across all bots, with names (?since=<id>, ?limit)
+    /api/bots/<charid>/live         live snapshot (and asks the game server to keep snapshotting it)
+    /api/zones/<zoneid>/layout      a zone's mob spawn points, for the live radar
     /api/bots/leaderboards          top bots by level, kills, EXP, NMs, achievements, defeats... (?period=all|week, ?limit)
 
 Every log row already carries a ready-to-show sentence; this module adds the
@@ -722,6 +725,80 @@ def api_bot_events(charid):
         category=args.get('category') or None,
     ))
     return jsonify({'events': events})
+
+
+# ── Live view (watch.html) ───────────────────────────────────────────────────
+#
+# Asking for a bot's live view puts it on the watch list (world_bot_watch) for
+# WATCH_SEC; while it's there the map engine writes a snapshot every couple of
+# seconds (world_bot_live - see src/map/utils/botwatch.h). The page polls, so
+# a bot stops being snapshotted shortly after the last viewer leaves.
+
+WATCH_SEC        = 30
+LIVE_STALE_SEC   = 10   # a snapshot older than this: the bot isn't in the world right now
+_zone_layouts    = {}   # zone id -> layout (static data, cached for the process)
+_zone_names      = {}
+
+
+def _zone_name_map(cur):
+    if not _zone_names:
+        cur.execute('SELECT zoneid, name FROM zone_settings')
+        for zid, name in cur.fetchall():
+            _zone_names[zid] = _zone_name(name)
+    return _zone_names
+
+
+def _live(cur, charid):
+    now = int(time.time())
+    cur.execute('SELECT charname FROM chars c INNER JOIN world_bots w ON w.charid = c.charid WHERE c.charid = ?', (charid,))
+    row = cur.fetchone()
+    if not row:
+        return None
+
+    cur.execute('INSERT INTO world_bot_watch (charid, until_ts) VALUES (?, ?) ON DUPLICATE KEY UPDATE until_ts = VALUES(until_ts)',
+                (charid, now + WATCH_SEC))
+
+    cur.execute('SELECT ts, zone_id, data FROM world_bot_live WHERE charid = ?', (charid,))
+    live = cur.fetchone()
+    names = _zone_name_map(cur)
+
+    result = {'charid': charid, 'name': row[0], 'now': now, 'snapshot': None, 'age': None, 'live': False}
+    if live:
+        snapshot = _json(live[2])
+        for line in snapshot.get('lines', []):
+            line['zone'] = names.get(line.get('to'), 'Zone {}'.format(line.get('to')))
+        snapshot['zone'] = names.get(live[1], 'Zone {}'.format(live[1]))
+        result.update(snapshot=snapshot, age=now - live[0], live=now - live[0] <= LIVE_STALE_SEC)
+    return result
+
+
+def _zone_layout(cur, zone_id):
+    """Static shape of a zone for the radar: mob spawn points (name, levels,
+    position) - where things live, which also outlines the walkable area."""
+    if zone_id in _zone_layouts:
+        return _zone_layouts[zone_id]
+
+    cur.execute(
+        'SELECT mobname, minLevel, maxLevel, pos_x, pos_z FROM mob_spawn_points '
+        'WHERE ((mobid >> 12) & 0xFFF) = ? AND pos_x != 0 AND pos_z != 0', (zone_id,))
+    spawns = [{'name': _zone_name(r[0]), 'min': r[1], 'max': r[2], 'x': round(float(r[3]), 1), 'z': round(float(r[4]), 1)}
+              for r in cur.fetchall()]
+    layout = {'zone_id': zone_id, 'zone': _zone_name_map(cur).get(zone_id, 'Zone {}'.format(zone_id)), 'spawns': spawns}
+    _zone_layouts[zone_id] = layout
+    return layout
+
+
+@bots.route('/api/bots/<int:charid>/live')
+def api_bot_live(charid):
+    result = _with_connection(lambda cur: _live(cur, charid))
+    if result is None:
+        abort(404)
+    return jsonify(result)
+
+
+@bots.route('/api/zones/<int:zone_id>/layout')
+def api_zone_layout(zone_id):
+    return jsonify(_with_connection(lambda cur: _zone_layout(cur, zone_id)))
 
 
 # ── Pages ────────────────────────────────────────────────────────────────────

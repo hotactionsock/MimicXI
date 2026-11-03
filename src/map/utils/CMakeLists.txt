@@ -26,6 +26,8 @@ set(UTIL_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/botinventory.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/botinventory.h
     ${CMAKE_CURRENT_SOURCE_DIR}/botutils.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/botwatch.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/botwatch.h
     ${CMAKE_CURRENT_SOURCE_DIR}/botutils.h
     ${CMAKE_CURRENT_SOURCE_DIR}/charutils.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/charutils.h

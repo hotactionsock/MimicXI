@@ -93,6 +93,7 @@
                 <h1 class="profile-name">${B.esc(bot.name)}</h1>
                 <span class="bot-presence ${bot.online ? "is-online" : ""}"></span>
                 <span class="profile-presence">${bot.online ? "In the world" : "Resting"}</span>
+                ${bot.online ? `<a class="btn btn-ghost profile-watch" href="watch.html?id=${bot.charid}">Watch live</a>` : ""}
               </div>
               ${bot.title ? `<p class="profile-title">${B.esc(bot.name)} ${B.esc(bot.title)}</p>` : ""}
               <div class="profile-facts">

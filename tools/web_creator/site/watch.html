@@ -1,0 +1,558 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Watch live — MimicXI</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="bots.css">
+  <script>window.MIMIC_API_BASE = "";</script>
+</head>
+<body data-screen-label="Watch live">
+
+  <div class="bots-shell watch-shell">
+    <div class="container">
+      <a class="back-link" id="back-link" href="bots.html">← Profile</a>
+
+      <div class="watch-head">
+        <div>
+          <h1 class="watch-name" id="watch-name">Watching…</h1>
+          <p class="watch-where"><span id="watch-zone">–</span> · <span id="watch-state">connecting</span></p>
+        </div>
+        <span class="watch-live" id="watch-live"><span class="live-dot"></span><span id="watch-live-text">Connecting</span></span>
+      </div>
+
+      <div class="watch-layout">
+        <div class="watch-map-wrap">
+          <div class="watch-map" id="watch-map">
+            <canvas id="radar" aria-label="Live map around the adventurer"></canvas>
+            <div class="watch-tip" id="watch-tip" hidden></div>
+            <div class="watch-notice" id="watch-notice" hidden></div>
+          </div>
+          <div class="watch-controls">
+            <button type="button" class="filter-chip" id="zoom-in" aria-label="Zoom in">＋</button>
+            <button type="button" class="filter-chip" id="zoom-out" aria-label="Zoom out">−</button>
+            <button type="button" class="filter-chip is-active" id="mode-follow">Follow</button>
+            <button type="button" class="filter-chip" id="mode-zone">Whole area</button>
+            <button type="button" class="filter-chip is-active" id="toggle-spawns">Spawn points</button>
+            <button type="button" class="filter-chip is-active" id="toggle-labels">Names</button>
+          </div>
+          <ul class="watch-legend">
+            <li><span class="lg lg-bot"></span>Adventurer</li>
+            <li><span class="lg lg-mine"></span>Its fight / party's</li>
+            <li><span class="lg lg-aggro"></span>Aggressive</li>
+            <li><span class="lg lg-mob"></span>Monster</li>
+            <li><span class="lg lg-other"></span>Someone else's</li>
+            <li><span class="lg lg-nm"></span>Notorious</li>
+            <li><span class="lg lg-ally"></span>Other adventurers</li>
+            <li><span class="lg lg-line"></span>Way out</li>
+          </ul>
+        </div>
+
+        <aside class="watch-side">
+          <section class="watch-card">
+            <div class="watch-vitals-head">
+              <span class="job-chip" id="watch-job">?</span>
+              <span id="watch-level">Lv –</span>
+            </div>
+            <div class="vital"><span class="vital-label">HP</span><span class="vital-track"><span class="vital-fill vital-hp" id="hp-fill"></span></span><span class="vital-num" id="hp-num">–</span></div>
+            <div class="vital"><span class="vital-label">MP</span><span class="vital-track"><span class="vital-fill vital-mp" id="mp-fill"></span></span><span class="vital-num" id="mp-num">–</span></div>
+            <div class="vital"><span class="vital-label">TP</span><span class="vital-track"><span class="vital-fill vital-tp" id="tp-fill"></span></span><span class="vital-num" id="tp-num">–</span></div>
+            <p class="watch-target" id="watch-target"></p>
+          </section>
+
+          <section class="watch-card">
+            <h2 class="section-label">Monsters nearby</h2>
+            <ul class="watch-list" id="mob-list"><li class="feed-empty">–</li></ul>
+          </section>
+
+          <section class="watch-card">
+            <h2 class="section-label">Adventurers nearby</h2>
+            <ul class="watch-list" id="char-list"><li class="feed-empty">–</li></ul>
+          </section>
+
+          <section class="watch-card">
+            <h2 class="section-label">As it happens</h2>
+            <ol class="feed-list" id="watch-feed"><li class="feed-empty">Listening…</li></ol>
+          </section>
+        </aside>
+      </div>
+    </div>
+  </div>
+
+  <script src="shell.js"></script>
+  <script src="tweaks.js"></script>
+  <script src="bots-common.js"></script>
+  <script>
+    (function () {
+      const B       = window.MimicBots;
+      const charid  = Number(new URLSearchParams(location.search).get("id"));
+      const POLL_MS = 2000;
+      const FEED_MS = 4000;
+      const TRAIL_MAX = 200;
+      // FFXI positions: x runs east-west, z north-south. Drawn with +z up;
+      // flip this if HD maps show the zone mirrored.
+      const Z_UP = true;
+
+      const canvas = document.getElementById("radar");
+      const ctx    = canvas.getContext("2d");
+      const tip    = document.getElementById("watch-tip");
+
+      let snap       = null;   // latest snapshot
+      let layout     = null;   // zone spawn points
+      let layoutZone = null;
+      let trail      = [];     // [{x, z}]
+      let mode       = "follow";
+      let radius     = 60;     // yalms from the centre to the edge, in follow mode
+      let showSpawns = true;
+      let showLabels = true;
+      let feedLast   = 0;
+
+      // Smooth movement: each entity moves from where it was drawn to its new
+      // position over one poll interval.
+      const motion = new Map(); // key -> {fromX, fromZ, toX, toZ, t0}
+      let pollAt   = performance.now();
+
+      if (!charid) {
+        document.getElementById("watch-name").textContent = "No adventurer chosen";
+        return;
+      }
+      document.getElementById("back-link").href = `bot.html?id=${charid}`;
+
+      // ── Colours from the site theme ──────────────────────────────────────
+      function css(name, fallback) {
+        const v = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+        return v || fallback;
+      }
+      const C = {};
+      function loadColours() {
+        C.bg     = css("--paper", "#151c33");
+        C.grid   = css("--line-soft", "rgba(255,255,255,0.06)");
+        C.ring   = css("--line", "rgba(255,255,255,0.12)");
+        C.text   = css("--ink-soft", "#c9c4b4");
+        C.faint  = css("--ink-faint", "#8a8676");
+        C.bot    = css("--crystal-amber", "#e8c27a");
+        C.ally   = "#7fc8c2";
+        C.party  = "#8fd18f";
+        C.player = "#f2efe6";
+        C.mob    = "#9aa3b8";
+        C.aggro  = "#e0686b";
+        C.other  = "#5d6475";
+        C.mine   = css("--crystal-amber", "#e8c27a");
+        C.nm     = css("--crystal-lilac", "#b9a3e3");
+        C.line   = "#6fb2e6";
+        C.spawn  = "rgba(154,163,184,0.18)";
+      }
+
+      // ── Canvas sizing (crisp on high-DPI screens) ───────────────────────
+      function resize() {
+        const box = canvas.parentElement.getBoundingClientRect();
+        const dpr = window.devicePixelRatio || 1;
+        canvas.width  = Math.round(box.width * dpr);
+        canvas.height = Math.round(box.height * dpr);
+        canvas.style.width  = box.width + "px";
+        canvas.style.height = box.height + "px";
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      }
+
+      // ── Positions ────────────────────────────────────────────────────────
+      function lerpPos(key, x, z, now) {
+        let m = motion.get(key);
+        if (!m) {
+          m = { fromX: x, fromZ: z, toX: x, toZ: z };
+          motion.set(key, m);
+        }
+        const t = Math.min(1, (now - pollAt) / POLL_MS);
+        return { x: m.fromX + (m.toX - m.fromX) * t, z: m.fromZ + (m.toZ - m.fromZ) * t };
+      }
+
+      function retarget(key, x, z, now) {
+        const m = motion.get(key);
+        if (!m) {
+          motion.set(key, { fromX: x, fromZ: z, toX: x, toZ: z });
+          return;
+        }
+        const t   = Math.min(1, (now - pollAt) / POLL_MS);
+        const cx  = m.fromX + (m.toX - m.fromX) * t;
+        const cz  = m.fromZ + (m.toZ - m.fromZ) * t;
+        const far = Math.hypot(x - cx, z - cz) > 40; // a jump (zoned, warped): don't glide
+        m.fromX = far ? x : cx;
+        m.fromZ = far ? z : cz;
+        m.toX = x;
+        m.toZ = z;
+      }
+
+      // The view: centre and scale (pixels per yalm).
+      function view(w, h, botPos) {
+        if (mode === "zone" && layout && layout.spawns.length) {
+          let minX = Infinity, maxX = -Infinity, minZ = Infinity, maxZ = -Infinity;
+          const pts = layout.spawns.concat(snap ? snap.lines || [] : []);
+          if (botPos) pts.push(botPos);
+          for (const p of pts) {
+            minX = Math.min(minX, p.x); maxX = Math.max(maxX, p.x);
+            minZ = Math.min(minZ, p.z); maxZ = Math.max(maxZ, p.z);
+          }
+          const spanX = Math.max(40, maxX - minX), spanZ = Math.max(40, maxZ - minZ);
+          return { cx: (minX + maxX) / 2, cz: (minZ + maxZ) / 2, scale: Math.min(w / spanX, h / spanZ) * 0.9 };
+        }
+        const c = botPos || { x: 0, z: 0 };
+        return { cx: c.x, cz: c.z, scale: Math.min(w, h) / 2 / radius };
+      }
+
+      function toScreen(v, w, h, x, z) {
+        return {
+          sx: w / 2 + (x - v.cx) * v.scale,
+          sy: h / 2 + (Z_UP ? -1 : 1) * (z - v.cz) * v.scale,
+        };
+      }
+
+      // ── Drawing ──────────────────────────────────────────────────────────
+      let hoverables = [];
+      let labels     = []; // queued, drawn last: higher priority first, skipping any that would overlap
+
+      function draw(now) {
+        const w = canvas.clientWidth, h = canvas.clientHeight;
+        ctx.clearRect(0, 0, w, h);
+        ctx.fillStyle = C.bg;
+        ctx.fillRect(0, 0, w, h);
+        hoverables = [];
+        labels     = [];
+
+        if (!snap) {
+          requestAnimationFrame(draw);
+          return;
+        }
+
+        const me = lerpPos("me", snap.x, snap.z, now);
+        const v  = view(w, h, me);
+        const S  = (x, z) => toScreen(v, w, h, x, z);
+
+        // Grid every 10 yalms (50 stronger), and range rings around the bot.
+        const step = 10;
+        const halfW = w / 2 / v.scale, halfH = h / 2 / v.scale;
+        ctx.lineWidth = 1;
+        for (let gx = Math.floor((v.cx - halfW) / step) * step; gx <= v.cx + halfW; gx += step) {
+          const a = S(gx, 0).sx;
+          ctx.strokeStyle = gx % 50 === 0 ? C.ring : C.grid;
+          ctx.beginPath(); ctx.moveTo(a, 0); ctx.lineTo(a, h); ctx.stroke();
+        }
+        for (let gz = Math.floor((v.cz - halfH) / step) * step; gz <= v.cz + halfH; gz += step) {
+          const b = S(0, gz).sy;
+          ctx.strokeStyle = gz % 50 === 0 ? C.ring : C.grid;
+          ctx.beginPath(); ctx.moveTo(0, b); ctx.lineTo(w, b); ctx.stroke();
+        }
+        const centre = S(me.x, me.z);
+        ctx.strokeStyle = C.ring;
+        ctx.setLineDash([3, 5]);
+        for (const r of [20, 50]) {
+          ctx.beginPath(); ctx.arc(centre.sx, centre.sy, r * v.scale, 0, Math.PI * 2); ctx.stroke();
+        }
+        ctx.setLineDash([]);
+
+        // Where things live (spawn points) - also the shape of the area.
+        if (showSpawns && layout && layout.zone_id === snap.zone_id) {
+          ctx.fillStyle = C.spawn;
+          const dot = Math.max(1.5, Math.min(4, v.scale * 1.2));
+          for (const p of layout.spawns) {
+            const s = S(p.x, p.z);
+            if (s.sx < -5 || s.sy < -5 || s.sx > w + 5 || s.sy > h + 5) continue;
+            ctx.beginPath(); ctx.arc(s.sx, s.sy, dot, 0, Math.PI * 2); ctx.fill();
+            hoverables.push({ sx: s.sx, sy: s.sy, r: 6, weak: true, text: `${p.name} spawns here (Lv ${p.min}${p.max > p.min ? "–" + p.max : ""})` });
+          }
+        }
+
+        // Ways out (zone lines).
+        for (const line of snap.lines || []) {
+          const s = S(line.x, line.z);
+          ctx.fillStyle = C.line;
+          ctx.beginPath();
+          ctx.moveTo(s.sx, s.sy - 7); ctx.lineTo(s.sx + 7, s.sy); ctx.lineTo(s.sx, s.sy + 7); ctx.lineTo(s.sx - 7, s.sy);
+          ctx.closePath(); ctx.fill();
+          if (showLabels) label(line.zone, s.sx + 10, s.sy + 4, C.line, false, 4);
+          hoverables.push({ sx: s.sx, sy: s.sy, r: 9, text: `Way to ${line.zone}` });
+        }
+
+        // Its trail.
+        if (trail.length > 1) {
+          for (let i = 1; i < trail.length; i++) {
+            const a = S(trail[i - 1].x, trail[i - 1].z), b = S(trail[i].x, trail[i].z);
+            ctx.strokeStyle = C.bot;
+            ctx.globalAlpha = 0.08 + 0.5 * (i / trail.length);
+            ctx.lineWidth = 2;
+            ctx.beginPath(); ctx.moveTo(a.sx, a.sy); ctx.lineTo(b.sx, b.sy); ctx.stroke();
+          }
+          ctx.globalAlpha = 1;
+          const last = S(trail[trail.length - 1].x, trail[trail.length - 1].z);
+          ctx.strokeStyle = C.bot; ctx.globalAlpha = 0.6; ctx.lineWidth = 2;
+          ctx.beginPath(); ctx.moveTo(last.sx, last.sy); ctx.lineTo(centre.sx, centre.sy); ctx.stroke();
+          ctx.globalAlpha = 1;
+        }
+
+        // Monsters.
+        for (const mob of snap.mobs || []) {
+          const p = lerpPos("m" + mob.id, mob.x, mob.z, now);
+          const s = S(p.x, p.z);
+          const colour = mob.claim === "mine" || mob.claim === "party" ? C.mine
+                       : mob.claim === "other" ? C.other
+                       : mob.aggro ? C.aggro : C.mob;
+          const r = mob.nm ? 7 : 5;
+          ctx.fillStyle = colour;
+          ctx.beginPath(); ctx.arc(s.sx, s.sy, r, 0, Math.PI * 2); ctx.fill();
+          if (mob.nm) {
+            ctx.strokeStyle = C.nm; ctx.lineWidth = 2.5;
+            ctx.beginPath(); ctx.arc(s.sx, s.sy, r + 3, 0, Math.PI * 2); ctx.stroke();
+          }
+          if (mob.engaged) {
+            ctx.strokeStyle = colour; ctx.lineWidth = 1;
+            ctx.beginPath(); ctx.arc(s.sx, s.sy, r + 6, 0, Math.PI * 2); ctx.stroke();
+          }
+          if (showLabels) label(mob.name, s.sx + r + 4, s.sy + 4, C.faint, false, snap.target && snap.target.id === mob.id ? 1 : mob.nm ? 2 : 7);
+          hoverables.push({ sx: s.sx, sy: s.sy, r: r + 4, text: `${mob.name} · Lv ${mob.level} · ${mob.hpp}% HP${mob.nm ? " · Notorious" : ""}${claimText(mob.claim)}${mob.aggro ? " · aggressive" : ""}` });
+        }
+
+        // Other adventurers.
+        for (const ch of snap.chars || []) {
+          const p = lerpPos("c" + ch.id, ch.x, ch.z, now);
+          const s = S(p.x, p.z);
+          ctx.fillStyle = ch.party ? C.party : ch.bot ? C.ally : C.player;
+          ctx.beginPath();
+          ctx.moveTo(s.sx, s.sy - 6); ctx.lineTo(s.sx + 5, s.sy + 4); ctx.lineTo(s.sx - 5, s.sy + 4);
+          ctx.closePath(); ctx.fill();
+          if (showLabels) label(ch.name, s.sx + 8, s.sy + 4, ch.party ? C.party : C.text, false, ch.party ? 3 : 5);
+          hoverables.push({ sx: s.sx, sy: s.sy, r: 8, text: `${ch.name} · Lv ${ch.level}${ch.party ? " · in its party" : ""}${ch.bot ? "" : " · player"}` });
+        }
+
+        // Line to what it's fighting.
+        if (snap.target) {
+          const t = lerpPos("m" + snap.target.id, snap.target.x, snap.target.z, now);
+          const s = S(t.x, t.z);
+          ctx.strokeStyle = C.aggro; ctx.lineWidth = 1.5; ctx.setLineDash([4, 3]);
+          ctx.beginPath(); ctx.moveTo(centre.sx, centre.sy); ctx.lineTo(s.sx, s.sy); ctx.stroke();
+          ctx.setLineDash([]);
+        }
+
+        // The adventurer: a marker pointing the way it faces.
+        const angle = (snap.rot || 0) / 256 * Math.PI * 2;
+        ctx.save();
+        ctx.translate(centre.sx, centre.sy);
+        ctx.rotate(-angle);
+        ctx.fillStyle = C.bot;
+        ctx.strokeStyle = C.bg; ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.moveTo(11, 0); ctx.lineTo(-7, 7); ctx.lineTo(-3, 0); ctx.lineTo(-7, -7); ctx.closePath();
+        ctx.fill(); ctx.stroke();
+        ctx.restore();
+        if (showLabels) label(snap.name || "", centre.sx + 12, centre.sy - 10, C.bot, true, 0);
+
+        // Scale bar.
+        const yalms = niceScale(80 / v.scale);
+        ctx.strokeStyle = C.text; ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.moveTo(14, h - 14); ctx.lineTo(14 + yalms * v.scale, h - 14); ctx.stroke();
+        label(`${yalms} yalms`, 14, h - 20, C.text, false, 0);
+
+        drawLabels();
+
+        requestAnimationFrame(draw);
+      }
+
+      // Queue a label; prio 0 is always drawn, higher numbers give way.
+      function label(text, x, y, colour, bold, prio) {
+        if (text) labels.push({ text, x, y, colour, bold, prio: prio || 0 });
+      }
+
+      function drawLabels() {
+        const placed = [];
+        labels.sort((a, b) => a.prio - b.prio);
+        for (const l of labels) {
+          ctx.font = `${l.bold ? "600 " : ""}12px Inter, sans-serif`;
+          const rect = { x: l.x - 2, y: l.y - 12, w: ctx.measureText(l.text).width + 4, h: 15 };
+          const hit = placed.some(p => rect.x < p.x + p.w && p.x < rect.x + rect.w && rect.y < p.y + p.h && p.y < rect.y + rect.h);
+          if (hit && l.prio > 0) continue;
+          placed.push(rect);
+          ctx.fillStyle = l.colour;
+          ctx.fillText(l.text, l.x, l.y);
+        }
+      }
+
+      function niceScale(n) {
+        for (const s of [5, 10, 20, 25, 50, 100, 200, 500]) if (s >= n) return s;
+        return 1000;
+      }
+
+      function claimText(claim) {
+        return claim === "mine" ? " · its fight" : claim === "party" ? " · its party's fight" : claim === "other" ? " · someone else's" : "";
+      }
+
+      // ── Side panel ───────────────────────────────────────────────────────
+      const STATES = { fighting: "Fighting", resting: "Resting", moving: "On the move", dead: "Knocked out", idle: "Standing by" };
+
+      function bar(id, numId, value, max, text) {
+        document.getElementById(id).style.width = (max > 0 ? Math.max(0, Math.min(100, value / max * 100)) : 0) + "%";
+        document.getElementById(numId).textContent = text;
+      }
+
+      function renderSide(data) {
+        const s = data.snapshot;
+        document.getElementById("watch-name").textContent = data.name;
+        document.title = `${data.name} live — MimicXI`;
+        if (!s) return;
+
+        document.getElementById("watch-zone").textContent = s.zone || "–";
+        document.getElementById("watch-state").textContent = data.live ? (STATES[s.state] || s.state) : "not in the world right now";
+        document.getElementById("watch-job").textContent = ["", "WAR", "MNK", "WHM", "BLM", "RDM", "THF", "PLD", "DRK", "BST", "BRD", "RNG", "SAM", "NIN", "DRG", "SMN", "BLU", "COR", "PUP", "DNC", "SCH", "GEO", "RUN"][s.job] || "?";
+        document.getElementById("watch-level").textContent = `Lv ${s.level}`;
+        bar("hp-fill", "hp-num", s.hp, s.max_hp, `${s.hp.toLocaleString()} / ${s.max_hp.toLocaleString()}`);
+        bar("mp-fill", "mp-num", s.mp, s.max_mp, s.max_mp ? `${s.mp.toLocaleString()} / ${s.max_mp.toLocaleString()}` : "–");
+        bar("tp-fill", "tp-num", s.tp, 3000, `${s.tp}`);
+        document.getElementById("watch-target").innerHTML = s.target
+          ? `Fighting <strong>${B.esc(s.target.name)}</strong> · ${s.target.hpp}% HP` : "";
+
+        const dist = (o) => Math.round(Math.hypot(o.x - s.x, o.z - s.z));
+        const mobs = (s.mobs || []).slice(0, 12);
+        document.getElementById("mob-list").innerHTML = mobs.length ? mobs.map(m => `
+          <li class="watch-row">
+            <span class="watch-dot ${m.claim === "mine" || m.claim === "party" ? "is-mine" : m.claim === "other" ? "is-other" : m.aggro ? "is-aggro" : ""} ${m.nm ? "is-nm" : ""}"></span>
+            <span class="watch-row-name">${B.esc(m.name)}</span>
+            <span class="watch-row-meta">Lv ${m.level}</span>
+            <span class="watch-hp"><span style="width:${m.hpp}%"></span></span>
+            <span class="watch-row-meta">${dist(m)}y</span>
+          </li>`).join("") : `<li class="feed-empty">Nothing close by.</li>`;
+
+        const chars = (s.chars || []).slice(0, 10);
+        document.getElementById("char-list").innerHTML = chars.length ? chars.map(c => `
+          <li class="watch-row">
+            <span class="watch-dot ${c.party ? "is-party" : c.bot ? "is-ally" : "is-player"}"></span>
+            <span class="watch-row-name">${c.bot ? `<a href="watch.html?id=${c.id}">${B.esc(c.name)}</a>` : B.esc(c.name)}</span>
+            <span class="watch-row-meta">Lv ${c.level}${c.party ? " · party" : ""}</span>
+            <span class="watch-row-meta">${dist(c)}y</span>
+          </li>`).join("") : `<li class="feed-empty">No one else around.</li>`;
+      }
+
+      function setLive(state, text) {
+        const el = document.getElementById("watch-live");
+        el.classList.toggle("is-off", state !== "live");
+        document.getElementById("watch-live-text").textContent = text;
+      }
+
+      function notice(text) {
+        const el = document.getElementById("watch-notice");
+        el.hidden = !text;
+        el.textContent = text || "";
+      }
+
+      // ── Polling ──────────────────────────────────────────────────────────
+      async function poll() {
+        try {
+          const data = await B.getJson(`/api/bots/${charid}/live`);
+          const s    = data.snapshot;
+          const now  = performance.now();
+
+          if (s) {
+            s.name = data.name;
+            if (snap && snap.zone_id !== s.zone_id) {
+              trail = [];
+              motion.clear();
+            }
+
+            retarget("me", s.x, s.z, now);
+            for (const m of s.mobs || []) retarget("m" + m.id, m.x, m.z, now);
+            for (const c of s.chars || []) retarget("c" + c.id, c.x, c.z, now);
+            pollAt = now;
+
+            const last = trail[trail.length - 1];
+            if (!last || Math.hypot(last.x - s.x, last.z - s.z) > 0.5) {
+              trail.push({ x: s.x, z: s.z });
+              if (trail.length > TRAIL_MAX) trail.shift();
+            }
+
+            snap = s;
+            if (layoutZone !== s.zone_id) {
+              layoutZone = s.zone_id;
+              B.getJson(`/api/zones/${s.zone_id}/layout`).then(l => { layout = l; }).catch(() => {});
+            }
+          }
+
+          renderSide(data);
+          if (data.live) {
+            setLive("live", "Live");
+            notice("");
+          } else if (s) {
+            setLive("off", "Not live");
+            notice(`${data.name} isn't in the world right now (logged off or between zones). Last seen ${B.ago(data.now - data.age)}.`);
+          } else {
+            setLive("off", "Waiting");
+            notice(`Waiting for ${data.name}'s first update… (they may be logged off right now)`);
+          }
+        } catch (e) {
+          setLive("off", "Offline");
+          notice("The live view is unavailable right now.");
+        }
+      }
+
+      async function pollFeed() {
+        try {
+          const d = await B.getJson(`/api/bots/${charid}/events?limit=15${feedLast ? `&since=${feedLast}` : ""}`);
+          const events = d.events || [];
+          if (!events.length) return;
+          feedLast = Math.max(feedLast, ...events.map(e => e.id));
+          const list = document.getElementById("watch-feed");
+          if (list.querySelector(".feed-empty")) list.innerHTML = "";
+          list.insertAdjacentHTML("afterbegin", events.map(e => `
+            <li class="feed-item">
+              <p class="feed-msg">${B.esc(e.message)}</p>
+              <time class="feed-time" data-ts="${e.ts}">${B.ago(e.ts)}</time>
+            </li>`).join(""));
+          while (list.children.length > 25) list.lastElementChild.remove();
+        } catch (e) { /* the next poll tries again */ }
+      }
+
+      // ── Interaction ──────────────────────────────────────────────────────
+      canvas.addEventListener("mousemove", (ev) => {
+        const r = canvas.getBoundingClientRect();
+        const x = ev.clientX - r.left, y = ev.clientY - r.top;
+        let best = null, bestD = Infinity;
+        for (const h of hoverables) {
+          const d = Math.hypot(h.sx - x, h.sy - y) - (h.weak ? 4 : 0);
+          if (d < h.r && d < bestD) { best = h; bestD = d; }
+        }
+        tip.hidden = !best;
+        if (best) {
+          tip.textContent = best.text;
+          tip.style.left = Math.min(x + 12, r.width - 220) + "px";
+          tip.style.top = (y + 12) + "px";
+        }
+      });
+      canvas.addEventListener("mouseleave", () => { tip.hidden = true; });
+      canvas.addEventListener("wheel", (ev) => {
+        if (mode !== "follow") return;
+        ev.preventDefault();
+        radius = Math.max(15, Math.min(300, radius * (ev.deltaY > 0 ? 1.15 : 0.87)));
+      }, { passive: false });
+
+      function setMode(m) {
+        mode = m;
+        document.getElementById("mode-follow").classList.toggle("is-active", m === "follow");
+        document.getElementById("mode-zone").classList.toggle("is-active", m === "zone");
+      }
+      document.getElementById("zoom-in").onclick  = () => { setMode("follow"); radius = Math.max(15, radius * 0.75); };
+      document.getElementById("zoom-out").onclick = () => { setMode("follow"); radius = Math.min(300, radius * 1.33); };
+      document.getElementById("mode-follow").onclick = () => setMode("follow");
+      document.getElementById("mode-zone").onclick   = () => setMode("zone");
+      document.getElementById("toggle-spawns").onclick = (ev) => { showSpawns = !showSpawns; ev.target.classList.toggle("is-active", showSpawns); };
+      document.getElementById("toggle-labels").onclick = (ev) => { showLabels = !showLabels; ev.target.classList.toggle("is-active", showLabels); };
+
+      window.addEventListener("resize", resize);
+      loadColours();
+      resize();
+      requestAnimationFrame(draw);
+      poll();
+      pollFeed();
+      setInterval(poll, POLL_MS);
+      setInterval(pollFeed, FEED_MS);
+      setInterval(() => B.refreshTimes(document), 30000);
+    })();
+  </script>
+</body>
+</html>
