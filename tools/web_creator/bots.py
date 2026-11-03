@@ -13,7 +13,7 @@ JSON (public, read-only):
     /api/bots/<charid>              profile, status, stats, title, achievements and recent events
     /api/bots/<charid>/events       events, newest first (?limit, ?before, ?since, ?category)
     /api/bots/feed                  latest events across all bots, with names (?since=<id>, ?limit)
-    /api/bots/leaderboards          top bots by level, kills, EXP, NMs, achievements... (?period=all|week, ?limit)
+    /api/bots/leaderboards          top bots by level, kills, EXP, NMs, achievements, defeats... (?period=all|week, ?limit)
 
 Every log row already carries a ready-to-show sentence; this module adds the
 "what is it doing now" status, worked out from the latest events, and titles
@@ -362,6 +362,7 @@ LEADERBOARDS_ALL = [
     ('zones',        'Areas explored',               'areas'),
     ('gold_caskets', 'Gold caskets opened',          'caskets'),
     ('parties',      'Parties joined',               'parties'),
+    ('deaths',       'Most defeats',                 'defeats'),
 ]
 LEADERBOARDS_WEEK = [
     ('levels_gained', 'Levels gained',               'levels'),
@@ -371,6 +372,7 @@ LEADERBOARDS_WEEK = [
     ('zones',         'Areas explored',              'areas'),
     ('gold_caskets',  'Gold caskets opened',         'caskets'),
     ('parties',       'Parties joined',              'parties'),
+    ('deaths',        'Most defeats',                'defeats'),
 ]
 WEEK_SEC = 7 * 24 * 60 * 60
 
@@ -385,7 +387,8 @@ def _period_totals(cur, since):
         "  SUM(event = 'nm_defeated'),"
         "  COUNT(DISTINCT CASE WHEN event = 'arrived' THEN JSON_VALUE(data, '$.zone_id') END),"
         "  SUM(event = 'casket' AND JSON_VALUE(data, '$.chest') = 4),"
-        "  SUM(event = 'joined' OR event = 'formed')"
+        "  SUM(event = 'joined' OR event = 'formed'),"
+        "  SUM(event = 'died')"
         ' FROM world_bot_log WHERE ts >= ? GROUP BY charid',
         (since,),
     )
@@ -399,6 +402,7 @@ def _period_totals(cur, since):
             'zones':         int(r[5] or 0),
             'gold_caskets':  int(r[6] or 0),
             'parties':       int(r[7] or 0),
+            'deaths':        int(r[8] or 0),
         }
     return totals
 
