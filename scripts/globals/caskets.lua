@@ -803,7 +803,8 @@ end
 -- guess. It never uses the other hints or Thief's Tools. It can fail (a
 -- failed Gold casket can still turn into a mimic). Whatever is
 -- inside goes to the bot: temporary items, items, and Gold casket gear with
--- its augments. Chests owed to a party with a real player in it are left to
+-- its augments - Rare/Ex items first, then gear, then the rest, tossing cheap
+-- junk to make room for the first two if its bags are full. Chests owed to a party with a real player in it are left to
 -- the players.
 -----------------------------------
 local botOpenDelayMinMs = 4000
@@ -816,6 +817,32 @@ local chestNames =
     [casketInfo.dropTypes.ITEM]      = 'a locked treasure casket',
     [casketInfo.dropTypes.RARE_ITEM] = 'a gold treasure casket',
 }
+
+-- Loot priority when emptying a chest (lower first). Returns the rank, and
+-- whether the item is Rare (only one may be owned).
+local botRankRareEx   = 1
+local botRankGear     = 2
+local botRankOther    = 3
+local botTossMaxValue = 100 -- junk worth less than this (gil) is tossed to make room for gear
+
+local function botLootRank(itemId)
+    local item = itemId ~= 0 and GetItemByID(itemId) or nil
+    if item == nil then
+        return botRankOther, false
+    end
+
+    local flags = item:getFlag()
+    local rare  = bit.band(flags, xi.itemFlag.RARE) ~= 0
+    if rare or bit.band(flags, xi.itemFlag.EXCLUSIVE) ~= 0 then
+        return botRankRareEx, rare
+    end
+
+    if item:isType(xi.itemType.ARMOR) or item:isType(xi.itemType.WEAPON) then
+        return botRankGear, false
+    end
+
+    return botRankOther, false
+end
 
 -- Simulates the lock game the way a sensible player would play it, against
 -- the chest's real combination and attempt count. True if it opened.
@@ -875,9 +902,41 @@ local function botTakeContents(bot, npc, dropType)
         return taken
     end
 
+    -- Most wanted first, so a bot short of bag space doesn't fill up on
+    -- crystals and leave the gear behind: Rare/Ex items (they can't be bought),
+    -- then gear, then everything else - in chest order within each.
+    local order = {}
     for slot = 1, 4 do
+        local rank, rare = botLootRank(getChestItem(npc, slot))
+        table.insert(order, { slot = slot, rank = rank, rare = rare })
+    end
+
+    table.sort(order, function(a, b)
+        if a.rank ~= b.rank then
+            return a.rank < b.rank
+        end
+
+        return a.slot < b.slot
+    end)
+
+    for _, pick in ipairs(order) do
+        local slot   = pick.slot
         local itemId = getChestItem(npc, slot)
-        if itemId ~= 0 and bot:getFreeSlotsCount() > 0 then
+
+        -- Bags full and this one is worth having: toss cheap junk for room.
+        if
+            itemId ~= 0 and
+            pick.rank <= botRankGear and
+            bot:getFreeSlotsCount() == 0
+        then
+            TossBotJunk(bot:getID(), botTossMaxValue, 1)
+        end
+
+        if
+            itemId ~= 0 and
+            bot:getFreeSlotsCount() > 0 and
+            not (pick.rare and bot:hasItem(itemId)) -- can't own two of a Rare item
+        then
             local numAugs = npc:getLocalVar(string.format('[caskets]ITEM%dNUMAUGS', slot))
             local added   = false
 
