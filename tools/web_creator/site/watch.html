@@ -386,7 +386,7 @@
           ctx.moveTo(s.sx, s.sy - 6); ctx.lineTo(s.sx + 5, s.sy + 4); ctx.lineTo(s.sx - 5, s.sy + 4);
           ctx.closePath(); ctx.fill();
           if (showLabels) label(ch.name, s.sx + 8, s.sy + 4, ch.party ? C.party : C.text, false, ch.party ? 3 : 5);
-          hoverables.push({ sx: s.sx, sy: s.sy, r: 8, text: `${ch.name} · Lv ${ch.level}${ch.party ? " · in its party" : ""}${ch.bot ? "" : " · player"}` });
+          hoverables.push({ sx: s.sx, sy: s.sy, r: 8, text: `${ch.name} · ${jobText(ch)}${ch.party ? " · in its party" : ""}${ch.bot ? "" : " · player"}` });
         }
 
         // Line to what it's fighting.
@@ -455,6 +455,15 @@
       }
 
       // ── Side panel ───────────────────────────────────────────────────────
+      const JOB_ABBR = ["", "WAR", "MNK", "WHM", "BLM", "RDM", "THF", "PLD", "DRK", "BST", "BRD", "RNG", "SAM", "NIN", "DRG", "SMN", "BLU", "COR", "PUP", "DNC", "SCH", "GEO", "RUN"];
+
+      // "WAR19/MNK9" (or "WAR19" with no support job; "Lv 19" if the job isn't known).
+      function jobText(o) {
+        const main = JOB_ABBR[o.job];
+        if (!main) return `Lv ${o.level}`;
+        const sub = JOB_ABBR[o.sub];
+        return `${main}${o.level}${sub && o.sub_level ? `/${sub}${o.sub_level}` : ""}`;
+      }
       const STATES = { fighting: "Fighting", resting: "Resting", moving: "On the move", dead: "Knocked out", idle: "Standing by" };
 
       function bar(id, numId, value, max, text) {
@@ -470,8 +479,8 @@
 
         document.getElementById("watch-zone").textContent = s.zone || "–";
         document.getElementById("watch-state").textContent = data.live ? (STATES[s.state] || s.state) : "not in the world right now";
-        document.getElementById("watch-job").textContent = ["", "WAR", "MNK", "WHM", "BLM", "RDM", "THF", "PLD", "DRK", "BST", "BRD", "RNG", "SAM", "NIN", "DRG", "SMN", "BLU", "COR", "PUP", "DNC", "SCH", "GEO", "RUN"][s.job] || "?";
-        document.getElementById("watch-level").textContent = `Lv ${s.level}`;
+        document.getElementById("watch-job").textContent = JOB_ABBR[s.job] || "?";
+        document.getElementById("watch-level").textContent = `Lv ${s.level}${JOB_ABBR[s.sub] && s.sub_level ? ` / ${JOB_ABBR[s.sub]} ${s.sub_level}` : ""}`;
         bar("hp-fill", "hp-num", s.hp, s.max_hp, `${s.hp.toLocaleString()} / ${s.max_hp.toLocaleString()}`);
         bar("mp-fill", "mp-num", s.mp, s.max_mp, s.max_mp ? `${s.mp.toLocaleString()} / ${s.max_mp.toLocaleString()}` : "–");
         bar("tp-fill", "tp-num", s.tp, 3000, `${s.tp}`);
@@ -494,7 +503,7 @@
           <li class="watch-row">
             <span class="watch-dot ${c.party ? "is-party" : c.bot ? "is-ally" : "is-player"}"></span>
             <span class="watch-row-name">${c.bot ? `<a href="watch.html?id=${c.id}">${B.esc(c.name)}</a>` : B.esc(c.name)}</span>
-            <span class="watch-row-meta">Lv ${c.level}${c.party ? " · party" : ""}</span>
+            <span class="watch-row-meta">${jobText(c)}${c.party ? " · party" : ""}</span>
             <span class="watch-row-meta">${dist(c)}y</span>
           </li>`).join("") : `<li class="feed-empty">No one else around.</li>`;
       }

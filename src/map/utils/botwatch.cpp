@@ -170,9 +170,11 @@ auto snapshot(CCharEntity* PChar) -> std::string
             return;
         }
 
-        chars.push_back(Near{ d, std::format(R"({{"id":{},"name":"{}","bot":{},"party":{},"level":{},{}}})", POther->id,
-                                             JsonEscape(POther->getName()), IsBotEntity(POther) ? "true" : "false",
-                                             party.contains(POther->id) ? "true" : "false", POther->GetMLevel(), pos(POther->loc.p)) });
+        chars.push_back(Near{ d, std::format(R"({{"id":{},"name":"{}","bot":{},"party":{},"job":{},"level":{},"sub":{},"sub_level":{},{}}})",
+                                             POther->id, JsonEscape(POther->getName()), IsBotEntity(POther) ? "true" : "false",
+                                             party.contains(POther->id) ? "true" : "false", static_cast<uint8>(POther->GetMJob()),
+                                             POther->GetMLevel(), static_cast<uint8>(POther->GetSJob()), POther->GetSLevel(),
+                                             pos(POther->loc.p)) });
     });
     // clang-format on
 
@@ -199,10 +201,10 @@ auto snapshot(CCharEntity* PChar) -> std::string
         lines += std::format(R"({}{{"to":{},{}}})", lines.empty() ? "" : ",", line.destinationZoneId, pos(line.origin));
     }
 
-    return std::format(R"({{"online":true,"zone_id":{},{},"rot":{},"level":{},"job":{},"hp":{},"max_hp":{},"mp":{},"max_mp":{},"tp":{},)"
-                       R"("state":"{}","target":{},"mobs":[{}],"chars":[{}],"lines":[{}]}})",
+    return std::format(R"({{"online":true,"zone_id":{},{},"rot":{},"level":{},"job":{},"sub":{},"sub_level":{},"hp":{},"max_hp":{},)"
+                       R"("mp":{},"max_mp":{},"tp":{},"state":"{}","target":{},"mobs":[{}],"chars":[{}],"lines":[{}]}})",
                        static_cast<uint16>(PChar->getZone()), pos(PChar->loc.p), PChar->loc.p.rotation, PChar->GetMLevel(),
-                       static_cast<uint8>(PChar->GetMJob()), PChar->health.hp, PChar->GetMaxHP(), PChar->health.mp, PChar->GetMaxMP(),
+                       static_cast<uint8>(PChar->GetMJob()), static_cast<uint8>(PChar->GetSJob()), PChar->GetSLevel(), PChar->health.hp, PChar->GetMaxHP(), PChar->health.mp, PChar->GetMaxMP(),
                        PChar->health.tp, state, target, join(mobs, kMaxMobs), join(chars, kMaxChars), lines);
 }
 
