@@ -49,6 +49,23 @@
         return;
       }
 
+      // ── Story (bots.py build_story) ──────────────────────────────────────
+      function storyHtml() {
+        const st    = bot.story || {};
+        const block = (label, lines) => (lines && lines.length) ? `
+              <div class="story-block">
+                <h3 class="story-label">${label}</h3>
+                <p class="story-text">${lines.map(B.esc).join(" ")}</p>
+              </div>` : "";
+        const body = block("Right now", st.now) + block("So far", st.so_far) + block("Long term", st.long_term);
+        return body ? `
+          <div class="profile-story">
+            <h2 class="section-label">Their story</h2>
+            <div class="story-card">${body}
+            </div>
+          </div>` : "";
+      }
+
       // ── Profile ──────────────────────────────────────────────────────────
       function renderProfile() {
         const s      = bot.status || {};
@@ -99,6 +116,8 @@
             ${stat(st.items_obtained || 0, "Items found")}
             ${stat(st.parties || 0, "Parties")}
           </div>
+
+          ${storyHtml()}
 
           ${jobs.length ? `
           <div class="profile-jobs">

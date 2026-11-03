@@ -10,7 +10,7 @@ JSON below; the old /bots URLs redirect there:
 
 JSON (public, read-only):
     /api/bots                       every bot with its status line
-    /api/bots/<charid>              profile, status, stats, title, achievements and recent events
+    /api/bots/<charid>              profile, status, stats, title, achievements, storyline and recent events
     /api/bots/<charid>/events       events, newest first (?limit, ?before, ?since, ?category)
     /api/bots/feed                  latest events across all bots, with names (?since=<id>, ?limit)
     /api/bots/leaderboards          top bots by level, kills, EXP, NMs, achievements, defeats... (?period=all|week, ?limit)
@@ -453,6 +453,197 @@ def leaderboards(cur, period='all', limit=10, now=None):
     return {'period': 'week' if week else 'all', 'boards': boards}
 
 
+# ── Storyline ────────────────────────────────────────────────────────────────
+#
+# A short, plain-English story for a bot's profile, written from its own log:
+# what it's doing now, what it has done, and what it's working towards. Built
+# from templates (no guessing): every sentence comes from a fact in the log,
+# the character tables or its achievements, and a sentence is left out when
+# the fact isn't there.
+
+LEVEL_CAP          = 75   # settings/default/main.lua MAX_LEVEL
+ADVANCED_JOB_LEVEL = 30   # a base job at this level unlocks the advanced jobs
+BASE_JOBS          = {'Warrior', 'Monk', 'White Mage', 'Black Mage', 'Red Mage', 'Thief'}
+
+
+def _story_facts(cur, charid):
+    """Everything the storyline needs from the log, in a few queries."""
+    facts = {'created': None, 'nms': [], 'players': [], 'unlocked': [], 'last_foe': None, 'nm_target': None}
+
+    cur.execute(
+        "SELECT ts, data FROM world_bot_log WHERE charid = ? AND event = 'created' ORDER BY id DESC LIMIT 1", (charid,))
+    row = cur.fetchone()
+    if row:
+        facts['created'] = {'ts': row[0], 'data': _json(row[1])}
+
+    cur.execute(
+        "SELECT JSON_VALUE(data, '$.nm'), COUNT(*) FROM world_bot_log WHERE charid = ? AND event = 'nm_defeated' "
+        "GROUP BY JSON_VALUE(data, '$.nm') ORDER BY MAX(id) DESC LIMIT 5", (charid,))
+    facts['nms'] = [r[0] for r in cur.fetchall() if r[0]]
+
+    cur.execute(
+        "SELECT JSON_VALUE(data, '$.player') FROM world_bot_log WHERE charid = ? AND event = 'hired' "
+        "GROUP BY JSON_VALUE(data, '$.player') ORDER BY MAX(id) DESC LIMIT 3", (charid,))
+    facts['players'] = [r[0] for r in cur.fetchall() if r[0]]
+
+    cur.execute(
+        "SELECT JSON_VALUE(data, '$.job') FROM world_bot_log WHERE charid = ? AND event = 'unlocked_job' ORDER BY id", (charid,))
+    facts['unlocked'] = [_job(int(r[0])) for r in cur.fetchall() if r[0] is not None]
+
+    cur.execute(
+        "SELECT JSON_VALUE(data, '$.foe') FROM world_bot_log WHERE charid = ? AND event = 'died' ORDER BY id DESC LIMIT 1", (charid,))
+    row = cur.fetchone()
+    facts['last_foe'] = row[0] if row and row[0] else None
+
+    # The NM it last set out after, if it hasn't beaten it since.
+    cur.execute(
+        "SELECT event, JSON_VALUE(data, '$.nm'), JSON_VALUE(data, '$.item') FROM world_bot_log WHERE charid = ? "
+        "AND event IN ('nm_camp', 'nm_defeated', 'nm_ended') ORDER BY id DESC LIMIT 1", (charid,))
+    row = cur.fetchone()
+    if row and row[0] == 'nm_camp' and row[1]:
+        facts['nm_target'] = {'nm': row[1], 'item': row[2]}
+
+    cur.execute(
+        "SELECT SUM(event = 'ah_sold'), COALESCE(SUM(CASE WHEN event = 'ah_sold' THEN JSON_VALUE(data, '$.price') END), 0), "
+        "SUM(event = 'ah_bought'), SUM(event = 'casket' AND JSON_VALUE(data, '$.chest') = 4), "
+        "COUNT(DISTINCT CASE WHEN event = 'arrived' THEN JSON_VALUE(data, '$.zone_id') END) "
+        "FROM world_bot_log WHERE charid = ?", (charid,))
+    row = cur.fetchone() or [0] * 5
+    facts.update(ah_sold=int(row[0] or 0), ah_gil=int(row[1] or 0), ah_bought=int(row[2] or 0),
+                 gold_caskets=int(row[3] or 0), zones=int(row[4] or 0))
+    return facts
+
+
+def _json(raw):
+    try:
+        return json.loads(raw) if raw else {}
+    except (TypeError, ValueError):
+        return {}
+
+
+def _ago_words(ts, now=None):
+    seconds = max(0, (now or int(time.time())) - (ts or 0))
+    days = seconds // 86400
+    if days >= 2:
+        return '{} days ago'.format(days)
+    if days == 1:
+        return 'yesterday'
+    hours = seconds // 3600
+    return '{} hour{} ago'.format(hours, '' if hours == 1 else 's') if hours else 'just now'
+
+
+def _list_words(items):
+    items = [i for i in items if i]
+    if len(items) <= 1:
+        return ''.join(items)
+    return '{} and {}'.format(', '.join(items[:-1]), items[-1])
+
+
+def _plural(n, word, plural=None):
+    return '{:,} {}'.format(n, word if n == 1 else (plural or word + 's'))
+
+
+def build_story(bot, facts, achievements, now=None):
+    """{'now': [sentences], 'so_far': [sentences], 'long_term': [sentences]}."""
+    name   = bot['name']
+    stats  = bot.get('stats') or {}
+    status = bot.get('status') or {}
+    jobs   = sorted((j for j in bot.get('jobs') or [] if j['level'] > 1 or j['job'] == bot['main_job']),
+                    key=lambda j: -j['level'])
+    main, level, career = bot['main_job'], bot['main_level'], bot.get('career') or ''
+
+    # ── Right now ────────────────────────────────────────────────────────────
+    current = []
+    text    = status.get('text') or ''
+    if not bot.get('online') or text == 'Logged off':
+        current.append('{} is resting for now and will be back in the world later.'.format(name))
+    elif text and not status.get('stale'):
+        # Status lines are phrased to follow "<name> is" ("Training in X",
+        # "Heading to X to train"), bar a couple that are their own verb.
+        lowered = text[0].lower() + text[1:]
+        joiner  = ' ' if text.startswith(('Just defeated', 'Just logged on')) else ' is '
+        current.append('{}{}{}.'.format(name, joiner, lowered))
+
+    if career and career != main and main:
+        current.append('They are levelling {} (level {}) on the way to becoming a {}.'.format(main, level, career))
+    elif main:
+        current.append('They are levelling {}, now at level {}.'.format(main, level))
+
+    if facts.get('nm_target'):
+        target = facts['nm_target']
+        current.append('They have their eye on the notorious {}{}.'.format(
+            target['nm'], ' and its {}'.format(target['item']) if target.get('item') else ''))
+
+    # ── So far ───────────────────────────────────────────────────────────────
+    so_far  = []
+    created = facts.get('created')
+    if created:
+        data = created['data']
+        so_far.append('{} began their adventure {} in {} as a {}{}.'.format(
+            name, _ago_words(created['ts'], now), data.get('zone') or 'Vana\'diel', _job(data.get('job')) or 'new adventurer',
+            ' of {}'.format(bot['nation']) if bot.get('nation') else ''))
+
+    levelled = [j for j in jobs if j['level'] > 1]
+    if levelled:
+        levels = ['{} {}'.format(j['job'], j['level']) for j in levelled[:3]]
+        so_far.append('{} they have reached {}.'.format('Since then' if created else 'So far', _list_words(levels)))
+
+    kills, exp = stats.get('monsters_defeated') or 0, stats.get('exp_earned') or 0
+    if kills or exp:
+        where = ' across {}'.format(_plural(facts['zones'], 'area')) if facts.get('zones') else ''
+        so_far.append('They have defeated {} and earned {:,} EXP{}.'.format(_plural(kills, 'monster'), exp, where))
+
+    moments = []
+    if facts.get('nms'):
+        moments.append('defeated the notorious {}'.format(_list_words(facts['nms'][:3])))
+    if facts.get('unlocked'):
+        moments.append('unlocked {}'.format(_list_words(facts['unlocked'])))
+    if facts.get('gold_caskets'):
+        moments.append('opened {}'.format(_plural(facts['gold_caskets'], 'gold casket')))
+    if facts.get('players'):
+        moments.append('adventured alongside {}'.format(_list_words(facts['players'])))
+    elif stats.get('parties'):
+        moments.append('joined {}'.format(_plural(stats['parties'], 'party', 'parties')))
+    if moments:
+        so_far.append('Along the way they {}.'.format(_list_words(moments)))
+
+    deaths = stats.get('deaths') or 0
+    if deaths:
+        so_far.append('They have been defeated {}{}.'.format(
+            'once' if deaths == 1 else '{:,} times'.format(deaths),
+            ', most recently by {}'.format(facts['last_foe']) if facts.get('last_foe') else ''))
+    elif kills:
+        so_far.append('They have never been defeated.')
+
+    if facts.get('ah_sold') or facts.get('ah_bought'):
+        trade = []
+        if facts['ah_sold']:
+            trade.append('sold {} for {:,} gil'.format(_plural(facts['ah_sold'], 'item'), facts['ah_gil']))
+        if facts['ah_bought']:
+            trade.append('bought {}'.format(_plural(facts['ah_bought'], 'upgrade')))
+        so_far.append('At the auction house they have {}.'.format(_list_words(trade)))
+
+    # ── Long term ────────────────────────────────────────────────────────────
+    long_term = []
+    career_level = next((j['level'] for j in jobs if j['job'] == career), 0)
+    if career and career_level == 0 and career not in BASE_JOBS:
+        long_term.append('Their dream is to become a {}. First they need a job at level {} to unlock it.'.format(career, ADVANCED_JOB_LEVEL))
+    elif career and career_level < LEVEL_CAP:
+        long_term.append('Their goal is to take {} all the way to level {}.'.format(career, LEVEL_CAP))
+    elif career:
+        long_term.append('They have mastered {} at level {} and are looking for new challenges.'.format(career, LEVEL_CAP))
+
+    # The next couple of achievements worth aiming for (not "be raised").
+    upcoming = [a for a in achievements or [] if not a['earned'] and a['key'] != 'resilient'][:2]
+    if upcoming:
+        long_term.append('Next achievements to aim for: {}.'.format(_list_words([a['name'] for a in upcoming])))
+
+    if not so_far:
+        so_far.append("{}'s story is just beginning.".format(name))
+
+    return {'now': current, 'so_far': so_far, 'long_term': long_term}
+
+
 def _with_connection(fn):
     conn = get_connection()
     cur  = conn.cursor()
@@ -487,6 +678,7 @@ def _one_bot(cur, charid):
     bot['stats']  = _stats(cur, charid)
     bot['events'] = events
     bot['title'], bot['achievements'] = achievements_for(_achievement_counts(cur, charid).get(charid))
+    bot['story']  = build_story(bot, _story_facts(cur, charid), bot['achievements'])
     return bot
 
 

@@ -263,6 +263,28 @@
 
 .profile-jobs { margin-bottom: 36px; }
 
+/* Storyline (bots.py build_story) */
+.profile-story { margin-bottom: 36px; }
+.story-card {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 18px 28px;
+  padding: 20px 22px;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+}
+.story-label {
+  margin: 0 0 6px;
+  font-family: var(--mono);
+  font-size: 0.68rem;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--crystal-amber-deep);
+}
+.story-text { margin: 0; font-size: 0.95rem; line-height: 1.55; color: var(--ink); }
+
 /* Titles and achievements (worked out from the log - see bots.py ACHIEVEMENTS) */
 .bot-title {
   font-size: 0.78rem;
