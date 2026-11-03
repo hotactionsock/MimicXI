@@ -860,6 +860,7 @@ local function relocateStep(bot, charId, state, now, currentPos, moving)
         end
 
         if walk.purpose == 'mog' then
+            StowBotKeepers(charId, 0, true) -- inside the Mog House: tidy kept loot into the Safe
             local want = state.goal and state.goal.jobs
             if want and xi.worldbots.jobs.apply(charId, want) then
                 diag(charId, 'changed jobs to %d/%d', want.main, want.sub)
@@ -886,6 +887,7 @@ local function relocateStep(bot, charId, state, now, currentPos, moving)
         -- At the Mog House door at the end of a play session: in it goes, and
         -- the bot logs off (worldbots_session.lua). The entity is gone now.
         if walk.purpose == 'logoff' then
+            StowBotKeepers(charId, 0, true) -- inside: Safe and Storage open
             xi.worldbots.session.logOff(bot, charId, 'in their Mog House in ' .. GetBotZoneName(bot:getZoneID()))
             return true
         end
@@ -1429,6 +1431,17 @@ end
 -- something, go sell it in town and come back.
 local function bagStep(bot, charId, state, now, zoneId)
     state.nextBagCheckAt = now + BAG_CHECK_SEC
+
+    if GetBotFreeSlots(charId) >= BAG_WANT_FREE then
+        return
+    end
+
+    -- Rare/Ex items and Auction House gear go into storage (Mog Case and the
+    -- like) rather than ever being thrown away or sold.
+    local stowed = StowBotKeepers(charId, BAG_WANT_FREE, false)
+    if stowed > 0 then
+        diag(charId, 'put %d stacks into storage', stowed)
+    end
 
     if GetBotFreeSlots(charId) >= BAG_WANT_FREE then
         return

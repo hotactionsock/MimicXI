@@ -340,6 +340,7 @@ bool AcceptBotRaise(uint32 charId);
 auto HomepointBot(uint32 charId) -> bool;
 auto GetBotFreeSlots(uint32 charId) -> uint8;
 auto TossBotJunk(uint32 charId, uint32 maxValue, uint8 wantFree) -> uint8;
+uint8 StowBotKeepers(uint32 charId, uint8 wantFree, sol::object insideMogHouse);
 auto GetBotSellableValue(uint32 charId) -> uint32;
 auto SellBotItems(uint32 charId) -> sol::table;
 auto GetBotVendors(uint16 zoneId) -> sol::table;

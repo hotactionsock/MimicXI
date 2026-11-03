@@ -359,6 +359,7 @@ void init(IPP mapIPP, bool isRunningInCI)
     lua.set_function("HomepointBot", &luautils::HomepointBot);
     lua.set_function("GetBotFreeSlots", &luautils::GetBotFreeSlots);
     lua.set_function("TossBotJunk", &luautils::TossBotJunk);
+    lua.set_function("StowBotKeepers", &luautils::StowBotKeepers);
     lua.set_function("GetBotSellableValue", &luautils::GetBotSellableValue);
     lua.set_function("SellBotItems", &luautils::SellBotItems);
     lua.set_function("GetBotVendors", &luautils::GetBotVendors);
@@ -2727,6 +2728,15 @@ uint8 TossBotJunk(uint32 charId, uint32 maxValue, uint8 wantFree)
     TracyZoneScoped;
 
     return botutils::TossBotJunk(charId, maxValue, wantFree);
+}
+
+// Puts kept loot (Rare/Ex, Auction House gear) into storage - see
+// botutils::StowBotKeepers. insideMogHouse: it's entering its Mog House.
+uint8 StowBotKeepers(uint32 charId, uint8 wantFree, sol::object insideMogHouse)
+{
+    TracyZoneScoped;
+
+    return botutils::StowBotKeepers(charId, wantFree, insideMogHouse.is<bool>() && insideMogHouse.as<bool>());
 }
 
 uint32 GetBotSellableValue(uint32 charId)

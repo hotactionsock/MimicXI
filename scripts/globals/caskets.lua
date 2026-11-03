@@ -803,8 +803,9 @@ end
 -- guess. It never uses the other hints or Thief's Tools. It can fail (a
 -- failed Gold casket can still turn into a mimic). Whatever is
 -- inside goes to the bot: temporary items, items, and Gold casket gear with
--- its augments - Rare/Ex items first, then gear, then the rest, tossing cheap
--- junk to make room for the first two if its bags are full. Chests owed to a party with a real player in it are left to
+-- its augments - Rare/Ex items first, then gear, then the rest. If its bags
+-- are full it makes room for the first two by putting kept loot into storage,
+-- or tossing cheap junk (Rare/Ex and Auction House gear are never tossed). Chests owed to a party with a real player in it are left to
 -- the players.
 -----------------------------------
 local botOpenDelayMinMs = 4000
@@ -823,7 +824,7 @@ local chestNames =
 local botRankRareEx   = 1
 local botRankGear     = 2
 local botRankOther    = 3
-local botTossMaxValue = 100 -- junk worth less than this (gil) is tossed to make room for gear
+local botTossMaxValue = 100 -- junk worth less than this (gil) may be tossed to make room for gear
 
 local function botLootRank(itemId)
     local item = itemId ~= 0 and GetItemByID(itemId) or nil
@@ -923,13 +924,17 @@ local function botTakeContents(bot, npc, dropType)
         local slot   = pick.slot
         local itemId = getChestItem(npc, slot)
 
-        -- Bags full and this one is worth having: toss cheap junk for room.
+        -- Bags full and this one is worth having: put kept loot into storage,
+        -- or failing that toss cheap junk (never Rare/Ex or Auction House gear).
         if
             itemId ~= 0 and
             pick.rank <= botRankGear and
             bot:getFreeSlotsCount() == 0
         then
-            TossBotJunk(bot:getID(), botTossMaxValue, 1)
+            StowBotKeepers(bot:getID(), 1, false)
+            if bot:getFreeSlotsCount() == 0 then
+                TossBotJunk(bot:getID(), botTossMaxValue, 1)
+            end
         end
 
         if

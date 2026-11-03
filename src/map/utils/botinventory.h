@@ -168,6 +168,15 @@ auto IsUsefulBotScroll(uint32 charId, uint16 itemId) -> bool;
 // rather than sell. Used for party loot etiquette (LotBotTreasure).
 auto IsBotKeeperLoot(CCharEntity* PChar, uint16 itemId) -> bool;
 
+// Moves loot the bot keeps (Rare/Ex items, gear worth putting on the Auction
+// House, augmented gear) out of its inventory into storage, through the real
+// item-move handler: the Mog Safe and Storage when it can reach them, else
+// the Mog Case, Satchel and Sack, and for gear the spare wardrobes. Stops
+// once wantFree inventory slots are free (0 = stow everything it can).
+// insideMogHouse: it's entering its own Mog House (logging off there), which
+// opens the Safe and Storage. Returns how many stacks it moved.
+auto StowBotKeepers(uint32 charId, uint8 wantFree, bool insideMogHouse) -> uint8;
+
 // True if itemId is equipment or a spell scroll at all.
 auto IsGearOrScroll(uint16 itemId) -> bool;
 

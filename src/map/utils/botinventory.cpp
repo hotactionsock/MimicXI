@@ -23,6 +23,7 @@
 #include "botlog.h"
 #include "trade_container.h"
 #include "utils/itemutils.h"
+#include "packets/c2s/0x029_item_move.h"
 #include "packets/c2s/0x083_shop_buy.h"
 #include "packets/basic.h"
 #include "packet_system.h"
@@ -352,6 +353,27 @@ auto isKeeper(CCharEntity* PChar, CItem* PItem, const std::unordered_set<CItem*>
     return false;
 }
 
+// Loot a bot never throws away or sells to a vendor: Rare/Ex items (they
+// can't be bought back), and gear worth putting on the Auction House - weapons
+// and armour that can be listed, plus augmented gear (it can't be listed, but
+// a Gold casket augment isn't vendor trash either). Kept in storage when the
+// bags fill up (StowBotKeepers).
+auto isKeptLoot(CItem* PItem) -> bool
+{
+    if (PItem->hasFlag(ItemFlag::Rare) || PItem->hasFlag(ItemFlag::Exclusive))
+    {
+        return true;
+    }
+
+    auto* PEquip = dynamic_cast<CItemEquipment*>(PItem);
+    if (PEquip == nullptr)
+    {
+        return false;
+    }
+
+    return !PItem->hasFlag(ItemFlag::NoAuction) || PEquip->getAugment(0) != 0;
+}
+
 auto isSellable(CItem* PItem) -> bool
 {
     return !PItem->hasFlag(ItemFlag::NoSale) && PItem->getBasePrice() > 0;
@@ -503,7 +525,7 @@ auto TossBotJunk(uint32 charId, uint32 maxValue, uint8 wantFree) -> uint8
     for (uint8 i = 1; i <= PInventory->GetSize(); ++i)
     {
         auto* PItem = PInventory->GetItem(i);
-        if (PItem != nullptr && !isKeeper(PChar, PItem, equipped) && lootValue(PItem) < maxValue)
+        if (PItem != nullptr && !isKeeper(PChar, PItem, equipped) && !isKeptLoot(PItem) && lootValue(PItem) < maxValue)
         {
             junk.emplace_back(lootValue(PItem), i);
         }
@@ -555,7 +577,7 @@ auto GetBotSellableValue(uint32 charId) -> uint32
     for (uint8 i = 1; i <= PInventory->GetSize(); ++i)
     {
         auto* PItem = PInventory->GetItem(i);
-        if (PItem != nullptr && !isKeeper(PChar, PItem, equipped))
+        if (PItem != nullptr && !isKeeper(PChar, PItem, equipped) && !isKeptLoot(PItem))
         {
             total += lootValue(PItem);
         }
@@ -580,7 +602,7 @@ auto SellBotItems(uint32 charId) -> BotSaleResult
     for (uint8 i = 1; i <= PInventory->GetSize(); ++i)
     {
         auto* PItem = PInventory->GetItem(i);
-        if (PItem == nullptr || isKeeper(PChar, PItem, equipped) || !isSellable(PItem))
+        if (PItem == nullptr || isKeeper(PChar, PItem, equipped) || isKeptLoot(PItem) || !isSellable(PItem))
         {
             continue;
         }
@@ -1126,6 +1148,93 @@ auto IsUsefulBotScroll(uint32 charId, uint16 itemId) -> bool
 
     return spell::CanUseSpellWith(static_cast<SpellID>(spellId), PChar->GetMJob(), PChar->GetMLevel()) ||
            (PChar->GetSJob() != xi::Job::NONE && spell::CanUseSpellWith(static_cast<SpellID>(spellId), PChar->GetSJob(), PChar->GetSLevel()));
+}
+
+auto StowBotKeepers(uint32 charId, uint8 wantFree, bool insideMogHouse) -> uint8
+{
+    auto* PChar = liveBot(charId);
+    if (PChar == nullptr || PChar->loc.zone == nullptr)
+    {
+        return 0;
+    }
+
+    auto*      PInventory = PChar->getStorage(LOC_INVENTORY);
+    const auto equipped   = equippedItems(PChar);
+
+    // Walking into its own Mog House (logging off there) opens the Safe and
+    // Storage, as for a player; restored afterwards.
+    const auto previousMogHouse = PChar->m_moghouseID;
+    if (insideMogHouse)
+    {
+        PChar->m_moghouseID = PChar->id;
+    }
+
+    // Safe and Storage when it can reach them, then the bags it carries
+    // everywhere. Gear can also go in the wardrobes it doesn't dress from.
+    static const std::array<CONTAINER_ID, 6> kStores = { LOC_MOGSAFE, LOC_MOGSAFE2, LOC_STORAGE, LOC_MOGCASE, LOC_MOGSATCHEL, LOC_MOGSACK };
+    static const std::array<CONTAINER_ID, 6> kGearStores = { LOC_WARDROBE3, LOC_WARDROBE4, LOC_WARDROBE5, LOC_WARDROBE6, LOC_WARDROBE7, LOC_WARDROBE8 };
+
+    auto& packets = g_PMapEngine->networking().packetSystem();
+    auto* session = PChar->PSession;
+
+    uint8 stowed = 0;
+    for (uint8 slot = 1; slot <= PInventory->GetSize(); ++slot)
+    {
+        if (wantFree != 0 && PInventory->GetFreeSlotsCount() >= wantFree)
+        {
+            break;
+        }
+
+        auto* PItem = PInventory->GetItem(slot);
+        if (PItem == nullptr || PItem->isBusy() || equipped.contains(PItem) || isKeeper(PChar, PItem, equipped) || !isKeptLoot(PItem))
+        {
+            continue;
+        }
+
+        const auto itemId   = PItem->getID();
+        const auto quantity = PItem->getQuantity();
+        const bool gear     = PItem->isType(ITEM_EQUIPMENT) || PItem->isType(ITEM_WEAPON);
+        const auto name     = HumanName(PItem->getName());
+
+        auto tryStore = [&](CONTAINER_ID to) -> bool
+        {
+            if (PChar->getStorage(to)->GetFreeSlotsCount() == 0)
+            {
+                return false;
+            }
+
+            // The real item-move handler: it decides which containers the bot
+            // may use where it stands (Safe only in a Mog House, and so on).
+            CBasicPacket packet;
+            packet.setType(static_cast<uint16>(GP_CLI_COMMAND_ITEM_MOVE::packetId));
+            packet.setSize(sizeof(GP_CLI_COMMAND_ITEM_MOVE));
+            auto* move       = packet.as<GP_CLI_COMMAND_ITEM_MOVE>();
+            move->ItemNum    = quantity;
+            move->Category1  = LOC_INVENTORY;
+            move->Category2  = to;
+            move->ItemIndex1 = slot;
+            move->ItemIndex2 = 0xFF; // any free slot
+            packets.dispatch(packet.getType(), session, PChar, packet);
+
+            return PInventory->GetItem(slot) == nullptr;
+        };
+
+        bool stored = std::any_of(kStores.begin(), kStores.end(), tryStore);
+        if (!stored && gear)
+        {
+            stored = std::any_of(kGearStores.begin(), kGearStores.end(), tryStore);
+        }
+
+        if (stored)
+        {
+            ++stowed;
+            LogBotEvent(PChar->id, BotLogLevel::Detail, "item", "stored", std::format("{} put {} into storage", PChar->getName(), name),
+                        std::format(R"({{"item_id":{},"item":"{}","quantity":{}}})", itemId, JsonEscape(name), quantity));
+        }
+    }
+
+    PChar->m_moghouseID = previousMogHouse;
+    return stowed;
 }
 
 auto IsBotKeeperLoot(CCharEntity* PChar, uint16 itemId) -> bool
