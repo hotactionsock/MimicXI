@@ -15,6 +15,7 @@ JSON (public, read-only):
     /api/bots/<charid>/events       events, newest first (?limit, ?before, ?since, ?category)
     /api/bots/feed                  latest events across all bots, with names (?since=<id>, ?limit)
     /api/bots/<charid>/live         live snapshot (and asks the game server to keep snapshotting it)
+    /api/bots/<charid>/inventory    every bag it owns and what's in it (equipment: /api/character/<charid>/equipment)
     /api/zones/<zoneid>/layout      a zone's mob spawn points, for the live radar
     /api/bots/leaderboards          top bots by level, kills, EXP, NMs, achievements, defeats... (?period=all|week, ?limit)
 
@@ -786,6 +787,82 @@ def _zone_layout(cur, zone_id):
     layout = {'zone_id': zone_id, 'zone': _zone_name_map(cur).get(zone_id, 'Zone {}'.format(zone_id)), 'spawns': spawns}
     _zone_layouts[zone_id] = layout
     return layout
+
+
+# Containers as the game numbers them (src/map/item_container.h), in display
+# order, with the char_storage column holding each one's size (None = no
+# fixed size: Storage depends on Mog House furniture).
+CONTAINERS = [
+    (0,  'Inventory',  'inventory'),
+    (7,  'Mog Case',   'case'),
+    (5,  'Mog Satchel', 'satchel'),
+    (6,  'Mog Sack',   'sack'),
+    (8,  'Wardrobe',   'wardrobe'),
+    (10, 'Wardrobe 2', 'wardrobe2'),
+    (11, 'Wardrobe 3', 'wardrobe3'),
+    (12, 'Wardrobe 4', 'wardrobe4'),
+    (13, 'Wardrobe 5', 'wardrobe5'),
+    (14, 'Wardrobe 6', 'wardrobe6'),
+    (15, 'Wardrobe 7', 'wardrobe7'),
+    (16, 'Wardrobe 8', 'wardrobe8'),
+    (1,  'Mog Safe',   'safe'),
+    (9,  'Mog Safe 2', 'safe'),
+    (2,  'Storage',    None),
+    (4,  'Mog Locker', 'locker'),
+]
+GIL_ITEM_ID = 65535
+
+
+def _item_label(raw):
+    return ' '.join(w[:1].upper() + w[1:] for w in (raw or '').replace('_', ' ').split())
+
+
+def _inventory(cur, charid):
+    """Every bag the bot owns with what's in it (equipped items marked), for
+    the live view. Bags with no room and nothing in them are left out."""
+    cur.execute('SELECT 1 FROM world_bots WHERE charid = ?', (charid,))
+    if not cur.fetchone():
+        return None
+
+    sizes = {}
+    cur.execute('SELECT inventory, safe, locker, satchel, sack, `case`, wardrobe, wardrobe2, wardrobe3, wardrobe4, '
+                'wardrobe5, wardrobe6, wardrobe7, wardrobe8 FROM char_storage WHERE charid = ?', (charid,))
+    row = cur.fetchone()
+    if row:
+        names = ['inventory', 'safe', 'locker', 'satchel', 'sack', 'case', 'wardrobe', 'wardrobe2', 'wardrobe3',
+                 'wardrobe4', 'wardrobe5', 'wardrobe6', 'wardrobe7', 'wardrobe8']
+        sizes = dict(zip(names, (int(v or 0) for v in row)))
+
+    cur.execute('SELECT containerid, slotid FROM char_equip WHERE charid = ?', (charid,))
+    equipped = {(r[0], r[1]) for r in cur.fetchall()}
+
+    items = {}
+    cur.execute('SELECT ci.location, ci.slot, ci.itemId, ci.quantity, ib.name, ib.stackSize FROM char_inventory ci '
+                'LEFT JOIN item_basic ib ON ib.itemid = ci.itemId '
+                'WHERE ci.charid = ? AND ci.itemId != ? ORDER BY ci.location, ci.slot', (charid, GIL_ITEM_ID))
+    for loc, slot, item_id, qty, name, stack in cur.fetchall():
+        items.setdefault(loc, []).append({
+            'slot': slot, 'item_id': item_id, 'quantity': int(qty or 1), 'stack': int(stack or 1),
+            'name': _item_label(name) or 'Item #{}'.format(item_id), 'equipped': (loc, slot) in equipped,
+        })
+
+    containers = []
+    for loc, label, column in CONTAINERS:
+        size = sizes.get(column) if column else None
+        held = items.get(loc, [])
+        if not held and not size:
+            continue
+        containers.append({'id': loc, 'name': label, 'size': size, 'items': held})
+
+    return {'charid': charid, 'containers': containers}
+
+
+@bots.route('/api/bots/<int:charid>/inventory')
+def api_bot_inventory(charid):
+    result = _with_connection(lambda cur: _inventory(cur, charid))
+    if result is None:
+        abort(404)
+    return jsonify(result)
 
 
 @bots.route('/api/bots/<int:charid>/live')

@@ -51,6 +51,20 @@
             <li><span class="lg lg-ally"></span>Other adventurers</li>
             <li><span class="lg lg-line"></span>Way out</li>
           </ul>
+
+          <div class="gear-row">
+            <section class="watch-card gear-card">
+              <h2 class="section-label">Equipment</h2>
+              <div class="equip-4x4" id="equip-4x4"></div>
+            </section>
+            <section class="watch-card gear-card gear-inv">
+              <div class="gear-inv-head">
+                <h2 class="section-label">Items</h2>
+                <div class="gear-tabs" id="gear-tabs"></div>
+              </div>
+              <div class="inv-grid" id="inv-grid"><p class="feed-empty">Loading…</p></div>
+            </section>
+          </div>
         </div>
 
         <aside class="watch-side">
@@ -83,6 +97,7 @@
       </div>
 
       <p class="watch-credit" id="watch-credit" hidden></p>
+      <div class="gear-tip" id="gear-tip" hidden></div>
     </div>
   </div>
 
@@ -607,6 +622,85 @@
         } catch (e) { /* the next poll tries again */ }
       }
 
+      // ── Equipment (4x4, as equipviewer) and items ────────────────────────
+      const GEAR_MS = 20000;
+      const SLOT_SHORT = { "Main": "Main", "Sub": "Sub", "Ranged": "Range", "Ammo": "Ammo", "Head": "Head", "Neck": "Neck",
+                           "Ear L": "Ear", "Ear R": "Ear", "Body": "Body", "Hands": "Hands", "Ring L": "Ring", "Ring R": "Ring",
+                           "Back": "Back", "Waist": "Waist", "Legs": "Legs", "Feet": "Feet" };
+      const RARITY_HUE = { common: "#9b94a8", uncommon: "#7fbf94", rare: "#6dadd8", exceptional: "#b787c9", relic: "#e8c785", mythic: "#f0a85b" };
+      const gearTip = document.getElementById("gear-tip");
+      let equipJson = "", invJson = "", invData = null, invTab = 0;
+
+      function icon(itemId, alt) {
+        return `<img src="/item-icon/${itemId}" alt="${B.esc(alt)}" loading="lazy" onerror="this.style.visibility='hidden'">`;
+      }
+
+      async function loadGear() {
+        try {
+          const eq = await B.getJson(`/api/character/${charid}/equipment`);
+          const text = JSON.stringify(eq);
+          if (text !== equipJson) {
+            equipJson = text;
+            document.getElementById("equip-4x4").innerHTML = (eq.slots || []).map(sl => sl.item_id ? `
+              <div class="eq-cell is-filled" style="--hue:${RARITY_HUE[sl.rarity] || RARITY_HUE.common}"
+                   data-tip="${B.esc(sl.name)}${sl.req_level ? ` · Lv ${sl.req_level}` : ""}${(sl.augments || []).length ? " · augmented" : ""}">
+                ${icon(sl.item_id, sl.name)}
+              </div>` : `
+              <div class="eq-cell" data-tip="${B.esc(sl.slot_name)}: empty"><span class="eq-slot">${B.esc(SLOT_SHORT[sl.slot_name] || sl.slot_name)}</span></div>`).join("");
+          }
+        } catch (e) { /* keep what's shown */ }
+
+        try {
+          const inv = await B.getJson(`/api/bots/${charid}/inventory`);
+          const text = JSON.stringify(inv);
+          if (text !== invJson) {
+            invJson = text;
+            invData = inv;
+            if (!(inv.containers || []).some(c => c.id === invTab)) invTab = (inv.containers[0] || { id: 0 }).id;
+            renderItems();
+          }
+        } catch (e) { /* keep what's shown */ }
+      }
+
+      function renderItems() {
+        const containers = invData.containers || [];
+        document.getElementById("gear-tabs").innerHTML = containers.map(c => `
+          <button type="button" class="filter-chip ${c.id === invTab ? "is-active" : ""}" data-bag="${c.id}">
+            ${B.esc(c.name)} <span class="gear-count">${c.items.length}${c.size ? "/" + c.size : ""}</span>
+          </button>`).join("");
+
+        const bag   = containers.find(c => c.id === invTab);
+        const grid  = document.getElementById("inv-grid");
+        if (!bag) { grid.innerHTML = `<p class="feed-empty">No items.</p>`; return; }
+        const cells = bag.items.map(it => `
+          <div class="inv-cell" data-tip="${B.esc(it.name)}${it.quantity > 1 ? ` ×${it.quantity}` : ""}${it.equipped ? " · equipped" : ""}">
+            ${icon(it.item_id, it.name)}
+            ${it.equipped ? `<span class="inv-e">E</span>` : ""}
+            ${it.quantity > 1 ? `<span class="inv-qty">${it.quantity}</span>` : ""}
+          </div>`);
+        const empty = Math.max(0, (bag.size || 0) - bag.items.length);
+        for (let i = 0; i < empty; i++) cells.push(`<div class="inv-cell is-empty"></div>`);
+        grid.innerHTML = cells.join("") || `<p class="feed-empty">Empty.</p>`;
+      }
+
+      document.getElementById("gear-tabs").addEventListener("click", (ev) => {
+        const b = ev.target.closest("[data-bag]");
+        if (!b || !invData) return;
+        invTab = Number(b.dataset.bag);
+        renderItems();
+      });
+
+      // One tooltip for every gear and item cell.
+      document.addEventListener("mouseover", (ev) => {
+        const cell = ev.target.closest(".eq-cell, .inv-cell");
+        if (!cell || !cell.dataset.tip) { gearTip.hidden = true; return; }
+        const r = cell.getBoundingClientRect();
+        gearTip.textContent = cell.dataset.tip;
+        gearTip.hidden = false;
+        gearTip.style.left = Math.min(window.scrollX + r.left, window.scrollX + document.documentElement.clientWidth - 240) + "px";
+        gearTip.style.top  = (window.scrollY + r.bottom + 6) + "px";
+      });
+
       // ── Interaction ──────────────────────────────────────────────────────
       canvas.addEventListener("mousemove", (ev) => {
         const r = canvas.getBoundingClientRect();
@@ -651,6 +745,8 @@
       pollFeed();
       setInterval(poll, POLL_MS);
       setInterval(pollFeed, FEED_MS);
+      loadGear();
+      setInterval(loadGear, GEAR_MS);
       setInterval(() => B.refreshTimes(document), 30000);
     })();
   </script>

@@ -588,3 +588,45 @@
 .cal-spawn { cursor: pointer; grid-template-columns: 12px minmax(0, 1fr) auto !important; }
 .cal-spawn:hover .watch-row-name { color: var(--crystal-amber); }
 .cal-field input { width: 100%; min-width: 0; box-sizing: border-box; }
+
+/* Live view: equipment (4x4, equipviewer-style) and items */
+.gear-row { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 16px; margin-top: 18px; align-items: start; }
+.equip-4x4 { display: grid; grid-template-columns: repeat(4, 48px); grid-auto-rows: 48px; gap: 4px; }
+.eq-cell, .inv-cell {
+  position: relative;
+  display: flex; align-items: center; justify-content: center;
+  background: linear-gradient(180deg, rgba(255,255,255,0.04), rgba(0,0,0,0.25));
+  border: 1px solid var(--line);
+  border-radius: 6px;
+}
+.eq-cell img, .inv-cell img { width: 32px; height: 32px; image-rendering: auto; }
+.eq-cell.is-filled { border-color: var(--hue); box-shadow: inset 0 0 0 1px rgba(0,0,0,0.4), 0 0 6px -2px var(--hue); }
+.eq-slot { font-family: var(--mono); font-size: 0.58rem; letter-spacing: 0.04em; color: var(--ink-faint); text-transform: uppercase; }
+.gear-inv-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 8px; margin-bottom: 10px; }
+.gear-inv-head .section-label { margin: 0; }
+.gear-tabs { display: flex; flex-wrap: wrap; gap: 4px; }
+.gear-tabs .filter-chip { font-size: 0.72rem; padding: 3px 9px; }
+.gear-count { color: var(--ink-faint); font-family: var(--mono); margin-left: 2px; }
+.inv-grid { display: grid; grid-template-columns: repeat(auto-fill, 40px); grid-auto-rows: 40px; gap: 4px; max-height: 260px; overflow-y: auto; }
+.inv-cell.is-empty { opacity: 0.35; }
+.inv-qty {
+  position: absolute; right: 2px; bottom: 0;
+  font-family: var(--mono); font-size: 0.62rem; color: #fff;
+  text-shadow: 0 0 3px #000, 0 0 3px #000;
+}
+.inv-e {
+  position: absolute; left: 2px; top: 0;
+  font-family: var(--mono); font-size: 0.6rem; font-weight: 600; color: var(--crystal-amber);
+  text-shadow: 0 0 3px #000;
+}
+.gear-tip {
+  position: absolute; z-index: 20; max-width: 240px; pointer-events: none;
+  padding: 6px 10px; border-radius: var(--radius);
+  background: var(--bg-2); border: 1px solid var(--line);
+  color: var(--ink); font-size: 0.8rem;
+}
+@media (max-width: 620px) {
+  .gear-row { grid-template-columns: minmax(0, 1fr); }
+  .equip-4x4 { grid-template-columns: repeat(4, minmax(0, 1fr)); grid-auto-rows: auto; }
+  .eq-cell { aspect-ratio: 1 / 1; }
+}
