@@ -98,6 +98,7 @@
       // FFXI positions: x runs east-west, z north-south. Drawn with +z up;
       // flip this if HD maps show the zone mirrored.
       const Z_UP = true;
+      const MAX_UPSCALE = 2.5; // with a map: never magnify its pixels more than this (blurry beyond)
 
       const canvas = document.getElementById("radar");
       const ctx    = canvas.getContext("2d");
@@ -209,7 +210,12 @@
           return { cx: (minX + maxX) / 2, cz: (minZ + maxZ) / 2, scale: Math.min(w / spanX, h / spanZ) * 0.9 };
         }
         const c = botPos || { x: 0, z: 0 };
-        return { cx: c.x, cz: c.z, scale: Math.min(w, h) / 2 / radius };
+        let scale = Math.min(w, h) / 2 / radius;
+        if (map) {
+          // Screen pixels per map pixel at most MAX_UPSCALE (ax = map pixels per yalm).
+          scale = Math.min(scale, MAX_UPSCALE * Math.abs(map.entry.ax));
+        }
+        return { cx: c.x, cz: c.z, scale };
       }
 
       // The calibrated map for where the bot stands (the floor whose height
@@ -271,29 +277,37 @@
           const b  = mapBounds(map);
           const s0 = S(b.x0, b.z0), s1 = S(b.x1, b.z1);
           ctx.save();
-          ctx.globalAlpha = 0.9;
+          ctx.globalAlpha = 0.95;
+          ctx.imageSmoothingEnabled = true;
+          ctx.imageSmoothingQuality = "high";
           ctx.translate(s0.sx, s0.sy);
           ctx.scale((s1.sx - s0.sx) / map.img.naturalWidth, (s1.sy - s0.sy) / map.img.naturalHeight);
           ctx.drawImage(map.img, 0, 0);
           ctx.restore();
         }
 
-        // Grid every 10 yalms (50 stronger), and range rings around the bot.
-        const step = 10;
-        const halfW = w / 2 / v.scale, halfH = h / 2 / v.scale;
-        ctx.lineWidth = 1;
-        for (let gx = Math.floor((v.cx - halfW) / step) * step; gx <= v.cx + halfW; gx += step) {
-          const a = S(gx, 0).sx;
-          ctx.strokeStyle = gx % 50 === 0 ? C.ring : C.grid;
-          ctx.beginPath(); ctx.moveTo(a, 0); ctx.lineTo(a, h); ctx.stroke();
-        }
-        for (let gz = Math.floor((v.cz - halfH) / step) * step; gz <= v.cz + halfH; gz += step) {
-          const b = S(0, gz).sy;
-          ctx.strokeStyle = gz % 50 === 0 ? C.ring : C.grid;
-          ctx.beginPath(); ctx.moveTo(0, b); ctx.lineTo(w, b); ctx.stroke();
+        // Grid (only without a map - the map has its own), spaced so lines
+        // stay at least ~24px apart, every fifth one stronger; then range
+        // rings around the bot.
+        if (!map) {
+          const step  = [10, 50, 100, 250, 500, 1000].find(st => st * v.scale >= 24) || 1000;
+          const major = step * 5;
+          const halfW = w / 2 / v.scale, halfH = h / 2 / v.scale;
+          ctx.lineWidth = 1;
+          for (let gx = Math.floor((v.cx - halfW) / step) * step; gx <= v.cx + halfW; gx += step) {
+            const a = S(gx, 0).sx;
+            ctx.strokeStyle = gx % major === 0 ? C.ring : C.grid;
+            ctx.beginPath(); ctx.moveTo(a, 0); ctx.lineTo(a, h); ctx.stroke();
+          }
+          for (let gz = Math.floor((v.cz - halfH) / step) * step; gz <= v.cz + halfH; gz += step) {
+            const b = S(0, gz).sy;
+            ctx.strokeStyle = gz % major === 0 ? C.ring : C.grid;
+            ctx.beginPath(); ctx.moveTo(0, b); ctx.lineTo(w, b); ctx.stroke();
+          }
         }
         const centre = S(me.x, me.z);
-        ctx.strokeStyle = C.ring;
+        ctx.lineWidth = 1;
+        ctx.strokeStyle = map ? "rgba(40, 32, 20, 0.45)" : C.ring;
         ctx.setLineDash([3, 5]);
         for (const r of [20, 50]) {
           ctx.beginPath(); ctx.arc(centre.sx, centre.sy, r * v.scale, 0, Math.PI * 2); ctx.stroke();
@@ -348,7 +362,8 @@
                        : mob.aggro ? C.aggro : C.mob;
           const r = mob.nm ? 7 : 5;
           ctx.fillStyle = colour;
-          ctx.beginPath(); ctx.arc(s.sx, s.sy, r, 0, Math.PI * 2); ctx.fill();
+          ctx.strokeStyle = "rgba(12, 16, 32, 0.8)"; ctx.lineWidth = 1.5;
+          ctx.beginPath(); ctx.arc(s.sx, s.sy, r, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
           if (mob.nm) {
             ctx.strokeStyle = C.nm; ctx.lineWidth = 2.5;
             ctx.beginPath(); ctx.arc(s.sx, s.sy, r + 3, 0, Math.PI * 2); ctx.stroke();
@@ -357,7 +372,7 @@
             ctx.strokeStyle = colour; ctx.lineWidth = 1;
             ctx.beginPath(); ctx.arc(s.sx, s.sy, r + 6, 0, Math.PI * 2); ctx.stroke();
           }
-          if (showLabels) label(mob.name, s.sx + r + 4, s.sy + 4, C.faint, false, snap.target && snap.target.id === mob.id ? 1 : mob.nm ? 2 : 7);
+          if (showLabels) label(mob.name, s.sx + r + 4, s.sy + 4, C.text, false, snap.target && snap.target.id === mob.id ? 1 : mob.nm ? 2 : 7);
           hoverables.push({ sx: s.sx, sy: s.sy, r: r + 4, text: `${mob.name} · Lv ${mob.level} · ${mob.hpp}% HP${mob.nm ? " · Notorious" : ""}${claimText(mob.claim)}${mob.aggro ? " · aggressive" : ""}` });
         }
 
@@ -420,6 +435,10 @@
           const hit = placed.some(p => rect.x < p.x + p.w && p.x < rect.x + rect.w && rect.y < p.y + p.h && p.y < rect.y + rect.h);
           if (hit && l.prio > 0) continue;
           placed.push(rect);
+          ctx.lineJoin    = "round";
+          ctx.lineWidth   = 2.5;
+          ctx.strokeStyle = "rgba(12, 16, 32, 0.7)";
+          ctx.strokeText(l.text, l.x, l.y);
           ctx.fillStyle = l.colour;
           ctx.fillText(l.text, l.x, l.y);
         }
