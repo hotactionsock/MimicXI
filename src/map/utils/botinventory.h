@@ -159,6 +159,17 @@ auto BuyBotShopItem(uint32 charId, uint8 index, uint32 quantity) -> bool;
 // (PlanBotGear) - 0 without them.
 auto EvaluateBotGearItem(uint32 charId, uint16 itemId) -> float;
 
+struct BotGearReadiness
+{
+    float weapon; // main weapon: 1 if no more than kGearLagOk levels old, falling to 0 at kGearLagBad
+    float armour; // head, body, hands, legs, feet the same way, averaged (an empty slot is 0)
+    float score;  // 0.4 weapon + 0.6 armour
+};
+
+// How up to date a bot's gear is for its level - what it buys and loots
+// feeding how adventurous it is (worldbots.lua, worldbots_party.lua).
+auto GetBotGearReadiness(uint32 charId) -> BotGearReadiness;
+
 // True if itemId is a spell scroll the bot doesn't know yet and its main or
 // sub job can use at its current level.
 auto IsUsefulBotScroll(uint32 charId, uint16 itemId) -> bool;

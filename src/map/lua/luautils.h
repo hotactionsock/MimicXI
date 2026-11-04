@@ -405,6 +405,7 @@ auto TradeBotItemToNpc(uint32 charId, uint32 npcId, uint16 itemId, uint32 quanti
 auto BrowseBotShop(uint32 charId, uint32 npcId) -> sol::table;
 auto BuyBotShopItem(uint32 charId, uint8 index, uint32 quantity) -> bool;
 auto EvaluateBotGearItem(uint32 charId, uint16 itemId) -> float;
+auto GetBotGearReadiness(uint32 charId) -> sol::table;
 auto IsUsefulBotScroll(uint32 charId, uint16 itemId) -> bool;
 auto GetBotPendingInvite(uint32 charId) -> sol::object;
 auto AnswerBotInvite(uint32 charId, bool accept) -> bool;

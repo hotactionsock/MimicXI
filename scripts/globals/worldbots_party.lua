@@ -15,7 +15,9 @@
 -- available healer heals (see designateRoles). Bots never invite players.
 --
 -- Playing: the leader picks a camp suited to the party (tougher prey: Decent
--- Challenge..Tough for 3-4, Even Match..Very Tough for 5-6) and is the only
+-- Challenge..Tough for 3-4, Even Match..Very Tough for 5-6), looking further
+-- afield and minding outclassing mobs less than a solo bot - more so the
+-- better geared its members are (party.readiness) and is the only
 -- one who pulls - and only when everyone's there and rested. Members follow
 -- the leader, travel after it across zones, assist on its target and rest
 -- between fights. Roles drive what each member does in a fight (Phase 4b).
@@ -36,7 +38,8 @@ xi.worldbots.party = xi.worldbots.party or {}
 local party = xi.worldbots.party
 
 local PARTY_MIN_LEVEL      = 5       -- below this, bots solo; from here they can team up for harder early camps
-local SEEK_CHANCE          = 0.6     -- on picking a levelling goal, chance to also seek a party
+local SEEK_CHANCE          = 0.35    -- on picking a levelling goal, chance to also seek a party...
+local SEEK_CHANCE_READY    = 0.55    -- ...plus this much for a bot whose gear is up to date
 local SEEK_TIMEOUT_SEC     = 15 * 60 -- give up seeking after this
 local PARTY_LEVEL_SPREAD   = 4       -- max level gap within a party
 local PARTY_MAX_HOPS       = 4       -- seekers this many zone hops apart can be grouped
@@ -273,6 +276,25 @@ local function settleSize(seeker, now)
     return math.max(PARTY_MIN_SIZE, settled)
 end
 
+-- How up to date the gear is (0..1, GetBotGearReadiness): the bot's own when
+-- solo, its party's average in a party.
+function party.readiness(bot, charId, now)
+    local record = party.get(bot, charId, now)
+    if record == nil then
+        return GetBotGearReadiness(charId).score or 0
+    end
+
+    local total, count = 0, 0
+    for _, id in ipairs(record.members) do
+        if GetPlayerByID(id) then
+            total = total + (GetBotGearReadiness(id).score or 0)
+            count = count + 1
+        end
+    end
+
+    return count > 0 and total / count or 0
+end
+
 function party.isLeader(bot, charId, now)
     local record = party.get(bot, charId, now)
     return record ~= nil and record.leaderId == charId
@@ -292,7 +314,9 @@ function party.maybeSeek(bot, charId, now)
         return
     end
 
-    if math.randomFloat(0, 1) < SEEK_CHANCE then
+    -- Well-geared bots look for a party far more often: they're ready to push on.
+    local ready = GetBotGearReadiness(charId).score or 0
+    if math.randomFloat(0, 1) < SEEK_CHANCE + SEEK_CHANCE_READY * ready then
         seekers[charId] =
         {
             charId = charId,
@@ -445,8 +469,13 @@ local function sendToCamp(record, now)
         return
     end
 
-    local zones = GetBotLevelingZones(record.level, leaderBot:getZoneID(), PARTY_GOAL_HOPS, record.size)
-    local camp  = zones[1] and zones[1].zoneId or leaderBot:getZoneID()
+    -- The leader's pick, scored as a party (worldbots.lua levelingOptions):
+    -- bolder and further afield than solo, more so when everyone's well geared.
+    local camp = xi.worldbots.internal.pickLevelingZone(leaderBot, leaderBot:getZoneID())
+    if camp == nil then
+        local zones = GetBotLevelingZones(record.level, leaderBot:getZoneID(), PARTY_GOAL_HOPS, record.size)
+        camp = zones[1] and zones[1].zoneId or leaderBot:getZoneID()
+    end
     record.zoneId = camp
 
     local api = xi.worldbots.internal

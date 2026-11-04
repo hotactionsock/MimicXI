@@ -1191,6 +1191,51 @@ auto EvaluateBotGearItem(uint32 charId, uint16 itemId) -> float
     return best;
 }
 
+auto GetBotGearReadiness(uint32 charId) -> BotGearReadiness
+{
+    BotGearReadiness result{};
+
+    auto* PChar = liveBot(charId);
+    if (PChar == nullptr)
+    {
+        return result;
+    }
+
+    // Gear this many levels below the bot is fine; this many is badly out of date.
+    constexpr float kGearLagOk  = 5.0f;
+    constexpr float kGearLagBad = 15.0f;
+
+    const float level = PChar->GetMLevel();
+    const auto  fresh = [&](SLOTTYPE slot) -> float
+    {
+        auto* PItem = PChar->getEquip(slot);
+        if (PItem == nullptr)
+        {
+            return 0.0f;
+        }
+
+        const float lag = level - static_cast<float>(PItem->getReqLvl());
+        return std::clamp(1.0f - (lag - kGearLagOk) / (kGearLagBad - kGearLagOk), 0.0f, 1.0f);
+    };
+
+    // A fresh character's starting gear is all it needs.
+    if (level <= kGearLagOk)
+    {
+        return { 1.0f, 1.0f, 1.0f };
+    }
+
+    result.weapon = fresh(SLOT_MAIN);
+
+    constexpr std::array<SLOTTYPE, 5> kArmour = { SLOT_HEAD, SLOT_BODY, SLOT_HANDS, SLOT_LEGS, SLOT_FEET };
+    for (const auto slot : kArmour)
+    {
+        result.armour += fresh(slot) / kArmour.size();
+    }
+
+    result.score = 0.4f * result.weapon + 0.6f * result.armour;
+    return result;
+}
+
 auto IsUsefulBotScroll(uint32 charId, uint16 itemId) -> bool
 {
     auto* PChar = liveBot(charId);

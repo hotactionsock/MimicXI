@@ -1208,6 +1208,24 @@ void ensureHuntData()
     g_huntBuilt = true;
 }
 
+// The EXP a spawn is worth on average over the levels it can spawn at that are
+// prey for the bot (see BotPreyValue).
+auto preyValue(const HuntMob& mob, uint8 level, uint8 partySize) -> float
+{
+    float total = 0.0f;
+    int   count = 0;
+    for (int mobLevel = mob.minLevel; mobLevel <= mob.maxLevel; ++mobLevel)
+    {
+        if (IsBotPrey(level, mobLevel, partySize))
+        {
+            total += BotPreyValue(level, mobLevel);
+            ++count;
+        }
+    }
+
+    return count > 0 ? total / count : 0.0f;
+}
+
 // A mob suits a bot if any level it can spawn at is prey for the bot.
 auto suitsLevel(const HuntMob& mob, uint8 level, uint8 partySize) -> bool
 {
@@ -1280,6 +1298,29 @@ auto nearestHomeCity(uint8 nation, uint16 from) -> std::pair<uint16, uint8>
 
 } // namespace
 
+auto BotPreyValue(uint8 botLevel, int32 mobLevel) -> float
+{
+    switch (charutils::CheckMobLevel(botLevel, mobLevel))
+    {
+        case EMobDifficulty::IncrediblyEasyPrey:
+            return 0.15f;
+        case EMobDifficulty::EasyPrey:
+            return 0.3f;
+        case EMobDifficulty::DecentChallenge:
+            return 0.7f;
+        case EMobDifficulty::EvenMatch:
+            return 1.0f;
+        case EMobDifficulty::Tough:
+            return 1.15f;
+        case EMobDifficulty::VeryTough:
+            return 1.25f;
+        case EMobDifficulty::IncrediblyTough:
+            return 1.3f;
+        default:
+            return 0.0f;
+    }
+}
+
 auto IsBotPrey(uint8 botLevel, int32 mobLevel, uint8 partySize) -> bool
 {
     const auto [lowest, highest] = preyBand(partySize);
@@ -1329,11 +1370,13 @@ auto GetBotLevelingZones(uint8 level, xi::ZoneId fromZone, uint8 maxHops, uint8 
 
         uint32 suitable  = 0;
         uint32 dangerous = 0;
+        float  value     = 0.0f;
         for (const auto& mob : it->second)
         {
             if (suitsLevel(mob, level, partySize))
             {
                 ++suitable;
+                value += preyValue(mob, level, partySize);
             }
             else if (threatens(mob, level, partySize))
             {
@@ -1343,16 +1386,17 @@ auto GetBotLevelingZones(uint8 level, xi::ZoneId fromZone, uint8 maxHops, uint8 
 
         if (suitable > 0)
         {
-            result.push_back({ zoneId, suitable, reach.hops, dangerous });
+            result.push_back({ zoneId, suitable, reach.hops, dangerous, value });
         }
     }
 
-    // More prey, fewer hops - and a zone crawling with aggressive mobs that
-    // outclass the bot counts for much less, however much prey it has.
+    // More (EXP-weighted) prey, fewer hops - and a zone crawling with
+    // aggressive mobs that outclass the bot counts for much less, however
+    // much prey it has.
     const auto score = [](const BotLevelingZone& z)
     {
         const float safety = static_cast<float>(z.suitable) / static_cast<float>(z.suitable + 2 * z.dangerous);
-        return static_cast<float>(z.suitable) / (1 + z.hops) * safety;
+        return z.value / (1 + z.hops) * safety;
     };
 
     std::sort(result.begin(), result.end(),

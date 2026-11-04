@@ -425,6 +425,7 @@ void init(IPP mapIPP, bool isRunningInCI)
     lua.set_function("BrowseBotShop", &luautils::BrowseBotShop);
     lua.set_function("BuyBotShopItem", &luautils::BuyBotShopItem);
     lua.set_function("EvaluateBotGearItem", &luautils::EvaluateBotGearItem);
+    lua.set_function("GetBotGearReadiness", &luautils::GetBotGearReadiness);
     lua.set_function("IsUsefulBotScroll", &luautils::IsUsefulBotScroll);
     lua.set_function("GetBotPendingInvite", &luautils::GetBotPendingInvite);
     lua.set_function("AnswerBotInvite", &luautils::AnswerBotInvite);
@@ -2565,6 +2566,7 @@ sol::table GetBotLevelingZones(uint8 level, uint16 fromZone, uint8 maxHops, sol:
         row["suitable"] = zone.suitable;
         row["hops"]      = zone.hops;
         row["dangerous"] = zone.dangerous;
+        row["value"]     = zone.value;
         table.add(row);
     }
 
@@ -3587,6 +3589,20 @@ bool BuyBotShopItem(uint32 charId, uint8 index, uint32 quantity)
     TracyZoneScoped;
 
     return botutils::BuyBotShopItem(charId, index, quantity);
+}
+
+// { weapon, armour, score } 0..1 each - how up to date its gear is for its
+// level (botutils::GetBotGearReadiness).
+sol::table GetBotGearReadiness(uint32 charId)
+{
+    TracyZoneScoped;
+
+    const auto readiness = botutils::GetBotGearReadiness(charId);
+    auto       result    = lua.create_table();
+    result["weapon"]     = readiness.weapon;
+    result["armour"]     = readiness.armour;
+    result["score"]      = readiness.score;
+    return result;
 }
 
 float EvaluateBotGearItem(uint32 charId, uint16 itemId)

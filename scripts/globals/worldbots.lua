@@ -222,9 +222,16 @@ local function levelTier(level)
 end
 local GOAL_MIN_SUITABLE          = 6       -- suitable mob spawns for a zone to count as a levelling zone
 local ZONE_QUALITY_CAP           = 24      -- past this many suitable spawns, more don't make training faster
-local ZONE_GOOD_ENOUGH           = 10      -- quality at which a (safe) zone is good enough: no reason to travel on
+local ZONE_GOOD_ENOUGH           = 14      -- quality (~Even Matches' worth of prey) at which a safe zone is good enough: no reason to travel on
 local ZONE_SAFE_ENOUGH           = 0.6     -- safety a zone needs to count as good enough
-local ZONE_HOP_DECAY             = 0.45    -- each zone hop multiplies a zone's appeal by this
+local ZONE_HOP_DECAY             = 0.45    -- each zone hop multiplies a zone's appeal by this...
+local ZONE_HOP_READY             = 0.15    -- ...plus this much more for a bot whose gear is up to date
+local PARTY_HOP_DECAY            = 0.6     -- a party minds the trip less...
+local PARTY_HOP_READY            = 0.25    -- ...and a well-geared one less still
+local PARTY_MIN_HOPS             = 4       -- a party looks at least this far afield (5-6 when well geared)
+local PARTY_STAY_SHARE           = 0.75    -- a party stays put only if here is at least this good, relatively
+local READY_DANGER_SOLO          = 0.25    -- well geared, outclassing aggressive mobs count this much less solo...
+local READY_DANGER_PARTY         = 0.4     -- ...and this much less in a party
 local ZONE_CROWD_BOTS            = 8       -- bots training in a zone before it counts as crowded
 local ZONE_JITTER                = 0.1     -- +-10% on zone scores, to spread bots over equal options
 local ZONE_ALONG_THE_WAY         = 0.7     -- stop in a zone passed on the way if it's at least this good, relatively
@@ -539,11 +546,17 @@ end
 -- weighted pick among suitable zones, favouring more prey, fewer hops and -
 -- far more so at low levels - fewer aggressive mobs that outclass the bot.
 -- Levelling zones from here, scored for the path of least resistance:
---   quality - suitable prey spawns, capped at ZONE_QUALITY_CAP (past that, more
---             mobs don't make training faster), times safety squared (a zone
---             crawling with aggressive mobs that outclass the bot is worth little)
---   utility - quality, discounted for every zone hop (ZONE_HOP_DECAY) and for
---             crowding by other bots
+--   quality - suitable prey spawns weighted by the EXP they give (Easy Prey a
+--             third of an Even Match - so a bot outgrows its starter zones),
+--             capped at ZONE_QUALITY_CAP (past that, more mobs don't make
+--             training faster), times safety squared (a zone crawling with
+--             aggressive mobs that outclass the bot is worth little)
+--   utility - quality, discounted for every zone hop and for crowding by
+--             other bots
+-- Gear readiness (GetBotGearReadiness - is its weapon and armour up to date
+-- for its level?) makes a bot bolder: trips matter less and outclassing mobs
+-- count for less. A party is bolder still, by its members' average readiness,
+-- and looks further afield - safety in numbers.
 -- Returns { [zoneId] = { quality, utility, hops, safe } }, plus the list
 -- sorted best utility first.
 local function levelingOptions(bot, zoneId, maxHops)
@@ -551,7 +564,17 @@ local function levelingOptions(bot, zoneId, maxHops)
     local level = xi.worldbots.party.huntLevel(bot, bot:getID(), now)
     local size  = xi.worldbots.party.huntSize(bot)
     local tier  = levelTier(level)
-    maxHops     = maxHops or tier.maxHops
+    local ready = xi.worldbots.party.readiness(bot, bot:getID(), now)
+    local decay, dangerWeight
+    if size > 1 then
+        maxHops      = maxHops or math.max(tier.maxHops, PARTY_MIN_HOPS + math.floor(2 * ready + 0.5))
+        decay        = PARTY_HOP_DECAY + PARTY_HOP_READY * ready
+        dangerWeight = tier.dangerWeight * (1 - READY_DANGER_PARTY * ready)
+    else
+        maxHops      = maxHops or tier.maxHops
+        decay        = ZONE_HOP_DECAY + ZONE_HOP_READY * ready
+        dangerWeight = tier.dangerWeight * (1 - READY_DANGER_SOLO * ready)
+    end
 
     local crowd = {}
     for _, z in ipairs(GetBotAwakeZones()) do
@@ -567,14 +590,14 @@ local function levelingOptions(bot, zoneId, maxHops)
             (z.zoneId ~= zoneId and mem.avoid(bot, mem.ROUTE, z.zoneId, now))
 
         if z.suitable >= GOAL_MIN_SUITABLE and not avoided then
-            local safety  = z.suitable / (z.suitable + tier.dangerWeight * (z.dangerous or 0))
-            local quality = math.min(z.suitable, ZONE_QUALITY_CAP) * safety * safety
+            local safety  = z.suitable / (z.suitable + dangerWeight * (z.dangerous or 0))
+            local quality = math.min(z.value or z.suitable, ZONE_QUALITY_CAP) * safety * safety
             local bots    = crowd[z.zoneId] or 0
             if z.zoneId == zoneId then
                 bots = math.max(0, bots - 1) -- not counting itself
             end
 
-            local utility = quality * ZONE_HOP_DECAY ^ z.hops / (1 + math.max(0, bots - ZONE_CROWD_BOTS) / ZONE_CROWD_BOTS)
+            local utility = quality * decay ^ z.hops / (1 + math.max(0, bots - ZONE_CROWD_BOTS) / ZONE_CROWD_BOTS)
 
             -- ...and lean towards what has worked, away from what has hurt.
             utility = utility * mem.trust(bot, mem.ZONE, z.zoneId, now)
@@ -609,7 +632,19 @@ local function pickLevelingZone(bot, zoneId)
         byZone, list = levelingOptions(bot, zoneId, GOAL_MAX_HOPS)
     end
 
-    if goodEnough(byZone[zoneId]) then
+    -- Solo: stay if here is good enough. A party only stays if nowhere it
+    -- can reach is clearly better - it came together to push on.
+    local here = byZone[zoneId]
+    if bot:getPartySize() > 1 then
+        if
+            here and
+            here.safe and
+            list[1] and
+            here.utility >= list[1].utility * PARTY_STAY_SHARE
+        then
+            return zoneId
+        end
+    elseif goodEnough(here) then
         return zoneId
     end
 
@@ -2020,8 +2055,11 @@ end
 -- For the worldbots_* modules: shared access to the AI scratch state.
 xi.worldbots.internal =
 {
-    getState = getState,
-    setGoal  = setGoal,
+    getState         = getState,
+    setGoal          = setGoal,
+    pickLevelingZone = function(bot, zoneId)
+        return pickLevelingZone(bot, zoneId)
+    end,
 }
 
 return xi.worldbots

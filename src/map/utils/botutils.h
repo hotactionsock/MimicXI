@@ -226,10 +226,16 @@ struct BotLevelingZone
     uint32 suitable; // huntable mob spawns whose level range suits the bot
     uint8  hops;      // zone hops from the bot's current zone (0 = here)
     uint32 dangerous; // aggressive mob spawns that outclass the bot (or its party)
+    float  value;     // suitable spawns weighted by the EXP they're worth (BotPreyValue): Easy Prey counts
+                      // for a third of an Even Match, so a zone the bot has outgrown loses its appeal
 };
 
+// What a mob of this con is worth to train on, relative to an Even Match (1):
+// roughly the EXP it gives. Too Weak 0 .. Incredibly Tough 1.3.
+auto BotPreyValue(uint8 botLevel, int32 mobLevel) -> float;
+
 // Zones within maxHops of fromZone that have huntable mobs suiting `level`,
-// best first (more suitable spawns, fewer hops, fewer dangerous aggressive
+// best first (more EXP-weighted prey, fewer hops, fewer dangerous aggressive
 // mobs). At most 8.
 // partySize widens what counts as prey (see IsBotPrey).
 auto GetBotLevelingZones(uint8 level, xi::ZoneId fromZone, uint8 maxHops, uint8 partySize = 1) -> std::vector<BotLevelingZone>;
