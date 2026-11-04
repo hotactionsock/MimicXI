@@ -44,6 +44,7 @@
 #include "map_session.h"
 #include "map_session_container.h"
 #include "spell.h"
+#include "utils/battleutils.h"
 #include "utils/charutils.h"
 #include "utils/squadutils.h"
 #include "utils/zoneutils.h"
@@ -719,7 +720,41 @@ std::unordered_map<uint32, std::unordered_map<std::string, GearSetPlan>> g_gearP
 std::unordered_map<uint32, std::vector<std::pair<std::string, BotGearWeights>>> g_gearWeights;
 std::unordered_map<uint32, std::string>                                         g_gearWeaponSet;
 
-auto weightedScore(CItemEquipment* PItem, const BotGearWeights& weights) -> float
+// How well the bot's main job handles this weapon's type: its skill cap there
+// against its best melee skill (1 = its best weapon type, 0 = one it can't
+// skill up at all). Without it, raw damage per delay sends a Warrior after
+// whatever weapon hits hardest, axe or not.
+auto weaponAptitude(CCharEntity* PChar, CItemWeapon* PWeapon) -> float
+{
+    if (PChar == nullptr)
+    {
+        return 1.0f;
+    }
+
+    const auto skill = static_cast<uint8>(PWeapon->getSkillType());
+    if (skill < static_cast<uint8>(xi::SkillType::HandToHand) || skill > static_cast<uint8>(xi::SkillType::Staff))
+    {
+        return 1.0f; // not a melee weapon type (grips, instruments...)
+    }
+
+    const auto job   = PChar->GetMJob();
+    const auto level = PChar->GetMLevel();
+    uint16     best  = 0;
+    for (uint8 i = static_cast<uint8>(xi::SkillType::HandToHand); i <= static_cast<uint8>(xi::SkillType::Staff); ++i)
+    {
+        best = std::max(best, battleutils::GetMaxSkill(static_cast<xi::SkillType>(i), job, level));
+    }
+
+    if (best == 0)
+    {
+        return 1.0f;
+    }
+
+    return static_cast<float>(battleutils::GetMaxSkill(static_cast<xi::SkillType>(skill), job, level)) / best;
+}
+
+// PChar (optional): weigh a weapon's damage by the job's skill with it.
+auto weightedScore(CItemEquipment* PItem, const BotGearWeights& weights, CCharEntity* PChar = nullptr) -> float
 {
     float score = 0.0f;
     for (const auto& [mod, weight] : weights.mods)
@@ -730,7 +765,7 @@ auto weightedScore(CItemEquipment* PItem, const BotGearWeights& weights) -> floa
     if (auto* PWeapon = dynamic_cast<CItemWeapon*>(PItem); PWeapon && weights.weaponDps != 0.0f)
     {
         const float delay = std::max<float>(PWeapon->getDelay(), 1.0f);
-        score += weights.weaponDps * PWeapon->getDamage() * 240.0f / delay;
+        score += weights.weaponDps * PWeapon->getDamage() * 240.0f / delay * weaponAptitude(PChar, PWeapon);
     }
 
     // Tie-break: newer gear over equivalent older gear.
@@ -839,9 +874,9 @@ auto PlanBotGear(uint32 charId, const std::vector<std::pair<std::string, BotGear
         if (name == weaponSet)
         {
             changed = equipBest(PChar, kWeaponSlots,
-                                [&weights](CItemEquipment* PItem)
+                                [&weights, PChar](CItemEquipment* PItem)
                                 {
-                                    return weightedScore(PItem, weights);
+                                    return weightedScore(PItem, weights, PChar);
                                 });
         }
     }
@@ -1149,7 +1184,7 @@ auto EvaluateBotGearItem(uint32 charId, uint16 itemId) -> float
             }
 
             auto* PCurrent = PChar->getEquip(SLOT_MAIN);
-            best           = std::max(best, weightedScore(PItem, weights) - (PCurrent ? weightedScore(PCurrent, weights) : 0.0f));
+            best           = std::max(best, weightedScore(PItem, weights, PChar) - (PCurrent ? weightedScore(PCurrent, weights, PChar) : 0.0f));
         }
     }
 

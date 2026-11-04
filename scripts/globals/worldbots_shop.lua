@@ -13,7 +13,14 @@
 --   3. a small stock of travel and job consumables (Silent Oil, Prism Powder,
 --      Shihei for Utsusemi users).
 -- It always keeps a reserve of gil, and never spends on things it can't use
--- yet. Every purchase is in the activity log ("Testbot bought Scroll of Cure
+-- yet.
+--
+-- Which shops: a city can have a dozen or more, and a trip visits at most
+-- MAX_SHOPS_PER_TRIP. Bots remember what each vendor stocks (shared - it's
+-- what any visitor sees), so a trip goes first to the shops holding the
+-- biggest upgrades for this bot - a weapon smith with a better sword before
+-- the armourer - then to shops nobody has looked in yet, and skips the ones
+-- with nothing for it. Every purchase is in the activity log ("Testbot bought Scroll of Cure
 -- for 61 gil" - logged engine-side).
 -----------------------------------
 xi = xi or {}
@@ -29,6 +36,11 @@ local RESERVE_FRACTION    = 0.3     -- keep this share of gil...
 local RESERVE_MIN         = 100     -- ...and at least this much
 local MIN_GEAR_GAIN       = 3       -- weighted stat gain for gear to count as an upgrade
 local MAX_SHOPS_PER_TRIP  = 8
+local SCROLL_VALUE        = 20      -- how much a usable new spell scroll counts, against gear gains
+local CONSUMABLE_VALUE    = 1       -- ...and consumables it's short of (worth a stop if passing)
+
+-- What each vendor sold on its last visit, by NPC id: { { itemId, price }... }.
+local stock = {}
 
 -- Consumables kept in stock: item name, how many to keep, when.
 local CONSUMABLES =
@@ -66,6 +78,55 @@ function shop.wantsTrip(bot, state, now)
     return state.lastShopLevel == nil or bot:getMainLvl() >= state.lastShopLevel + SHOP_LEVELS_BETWEEN
 end
 
+local function knowsSpellId(state, id)
+    local m = state.magic
+    return m ~= nil and m.spells ~= nil and m.spells[id] ~= nil
+end
+
+-- Short of a consumable this shop sells?
+local function wantsConsumable(bot, state, itemId)
+    for _, want in ipairs(CONSUMABLES) do
+        if
+            xi.item[want.item] == itemId and
+            (want.minLevel == nil or bot:getMainLvl() >= want.minLevel) and
+            (want.needsSpell == nil or knowsSpellId(state, xi.magic.spell[want.needsSpell])) and
+            bot:getItemCount(itemId) < want.keep
+        then
+            return true
+        end
+    end
+
+    return false
+end
+
+-- How much a visit to this shop is worth to the bot, from its remembered
+-- stock: the biggest affordable gear gain, a usable scroll, or a consumable
+-- it's short of. nil = nobody has looked in yet.
+local function shopValue(bot, charId, state, npcId, money)
+    local items = stock[npcId]
+    if items == nil then
+        return nil
+    end
+
+    local best = 0
+    for _, item in ipairs(items) do
+        if item.price <= money then
+            local gain = EvaluateBotGearItem(charId, item.itemId)
+            if gain > MIN_GEAR_GAIN then
+                best = math.max(best, gain)
+            end
+
+            if IsUsefulBotScroll(charId, item.itemId) then
+                best = math.max(best, SCROLL_VALUE)
+            elseif best < CONSUMABLE_VALUE and wantsConsumable(bot, state, item.itemId) then
+                best = CONSUMABLE_VALUE
+            end
+        end
+    end
+
+    return best
+end
+
 -- Starts going round this zone's shops. False if there are none (or no gil).
 function shop.begin(bot, charId, state, now, zoneId)
     if bot:getGil() < SHOP_MIN_GIL then
@@ -77,15 +138,43 @@ function shop.begin(bot, charId, state, now, zoneId)
         return false
     end
 
-    -- A random order, so bots don't all queue at the same counter.
+    -- A random order to start with, so bots don't all queue at the same counter.
     for i = #shops, 2, -1 do
         local j = math.random(1, i)
         shops[i], shops[j] = shops[j], shops[i]
     end
 
+    -- Shops with something for it, biggest upgrade first; then ones nobody
+    -- has looked in yet. Shops known to hold nothing for it are skipped.
+    local money, worth, unknown = budget(bot), {}, {}
+    for _, target in ipairs(shops) do
+        local value = shopValue(bot, charId, state, target.npcId, money)
+        if value == nil then
+            table.insert(unknown, target)
+        elseif value > 0 then
+            table.insert(worth, { shop = target, value = value })
+        end
+    end
+
+    table.sort(worth, function(a, b)
+        return a.value > b.value
+    end)
+
     local queue = {}
-    for i = 1, math.min(#shops, MAX_SHOPS_PER_TRIP) do
-        table.insert(queue, shops[i])
+    for _, entry in ipairs(worth) do
+        table.insert(queue, entry.shop)
+    end
+
+    for _, target in ipairs(unknown) do
+        table.insert(queue, target)
+    end
+
+    while #queue > MAX_SHOPS_PER_TRIP do
+        table.remove(queue)
+    end
+
+    if #queue == 0 then
+        return false
     end
 
     state.shopping = { queue = queue, index = 0, bought = 0 }
@@ -132,6 +221,14 @@ function shop.buyHere(bot, charId, state, now)
     if #items == 0 then
         return
     end
+
+    -- Remember the stock, for planning later trips (anyone's).
+    local seen = {}
+    for _, item in ipairs(items) do
+        table.insert(seen, { itemId = item.itemId, price = item.price })
+    end
+
+    stock[target.npcId] = seen
 
     -- 1. Spell scrolls it can use now.
     for _, item in ipairs(items) do

@@ -3,10 +3,14 @@
 --
 -- Forming: from level 5 (PARTY_MIN_LEVEL) a bot that picks a new levelling goal often also
 -- puts itself on a "seeking party" list (it keeps levelling solo while it
--- waits). Every few seconds the matchmaker groups seekers of similar level
--- (within PARTY_LEVEL_SPREAD) who are a few zone hops apart into a balanced
--- party - a tank, a healer, a support job, then damage - and forms a real
--- engine party (FormBotParty). If the jobs available are lopsided it forms the
+-- waits), with a party size in mind (WANT_SIZE: duos and trios early on,
+-- mostly full parties later). Every few seconds the matchmaker groups seekers
+-- of similar level (within PARTY_LEVEL_SPREAD) who are a few zone hops apart
+-- into a balanced party - a tank, a healer, a support job, then damage - and
+-- forms a real engine party (FormBotParty). It waits for the size the
+-- longest-waiting seeker wants, settling for one fewer every
+-- SETTLE_EVERY_SEC (never below a duo). A party short of the size it wanted
+-- keeps recruiting: seekers who fit join it before new parties are made. If the jobs available are lopsided it forms the
 -- party anyway and designates roles: the sturdiest melee tanks, the best
 -- available healer heals (see designateRoles). Bots never invite players.
 --
@@ -36,8 +40,19 @@ local SEEK_CHANCE          = 0.6     -- on picking a levelling goal, chance to a
 local SEEK_TIMEOUT_SEC     = 15 * 60 -- give up seeking after this
 local PARTY_LEVEL_SPREAD   = 4       -- max level gap within a party
 local PARTY_MAX_HOPS       = 4       -- seekers this many zone hops apart can be grouped
-local PARTY_MIN_SIZE       = 3
+local PARTY_MIN_SIZE       = 2
 local PARTY_MAX_SIZE       = 6
+local SETTLE_EVERY_SEC     = 3 * 60  -- a seeker settles for one member fewer this often
+local RECRUIT_FOR_SEC      = 30 * 60 -- a short-handed party takes newcomers for this long after forming
+
+-- The party size a seeker hopes for, by level: { level from, weights for sizes 2..6 }.
+-- Small groups early on, mostly full parties once EXP needs them.
+local WANT_SIZE =
+{
+    { from = 30, weights = { 5, 10, 20, 25, 40 } },
+    { from = 15, weights = { 10, 20, 25, 20, 25 } },
+    { from = 0,  weights = { 30, 30, 20, 10, 10 } },
+}
 local PARTY_SESSION_MIN    = 60 * 60
 local PARTY_SESSION_MAX    = 120 * 60
 local MATCH_INTERVAL_SEC   = 10
@@ -71,7 +86,7 @@ local HEALER_STANDINS = { 'RDM', 'SCH', 'PLD', 'DNC', 'BRD' }
 
 local parties  = {} -- leaderId -> party record
 local memberOf = {} -- charId -> leaderId
-local seekers  = {} -- charId -> { charId, level, job, zoneId, since }
+local seekers  = {} -- charId -> { charId, level, job, zoneId, since, wantSize }
 local nextMatchAt = 0
 
 local function jobName(job)
@@ -230,6 +245,34 @@ function party.huntLevel(bot, charId, now)
     return record and record.level or bot:getMainLvl()
 end
 
+local function rollWantSize(level)
+    for _, band in ipairs(WANT_SIZE) do
+        if level >= band.from then
+            local total = 0
+            for _, w in ipairs(band.weights) do
+                total = total + w
+            end
+
+            local roll = math.random(1, total)
+            for i, w in ipairs(band.weights) do
+                roll = roll - w
+                if roll <= 0 then
+                    return i + 1
+                end
+            end
+        end
+    end
+
+    return PARTY_MIN_SIZE
+end
+
+-- The size a seeker will settle for now: what it wanted, one fewer for every
+-- SETTLE_EVERY_SEC it has waited, never below a duo.
+local function settleSize(seeker, now)
+    local settled = (seeker.wantSize or 3) - math.floor((now - seeker.since) / SETTLE_EVERY_SEC)
+    return math.max(PARTY_MIN_SIZE, settled)
+end
+
 function party.isLeader(bot, charId, now)
     local record = party.get(bot, charId, now)
     return record ~= nil and record.leaderId == charId
@@ -257,6 +300,7 @@ function party.maybeSeek(bot, charId, now)
             job    = bot:getMainJob(),
             zoneId = bot:getZoneID(),
             since  = now,
+            wantSize = rollWantSize(bot:getMainLvl()),
         }
     end
 end
@@ -265,9 +309,9 @@ function party.stopSeeking(charId)
     seekers[charId] = nil
 end
 
--- Chooses up to PARTY_MAX_SIZE seekers around an anchor, filling COMPOSITION
--- slots first, then anyone left. Returns the chosen list.
-local function compose(anchor, candidates)
+-- Chooses up to size seekers around an anchor, filling COMPOSITION slots
+-- first, then anyone left. Returns the chosen list.
+local function compose(anchor, candidates, size)
     local chosen, used, need = { anchor }, { [anchor.charId] = true }, {}
 
     for _, role in ipairs(COMPOSITION) do
@@ -278,7 +322,7 @@ local function compose(anchor, candidates)
 
     -- First pass: fill the roles the party wants.
     for _, c in ipairs(candidates) do
-        if #chosen >= PARTY_MAX_SIZE then
+        if #chosen >= size then
             break
         end
 
@@ -292,7 +336,7 @@ local function compose(anchor, candidates)
 
     -- Second pass: lopsided is better than empty - take whoever's left.
     for _, c in ipairs(candidates) do
-        if #chosen >= PARTY_MAX_SIZE then
+        if #chosen >= size then
             break
         end
 
@@ -365,6 +409,7 @@ local function formParty(chosen, now, keepFirstAsLeader)
         roles     = designateRoles(list),
         level     = minLevel,
         size      = #members,
+        wantSize  = #members, -- the matchmaker raises this to what the party was formed for
         formedAt  = now,
         untilTime = now + math.random(PARTY_SESSION_MIN, PARTY_SESSION_MAX),
     }
@@ -415,7 +460,94 @@ local function sendToCamp(record, now)
     end
 end
 
--- Runs from any awake zone's tick (throttled): groups seekers into parties.
+-- A short-handed party takes in seekers who fit: near the leader, close in
+-- level, roles it lacks first. Returns how many joined.
+local function recruit(record, list, now)
+    if
+        (record.size or 0) >= (record.wantSize or 0) or
+        now >= (record.formedAt or 0) + RECRUIT_FOR_SEC
+    then
+        return 0
+    end
+
+    local leaderBot = GetPlayerByID(record.leaderId)
+    if leaderBot == nil or leaderBot:getPartySize() >= PARTY_MAX_SIZE then
+        return 0
+    end
+
+    local have = {}
+    for _, role in pairs(record.roles) do
+        have[role] = (have[role] or 0) + 1
+    end
+
+    local fits = {}
+    for _, c in ipairs(list) do
+        if
+            seekers[c.charId] and
+            math.abs(c.level - record.level) <= PARTY_LEVEL_SPREAD and
+            hopsBetween(leaderBot:getZoneID(), c.zoneId) <= PARTY_MAX_HOPS
+        then
+            table.insert(fits, c)
+        end
+    end
+
+    -- Missing roles first (no tank, no healer...), then longest waiting.
+    table.sort(fits, function(a, b)
+        local aMissing, bMissing = have[roleOfJob(a.job)] == nil, have[roleOfJob(b.job)] == nil
+        if aMissing ~= bMissing then
+            return aMissing
+        end
+
+        return a.since < b.since
+    end)
+
+    local room, ids = math.min(record.wantSize, PARTY_MAX_SIZE) - leaderBot:getPartySize(), {}
+    for i = 1, math.min(room, #fits) do
+        table.insert(ids, fits[i].charId)
+    end
+
+    if #ids == 0 or FormBotParty(record.leaderId, ids) == 0 then
+        return 0
+    end
+
+    local inParty = {}
+    for _, m in ipairs(GetBotParty(record.leaderId) or {}) do
+        inParty[m.charId] = true
+    end
+
+    local api, list2, joined = xi.worldbots.internal, {}, 0
+    for _, id in ipairs(ids) do
+        seekers[id] = nil
+        if inParty[id] then
+            table.insert(record.members, id)
+            memberOf[id] = record.leaderId
+            joined = joined + 1
+        end
+    end
+
+    for _, id in ipairs(record.members) do
+        local bot = GetPlayerByID(id)
+        table.insert(list2, { charId = id, job = bot and bot:getMainJob() or 0 })
+    end
+
+    record.roles = designateRoles(list2)
+    record.size  = #record.members
+
+    for _, id in ipairs(ids) do
+        local member = inParty[id] and GetPlayerByID(id)
+        if member then
+            local state = api.getState(id, now)
+            xi.worldbots.log.joinedParty(member, leaderBot:getName(), record.roles[id] or 'damage', record.size)
+            xi.worldbots.social.onJoinedParty(member, id, state, now, record.leaderId)
+            api.setGoal(id, state, 'party', record.zoneId or leaderBot:getZoneID())
+        end
+    end
+
+    return joined
+end
+
+-- Runs from any awake zone's tick (throttled): fills short-handed parties,
+-- then groups the remaining seekers into new ones.
 function party.matchmake(now)
     if now < nextMatchAt then
         return
@@ -446,6 +578,11 @@ function party.matchmake(now)
         return a.since < b.since
     end)
 
+    -- Parties still looking for members get first pick.
+    for _, record in pairs(parties) do
+        recruit(record, list, now)
+    end
+
     for _, anchor in ipairs(list) do
         if seekers[anchor.charId] then
             local candidates = {}
@@ -460,9 +597,12 @@ function party.matchmake(now)
                 end
             end
 
-            if #candidates + 1 >= PARTY_MIN_SIZE then
-                local record = formParty(compose(anchor, candidates), now)
+            -- Enough for the size it'll settle for now: take up to the size it wanted.
+            if #candidates + 1 >= settleSize(anchor, now) then
+                local size   = math.min(anchor.wantSize or PARTY_MAX_SIZE, PARTY_MAX_SIZE)
+                local record = formParty(compose(anchor, candidates, size), now)
                 if record then
+                    record.wantSize = math.max(record.size, size)
                     sendToCamp(record, now)
                 end
             end

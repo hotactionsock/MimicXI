@@ -75,6 +75,13 @@ local WEIGHTS =
     {
         weaponDps = 2, MND = 1, INT = 1, MATT = 1, CURE_POTENCY = 2, ACC = 0.5,
     },
+
+    -- Weapon pick for nukers: casting stats first, but a staff that hits
+    -- harder still counts (they melee a little while soloing early on).
+    nukerWeapon =
+    {
+        weaponDps = 1, INT = 1.5, MATT = 1.5, MACC = 1, ELEM = 1, MP = 0.05,
+    },
 }
 
 -- Weapon-skill stat emphasis by main job (replaces ws STR/DEX weights).
@@ -102,7 +109,7 @@ local ARCHETYPES =
     melee  = { sets = { idle = 'idle', engaged = 'melee', ws = 'ws' }, weapon = 'engaged' },
     tank   = { sets = { idle = 'idle', engaged = 'tank', ws = 'ws', cure = 'cure' }, weapon = 'engaged' },
     healer = { sets = { idle = 'idle', engaged = 'melee', ws = 'ws', cure = 'cure', enfeeble = 'enfeeble', nuke = 'nuke', weapon = 'casterWeapon' }, weapon = 'weapon' },
-    nuker  = { sets = { idle = 'idle', engaged = 'melee', nuke = 'nuke', enfeeble = 'enfeeble', cure = 'cure', weapon = 'nuke' }, weapon = 'weapon' },
+    nuker  = { sets = { idle = 'idle', engaged = 'melee', nuke = 'nuke', enfeeble = 'enfeeble', cure = 'cure', weapon = 'nukerWeapon' }, weapon = 'weapon' },
     hybrid = { sets = { idle = 'idle', engaged = 'melee', ws = 'ws', nuke = 'nuke', enfeeble = 'enfeeble', cure = 'cure', weapon = 'casterWeapon' }, weapon = 'weapon' },
 }
 
